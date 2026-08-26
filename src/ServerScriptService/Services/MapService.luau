@@ -86,12 +86,30 @@ local function buildPlot(index: number, cf: CFrame, parent: Instance): Plot
 		Color = Palette.LockerBlue,
 		Parent = model,
 	})
-	-- locker detail stripes
+	-- locker detail: seams, handles, vents
 	for i = 1, 7 do
 		part({
 			Name = "LockerSeam",
 			Size = Vector3.new(0.4, 9, 0.4),
 			CFrame = cf * CFrame.new(-24 + i * 6, 4.5, -(depth / 2 - 2.2)),
+			Color = Palette.LockerBlueDark,
+			Parent = model,
+		})
+	end
+	for i = 0, 7 do
+		local lockerX = -21 + i * 6
+		part({
+			Name = "LockerHandle",
+			Size = Vector3.new(0.5, 1.2, 0.4),
+			CFrame = cf * CFrame.new(lockerX + 1.8, 4.6, -(depth / 2 - 2.15)),
+			Color = Palette.BusYellow,
+			Material = Enum.Material.Metal,
+			Parent = model,
+		})
+		part({
+			Name = "LockerVent",
+			Size = Vector3.new(2.6, 0.5, 0.3),
+			CFrame = cf * CFrame.new(lockerX, 7.6, -(depth / 2 - 2.1)),
 			Color = Palette.LockerBlueDark,
 			Parent = model,
 		})
@@ -206,12 +224,13 @@ local function buildPlot(index: number, cf: CFrame, parent: Instance): Plot
 	}
 end
 
-local function buildZone(parent: Instance, name: string, center: Vector3, size: Vector2, color: Color3, label: string): BasePart
+local function buildZone(parent: Instance, name: string, center: Vector3, size: Vector2, color: Color3, label: string, material: Enum.Material?): BasePart
 	local floor = part({
 		Name = name .. "Floor",
 		Size = Vector3.new(size.X, 1, size.Y),
 		CFrame = CFrame.new(center) * CFrame.new(0, -0.5, 0),
 		Color = color,
+		Material = material or Enum.Material.SmoothPlastic,
 		Parent = parent,
 	})
 	local sign = part({
@@ -408,7 +427,7 @@ local function buildGymMarkings(parent: Instance, center: Vector3)
 		Name = "GymCircleInner",
 		Size = Vector3.new(0.22, 23, 23),
 		CFrame = CFrame.new(center + Vector3.new(0, 0.12, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = Color3.fromRGB(226, 178, 172),
+		Color = Color3.fromRGB(210, 160, 110),
 		Parent = parent,
 	})
 	inner.Shape = Enum.PartType.Cylinder
@@ -452,6 +471,119 @@ local function buildStatues(parent: Instance)
 	end
 end
 
+-- Stepped roof + warm interior lighting for a walled building.
+local function buildRoof(parent: Instance, center: Vector3, size: Vector2)
+	local layers = {
+		{ inset = -4, y = 14.75 },
+		{ inset = 8, y = 16.25 },
+		{ inset = 20, y = 17.75 },
+		{ inset = 32, y = 19.25 },
+	}
+	for _, layer in layers do
+		if size.X - layer.inset > 6 and size.Y - layer.inset > 6 then
+			part({
+				Name = "RoofLayer",
+				Size = Vector3.new(size.X - layer.inset, 1.5, size.Y - layer.inset),
+				CFrame = CFrame.new(center + Vector3.new(0, layer.y, 0)),
+				Color = Color3.fromRGB(84, 98, 110),
+				Material = Enum.Material.ClayRoofTiles,
+				Parent = parent,
+			})
+		end
+	end
+	-- interior ceiling lights so roofed rooms stay warm and readable
+	for _, offset in { Vector3.new(-size.X / 5, 0, 0), Vector3.new(size.X / 5, 0, 0) } do
+		local strip = part({
+			Name = "CeilingLight",
+			Size = Vector3.new(1, 0.4, size.Y * 0.5),
+			CFrame = CFrame.new(center + offset + Vector3.new(0, 13.6, 0)),
+			Color = Color3.fromRGB(255, 244, 214),
+			Material = Enum.Material.Neon,
+			Parent = parent,
+		})
+		local light = Instance.new("PointLight")
+		light.Brightness = 1.2
+		light.Range = 34
+		light.Color = Color3.fromRGB(255, 238, 200)
+		light.Parent = strip
+	end
+end
+
+-- Concrete walkway between two points.
+local function buildPath(parent: Instance, from: Vector3, to: Vector3, width: number)
+	local flat = Vector3.new(to.X - from.X, 0, to.Z - from.Z)
+	local length = flat.Magnitude
+	local mid = (from + to) / 2
+	part({
+		Name = "Walkway",
+		Size = Vector3.new(width, 0.3, length),
+		CFrame = CFrame.lookAt(Vector3.new(mid.X, 0.05, mid.Z), Vector3.new(to.X, 0.05, to.Z)),
+		Color = Color3.fromRGB(178, 172, 160),
+		Material = Enum.Material.Concrete,
+		Parent = parent,
+	})
+end
+
+-- Courtyard fountain: stone basin, water, spray.
+local function buildFountain(parent: Instance, center: Vector3)
+	local basin = part({
+		Name = "FountainBasin",
+		Size = Vector3.new(2.5, 16, 16),
+		CFrame = CFrame.new(center + Vector3.new(0, 1.25, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(190, 190, 190),
+		Material = Enum.Material.Marble,
+		Parent = parent,
+	})
+	basin.Shape = Enum.PartType.Cylinder
+	local water = part({
+		Name = "FountainWater",
+		Size = Vector3.new(1.2, 14, 14),
+		CFrame = CFrame.new(center + Vector3.new(0, 2.1, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(90, 160, 220),
+		Material = Enum.Material.Glass,
+		Transparency = 0.35,
+		Parent = parent,
+	})
+	water.Shape = Enum.PartType.Cylinder
+	local column = part({
+		Name = "FountainColumn",
+		Size = Vector3.new(1.6, 5, 1.6),
+		CFrame = CFrame.new(center + Vector3.new(0, 3.5, 0)),
+		Color = Color3.fromRGB(190, 190, 190),
+		Material = Enum.Material.Marble,
+		Parent = parent,
+	})
+	local spray = Instance.new("ParticleEmitter")
+	spray.Color = ColorSequence.new(Color3.fromRGB(180, 220, 255))
+	spray.Rate = 24
+	spray.Lifetime = NumberRange.new(0.7, 1.1)
+	spray.Speed = NumberRange.new(9, 12)
+	spray.SpreadAngle = Vector2.new(12, 12)
+	spray.Acceleration = Vector3.new(0, -24, 0)
+	spray.Size = NumberSequence.new(0.35)
+	spray.Transparency = NumberSequence.new(0.35)
+	spray.LightEmission = 0.4
+	spray.EmissionDirection = Enum.NormalId.Top
+	spray.Parent = column
+end
+
+-- Banners hanging under the hallway canopy.
+local function buildBanners(parent: Instance)
+	local colors = { Palette.DetentionRed, Palette.LockerBlue, Palette.BusYellow, Palette.AuraPurple }
+	local texts = { "GO LEGENDS!", "QUIZ FRIDAY", "LOCK YOUR BASE", "FARM AURA" }
+	for i = 1, 4 do
+		local banner = part({
+			Name = "Banner" .. i,
+			Size = Vector3.new(8, 4.5, 0.3),
+			CFrame = CFrame.new(-90 + (i - 1) * 60, 11.6, 0) * CFrame.Angles(0, math.rad(90), 0),
+			Color = colors[i],
+			Parent = parent,
+		})
+		signText(banner, texts[i], Palette.White, Enum.NormalId.Front)
+		signText(banner, texts[i], Palette.White, Enum.NormalId.Back)
+	end
+end
+
 -- Three walls + a window band around a zone, leaving the side facing `openDir` open.
 local function buildZoneWalls(parent: Instance, center: Vector3, size: Vector2, openDir: Vector3)
 	local height = 14
@@ -483,6 +615,18 @@ local function buildZoneWalls(parent: Instance, center: Vector3, size: Vector2, 
 			Transparency = 0.35,
 			Parent = parent,
 		})
+		-- window mullions
+		local mullions = math.floor(side.len / 9)
+		for m = 1, mullions - 1 do
+			part({
+				Name = "WindowMullion",
+				Size = Vector3.new(0.5, 4, 1.4),
+				CFrame = side.cf * CFrame.new(-side.len / 2 + m * 9, 8, 0),
+				Color = Color3.fromRGB(226, 218, 196),
+				Material = Enum.Material.Concrete,
+				Parent = parent,
+			})
+		end
 		part({
 			Name = "ZoneWallUpper",
 			Size = Vector3.new(side.len, height - 10, 2),
@@ -786,12 +930,12 @@ function MapService.Build(): Map
 	end
 
 	-- surrounding zones
-	buildZone(folder, "Cafeteria", Vector3.new(-215, 0, 60), Vector2.new(70, 70), Color3.fromRGB(235, 214, 156), "CAFETERIA")
-	buildZone(folder, "PrincipalsOffice", Vector3.new(-215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)")
-	buildZone(folder, "Gym", Vector3.new(215, 0, 60), Vector2.new(70, 70), Color3.fromRGB(226, 178, 172), "GYM — FIGHT ZONE")
-	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(228, 228, 228), "TROPHY HALL")
+	buildZone(folder, "Cafeteria", Vector3.new(-215, 0, 60), Vector2.new(70, 70), Color3.fromRGB(235, 214, 156), "CAFETERIA", Enum.Material.CeramicTiles)
+	buildZone(folder, "PrincipalsOffice", Vector3.new(-215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)", Enum.Material.Marble)
+	buildZone(folder, "Gym", Vector3.new(215, 0, 60), Vector2.new(70, 70), Color3.fromRGB(210, 160, 110), "GYM — FIGHT ZONE", Enum.Material.WoodPlanks)
+	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
 	buildZone(folder, "Courtyard", Vector3.new(0, 0, 150), Vector2.new(120, 70), Color3.fromRGB(148, 190, 128), "COURTYARD — CLIQUES")
-	buildZone(folder, "Classroom101", Vector3.new(0, 0, -150), Vector2.new(80, 60), Color3.fromRGB(199, 210, 232), "CLASSROOM 101\nPOP QUIZ")
+	buildZone(folder, "Classroom101", Vector3.new(0, 0, -150), Vector2.new(80, 60), Color3.fromRGB(199, 210, 232), "CLASSROOM 101\nPOP QUIZ", Enum.Material.Carpet)
 
 	-- trophy hall boards
 	local trophyCashBoard = part({
@@ -838,6 +982,20 @@ function MapService.Build(): Map
 	buildZoneWalls(folder, Vector3.new(215, 0, 60), Vector2.new(70, 70), Vector3.new(-1, 0, 0))
 	buildZoneWalls(folder, Vector3.new(215, 0, -60), Vector2.new(70, 70), Vector3.new(-1, 0, 0))
 	buildZoneWalls(folder, Vector3.new(0, 0, -150), Vector2.new(80, 60), Vector3.new(0, 0, 1))
+	buildRoof(folder, Vector3.new(-215, 0, 60), Vector2.new(70, 70))
+	buildRoof(folder, Vector3.new(-215, 0, -60), Vector2.new(70, 70))
+	buildRoof(folder, Vector3.new(215, 0, 60), Vector2.new(70, 70))
+	buildRoof(folder, Vector3.new(215, 0, -60), Vector2.new(70, 70))
+	buildRoof(folder, Vector3.new(0, 0, -150), Vector2.new(80, 60))
+	-- walkways stitching the campus together
+	buildPath(folder, Vector3.new(-160, 0, 0), Vector3.new(-180, 0, 60), 8)
+	buildPath(folder, Vector3.new(-160, 0, 0), Vector3.new(-180, 0, -60), 8)
+	buildPath(folder, Vector3.new(160, 0, 0), Vector3.new(180, 0, 60), 8)
+	buildPath(folder, Vector3.new(160, 0, 0), Vector3.new(180, 0, -60), 8)
+	buildPath(folder, Vector3.new(0, 0, 30), Vector3.new(0, 0, 115), 10)
+	buildPath(folder, Vector3.new(0, 0, -30), Vector3.new(0, 0, -120), 8)
+	buildFountain(folder, Vector3.new(0, 0, 122))
+	buildBanners(folder)
 	buildEntranceArch(folder)
 	buildFlagpole(folder)
 	buildHoops(folder, Vector3.new(215, 0, 60))

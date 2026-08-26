@@ -23,7 +23,9 @@
     "Lighting": {
       "$ignoreUnknownInstances": true,
       "$properties": {
+        "Technology": "Future",
         "Brightness": 2,
+        "ShadowSoftness": 0.2,
         "EnvironmentDiffuseScale": 1,
         "EnvironmentSpecularScale": 1
       }

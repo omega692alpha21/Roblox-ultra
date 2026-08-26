@@ -34,6 +34,17 @@ function UIBuilder.Round(instance: Instance, radius: number?)
 	corner.Parent = instance
 end
 
+-- Subtle vertical sheen so surfaces read as lit, not flat.
+function UIBuilder.Sheen(instance: Instance)
+	local gradient = Instance.new("UIGradient")
+	gradient.Rotation = 90
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(196, 205, 194)),
+	})
+	gradient.Parent = instance
+end
+
 function UIBuilder.Stroke(instance: Instance, color: Color3, thickness: number?)
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = color
@@ -104,6 +115,7 @@ function UIBuilder.Panel(parent: Instance, name: string, title: string): (Frame,
 	})
 	UIBuilder.Round(panel, 16)
 	UIBuilder.Stroke(panel, Palette.CashGreen, 3)
+	UIBuilder.Sheen(panel)
 
 	UIBuilder.Label({
 		Name = "Title",

@@ -25,6 +25,7 @@ local function pill(parent: Instance, name: string, position: UDim2, color: Colo
 	})
 	UIBuilder.Round(frame, 999)
 	UIBuilder.Stroke(frame, color, 3)
+	UIBuilder.Sheen(frame)
 	local top = UIBuilder.Label({
 		Name = "Top",
 		Position = UDim2.fromOffset(14, 5),

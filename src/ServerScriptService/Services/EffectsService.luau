@@ -4,6 +4,7 @@
 
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Sounds = require(ReplicatedStorage.Config.Sounds)
@@ -105,6 +106,21 @@ end
 
 function EffectsService.Init()
 	setupLighting()
+
+	-- flag sway
+	task.defer(function()
+		local campus = workspace:FindFirstChild("CrumbworthHigh")
+		local flag = campus and campus:FindFirstChild("Flag") :: BasePart?
+		if flag then
+			local base = flag.CFrame
+			local tween = TweenService:Create(
+				flag,
+				TweenInfo.new(2.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+				{ CFrame = base * CFrame.Angles(0, math.rad(9), math.rad(3)) }
+			)
+			tween:Play()
+		end
+	end)
 
 	Signals.Collected:Connect(function(player)
 		local plot = PlotService.GetPlot(player)
