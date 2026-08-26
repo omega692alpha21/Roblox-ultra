@@ -22,6 +22,7 @@ local SPOTS = {
 	Vector3.new(-190, 0, 40), Vector3.new(-195, 0, 85), Vector3.new(190, 0, 40),
 	Vector3.new(195, 0, 82), Vector3.new(-190, 0, -55), Vector3.new(192, 0, -62),
 	Vector3.new(0, 0, -120), Vector3.new(-130, 0, 118),
+	Vector3.new(-120, 0, 178), Vector3.new(120, 0, 178),
 }
 
 local rng = Random.new()

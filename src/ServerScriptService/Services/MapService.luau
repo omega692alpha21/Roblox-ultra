@@ -30,6 +30,7 @@ export type Map = {
 	trophyCashBoard: BasePart,
 	trophyAuraBoard: BasePart,
 	cliqueBoards: { [string]: BasePart },
+	dormBeds: { BasePart },
 	folder: Folder,
 }
 
@@ -1057,6 +1058,132 @@ local function buildTerrain()
 	end
 end
 
+
+-- A wall run with door gaps: brick base, window band, brick top, parapet cap.
+local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } })
+	local dir = (to - from)
+	local length = dir.Magnitude
+	local unit = dir.Unit
+	local perp = Vector3.new(-unit.Z, 0, unit.X)
+	local cuts = { 0, length }
+	for _, gap in gaps do
+		table.insert(cuts, math.clamp(gap.at - gap.width / 2, 0, length))
+		table.insert(cuts, math.clamp(gap.at + gap.width / 2, 0, length))
+	end
+	table.sort(cuts)
+	for i = 1, #cuts - 1 do
+		-- odd segments are wall, even segments are gaps (cuts alternate)
+		local a, b = cuts[i], cuts[i + 1]
+		local isGap = false
+		for _, gap in gaps do
+			local mid = (a + b) / 2
+			if mid > gap.at - gap.width / 2 and mid < gap.at + gap.width / 2 then
+				isGap = true
+				break
+			end
+		end
+		local segLen = b - a
+		if isGap or segLen < 1 then
+			continue
+		end
+		local mid = from + unit * ((a + b) / 2)
+		local cf = CFrame.lookAt(mid, mid + perp)
+		part({ Name = "ShellBrickLow", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 3, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
+		part({ Name = "ShellWindow", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+		local mullions = math.floor(segLen / 9)
+		for m2 = 1, mullions - 1 do
+			part({ Name = "ShellMullion", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m2 * 9, 8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+		end
+		part({ Name = "ShellBrickHigh", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
+		part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 16.6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+	end
+	-- door frames at each gap
+	for _, gap in gaps do
+		local mid = from + unit * gap.at
+		local cf = CFrame.lookAt(mid, mid + perp)
+		for _, side in { -1, 1 } do
+			part({ Name = "DoorPost", Size = Vector3.new(1.6, 12, 2.6), CFrame = cf * CFrame.new(side * (gap.width / 2 + 0.8), 6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+		end
+		part({ Name = "DoorLintel", Size = Vector3.new(gap.width + 4, 2, 2.8), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+	end
+end
+
+-- The main school becomes a real building: an outer shell around the hallway
+-- and all eight homerooms, wing roofs, interior lights, and a grand entrance.
+local function buildMainShell(parent: Instance)
+	local x0, x1, z0, z1 = -168, 168, -84, 84
+	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x1, 0, z0), { { at = 168, width = 16 } }) -- north (path to classroom)
+	buildWallRun(parent, Vector3.new(x0, 0, z1), Vector3.new(x1, 0, z1), { { at = 168, width = 30 } }) -- south (main entrance)
+	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x0, 0, z1), { { at = 84, width = 30 } }) -- west hallway mouth
+	buildWallRun(parent, Vector3.new(x1, 0, z0), Vector3.new(x1, 0, z1), { { at = 84, width = 30 } }) -- east hallway mouth
+
+	-- wing roofs over the homeroom rows (skylight strip stays over the hallway)
+	for _, zc in { -55, 55 } do
+		part({ Name = "WingRoof", Size = Vector3.new(336, 1.4, 58), CFrame = CFrame.new(0, 16.6, zc), Color = Color3.fromRGB(84, 98, 110), Material = Enum.Material.Slate, Parent = parent })
+	end
+	-- interior lights above each homeroom
+	for _, zc in { -52, 52 } do
+		for _, xc in { -117, -39, 39, 117 } do
+			local strip = part({ Name = "WingLight", Size = Vector3.new(26, 0.4, 1), CFrame = CFrame.new(xc, 15.6, zc), Color = Color3.fromRGB(255, 244, 214), Material = Enum.Material.Neon, Parent = parent })
+			local light = Instance.new("PointLight")
+			light.Brightness = 1.1
+			light.Range = 36
+			light.Color = Color3.fromRGB(255, 238, 200)
+			light.Parent = strip
+		end
+	end
+
+	-- grand entrance: steps, columns, facade sign
+	part({ Name = "EntranceStepLow", Size = Vector3.new(34, 1, 8), CFrame = CFrame.new(0, 0.5, 90), Color = Color3.fromRGB(200, 196, 186), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "EntranceStepHigh", Size = Vector3.new(30, 1, 5), CFrame = CFrame.new(0, 1.0, 87), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent })
+	for _, side in { -1, 1 } do
+		part({ Name = "EntranceColumn", Size = Vector3.new(2.4, 15, 2.4), CFrame = CFrame.new(side * 17, 7.5, 87), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+	end
+	local facade = part({ Name = "FacadeSign", Size = Vector3.new(52, 6, 1.4), CFrame = CFrame.new(0, 19.5, 84), Color = Palette.Blackboard, Parent = parent })
+	signText(facade, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Front)
+	signText(facade, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Back)
+end
+
+-- Dormitory: a snug building full of beds. Napping gives a luck buff.
+-- Boys and girls dorms share a layout but wear their own accent color.
+local function buildDorm(parent: Instance, center: Vector3, name: string, accent: Color3, beds: { BasePart })
+	local w, d2 = 70, 60
+	buildZone(parent, name:gsub(" ", ""), center, Vector2.new(w, d2), Color3.fromRGB(196, 176, 150), name:upper(), Enum.Material.WoodPlanks)
+	-- four walls, door on the side facing campus center (negative Z side)
+	local x0, x1 = center.X - w / 2, center.X + w / 2
+	local z0, z1 = center.Z - d2 / 2, center.Z + d2 / 2
+	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x1, 0, z0), { { at = w / 2, width = 14 } })
+	buildWallRun(parent, Vector3.new(x0, 0, z1), Vector3.new(x1, 0, z1), {})
+	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x0, 0, z1), {})
+	buildWallRun(parent, Vector3.new(x1, 0, z0), Vector3.new(x1, 0, z1), {})
+	-- accent trim over the door + a name plaque so you can tell whose dorm it is
+	part({ Name = "DormTrim", Size = Vector3.new(20, 1.2, 1), CFrame = CFrame.new(center.X, 14.6, z0), Color = accent, Material = Enum.Material.Neon, Parent = parent })
+	local plaque = part({ Name = "DormPlaque", Size = Vector3.new(22, 4, 1), CFrame = CFrame.new(center.X, 11.4, z0 - 1.6), Color = Palette.Blackboard, Parent = parent })
+	signText(plaque, name:upper(), accent, Enum.NormalId.Front)
+	for _, layer in { { inset = -4, y = 17.4 }, { inset = 10, y = 18.9 }, { inset = 24, y = 20.4 } } do
+		part({ Name = "DormRoof", Size = Vector3.new(w - layer.inset, 1.5, d2 - layer.inset), CFrame = CFrame.new(center.X, layer.y, center.Z), Color = Color3.fromRGB(122, 78, 64), Material = Enum.Material.ClayRoofTiles, Parent = parent })
+	end
+	-- warm interior light
+	local glow = part({ Name = "DormLight", Size = Vector3.new(1, 0.4, d2 * 0.5), CFrame = CFrame.new(center.X, 14.6, center.Z), Color = Color3.fromRGB(255, 240, 200), Material = Enum.Material.Neon, Parent = parent })
+	local light = Instance.new("PointLight")
+	light.Brightness = 1.2
+	light.Range = 38
+	light.Color = Color3.fromRGB(255, 234, 190)
+	light.Parent = glow
+	-- six beds in two rows
+	for row = 0, 1 do
+		for col = 0, 2 do
+			local bx = center.X - 22 + col * 22
+			local bz = center.Z - 14 + row * 28
+			part({ Name = "BedFrame", Size = Vector3.new(7, 1.6, 12), CFrame = CFrame.new(bx, 0.8, bz), Color = Color3.fromRGB(105, 76, 48), Material = Enum.Material.Wood, Parent = parent })
+			local shade = 0.85 + col * 0.12
+			local mattress = part({ Name = "DormBed", Size = Vector3.new(6.4, 1, 11), CFrame = CFrame.new(bx, 1.9, bz), Color = Color3.new(math.min(1, accent.R * shade), math.min(1, accent.G * shade), math.min(1, accent.B * shade)), Material = Enum.Material.Fabric, Parent = parent })
+			part({ Name = "Pillow", Size = Vector3.new(4.5, 0.8, 2.6), CFrame = CFrame.new(bx, 2.6, bz - 3.8), Color = Color3.fromRGB(240, 240, 232), Material = Enum.Material.Fabric, Parent = parent })
+			table.insert(beds, mattress)
+		end
+	end
+end
+
 function MapService.Build(): Map
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
@@ -1171,6 +1298,12 @@ function MapService.Build(): Map
 	buildPath(folder, Vector3.new(0, 0, -30), Vector3.new(0, 0, -120), 8)
 	buildFountain(folder, Vector3.new(0, 0, 122))
 	buildBanners(folder)
+	buildMainShell(folder)
+	local dormBeds: { BasePart } = {}
+	buildDorm(folder, Vector3.new(-195, 0, 200), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
+	buildDorm(folder, Vector3.new(195, 0, 200), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
+	buildPath(folder, Vector3.new(-60, 0, 150), Vector3.new(-170, 0, 195), 8)
+	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(170, 0, 195), 8)
 	buildEntranceArch(folder)
 	buildFlagpole(folder)
 	buildHoops(folder, Vector3.new(215, 0, 60))
@@ -1213,6 +1346,7 @@ function MapService.Build(): Map
 		trophyCashBoard = trophyCashBoard,
 		trophyAuraBoard = trophyAuraBoard,
 		cliqueBoards = cliqueBoards,
+		dormBeds = dormBeds,
 		folder = folder,
 	}
 end

@@ -18,6 +18,8 @@ local POIS = {
 	Vector3.new(0, 0, -140), -- classroom
 	Vector3.new(200, 0, -60), -- trophy hall
 	Vector3.new(-70, 0, 110), -- flowerbeds
+	Vector3.new(-195, 0, 175), -- boys dorm porch
+	Vector3.new(195, 0, 175), -- girls dorm porch
 }
 
 local AMBIENT_IDS = {
