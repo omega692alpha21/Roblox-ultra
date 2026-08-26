@@ -1,0 +1,381 @@
+--!strict
+-- The title screen: replaces Roblox's default loading screen with a branded
+-- splash — animated logo, drifting cash, rotating tips, and a PLAY button that
+-- only unlocks once the world has actually loaded.
+
+local ContentProvider = game:GetService("ContentProvider")
+local Players = game:GetService("Players")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+ReplicatedFirst:RemoveDefaultLoadingScreen()
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local GREEN = Color3.fromRGB(63, 191, 74)
+local GREEN_DARK = Color3.fromRGB(28, 92, 34)
+local YELLOW = Color3.fromRGB(245, 197, 49)
+local YELLOW_DARK = Color3.fromRGB(138, 107, 18)
+local BLUE = Color3.fromRGB(46, 107, 214)
+local BOARD = Color3.fromRGB(26, 36, 24)
+local CHALK = Color3.fromRGB(216, 230, 212)
+
+local TIPS = {
+	"Recruit students from the Main Hallway — each one earns you money every second.",
+	"Lock your homeroom before someone walks in and carries your crew away.",
+	"Punch a thief to send your student straight back to their desk.",
+	"GOLDEN and RADIOACTIVE students cost more but earn way more.",
+	"Fuse 3 copies of the same student into a ★ Star version for triple income.",
+	"Pass the pop quiz when the bell rings for cash, aura and a luck boost.",
+	"Aura is status. Steal, win quizzes, and defend your crew to climb the ranks.",
+	"The richest player in the server wears a crown — robbing them pays extra aura.",
+	"Graduate when you can afford it: you lose your crew but keep a permanent multiplier.",
+}
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "TitleScreen"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 1000
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = playerGui
+
+-- ===== background =====
+local backdrop = Instance.new("Frame")
+backdrop.Size = UDim2.fromScale(1, 1)
+backdrop.BackgroundColor3 = BOARD
+backdrop.BorderSizePixel = 0
+backdrop.Parent = gui
+
+local vignette = Instance.new("UIGradient")
+vignette.Rotation = 90
+vignette.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(38, 52, 35)),
+	ColorSequenceKeypoint.new(0.55, BOARD),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(16, 22, 15)),
+})
+vignette.Parent = backdrop
+
+-- drifting dollar signs behind the logo
+local driftHolder = Instance.new("Frame")
+driftHolder.Size = UDim2.fromScale(1, 1)
+driftHolder.BackgroundTransparency = 1
+driftHolder.ClipsDescendants = true
+driftHolder.Parent = backdrop
+
+local rng = Random.new()
+local drifters: { { label: TextLabel, speed: number } } = {}
+for i = 1, 16 do
+	local label = Instance.new("TextLabel")
+	label.Text = "$"
+	label.Font = Enum.Font.FredokaOne
+	label.TextSize = rng:NextInteger(22, 64)
+	label.TextColor3 = (i % 3 == 0) and YELLOW or GREEN
+	label.TextTransparency = rng:NextNumber(0.55, 0.85)
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromOffset(80, 80)
+	label.Position = UDim2.fromScale(rng:NextNumber(0, 1), rng:NextNumber(0, 1))
+	label.Parent = driftHolder
+	table.insert(drifters, { label = label, speed = rng:NextNumber(0.012, 0.045) })
+end
+
+-- ===== logo =====
+local logoHolder = Instance.new("Frame")
+logoHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+logoHolder.Position = UDim2.fromScale(0.5, 0.38)
+logoHolder.Size = UDim2.fromScale(0.9, 0.34)
+logoHolder.BackgroundTransparency = 1
+logoHolder.Parent = backdrop
+
+local logoScale = Instance.new("UIScale")
+logoScale.Scale = 0.7
+logoScale.Parent = logoHolder
+
+-- crest: a coin with a $ over crossed rulers
+local crest = Instance.new("Frame")
+crest.AnchorPoint = Vector2.new(0.5, 1)
+crest.Position = UDim2.fromScale(0.5, 0.02)
+crest.Size = UDim2.fromOffset(78, 78)
+crest.BackgroundColor3 = YELLOW
+crest.BorderSizePixel = 0
+crest.Parent = logoHolder
+local crestCorner = Instance.new("UICorner")
+crestCorner.CornerRadius = UDim.new(1, 0)
+crestCorner.Parent = crest
+local crestStroke = Instance.new("UIStroke")
+crestStroke.Color = BOARD
+crestStroke.Thickness = 4
+crestStroke.Parent = crest
+local crestInner = Instance.new("Frame")
+crestInner.AnchorPoint = Vector2.new(0.5, 0.5)
+crestInner.Position = UDim2.fromScale(0.5, 0.5)
+crestInner.Size = UDim2.fromScale(0.76, 0.76)
+crestInner.BackgroundColor3 = GREEN
+crestInner.BorderSizePixel = 0
+crestInner.Parent = crest
+local crestInnerCorner = Instance.new("UICorner")
+crestInnerCorner.CornerRadius = UDim.new(1, 0)
+crestInnerCorner.Parent = crestInner
+local crestText = Instance.new("TextLabel")
+crestText.Size = UDim2.fromScale(1, 1)
+crestText.BackgroundTransparency = 1
+crestText.Font = Enum.Font.FredokaOne
+crestText.Text = "$"
+crestText.TextScaled = true
+crestText.TextColor3 = Color3.new(1, 1, 1)
+crestText.TextStrokeTransparency = 0.4
+crestText.Parent = crestInner
+
+local function wordLabel(text: string, yScale: number, fill: Color3, shadow: Color3): TextLabel
+	local shadowLabel = Instance.new("TextLabel")
+	shadowLabel.AnchorPoint = Vector2.new(0.5, 0)
+	shadowLabel.Position = UDim2.new(0.5, 4, yScale, 5)
+	shadowLabel.Size = UDim2.fromScale(1, 0.42)
+	shadowLabel.BackgroundTransparency = 1
+	shadowLabel.Font = Enum.Font.FredokaOne
+	shadowLabel.Text = text
+	shadowLabel.TextScaled = true
+	shadowLabel.TextColor3 = shadow
+	shadowLabel.Parent = logoHolder
+
+	local label = Instance.new("TextLabel")
+	label.AnchorPoint = Vector2.new(0.5, 0)
+	label.Position = UDim2.fromScale(0.5, yScale)
+	label.Size = UDim2.fromScale(1, 0.42)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.FredokaOne
+	label.Text = text
+	label.TextScaled = true
+	label.TextColor3 = fill
+	label.Parent = logoHolder
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = BOARD
+	stroke.Thickness = 3
+	stroke.Parent = label
+	return label
+end
+
+wordLabel("LUNCH MONEY", 0.06, GREEN, GREEN_DARK)
+wordLabel("LEGENDS", 0.5, YELLOW, YELLOW_DARK)
+
+local tagline = Instance.new("TextLabel")
+tagline.AnchorPoint = Vector2.new(0.5, 0)
+tagline.Position = UDim2.fromScale(0.5, 0.95)
+tagline.Size = UDim2.fromScale(1, 0.16)
+tagline.BackgroundTransparency = 1
+tagline.Font = Enum.Font.FredokaOne
+tagline.Text = "Build your crew. Steal theirs. Rule the school."
+tagline.TextScaled = true
+tagline.TextColor3 = CHALK
+tagline.TextTransparency = 1
+tagline.Parent = logoHolder
+
+-- ===== loading bar + tip =====
+local barHolder = Instance.new("Frame")
+barHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+barHolder.Position = UDim2.fromScale(0.5, 0.68)
+barHolder.Size = UDim2.new(0.62, 0, 0, 16)
+barHolder.BackgroundColor3 = Color3.fromRGB(44, 58, 41)
+barHolder.BorderSizePixel = 0
+barHolder.Parent = backdrop
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(1, 0)
+barCorner.Parent = barHolder
+local barStroke = Instance.new("UIStroke")
+barStroke.Color = Color3.fromRGB(70, 88, 66)
+barStroke.Thickness = 2
+barStroke.Parent = barHolder
+
+local barFill = Instance.new("Frame")
+barFill.Size = UDim2.fromScale(0, 1)
+barFill.BackgroundColor3 = GREEN
+barFill.BorderSizePixel = 0
+barFill.Parent = barHolder
+local fillCorner = Instance.new("UICorner")
+fillCorner.CornerRadius = UDim.new(1, 0)
+fillCorner.Parent = barFill
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.AnchorPoint = Vector2.new(0.5, 0)
+statusLabel.Position = UDim2.new(0.5, 0, 0, 24)
+statusLabel.Size = UDim2.new(1, 0, 0, 22)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Font = Enum.Font.FredokaOne
+statusLabel.Text = "Setting up Crumbworth High..."
+statusLabel.TextScaled = true
+statusLabel.TextColor3 = Color3.fromRGB(150, 170, 145)
+statusLabel.Parent = barHolder
+
+local tipCard = Instance.new("Frame")
+tipCard.AnchorPoint = Vector2.new(0.5, 1)
+tipCard.Position = UDim2.fromScale(0.5, 0.93)
+tipCard.Size = UDim2.new(0.78, 0, 0, 76)
+tipCard.BackgroundColor3 = Color3.fromRGB(33, 45, 30)
+tipCard.BorderSizePixel = 0
+tipCard.Parent = backdrop
+local tipCorner = Instance.new("UICorner")
+tipCorner.CornerRadius = UDim.new(0, 14)
+tipCorner.Parent = tipCard
+local tipStroke = Instance.new("UIStroke")
+tipStroke.Color = BLUE
+tipStroke.Thickness = 2
+tipStroke.Parent = tipCard
+
+local tipHeader = Instance.new("TextLabel")
+tipHeader.Position = UDim2.fromOffset(16, 8)
+tipHeader.Size = UDim2.new(1, -32, 0, 18)
+tipHeader.BackgroundTransparency = 1
+tipHeader.Font = Enum.Font.FredokaOne
+tipHeader.Text = "SCHOOL RULE"
+tipHeader.TextScaled = true
+tipHeader.TextXAlignment = Enum.TextXAlignment.Left
+tipHeader.TextColor3 = YELLOW
+tipHeader.Parent = tipCard
+
+local tipText = Instance.new("TextLabel")
+tipText.Position = UDim2.fromOffset(16, 30)
+tipText.Size = UDim2.new(1, -32, 0, 38)
+tipText.BackgroundTransparency = 1
+tipText.Font = Enum.Font.FredokaOne
+tipText.Text = TIPS[1]
+tipText.TextSize = 17
+tipText.TextWrapped = true
+tipText.TextXAlignment = Enum.TextXAlignment.Left
+tipText.TextYAlignment = Enum.TextYAlignment.Top
+tipText.TextColor3 = CHALK
+tipText.Parent = tipCard
+
+-- ===== play button (hidden until loaded) =====
+local playButton = Instance.new("TextButton")
+playButton.AnchorPoint = Vector2.new(0.5, 0.5)
+playButton.Position = UDim2.fromScale(0.5, 0.68)
+playButton.Size = UDim2.fromOffset(260, 68)
+playButton.BackgroundColor3 = GREEN
+playButton.Font = Enum.Font.FredokaOne
+playButton.Text = "PLAY"
+playButton.TextScaled = true
+playButton.TextColor3 = Color3.new(1, 1, 1)
+playButton.AutoButtonColor = true
+playButton.Visible = false
+playButton.Parent = backdrop
+local playCorner = Instance.new("UICorner")
+playCorner.CornerRadius = UDim.new(0, 16)
+playCorner.Parent = playButton
+local playStroke = Instance.new("UIStroke")
+playStroke.Color = GREEN_DARK
+playStroke.Thickness = 4
+playStroke.Parent = playButton
+local playScale = Instance.new("UIScale")
+playScale.Parent = playButton
+
+-- ===== animation =====
+local reduceMotion = false
+
+TweenService:Create(logoScale, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+task.delay(0.5, function()
+	TweenService:Create(tagline, TweenInfo.new(0.6), { TextTransparency = 0 }):Play()
+end)
+
+-- gentle drift + logo bob
+local elapsed = 0
+local driftConn = RunService.RenderStepped:Connect(function(dt: number)
+	elapsed += dt
+	if reduceMotion then
+		return
+	end
+	for _, drifter in drifters do
+		local pos = drifter.label.Position
+		local newY = pos.Y.Scale - drifter.speed * dt
+		if newY < -0.1 then
+			newY = 1.1
+			drifter.label.Position = UDim2.fromScale(rng:NextNumber(0, 1), newY)
+		else
+			drifter.label.Position = UDim2.fromScale(pos.X.Scale, newY)
+		end
+	end
+	logoHolder.Position = UDim2.new(0.5, 0, 0.38, math.sin(elapsed * 1.6) * 6)
+end)
+
+-- rotating tips
+task.spawn(function()
+	local index = 1
+	while gui.Parent do
+		task.wait(4)
+		if not gui.Parent then
+			break
+		end
+		index = index % #TIPS + 1
+		TweenService:Create(tipText, TweenInfo.new(0.25), { TextTransparency = 1 }):Play()
+		task.wait(0.25)
+		tipText.Text = TIPS[index]
+		TweenService:Create(tipText, TweenInfo.new(0.25), { TextTransparency = 0 }):Play()
+	end
+end)
+
+-- ===== loading progress =====
+local function setProgress(alpha: number)
+	TweenService:Create(barFill, TweenInfo.new(0.35), { Size = UDim2.fromScale(math.clamp(alpha, 0, 1), 1) }):Play()
+end
+
+task.spawn(function()
+	setProgress(0.15)
+	statusLabel.Text = "Waking up the students..."
+
+	-- wait for the world to replicate
+	local started = os.clock()
+	while not game:IsLoaded() and os.clock() - started < 25 do
+		task.wait(0.1)
+	end
+	setProgress(0.55)
+	statusLabel.Text = "Unlocking the lockers..."
+
+	-- preload what we can see so the first frame is not a texture pop
+	local campus = workspace:FindFirstChild("CrumbworthHigh")
+	if campus then
+		pcall(function()
+			ContentProvider:PreloadAsync(campus:GetChildren())
+		end)
+	end
+	setProgress(0.85)
+	statusLabel.Text = "Counting the lunch money..."
+
+	task.wait(0.6)
+	setProgress(1)
+	statusLabel.Text = "Ready!"
+	task.wait(0.35)
+
+	barHolder.Visible = false
+	playButton.Visible = true
+	playScale.Scale = 0.8
+	TweenService:Create(playScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	-- idle pulse so it reads as tappable
+	task.spawn(function()
+		while playButton.Visible and gui.Parent do
+			TweenService:Create(playScale, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Scale = 1.05 }):Play()
+			task.wait(0.9)
+			TweenService:Create(playScale, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Scale = 1 }):Play()
+			task.wait(0.9)
+		end
+	end)
+end)
+
+playButton.Activated:Connect(function()
+	playButton.Active = false
+	local fade = TweenInfo.new(0.5)
+	TweenService:Create(backdrop, fade, { BackgroundTransparency = 1 }):Play()
+	for _, descendant in backdrop:GetDescendants() do
+		if descendant:IsA("TextLabel") or descendant:IsA("TextButton") then
+			TweenService:Create(descendant, fade, { TextTransparency = 1, BackgroundTransparency = 1 }):Play()
+		elseif descendant:IsA("Frame") then
+			TweenService:Create(descendant, fade, { BackgroundTransparency = 1 }):Play()
+		elseif descendant:IsA("UIStroke") then
+			TweenService:Create(descendant, fade, { Transparency = 1 }):Play()
+		end
+	end
+	task.delay(0.55, function()
+		driftConn:Disconnect()
+		gui:Destroy()
+	end)
+end)

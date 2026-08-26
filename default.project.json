@@ -32,6 +32,10 @@
     },
     "SoundService": {
       "$ignoreUnknownInstances": true
+    },
+    "ReplicatedFirst": {
+      "$path": "src/ReplicatedFirst",
+      "$ignoreUnknownInstances": true
     }
   }
 }
