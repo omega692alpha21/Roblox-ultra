@@ -78,6 +78,60 @@ local function makeCoin(spot: Vector3)
 	end)
 end
 
+-- One-shot event coin: bigger, brighter, fixed value, despawns after lifetime.
+-- onPickup lets the caller award event/reputation credit.
+function CoinService.SpawnBonus(position: Vector3, value: number, lifetime: number, onPickup: ((Player) -> ())?)
+	local coin = Instance.new("Part")
+	coin.Name = "BonusCoin"
+	coin.Shape = Enum.PartType.Cylinder
+	coin.Size = Vector3.new(0.7, 4.2, 4.2)
+	coin.Color = Color3.fromRGB(255, 196, 70)
+	coin.Material = Enum.Material.Neon
+	coin.Anchored = true
+	coin.CanCollide = false
+	coin.CFrame = CFrame.new(position + Vector3.new(0, 2.8, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	coin.Parent = workspace
+
+	local light = Instance.new("PointLight")
+	light.Color = coin.Color
+	light.Brightness = 1.2
+	light.Range = 14
+	light.Parent = coin
+
+	local spin = TweenService:Create(
+		coin,
+		TweenInfo.new(1.6, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1),
+		{ CFrame = coin.CFrame * CFrame.Angles(math.rad(180), 0, 0) }
+	)
+	spin:Play()
+
+	local taken = false
+	coin.Touched:Connect(function(hit)
+		if taken then
+			return
+		end
+		local character = hit.Parent
+		local player = character and Players:GetPlayerFromCharacter(character :: any)
+		if not player or not DataService.IsLoaded(player) then
+			return
+		end
+		taken = true
+		local amount = math.floor(value * EconomyService.Multiplier(player))
+		EconomyService.AddCash(player, amount, true)
+		EffectsService.CashPopup(coin.Position, amount)
+		EffectsService.PlaySound(coin, "Collect")
+		if onPickup then
+			onPickup(player)
+		end
+		coin:Destroy()
+	end)
+	task.delay(lifetime, function()
+		if coin.Parent then
+			coin:Destroy()
+		end
+	end)
+end
+
 function CoinService.Init()
 	for _, spot in SPOTS do
 		makeCoin(spot)

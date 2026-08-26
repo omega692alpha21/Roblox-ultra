@@ -157,8 +157,8 @@ local function wordLabel(text: string, yScale: number, fill: Color3, shadow: Col
 	return label
 end
 
-wordLabel("LUNCH MONEY", 0.06, GREEN, GREEN_DARK)
-wordLabel("LEGENDS", 0.5, YELLOW, YELLOW_DARK)
+wordLabel("DETENTION", 0.08, YELLOW, YELLOW_DARK)
+wordLabel("CHOOSE YOUR PATH", 0.56, CHALK, GREEN_DARK)
 
 local tagline = Instance.new("TextLabel")
 tagline.AnchorPoint = Vector2.new(0.5, 0)
@@ -166,7 +166,7 @@ tagline.Position = UDim2.fromScale(0.5, 0.95)
 tagline.Size = UDim2.fromScale(1, 0.16)
 tagline.BackgroundTransparency = 1
 tagline.Font = Enum.Font.FredokaOne
-tagline.Text = "Build your crew. Steal theirs. Rule the school."
+tagline.Text = "One school. Endless stories. Choose your path."
 tagline.TextScaled = true
 tagline.TextColor3 = CHALK
 tagline.TextTransparency = 1
@@ -203,7 +203,7 @@ statusLabel.Position = UDim2.new(0.5, 0, 0, 24)
 statusLabel.Size = UDim2.new(1, 0, 0, 22)
 statusLabel.BackgroundTransparency = 1
 statusLabel.Font = Enum.Font.FredokaOne
-statusLabel.Text = "Setting up Crumbworth High..."
+statusLabel.Text = "Unlocking the front gates..."
 statusLabel.TextScaled = true
 statusLabel.TextColor3 = Color3.fromRGB(150, 170, 145)
 statusLabel.Parent = barHolder
@@ -422,7 +422,7 @@ local function runCinematic()
 			from = CFrame.lookAt(Vector3.new(-20, 85, 245), Vector3.new(0, 8, 40)),
 			to = CFrame.lookAt(Vector3.new(15, 45, 155), Vector3.new(0, 8, 30)),
 			dur = 3,
-			label = "CRUMBWORTH HIGH",
+			label = "WELCOME TO DETENTION",
 		},
 		{
 			from = CFrame.lookAt(Vector3.new(-150, 8, 21), Vector3.new(-40, 7, -2)),

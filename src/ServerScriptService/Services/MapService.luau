@@ -1140,9 +1140,28 @@ local function buildMainShell(parent: Instance)
 	for _, side in { -1, 1 } do
 		part({ Name = "EntranceColumn", Size = Vector3.new(2.4, 15, 2.4), CFrame = CFrame.new(side * 17, 7.5, 87), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 	end
-	local facade = part({ Name = "FacadeSign", Size = Vector3.new(52, 6, 1.4), CFrame = CFrame.new(0, 19.5, 84), Color = Palette.Blackboard, Parent = parent })
-	signText(facade, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Front)
-	signText(facade, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Back)
+	local facade = part({ Name = "FacadeSign", Size = Vector3.new(52, 6, 1.4), CFrame = CFrame.new(0, 19.5, 84), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
+	signText(facade, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Front)
+	signText(facade, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Back)
+
+	-- brick clock tower rising over the entrance (the campus landmark)
+	local towerBrick = Color3.fromRGB(126, 78, 62)
+	part({ Name = "ClockTower", Size = Vector3.new(14, 34, 14), CFrame = CFrame.new(0, 33, 78), Color = towerBrick, Material = Enum.Material.Brick, Parent = parent })
+	part({ Name = "TowerTrim", Size = Vector3.new(15, 1.6, 15), CFrame = CFrame.new(0, 50.6, 78), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "TowerCap", Size = Vector3.new(12, 4, 12), CFrame = CFrame.new(0, 53.4, 78), Color = Color3.fromRGB(60, 72, 86), Material = Enum.Material.Slate, Parent = parent })
+	part({ Name = "TowerSpire", Size = Vector3.new(1.2, 7, 1.2), CFrame = CFrame.new(0, 58.9, 78), Color = Color3.fromRGB(255, 196, 60), Material = Enum.Material.Metal, Parent = parent })
+	for _, side in { { normal = Enum.NormalId.Front, cf = CFrame.new(0, 44, 85.2) }, { normal = Enum.NormalId.Back, cf = CFrame.new(0, 44, 70.8) } } do
+		local face = part({ Name = "ClockFace", Size = Vector3.new(8, 8, 0.4), CFrame = side.cf, Color = Color3.fromRGB(240, 236, 224), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		local hourHand = part({ Name = "ClockHour", Size = Vector3.new(0.6, 2.6, 0.2), CFrame = side.cf * CFrame.new(0, 1.1, side.normal == Enum.NormalId.Front and 0.31 or -0.31), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
+		local minuteHand = part({ Name = "ClockMinute", Size = Vector3.new(0.5, 3.4, 0.2), CFrame = side.cf * CFrame.new(1.0, 0.6, side.normal == Enum.NormalId.Front and 0.32 or -0.32) * CFrame.Angles(0, 0, math.rad(-55)), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
+		local _ = hourHand
+		local _ = minuteHand
+		local ring = Instance.new("SelectionBox")
+		ring.Adornee = face
+		ring.Color3 = Color3.fromRGB(120, 90, 40)
+		ring.LineThickness = 0.06
+		ring.Parent = face
+	end
 end
 
 -- Dormitory: a snug building full of beds. Napping gives a luck buff.
@@ -1217,6 +1236,39 @@ function MapService.Build(): Map
 		})
 		signText(sign, "MAIN HALLWAY", Palette.BusYellow, Enum.NormalId.Left)
 		signText(sign, "MAIN HALLWAY", Palette.BusYellow, Enum.NormalId.Right)
+	end
+
+	-- navy locker banks lining both hallway walls (reference-look lockers)
+	for _, zSide in { -13.2, 13.2 } do
+		for _, bankX in { -130, -90, -50, 50, 90, 130 } do
+			local bank = part({
+				Name = "LockerBank",
+				Size = Vector3.new(24, 8.4, 1.6),
+				CFrame = CFrame.new(bankX, 4.2, zSide),
+				Color = Color3.fromRGB(46, 84, 168),
+				Material = Enum.Material.Metal,
+				Parent = folder,
+			})
+			local _ = bank
+			for door = 0, 9 do
+				local doorX = bankX - 10.8 + door * 2.4
+				part({
+					Name = "LockerDoor",
+					Size = Vector3.new(2.1, 7.8, 0.3),
+					CFrame = CFrame.new(doorX, 4.2, zSide + (zSide > 0 and -1.0 or 1.0)),
+					Color = Color3.fromRGB(58, 104, 196),
+					Material = Enum.Material.SmoothPlastic,
+					Parent = folder,
+				})
+				part({
+					Name = "LockerVent",
+					Size = Vector3.new(1.4, 0.5, 0.1),
+					CFrame = CFrame.new(doorX, 6.6, zSide + (zSide > 0 and -1.2 or 1.2)),
+					Color = Color3.fromRGB(30, 56, 118),
+					Parent = folder,
+				})
+			end
+		end
 	end
 
 	-- 8 homeroom plots: 4 above the hallway, 4 below
@@ -1297,6 +1349,38 @@ function MapService.Build(): Map
 	buildPath(folder, Vector3.new(160, 0, 0), Vector3.new(180, 0, -60), 8)
 	buildPath(folder, Vector3.new(0, 0, 30), Vector3.new(0, 0, 115), 10)
 	buildPath(folder, Vector3.new(0, 0, -30), Vector3.new(0, 0, -120), 8)
+	-- courtyard sports courts + festival bunting (reference-look campus yard)
+	local courtBase = part({ Name = "BasketballCourt", Size = Vector3.new(34, 0.2, 22), CFrame = CFrame.new(-38, 0.11, 158), Color = Color3.fromRGB(52, 118, 190), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	local _ = courtBase
+	part({ Name = "CourtKey", Size = Vector3.new(10, 0.22, 22), CFrame = CFrame.new(-38, 0.12, 158), Color = Color3.fromRGB(226, 130, 62), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	for _, hoopX in { -54, -22 } do
+		part({ Name = "HoopPost", Size = Vector3.new(0.8, 11, 0.8), CFrame = CFrame.new(hoopX, 5.5, 158), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
+		part({ Name = "HoopBoard", Size = Vector3.new(0.4, 4, 6), CFrame = CFrame.new(hoopX + (hoopX < -38 and 0.7 or -0.7), 9.6, 158), Color = Color3.fromRGB(240, 240, 240), Parent = folder })
+		part({ Name = "HoopRim", Size = Vector3.new(1.6, 0.3, 1.6), CFrame = CFrame.new(hoopX + (hoopX < -38 and 1.8 or -1.8), 8.2, 158), Color = Color3.fromRGB(226, 100, 60), Material = Enum.Material.Neon, Parent = folder })
+	end
+	local volleyBase = part({ Name = "VolleyballCourt", Size = Vector3.new(30, 0.2, 18), CFrame = CFrame.new(40, 0.11, 158), Color = Color3.fromRGB(226, 148, 168), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	local _2 = volleyBase
+	for _, postZ in { 149.5, 166.5 } do
+		part({ Name = "NetPost", Size = Vector3.new(0.6, 8, 0.6), CFrame = CFrame.new(40, 4, postZ), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
+	end
+	part({ Name = "VolleyNet", Size = Vector3.new(0.2, 2.4, 17), CFrame = CFrame.new(40, 6.4, 158), Color = Color3.fromRGB(235, 235, 235), Material = Enum.Material.Fabric, Transparency = 0.35, Parent = folder })
+	-- bunting strings across the courtyard
+	local buntingColors = { Color3.fromRGB(232, 76, 76), Color3.fromRGB(255, 196, 60), Color3.fromRGB(74, 160, 90), Color3.fromRGB(64, 140, 226), Color3.fromRGB(168, 90, 220) }
+	for line = 0, 1 do
+		local z = 132 + line * 36
+		for i = 0, 14 do
+			local x = -52 + i * 7.5
+			part({
+				Name = "BuntingFlag",
+				Size = Vector3.new(1.6, 2, 0.15),
+				CFrame = CFrame.new(x, 13 - math.abs(i - 7) * -0.12, z) * CFrame.Angles(math.rad(8), 0, 0),
+				Color = buntingColors[(i % #buntingColors) + 1],
+				Material = Enum.Material.SmoothPlastic,
+				Parent = folder,
+			})
+		end
+	end
+
 	buildFountain(folder, Vector3.new(0, 0, 122))
 	buildBanners(folder)
 	buildMainShell(folder)

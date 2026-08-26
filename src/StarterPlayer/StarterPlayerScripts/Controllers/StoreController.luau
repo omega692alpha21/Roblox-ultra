@@ -74,6 +74,20 @@ function StoreController.Init(gui: ScreenGui)
 		end)
 	end
 
+	UIBuilder.Label({
+		Size = UDim2.new(1, -8, 0, 30),
+		Text = "COSMETICS — PURE FLEX, ZERO GAMEPLAY EFFECT",
+		TextColor3 = Palette.AuraPurple,
+		LayoutOrder = nextOrder(),
+		Parent = list,
+	})
+	for _, key in { "GoldenHalo", "CashCrown", "AuraRing", "LegendCape" } do
+		local pass = (Products.GamePasses :: any)[key]
+		row(list, nextOrder(), pass.name, pass.desc, pass.price, pass.id ~= 0, function()
+			MarketplaceService:PromptGamePassPurchase(player, pass.id)
+		end)
+	end
+
 	for _, key in { "LegendaryCrate", "CashSmall", "CashMedium", "CashLarge", "CashHuge", "Spins5" } do
 		local product = (Products.DevProducts :: any)[key]
 		local desc = if product.cash

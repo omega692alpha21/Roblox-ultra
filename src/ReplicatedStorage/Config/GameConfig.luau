@@ -74,6 +74,11 @@ return {
 	RivalEscapeReturnSeconds = 15,
 	RivalFoilAura = 3,
 
+	-- Live server events (EventDirector)
+	EventFirstDelay = 240, -- seconds after server start before the first event
+	EventMinInterval = 420, -- seconds between events (min)
+	EventMaxInterval = 720, -- (max)
+
 	-- Curfew: after Lights Out, being outdoors farms aura but risks detention
 	CurfewNightSeconds = 120,
 	CurfewTickSeconds = 5,

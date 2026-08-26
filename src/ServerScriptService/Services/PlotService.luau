@@ -240,6 +240,7 @@ function PlotService.FuseStudent(player: Player, defId: string): boolean
 	end
 	table.insert(profile.crew, { uid = HttpService:GenerateGUID(false), id = defId, mut = bestMut, star = true })
 	PlotService.RebuildCrew(player)
+	Signals.Fused:Fire(player, defId)
 	return true
 end
 

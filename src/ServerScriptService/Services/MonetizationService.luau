@@ -23,6 +23,10 @@ local PASS_ATTRIBUTES: { [string]: string } = {
 	ExtraSlots = "PassSlots",
 	ExtendedLock = "PassLock",
 	Speed = "PassSpeed",
+	GoldenHalo = "CosmeticHalo",
+	CashCrown = "CosmeticCrown",
+	AuraRing = "CosmeticAuraRing",
+	LegendCape = "CosmeticCape",
 }
 
 local rng = Random.new()

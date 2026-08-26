@@ -152,6 +152,10 @@ function UIBuilder.Panel(parent: Instance, name: string, title: string): (Frame,
 	return panel, content
 end
 
+function UIBuilder.HasPanel(name: string): boolean
+	return (panels :: { [string]: Frame? })[name] ~= nil
+end
+
 function UIBuilder.CloseAll()
 	for _, panel in panels do
 		panel.Visible = false

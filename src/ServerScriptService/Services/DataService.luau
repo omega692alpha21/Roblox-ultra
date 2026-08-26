@@ -33,6 +33,7 @@ export type Profile = {
 	lastIncome: number,
 	social: { [string]: boolean },
 	missions: { [string]: number }, -- mission giver id -> completed count
+	rep: { [string]: number }, -- reputation tracks: popular/smart/athletic/creative/troublemaker
 }
 
 local function template(): Profile
@@ -52,6 +53,7 @@ local function template(): Profile
 		lastIncome = 0,
 		social = {},
 		missions = {},
+		rep = {},
 	}
 end
 

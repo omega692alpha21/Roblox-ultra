@@ -35,4 +35,6 @@ return {
 	ProfileLoaded = makeSignal(), -- (player, profile)
 	CrewChanged = makeSignal(), -- (player)
 	RivalFoiled = makeSignal(), -- (puncher) Rico dropped his loot
+	Fused = makeSignal(), -- (player, defId) fused 3 dupes into a star
+	EventScore = makeSignal(), -- (player, eventId) scored during a live event
 }

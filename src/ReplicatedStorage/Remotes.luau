@@ -31,6 +31,7 @@ local EVENTS = {
 	"QuizAnswer", -- (questionIndex: number, answerIndex: number)
 	"Punch",
 	"Sprint", -- (on: boolean)
+	"ClientDiagnostic", -- (failures: {string}) UI self-check report
 }
 
 local FUNCTIONS = {

@@ -1,5 +1,7 @@
 --!strict
 -- Lunch Money Legends — client bootstrap: one ScreenGui, all controllers.
+-- Every controller Init is isolated: one crashing controller can never take
+-- down the rest of the UI. Failures surface on the Diagnostics badge.
 
 local Players = game:GetService("Players")
 
@@ -15,19 +17,40 @@ gui.Parent = playerGui
 
 local Controllers = script.Parent.Controllers
 
-require(Controllers.NotifyController).Init(gui)
-require(Controllers.HudController).Init(gui)
-require(Controllers.CrewController).Init(gui)
-require(Controllers.StoreController).Init(gui)
-require(Controllers.RebirthController).Init(gui)
-require(Controllers.RewardsController).Init(gui)
-require(Controllers.QuestController).Init(gui)
-require(Controllers.QuizController).Init(gui)
-require(Controllers.CliqueController).Init(gui)
-require(Controllers.LeaderboardController).Init(gui)
-require(Controllers.PunchController).Init(gui)
-require(Controllers.SprintController).Init(gui)
-require(Controllers.TutorialController).Init(gui)
-require(Controllers.DialogueController).Init(gui)
+local ORDER = {
+	"NotifyController",
+	"HudController",
+	"CrewController",
+	"RepController",
+	"StoreController",
+	"RebirthController",
+	"RewardsController",
+	"QuestController",
+	"QuizController",
+	"CliqueController",
+	"LeaderboardController",
+	"PunchController",
+	"SprintController",
+	"TutorialController",
+	"DialogueController",
+}
+
+local results: { { name: string, ok: boolean, err: string? } } = {}
+for _, name in ORDER do
+	local ok, err = pcall(function()
+		(require(Controllers:FindFirstChild(name) :: ModuleScript) :: any).Init(gui)
+	end)
+	table.insert(results, { name = name, ok = ok, err = if ok then nil else tostring(err) })
+	if not ok then
+		warn(("[LML] %s.Init FAILED: %s"):format(name, tostring(err)))
+	end
+end
+
+local okDiag, diagErr = pcall(function()
+	(require(Controllers:FindFirstChild("Diagnostics") :: ModuleScript) :: any).Report(playerGui, results)
+end)
+if not okDiag then
+	warn("[LML] Diagnostics.Report failed: " .. tostring(diagErr))
+end
 
 print("[LunchMoneyLegends] client ready")

@@ -24,6 +24,10 @@ local periodMult = 1 -- school-day period bonus (e.g. Lunch Rush), set by School
 function EconomyService.SetPeriodMult(mult: number)
 	periodMult = mult
 end
+local eventMult = 1 -- live-event bonus (e.g. Food Fight), set by EventDirector
+function EconomyService.SetEventMult(mult: number)
+	eventMult = mult
+end
 local friendBonus: { [Player]: number } = {}
 local collectDebounce: { [Player]: number } = {}
 
@@ -195,6 +199,7 @@ function EconomyService.Init()
 				local income = EconomyService.BaseIncome(player)
 					* EconomyService.Multiplier(player)
 					* periodMult
+					* eventMult
 					* (GameConfig.EventCashMultiplier or 1)
 				player:SetAttribute("Income", math.floor(income))
 				local profile = DataService.Get(player)

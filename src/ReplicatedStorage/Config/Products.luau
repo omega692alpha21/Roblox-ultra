@@ -12,6 +12,13 @@ local Products = {
 		ExtraSlots = { id = 1963374270, name = "+2 Crew Slots", price = 249, desc = "Two extra desks in your homeroom" },
 		ExtendedLock = { id = 1962906271, name = "Extended Lock", price = 179, desc = "+30s base lock duration" },
 		Speed = { id = 1961970283, name = "Speed Sneakers", price = 99, desc = "+6 walkspeed, always" },
+
+		-- Cosmetic-only passes: zero gameplay effect, pure flex. This is where
+		-- the top-grossing Roblox games actually make their money.
+		GoldenHalo = { id = 0, name = "Golden Halo", price = 129, desc = "A glowing halo that follows you everywhere" },
+		CashCrown = { id = 0, name = "Cash Crown", price = 149, desc = "A sparkling crown — you ARE the bounty" },
+		AuraRing = { id = 0, name = "Aura Ring", price = 99, desc = "A swirling particle ring around your feet" },
+		LegendCape = { id = 0, name = "Legend Cape", price = 179, desc = "A billowing cape for certified legends" },
 	},
 
 	-- Developer products (repeatable purchases).
