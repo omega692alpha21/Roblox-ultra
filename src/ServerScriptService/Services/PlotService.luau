@@ -20,9 +20,16 @@ local plotOwner: { [number]: Player } = {} -- plot index -> player
 local playerPlot: { [Player]: MapService.Plot } = {}
 local crewModels: { [Player]: { [string]: Model } } = {} -- uid -> model
 local modelAddedCallbacks: { (player: Player, plot: MapService.Plot, model: Model, uid: string, defId: string) -> () } = {}
+local carriedPredicate: ((uid: string) -> boolean)? = nil
 
 function PlotService.OnStudentModelAdded(fn: (player: Player, plot: MapService.Plot, model: Model, uid: string, defId: string) -> ())
 	table.insert(modelAddedCallbacks, fn)
+end
+
+-- StealService registers this so rebuilds never respawn a student that is
+-- currently being carried by a thief (avoids duplicate grab targets).
+function PlotService.SetCarriedPredicate(fn: (uid: string) -> boolean)
+	carriedPredicate = fn
 end
 
 function PlotService.GetPlot(player: Player): MapService.Plot?
@@ -85,7 +92,9 @@ function PlotService.RebuildCrew(player: Player)
 	end
 	crewModels[player] = {}
 	for i, member in profile.crew do
-		spawnStudentModel(player, member.uid, member.id, i)
+		if not (carriedPredicate and carriedPredicate(member.uid)) then
+			spawnStudentModel(player, member.uid, member.id, i)
+		end
 	end
 	Signals.CrewChanged:Fire(player)
 end

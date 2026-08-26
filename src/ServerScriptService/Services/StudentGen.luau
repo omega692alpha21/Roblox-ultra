@@ -225,6 +225,12 @@ function StudentGen.Create(defId: string): Model?
 	end
 
 	model.Name = "Student_" .. defId
+	-- rigs from CreateHumanoidModelFromDescription can ship with an Animate script
+	for _, child in model:GetDescendants() do
+		if child:IsA("BaseScript") then
+			child:Destroy()
+		end
+	end
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		humanoid.DisplayName = ""

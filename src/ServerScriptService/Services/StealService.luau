@@ -195,6 +195,15 @@ local function tryGrab(thief: Player, owner: Player, plot: MapService.Plot, uid:
 end
 
 function StealService.Init()
+	PlotService.SetCarriedPredicate(function(uid)
+		for _, carry in carrying do
+			if carry.uid == uid then
+				return true
+			end
+		end
+		return false
+	end)
+
 	-- attach steal prompts to every crew model as it spawns
 	PlotService.OnStudentModelAdded(function(owner, plot, model, uid, defId)
 		local root = (model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")) :: BasePart?

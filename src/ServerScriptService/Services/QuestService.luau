@@ -10,6 +10,7 @@ local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local Remotes = require(ReplicatedStorage.Remotes)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
+local AuraService = require(script.Parent.AuraService)
 local Signals = require(script.Parent.Parent.Signals)
 
 local QuestService = {}
@@ -140,11 +141,7 @@ function QuestService.Init()
 		local cash = math.floor(quest.cash * EconomyService.Multiplier(player))
 		EconomyService.AddCash(player, cash, false)
 		if quest.aura > 0 then
-			-- routed through the Aura signal chain via a direct require would be circular;
-			-- fire the shared signal instead and let AuraService apply it
-			profile.aura += quest.aura
-			player:SetAttribute("Aura", profile.aura)
-			Signals.AuraGained:Fire(player, quest.aura)
+			AuraService.Add(player, quest.aura)
 		end
 		Remotes.Get("Notify"):FireClient(
 			player,

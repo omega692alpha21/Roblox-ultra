@@ -1,0 +1,154 @@
+--!strict
+-- HUD: cash + income, aura + rank, grade badge, lock timer, nav rail.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Palette = require(ReplicatedStorage.Shared.Palette)
+local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
+local Rebirths = require(ReplicatedStorage.Config.Rebirths)
+local UIBuilder = require(script.Parent.UIBuilder)
+
+local HudController = {}
+
+local player = Players.LocalPlayer
+
+local function pill(parent: Instance, name: string, position: UDim2, color: Color3): (Frame, TextLabel, TextLabel)
+	local frame = UIBuilder.Frame({
+		Name = name,
+		Position = position,
+		Size = UDim2.fromOffset(190, 56),
+		BackgroundColor3 = Palette.PanelBg,
+		BackgroundTransparency = 0.1,
+		Parent = parent,
+	})
+	UIBuilder.Round(frame, 999)
+	UIBuilder.Stroke(frame, color, 3)
+	local top = UIBuilder.Label({
+		Name = "Top",
+		Position = UDim2.fromOffset(14, 5),
+		Size = UDim2.new(1, -24, 0, 27),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Text = "",
+		Parent = frame,
+	})
+	local bottom = UIBuilder.Label({
+		Name = "Bottom",
+		Position = UDim2.fromOffset(14, 32),
+		Size = UDim2.new(1, -24, 0, 18),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextColor3 = color,
+		Text = "",
+		Parent = frame,
+	})
+	return frame, top, bottom
+end
+
+function HudController.Init(gui: ScreenGui)
+	-- currency pills
+	local _, cashTop, cashBottom = pill(gui, "CashPill", UDim2.fromOffset(12, 10), Palette.CashGreen)
+	local _, auraTop, auraBottom = pill(gui, "AuraPill", UDim2.fromOffset(12, 74), Palette.AuraPurple)
+
+	-- grade badge (top center)
+	local gradeBadge = UIBuilder.Frame({
+		Name = "GradeBadge",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 10),
+		Size = UDim2.fromOffset(250, 42),
+		BackgroundColor3 = Palette.PanelBg,
+		BackgroundTransparency = 0.1,
+		Parent = gui,
+	})
+	UIBuilder.Round(gradeBadge, 12)
+	UIBuilder.Stroke(gradeBadge, Palette.LockerBlue, 3)
+	local gradeLabel = UIBuilder.Label({
+		Size = UDim2.fromScale(1, 1),
+		Text = "Freshman Year",
+		Parent = gradeBadge,
+	})
+
+	-- lock timer (top right)
+	local lockFrame = UIBuilder.Frame({
+		Name = "LockTimer",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -12, 0, 10),
+		Size = UDim2.fromOffset(190, 46),
+		BackgroundColor3 = Palette.PanelBg,
+		BackgroundTransparency = 0.1,
+		Visible = false,
+		Parent = gui,
+	})
+	UIBuilder.Round(lockFrame, 12)
+	UIBuilder.Stroke(lockFrame, Palette.DetentionRed, 3)
+	local lockLabel = UIBuilder.Label({
+		Size = UDim2.fromScale(1, 1),
+		Text = "BASE LOCKED 0:00",
+		TextColor3 = Color3.fromRGB(255, 157, 143),
+		Parent = lockFrame,
+	})
+
+	-- nav rail
+	local nav = UIBuilder.Frame({
+		Name = "NavRail",
+		Position = UDim2.fromOffset(12, 150),
+		Size = UDim2.fromOffset(84, 6 * 62),
+		BackgroundTransparency = 1,
+		Parent = gui,
+	})
+	local navLayout = Instance.new("UIListLayout")
+	navLayout.Padding = UDim.new(0, 8)
+	navLayout.Parent = nav
+	local navItems = {
+		{ label = "STORE", panel = "Store", color = Palette.CashGreen },
+		{ label = "GRADES", panel = "Rebirth", color = Palette.LockerBlue },
+		{ label = "REWARDS", panel = "Rewards", color = Palette.BusYellow },
+		{ label = "QUESTS", panel = "Quests", color = Palette.AuraPurple },
+		{ label = "CLIQUES", panel = "Cliques", color = Palette.DetentionRed },
+		{ label = "TOP", panel = "Top", color = Palette.Chalk },
+	}
+	for i, item in navItems do
+		local button = UIBuilder.Button({
+			Size = UDim2.fromOffset(84, 54),
+			Text = item.label,
+			BackgroundColor3 = Palette.PanelBg,
+			BackgroundTransparency = 0.1,
+			LayoutOrder = i,
+		}, function()
+			UIBuilder.Toggle(item.panel)
+		end)
+		UIBuilder.Round(button, 12)
+		UIBuilder.Stroke(button, item.color, 3)
+		button.Parent = nav
+	end
+
+	-- live updates from attributes
+	RunService.Heartbeat:Connect(function()
+		local cash = player:GetAttribute("Cash")
+		local income = player:GetAttribute("Income")
+		cashTop.Text = "$" .. NumberFormat.Abbreviate(typeof(cash) == "number" and cash or 0)
+		cashBottom.Text = "+" .. NumberFormat.Abbreviate(typeof(income) == "number" and income or 0) .. "/s"
+
+		local aura = player:GetAttribute("Aura")
+		local rank = player:GetAttribute("Rank")
+		auraTop.Text = NumberFormat.Abbreviate(typeof(aura) == "number" and aura or 0) .. " Aura"
+		auraBottom.Text = typeof(rank) == "string" and rank or "NPC"
+
+		local grade = player:GetAttribute("Grade")
+		local gradeNum = typeof(grade) == "number" and grade or 0
+		gradeLabel.Text = ("%s · x%.1f"):format(Rebirths.GradeName(gradeNum), Rebirths.Multiplier(gradeNum))
+
+		local lockUntil = player:GetAttribute("LockUntil")
+		if typeof(lockUntil) == "number" then
+			local remaining = lockUntil - workspace:GetServerTimeNow()
+			if remaining > 0 then
+				lockFrame.Visible = true
+				lockLabel.Text = "BASE LOCKED " .. NumberFormat.Clock(remaining)
+			else
+				lockFrame.Visible = false
+			end
+		end
+	end)
+end
+
+return HudController
