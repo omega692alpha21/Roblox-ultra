@@ -9,6 +9,7 @@ local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Cliques = require(ReplicatedStorage.Config.Cliques)
 local Remotes = require(ReplicatedStorage.Remotes)
 local StealService = require(script.Parent.StealService)
+local RivalService = require(script.Parent.RivalService)
 local Signals = require(script.Parent.Parent.Signals)
 
 local FightService = {}
@@ -56,6 +57,14 @@ local function onPunch(player: Player)
 	end
 
 	if not bestTarget then
+		-- no player in range: check Rico the Bully
+		local ricoRoot = RivalService.GetRoot()
+		if ricoRoot then
+			local offset = ricoRoot.Position - root.Position
+			if offset.Magnitude <= GameConfig.PunchRange and root.CFrame.LookVector:Dot(offset.Unit) > 0.2 then
+				RivalService.OnPunched(player)
+			end
+		end
 		return
 	end
 	local target = bestTarget :: Player

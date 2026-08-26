@@ -23,6 +23,9 @@ type Walker = {
 	defId: string,
 	startedAt: number,
 	bought: boolean,
+	recruitOwner: Player?,
+	recruitUid: string?,
+	position: Vector3?,
 }
 
 local rng = Random.new()
@@ -101,7 +104,11 @@ local function spawnWalker()
 			return
 		end
 		walker.bought = true
-		PlotService.AddStudent(player, def.id, mut)
+		prompt:Destroy()
+		local uid = PlotService.AddStudent(player, def.id, mut, false, true) -- model deferred: they walk home
+		walker.recruitOwner = player
+		walker.recruitUid = uid
+		walker.position = walker.model:GetPivot().Position
 		Signals.Recruited:Fire(player, def.id)
 		Remotes.Get("Notify"):FireClient(
 			player,
@@ -114,7 +121,6 @@ local function spawnWalker()
 				"announce"
 			)
 		end
-		model:Destroy()
 	end)
 
 	model.Parent = workspace
@@ -151,12 +157,36 @@ function ConveyorService.Init(map: { conveyorStart: Vector3, conveyorEnd: Vector
 		end
 	end)
 
-	RunService.Heartbeat:Connect(function()
+	RunService.Heartbeat:Connect(function(step: number)
 		local now = os.clock()
 		for i = #walkers, 1, -1 do
 			local walker = walkers[i]
-			if walker.bought or not walker.model.Parent then
+			if not walker.model.Parent then
 				table.remove(walkers, i)
+				continue
+			end
+			if walker.bought then
+				-- walk to the new desk, then take a seat
+				local owner, uid = walker.recruitOwner, walker.recruitUid
+				local slotCf = owner and uid and owner.Parent and PlotService.GetSlotWorldCFrame(owner, uid) or nil
+				if not slotCf or not uid or not owner then
+					walker.model:Destroy()
+					table.remove(walkers, i)
+					continue
+				end
+				local target = slotCf.Position
+				local pos = walker.position or walker.model:GetPivot().Position
+				local flat = Vector3.new(target.X - pos.X, 0, target.Z - pos.Z)
+				local dt = step
+				if flat.Magnitude < 2.5 then
+					walker.model:Destroy()
+					table.remove(walkers, i)
+					PlotService.SpawnPendingModel(owner, uid)
+				else
+					local newPos = pos + flat.Unit * 14 * dt
+					walker.position = newPos
+					walker.model:PivotTo(CFrame.lookAt(newPos + Vector3.new(0, 2.6, 0), newPos + flat.Unit * 10 + Vector3.new(0, 2.6, 0)))
+				end
 				continue
 			end
 			local alpha = (now - walker.startedAt) / GameConfig.ConveyorTravelTime

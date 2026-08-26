@@ -131,7 +131,8 @@ function PlotService.RebuildCrew(player: Player)
 end
 
 -- Add a student to the player's crew (validates a free slot). Returns the uid.
-function PlotService.AddStudent(player: Player, defId: string, mut: string?, star: boolean?): string?
+-- skipModel defers the desk model (the recruit is walking over from the hallway).
+function PlotService.AddStudent(player: Player, defId: string, mut: string?, star: boolean?, skipModel: boolean?): string?
 	local profile = DataService.Get(player)
 	if not profile or not playerPlot[player] then
 		return nil
@@ -144,10 +145,45 @@ function PlotService.AddStudent(player: Player, defId: string, mut: string?, sta
 	end
 	local member: CrewMember = { uid = HttpService:GenerateGUID(false), id = defId, mut = mut, star = star }
 	table.insert(profile.crew, member)
-	spawnStudentModel(player, member, #profile.crew)
+	if not skipModel then
+		spawnStudentModel(player, member, #profile.crew)
+	end
 	pushCrew(player)
 	Signals.CrewChanged:Fire(player)
 	return member.uid
+end
+
+-- Spawn the desk model for a member added with skipModel (recruit arrived).
+function PlotService.SpawnPendingModel(player: Player, uid: string)
+	local profile = DataService.Get(player)
+	if not profile then
+		return
+	end
+	local models = crewModels[player]
+	if models and models[uid] then
+		return
+	end
+	for i, member in profile.crew do
+		if member.uid == uid then
+			spawnStudentModel(player, member, i)
+			return
+		end
+	end
+end
+
+-- World CFrame of the desk slot a member stands at (nil if gone).
+function PlotService.GetSlotWorldCFrame(player: Player, uid: string): CFrame?
+	local profile = DataService.Get(player)
+	local plot = playerPlot[player]
+	if not profile or not plot then
+		return nil
+	end
+	for i, member in profile.crew do
+		if member.uid == uid then
+			return plot.deskSlots[i] or plot.deskSlots[#plot.deskSlots]
+		end
+	end
+	return nil
 end
 
 -- Remove by uid (steal transfer / rebirth). Returns a copy of the removed member.

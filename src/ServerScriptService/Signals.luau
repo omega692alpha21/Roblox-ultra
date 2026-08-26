@@ -34,4 +34,5 @@ return {
 	AuraGained = makeSignal(), -- (player, amount)
 	ProfileLoaded = makeSignal(), -- (player, profile)
 	CrewChanged = makeSignal(), -- (player)
+	RivalFoiled = makeSignal(), -- (puncher) Rico dropped his loot
 }

@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
+local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local Sounds = require(ReplicatedStorage.Config.Sounds)
 local PlotService = require(script.Parent.PlotService)
 local Signals = require(script.Parent.Parent.Signals)
@@ -52,6 +53,42 @@ local function burst(part: BasePart, color: Color3, count: number)
 	emitter:Emit(count)
 	task.delay(1.5, function()
 		emitter:Destroy()
+	end)
+end
+
+-- Floating "+$X" that rises and fades at a world position.
+function EffectsService.CashPopup(position: Vector3, amount: number)
+	local anchor = Instance.new("Part")
+	anchor.Anchored = true
+	anchor.CanCollide = false
+	anchor.CanQuery = false
+	anchor.Transparency = 1
+	anchor.Size = Vector3.one
+	anchor.Position = position
+	anchor.Parent = workspace
+
+	local billboard = Instance.new("BillboardGui")
+	billboard.Size = UDim2.fromScale(6, 2)
+	billboard.StudsOffset = Vector3.new(0, 1, 0)
+	billboard.AlwaysOnTop = true
+	billboard.MaxDistance = 90
+	billboard.Parent = anchor
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.FredokaOne
+	label.TextScaled = true
+	label.TextColor3 = Palette.CashGreen
+	label.TextStrokeTransparency = 0.3
+	label.Text = "+$" .. NumberFormat.Abbreviate(amount)
+	label.Parent = billboard
+
+	TweenService:Create(anchor, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Position = position + Vector3.new(0, 7, 0),
+	}):Play()
+	TweenService:Create(label, TweenInfo.new(1.1), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+	task.delay(1.2, function()
+		anchor:Destroy()
 	end)
 end
 
@@ -167,6 +204,14 @@ function EffectsService.Init()
 			EffectsService.PlaySound(root, "Punch")
 		end
 		local _ = puncher
+	end)
+
+	Signals.RivalFoiled:Connect(function(puncher)
+		local root = characterRoot(puncher)
+		if root then
+			burst(root, Palette.BusYellow, 22)
+			EffectsService.PlaySound(root, "Punch")
+		end
 	end)
 
 	Signals.QuizWon:Connect(function(player)

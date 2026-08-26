@@ -67,6 +67,19 @@ return {
 	-- Bounty: the richest player in the server wears a crown; robbing them pays extra
 	BountyStealAuraBonus = 15,
 
+	-- Rico the Bully (NPC rival)
+	RivalRaidMinSeconds = 100,
+	RivalRaidMaxSeconds = 180,
+	RivalWalkSpeed = 11,
+	RivalEscapeReturnSeconds = 15,
+	RivalFoilAura = 3,
+
+	-- Campus coin pickups
+	CoinValueMin = 25,
+	CoinValueMax = 75,
+	CoinRespawnMin = 45,
+	CoinRespawnMax = 90,
+
 	-- Misc
 	AutosaveSeconds = 60,
 	LeaderboardPushSeconds = 120,

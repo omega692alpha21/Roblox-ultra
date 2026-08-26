@@ -29,6 +29,8 @@ local EffectsService = require(Services.EffectsService)
 local NPCDirector = require(Services.NPCDirector)
 local SchoolClock = require(Services.SchoolClock)
 local MissionService = require(Services.MissionService)
+local RivalService = require(Services.RivalService)
+local CoinService = require(Services.CoinService)
 
 DataService.Init()
 
@@ -55,5 +57,7 @@ EffectsService.Init()
 NPCDirector.Init()
 SchoolClock.Init()
 MissionService.Init()
+RivalService.Init()
+CoinService.Init()
 
 print("[LunchMoneyLegends] server ready — welcome to Crumbworth High")

@@ -13,6 +13,7 @@ local Rewards = require(ReplicatedStorage.Config.Rewards)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local DataService = require(script.Parent.DataService)
 local PlotService = require(script.Parent.PlotService)
+local EffectsService = require(script.Parent.EffectsService)
 local Signals = require(script.Parent.Parent.Signals)
 
 local EconomyService = {}
@@ -138,6 +139,7 @@ local function bank(player: Player)
 	local plot = PlotService.GetPlot(player)
 	if plot then
 		plot.pileLabel.Text = "$0"
+		EffectsService.CashPopup(plot.collectPad.Position, math.floor(pile))
 	end
 end
 
