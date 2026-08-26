@@ -70,6 +70,7 @@ local function spawnStudentModel(player: Player, uid: string, defId: string, slo
 	local slotCf = plot.deskSlots[slotIndex] or plot.deskSlots[#plot.deskSlots]
 	model.Parent = plot.model
 	StudentGen.Stand(model, slotCf)
+	StudentGen.PlayAnim(model, "idle")
 	crewModels[player] = crewModels[player] or {}
 	crewModels[player][uid] = model
 	for _, fn in modelAddedCallbacks do

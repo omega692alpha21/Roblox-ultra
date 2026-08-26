@@ -17,6 +17,7 @@ local PlotService = require(script.Parent.PlotService)
 local MapService = require(script.Parent.MapService)
 local LockService = require(script.Parent.LockService)
 local StudentGen = require(script.Parent.StudentGen)
+local EffectsService = require(script.Parent.EffectsService)
 local Signals = require(script.Parent.Parent.Signals)
 
 local StealService = {}
@@ -192,6 +193,10 @@ local function tryGrab(thief: Player, owner: Player, plot: MapService.Plot, uid:
 	local studentName = entry and entry.def.name or "student"
 	Remotes.Get("StealAlert"):FireClient(owner, thief.DisplayName, studentName)
 	Remotes.Get("Notify"):FireClient(thief, "Carrying " .. studentName .. " — get back to YOUR homeroom!", "info")
+	local thiefRoot = character and character:FindFirstChild("HumanoidRootPart")
+	if thiefRoot then
+		EffectsService.PlaySound(thiefRoot, "StealGrab")
+	end
 end
 
 function StealService.Init()

@@ -2,10 +2,29 @@
 -- Small UI toolkit: styled frames/labels/buttons + a one-at-a-time panel manager.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
+local Sounds = require(ReplicatedStorage.Config.Sounds)
 
 local UIBuilder = {}
+
+local clickSound: Sound? = nil
+local function playClick()
+	if not clickSound then
+		local sound = Instance.new("Sound")
+		sound.SoundId = Sounds.UIClick.id
+		sound.Volume = Sounds.UIClick.volume
+		sound.PlaybackSpeed = Sounds.UIClick.speed
+		sound.Parent = SoundService
+		clickSound = sound
+	end
+	local s = clickSound
+	if s then
+		s:Play()
+	end
+end
 
 local panels: { [string]: Frame } = {}
 
@@ -56,7 +75,19 @@ function UIBuilder.Button(props: { [string]: any }, onClick: () -> ()): TextButt
 	for k, v in props do
 		(button :: any)[k] = v
 	end
-	button.Activated:Connect(onClick)
+	button.Activated:Connect(function()
+		playClick()
+		-- quick press pop
+		local originalSize = button.Size
+		local shrink = TweenService:Create(button, TweenInfo.new(0.06), {
+			Size = UDim2.new(originalSize.X.Scale * 0.94, math.floor(originalSize.X.Offset * 0.94), originalSize.Y.Scale * 0.94, math.floor(originalSize.Y.Offset * 0.94)),
+		})
+		shrink:Play()
+		shrink.Completed:Once(function()
+			TweenService:Create(button, TweenInfo.new(0.1), { Size = originalSize }):Play()
+		end)
+		onClick()
+	end)
 	return button
 end
 
@@ -122,7 +153,19 @@ function UIBuilder.Toggle(name: string)
 	end
 	local wasVisible = target.Visible
 	UIBuilder.CloseAll()
-	target.Visible = not wasVisible
+	if not wasVisible then
+		target.Visible = true
+		-- pop-in
+		local scale = target:FindFirstChildOfClass("UIScale")
+		if not scale then
+			local s = Instance.new("UIScale")
+			s.Parent = target
+			scale = s
+		end
+		local uiScale = scale :: UIScale
+		uiScale.Scale = 0.85
+		TweenService:Create(uiScale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	end
 end
 
 -- Vertical scrolling list container.

@@ -122,11 +122,18 @@ function HudController.Init(gui: ScreenGui)
 		button.Parent = nav
 	end
 
-	-- live updates from attributes
-	RunService.Heartbeat:Connect(function()
+	-- live updates from attributes (cash animates toward the real value)
+	local shownCash = 0
+	RunService.Heartbeat:Connect(function(dt: number)
 		local cash = player:GetAttribute("Cash")
 		local income = player:GetAttribute("Income")
-		cashTop.Text = "$" .. NumberFormat.Abbreviate(typeof(cash) == "number" and cash or 0)
+		local realCash = typeof(cash) == "number" and cash or 0
+		if math.abs(realCash - shownCash) < 1 then
+			shownCash = realCash
+		else
+			shownCash += (realCash - shownCash) * math.min(dt * 8, 1)
+		end
+		cashTop.Text = "$" .. NumberFormat.Abbreviate(shownCash)
 		cashBottom.Text = "+" .. NumberFormat.Abbreviate(typeof(income) == "number" and income or 0) .. "/s"
 
 		local aura = player:GetAttribute("Aura")

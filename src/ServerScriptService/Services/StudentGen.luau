@@ -241,9 +241,11 @@ function StudentGen.Create(defId: string): Model?
 	addProp(model, rng, rarity.name)
 	addBillboard(model, def.name, rarity.name, def.income, rarity.color)
 
+	-- anchor only the root: limbs stay free so Motor6D animations can play
+	local rootPart = (model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")) :: BasePart?
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
-			part.Anchored = true
+			part.Anchored = part == rootPart
 			part.CanCollide = false
 			part.CanQuery = true
 		end
@@ -275,6 +277,36 @@ function StudentGen.Create(defId: string): Model?
 	-- attribute so other services can identify the def without parsing names
 	model:SetAttribute("StudentId", defId)
 	return model
+end
+
+-- Roblox-owned default R15 animations (usable by any experience).
+local ANIMATIONS: { [string]: string } = {
+	idle = "rbxassetid://507766388",
+	walk = "rbxassetid://507777826",
+}
+
+-- Play a looping animation on a generated student (no-op on the block fallback).
+function StudentGen.PlayAnim(model: Model, kind: string)
+	local animId = ANIMATIONS[kind]
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if not animId or not humanoid then
+		return
+	end
+	pcall(function()
+		local existing = humanoid:FindFirstChildOfClass("Animator")
+		local animator: Animator
+		if existing then
+			animator = existing
+		else
+			animator = Instance.new("Animator")
+			animator.Parent = humanoid
+		end
+		local animation = Instance.new("Animation")
+		animation.AnimationId = animId
+		local track = animator:LoadAnimation(animation)
+		track.Looped = true
+		track:Play()
+	end)
 end
 
 -- Position an (anchored) student model so its feet sit on the given CFrame.

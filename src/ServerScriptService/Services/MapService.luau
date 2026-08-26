@@ -35,7 +35,7 @@ export type Map = {
 
 local MapService = {}
 
-local function part(props: { [string]: any }): BasePart
+local function part(props: { [string]: any }): Part
 	local p = Instance.new("Part")
 	p.Anchored = true
 	p.TopSurface = Enum.SurfaceType.Smooth
@@ -234,6 +234,242 @@ local function buildZone(parent: Instance, name: string, center: Vector3, size: 
 	return floor
 end
 
+-- ===== decorations (all parts, no assets) =====
+
+local function buildBus(parent: Instance, cf: CFrame)
+	local body = part({
+		Name = "BusBody",
+		Size = Vector3.new(24, 9, 9),
+		CFrame = cf * CFrame.new(0, 6.5, 0),
+		Color = Palette.BusYellow,
+		Parent = parent,
+	})
+	part({
+		Name = "BusHood",
+		Size = Vector3.new(4, 5, 9),
+		CFrame = cf * CFrame.new(14, 4.5, 0),
+		Color = Palette.BusYellow,
+		Parent = parent,
+	})
+	-- windows strip
+	part({
+		Name = "BusWindows",
+		Size = Vector3.new(20, 3, 9.2),
+		CFrame = cf * CFrame.new(0, 8, 0),
+		Color = Color3.fromRGB(140, 190, 220),
+		Material = Enum.Material.Glass,
+		Transparency = 0.3,
+		Parent = parent,
+	})
+	-- stripe
+	part({
+		Name = "BusStripe",
+		Size = Vector3.new(24.2, 0.8, 9.3),
+		CFrame = cf * CFrame.new(0, 5.4, 0),
+		Color = Palette.Blackboard,
+		Parent = parent,
+	})
+	-- wheels
+	for _, offset in { Vector3.new(-8, 2, 4.6), Vector3.new(8, 2, 4.6), Vector3.new(-8, 2, -4.6), Vector3.new(8, 2, -4.6) } do
+		local wheel = part({
+			Name = "BusWheel",
+			Size = Vector3.new(3.4, 3.4, 1.2),
+			CFrame = cf * CFrame.new(offset) * CFrame.Angles(0, math.rad(90), math.rad(90)),
+			Color = Color3.fromRGB(30, 30, 30),
+			Parent = parent,
+		})
+		wheel.Shape = Enum.PartType.Cylinder
+	end
+	local sign = part({
+		Name = "BusSign",
+		Size = Vector3.new(18, 2.2, 0.4),
+		CFrame = cf * CFrame.new(0, 10.6, 0),
+		Color = Palette.Blackboard,
+		Parent = parent,
+	})
+	signText(sign, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Front)
+	signText(sign, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Back)
+	local _ = body
+end
+
+local function buildHallwayLights(parent: Instance)
+	for x = -120, 120, 60 do
+		for _, side in { -1, 1 } do
+			part({
+				Name = "LightPost",
+				Size = Vector3.new(1, 13, 1),
+				CFrame = CFrame.new(x, 6.5, side * 13.5),
+				Color = Palette.LockerBlueDark,
+				Parent = parent,
+			})
+		end
+		local beam = part({
+			Name = "LightBeam",
+			Size = Vector3.new(1.4, 1, 28),
+			CFrame = CFrame.new(x, 13.5, 0),
+			Color = Palette.Chalk,
+			Parent = parent,
+		})
+		local strip = part({
+			Name = "LightStrip",
+			Size = Vector3.new(0.8, 0.4, 24),
+			CFrame = CFrame.new(x, 12.9, 0),
+			Color = Color3.fromRGB(255, 245, 210),
+			Material = Enum.Material.Neon,
+			Parent = parent,
+		})
+		local light = Instance.new("PointLight")
+		light.Brightness = 0.8
+		light.Range = 26
+		light.Color = Color3.fromRGB(255, 240, 200)
+		light.Parent = strip
+		local _ = beam
+	end
+end
+
+local function buildBenches(parent: Instance)
+	for x = -90, 90, 60 do
+		for _, side in { -1, 1 } do
+			local cf = CFrame.new(x + 30, 0, side * 20)
+			part({
+				Name = "BenchSeat",
+				Size = Vector3.new(8, 0.8, 2.4),
+				CFrame = cf * CFrame.new(0, 1.6, 0),
+				Color = Color3.fromRGB(160, 120, 76),
+				Material = Enum.Material.Wood,
+				Parent = parent,
+			})
+			for _, legX in { -3.2, 3.2 } do
+				part({
+					Name = "BenchLeg",
+					Size = Vector3.new(0.8, 1.6, 2.4),
+					CFrame = cf * CFrame.new(legX, 0.8, 0),
+					Color = Palette.LockerBlueDark,
+					Parent = parent,
+				})
+			end
+		end
+	end
+end
+
+local function buildCafeteriaTables(parent: Instance, center: Vector3)
+	for _, offset in { Vector3.new(-18, 0, -18), Vector3.new(18, 0, -18), Vector3.new(-18, 0, 14), Vector3.new(18, 0, 14) } do
+		local pos = center + offset
+		local top = part({
+			Name = "TableTop",
+			Size = Vector3.new(1, 10, 10),
+			CFrame = CFrame.new(pos + Vector3.new(0, 3, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+			Color = Color3.fromRGB(222, 100, 90),
+			Parent = parent,
+		})
+		top.Shape = Enum.PartType.Cylinder
+		part({
+			Name = "TableLeg",
+			Size = Vector3.new(1.2, 3, 1.2),
+			CFrame = CFrame.new(pos + Vector3.new(0, 1.5, 0)),
+			Color = Color3.fromRGB(120, 120, 120),
+			Parent = parent,
+		})
+	end
+end
+
+local function buildTree(parent: Instance, pos: Vector3, scale: number)
+	part({
+		Name = "TreeTrunk",
+		Size = Vector3.new(1.8 * scale, 7 * scale, 1.8 * scale),
+		CFrame = CFrame.new(pos + Vector3.new(0, 3.5 * scale, 0)),
+		Color = Color3.fromRGB(105, 76, 48),
+		Material = Enum.Material.Wood,
+		Parent = parent,
+	})
+	for i, offset in { Vector3.new(0, 8 * scale, 0), Vector3.new(1.6 * scale, 6.6 * scale, 1.2 * scale), Vector3.new(-1.5 * scale, 6.9 * scale, -1 * scale) } do
+		local leaves = part({
+			Name = "TreeLeaves",
+			Size = Vector3.one * (4.6 - i * 0.5) * scale,
+			CFrame = CFrame.new(pos + offset),
+			Color = Color3.fromRGB(88 + i * 10, 160 + i * 8, 78),
+			Material = Enum.Material.Grass,
+			Parent = parent,
+		})
+		leaves.Shape = Enum.PartType.Ball
+	end
+end
+
+local function buildGymMarkings(parent: Instance, center: Vector3)
+	local circle = part({
+		Name = "GymCircle",
+		Size = Vector3.new(0.2, 26, 26),
+		CFrame = CFrame.new(center + Vector3.new(0, 0.11, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Palette.White,
+		Parent = parent,
+	})
+	circle.Shape = Enum.PartType.Cylinder
+	local inner = part({
+		Name = "GymCircleInner",
+		Size = Vector3.new(0.22, 23, 23),
+		CFrame = CFrame.new(center + Vector3.new(0, 0.12, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(226, 178, 172),
+		Parent = parent,
+	})
+	inner.Shape = Enum.PartType.Cylinder
+	part({
+		Name = "GymCenterLine",
+		Size = Vector3.new(66, 0.2, 1.2),
+		CFrame = CFrame.new(center + Vector3.new(0, 0.13, 0)),
+		Color = Palette.White,
+		Parent = parent,
+	})
+end
+
+local function buildStatues(parent: Instance)
+	local StudentGen = require(script.Parent.StudentGen) :: any
+	for i, spec in { { id = "school_legend", x = 215 - 14 }, { id = "substitute_who_stayed", x = 215 + 14 } } do
+		local pedestal = part({
+			Name = "StatuePedestal",
+			Size = Vector3.new(6, 3, 6),
+			CFrame = CFrame.new(spec.x, 1.5, -78),
+			Color = Color3.fromRGB(200, 200, 200),
+			Material = Enum.Material.Marble,
+			Parent = parent,
+		})
+		local model = StudentGen.Create(spec.id)
+		if model then
+			-- solid gold repaint
+			for _, child in model:GetDescendants() do
+				if child:IsA("BasePart") then
+					child.Color = Palette.BusYellow
+					child.Material = Enum.Material.Metal
+					child.Anchored = true
+				elseif child:IsA("BillboardGui") or child:IsA("ParticleEmitter") or child:IsA("Highlight") then
+					child:Destroy()
+				end
+			end
+			model.Name = "Statue" .. i
+			model.Parent = parent
+			StudentGen.Stand(model, pedestal.CFrame * CFrame.new(0, 1.5, 0) * CFrame.Angles(0, math.rad(180), 0))
+		end
+		local _ = i
+	end
+end
+
+local function buildPerimeter(parent: Instance)
+	for _, spec in {
+		{ size = Vector3.new(560, 6, 2), cf = CFrame.new(0, 3, -279) },
+		{ size = Vector3.new(560, 6, 2), cf = CFrame.new(0, 3, 279) },
+		{ size = Vector3.new(2, 6, 560), cf = CFrame.new(-279, 3, 0) },
+		{ size = Vector3.new(2, 6, 560), cf = CFrame.new(279, 3, 0) },
+	} do
+		part({
+			Name = "PerimeterWall",
+			Size = spec.size,
+			CFrame = spec.cf,
+			Color = Color3.fromRGB(150, 100, 70),
+			Material = Enum.Material.Brick,
+			Parent = parent,
+		})
+	end
+end
+
 function MapService.Build(): Map
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
@@ -327,6 +563,21 @@ function MapService.Build(): Map
 		signText(board, clique.name:upper() .. "\n" .. clique.motto, Palette.White, Enum.NormalId.Front)
 		signText(board, clique.name:upper(), Palette.White, Enum.NormalId.Back)
 		cliqueBoards[clique.id] = board
+	end
+
+	-- decorations
+	buildBus(folder, CFrame.new(-120, 0, 120) * CFrame.Angles(0, math.rad(15), 0))
+	buildHallwayLights(folder)
+	buildBenches(folder)
+	buildCafeteriaTables(folder, Vector3.new(-215, 0, 60))
+	buildGymMarkings(folder, Vector3.new(215, 0, 60))
+	buildStatues(folder)
+	buildPerimeter(folder)
+	for _, pos in {
+		Vector3.new(-40, 0, 130), Vector3.new(45, 0, 128), Vector3.new(-15, 0, 172),
+		Vector3.new(30, 0, 175), Vector3.new(-52, 0, 168), Vector3.new(55, 0, 150),
+	} do
+		buildTree(folder, pos, 1 + (pos.X % 3) * 0.15)
 	end
 
 	-- spawn

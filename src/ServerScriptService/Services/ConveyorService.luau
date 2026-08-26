@@ -96,7 +96,7 @@ local function spawnWalker()
 		if rarity.name == "Secret" or rarity.name == "Mythic" then
 			Remotes.Get("Notify"):FireAllClients(
 				player.DisplayName .. " recruited " .. rarity.name:upper() .. " " .. def.name .. "!",
-				"aura"
+				"announce"
 			)
 		end
 		model:Destroy()
@@ -104,6 +104,7 @@ local function spawnWalker()
 
 	model.Parent = workspace
 	StudentGen.Stand(model, CFrame.lookAt(startPos, endPos))
+	StudentGen.PlayAnim(model, "walk")
 	table.insert(walkers, walker)
 end
 
@@ -133,10 +134,9 @@ function ConveyorService.Init(map: { conveyorStart: Vector3, conveyorEnd: Vector
 				continue
 			end
 			local pos = startPos:Lerp(endPos, alpha)
-			local bob = math.sin(now * 8 + walker.startedAt * 10) * 0.25
 			local root = walker.model.PrimaryPart
 			if root then
-				walker.model:PivotTo(CFrame.lookAt(pos + Vector3.new(0, 2.6 + bob, 0), endPos + Vector3.new(0, 2.6, 0)))
+				walker.model:PivotTo(CFrame.lookAt(pos + Vector3.new(0, 2.6, 0), endPos + Vector3.new(0, 2.6, 0)))
 			end
 		end
 	end)

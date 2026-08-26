@@ -25,6 +25,7 @@ local MonetizationService = require(Services.MonetizationService)
 local RewardService = require(Services.RewardService)
 local QuestService = require(Services.QuestService)
 local LeaderboardService = require(Services.LeaderboardService)
+local EffectsService = require(Services.EffectsService)
 
 DataService.Init()
 
@@ -47,5 +48,6 @@ MonetizationService.Init()
 RewardService.Init()
 QuestService.Init()
 LeaderboardService.Init(map)
+EffectsService.Init()
 
 print("[LunchMoneyLegends] server ready — welcome to Crumbworth High")
