@@ -28,6 +28,7 @@ local Rarities: { Rarity } = {
 			{ id = "pencil_borrower", name = "Pencil Borrower", cost = 85, income = 2 },
 			{ id = "hall_wanderer", name = "Hall Wanderer", cost = 110, income = 3 },
 			{ id = "homework_forgetter", name = "Homework Forgetter", cost = 150, income = 4 },
+			{ id = "late_slip_collector", name = "Late Slip Collector", cost = 200, income = 5 },
 		},
 	},
 	{
@@ -41,6 +42,7 @@ local Rarities: { Rarity } = {
 			{ id = "teachers_pet", name = "Teacher's Pet", cost = 1600, income = 18 },
 			{ id = "cafeteria_insider", name = "Cafeteria Insider", cost = 2000, income = 21 },
 			{ id = "gum_dealer", name = "Gum Dealer", cost = 2500, income = 25 },
+			{ id = "study_hall_dj", name = "Study Hall DJ", cost = 3000, income = 28 },
 		},
 	},
 	{
@@ -54,6 +56,7 @@ local Rarities: { Rarity } = {
 			{ id = "science_fair_champ", name = "Science Fair Champ", cost = 16000, income = 130 },
 			{ id = "vending_whisperer", name = "Vending Machine Whisperer", cost = 20000, income = 155 },
 			{ id = "sweaty_tryhard", name = "Sweaty Tryhard", cost = 25000, income = 180 },
+			{ id = "hallway_sprinter", name = "Hallway Sprinter", cost = 30000, income = 200 },
 		},
 	},
 	{
@@ -67,6 +70,7 @@ local Rarities: { Rarity } = {
 			{ id = "gym_class_legend", name = "Gym Class Legend", cost = 200000, income = 1050 },
 			{ id = "snack_kingpin", name = "Snack Kingpin", cost = 250000, income = 1250 },
 			{ id = "valedictorian", name = "The Valedictorian", cost = 300000, income = 1400 },
+			{ id = "rps_champ", name = "Undefeated Rock-Paper-Scissors Champ", cost = 350000, income = 1550 },
 		},
 	},
 	{
@@ -79,6 +83,7 @@ local Rarities: { Rarity } = {
 			{ id = "lunch_lady_supreme", name = "Lunch Lady Supreme", cost = 3000000, income = 11000 },
 			{ id = "exchange_student", name = "The Exchange Student From Nowhere", cost = 4500000, income = 14500 },
 			{ id = "the_janitor", name = "The Janitor (Knows Everything)", cost = 6000000, income = 18000 },
+			{ id = "superintendents_nephew", name = "The Superintendent's Nephew", cost = 8000000, income = 22000 },
 		},
 	},
 	{
