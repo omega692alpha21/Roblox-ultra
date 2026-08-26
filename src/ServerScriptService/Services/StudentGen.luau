@@ -198,10 +198,10 @@ local function addBillboard(model: Model, defName: string, rarityName: string, i
 	end
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "NameTag"
-	billboard.Size = UDim2.fromOffset(190, 64)
+	billboard.Size = UDim2.fromScale(4.6, 1.7) -- studs, so it shrinks with distance
 	billboard.StudsOffset = Vector3.new(0, 2.6, 0)
-	billboard.AlwaysOnTop = true
-	billboard.MaxDistance = 140
+	billboard.AlwaysOnTop = false
+	billboard.MaxDistance = 42
 	billboard.Parent = head
 
 	local nameLabel = Instance.new("TextLabel")

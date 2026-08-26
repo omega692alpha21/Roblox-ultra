@@ -91,6 +91,13 @@ local function setupLighting()
 	color.TintColor = Color3.fromRGB(255, 250, 240)
 	color.Parent = Lighting
 
+	local dof = Instance.new("DepthOfFieldEffect")
+	dof.FarIntensity = 0.28
+	dof.FocusDistance = 55
+	dof.InFocusRadius = 90
+	dof.NearIntensity = 0
+	dof.Parent = Lighting
+
 	local rays = Instance.new("SunRaysEffect")
 	rays.Intensity = 0.08
 	rays.Spread = 0.6

@@ -29,10 +29,10 @@ local function updateOverhead(player: Player)
 	else
 		billboard = Instance.new("BillboardGui")
 		billboard.Name = "AuraTitle"
-		billboard.Size = UDim2.fromOffset(200, 56)
+		billboard.Size = UDim2.fromScale(5.2, 1.5)
 		billboard.StudsOffset = Vector3.new(0, 2.4, 0)
 		billboard.AlwaysOnTop = false
-		billboard.MaxDistance = 120
+		billboard.MaxDistance = 55
 		billboard.Parent = head
 		local title = Instance.new("TextLabel")
 		title.Name = "Title"

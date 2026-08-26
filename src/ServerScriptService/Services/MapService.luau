@@ -157,10 +157,10 @@ local function buildPlot(index: number, cf: CFrame, parent: Instance): Plot
 	})
 	local pileBillboard = Instance.new("BillboardGui")
 	pileBillboard.Name = "PileBillboard"
-	pileBillboard.Size = UDim2.fromOffset(220, 60)
+	pileBillboard.Size = UDim2.fromScale(9, 2.4)
 	pileBillboard.StudsOffset = Vector3.new(0, 6, 0)
 	pileBillboard.AlwaysOnTop = true
-	pileBillboard.MaxDistance = 220
+	pileBillboard.MaxDistance = 110
 	pileBillboard.Parent = collectPad
 	local pileLabel = Instance.new("TextLabel")
 	pileLabel.Size = UDim2.fromScale(1, 1)
@@ -844,6 +844,181 @@ local function buildRoad(parent: Instance)
 	end
 end
 
+
+-- School props that fill the space: vending machines, bins, notice boards,
+-- water fountains, planters. Placed along the hallway edges and in the zones.
+local function buildProps(parent: Instance)
+	local function vending(x: number, z: number, yaw: number, color: Color3)
+		local body = part({
+			Name = "VendingMachine",
+			Size = Vector3.new(6, 11, 3.5),
+			CFrame = CFrame.new(x, 5.5, z) * CFrame.Angles(0, yaw, 0),
+			Color = color,
+			Parent = parent,
+		})
+		part({
+			Name = "VendingGlass",
+			Size = Vector3.new(4.4, 7, 0.4),
+			CFrame = body.CFrame * CFrame.new(0, 1.4, -1.8),
+			Color = Color3.fromRGB(40, 50, 60),
+			Material = Enum.Material.Glass,
+			Transparency = 0.25,
+			Parent = parent,
+		})
+		for row = 0, 2 do
+			part({
+				Name = "VendingShelf",
+				Size = Vector3.new(4.2, 0.3, 0.5),
+				CFrame = body.CFrame * CFrame.new(0, 3.4 - row * 2.1, -1.9),
+				Color = Color3.fromRGB(180, 180, 185),
+				Parent = parent,
+			})
+		end
+		local glow = part({
+			Name = "VendingGlow",
+			Size = Vector3.new(5, 0.6, 0.3),
+			CFrame = body.CFrame * CFrame.new(0, 5, -1.85),
+			Color = Palette.BusYellow,
+			Material = Enum.Material.Neon,
+			Parent = parent,
+		})
+		local light = Instance.new("PointLight")
+		light.Brightness = 1
+		light.Range = 16
+		light.Color = Palette.BusYellow
+		light.Parent = glow
+	end
+
+	local function bin(x: number, z: number)
+		local body = part({
+			Name = "TrashBin",
+			Size = Vector3.new(3.4, 4.4, 3.4),
+			CFrame = CFrame.new(x, 2.2, z),
+			Color = Color3.fromRGB(70, 78, 68),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+		body.Shape = Enum.PartType.Cylinder
+		body.CFrame = CFrame.new(x, 2.2, z) * CFrame.Angles(0, 0, math.rad(90))
+		part({
+			Name = "TrashLid",
+			Size = Vector3.new(0.5, 3.8, 3.8),
+			CFrame = CFrame.new(x, 4.6, z) * CFrame.Angles(0, 0, math.rad(90)),
+			Color = Color3.fromRGB(45, 52, 44),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).Shape = Enum.PartType.Cylinder
+	end
+
+	local function noticeBoard(x: number, z: number, yaw: number)
+		local board = part({
+			Name = "NoticeBoard",
+			Size = Vector3.new(10, 7, 0.6),
+			CFrame = CFrame.new(x, 6, z) * CFrame.Angles(0, yaw, 0),
+			Color = Color3.fromRGB(120, 88, 56),
+			Material = Enum.Material.Wood,
+			Parent = parent,
+		})
+		local rng = Random.new(math.floor(x * 7 + z * 3))
+		for i = 1, 6 do
+			part({
+				Name = "Flyer",
+				Size = Vector3.new(rng:NextNumber(1.6, 2.4), rng:NextNumber(2, 2.8), 0.15),
+				CFrame = board.CFrame
+					* CFrame.new(rng:NextNumber(-3.6, 3.6), rng:NextNumber(-2, 2), -0.4)
+					* CFrame.Angles(0, 0, math.rad(rng:NextNumber(-8, 8))),
+				Color = ({
+					Color3.fromRGB(245, 245, 235),
+					Color3.fromRGB(250, 220, 160),
+					Color3.fromRGB(200, 235, 245),
+				})[rng:NextInteger(1, 3)],
+				Parent = parent,
+			})
+		end
+	end
+
+	local function fountain(x: number, z: number, yaw: number)
+		part({
+			Name = "WaterFountain",
+			Size = Vector3.new(3.6, 3.6, 2.4),
+			CFrame = CFrame.new(x, 1.8, z) * CFrame.Angles(0, yaw, 0),
+			Color = Color3.fromRGB(200, 205, 210),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+		part({
+			Name = "FountainBowl",
+			Size = Vector3.new(3.2, 0.5, 2),
+			CFrame = CFrame.new(x, 3.6, z) * CFrame.Angles(0, yaw, 0),
+			Color = Color3.fromRGB(225, 230, 235),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+	end
+
+	local function planter(x: number, z: number)
+		part({
+			Name = "PlanterPot",
+			Size = Vector3.new(3.4, 3, 3.4),
+			CFrame = CFrame.new(x, 1.5, z),
+			Color = Color3.fromRGB(160, 96, 70),
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		})
+		local rng = Random.new(math.floor(x * 11 + z * 5))
+		for i = 1, 4 do
+			local leaf = part({
+				Name = "PlantLeaf",
+				Size = Vector3.one * rng:NextNumber(2, 3.2),
+				CFrame = CFrame.new(x + rng:NextNumber(-1, 1), 4 + rng:NextNumber(0, 1.4), z + rng:NextNumber(-1, 1)),
+				Color = Color3.fromRGB(70, 140 + i * 8, 60),
+				Material = Enum.Material.Grass,
+				Parent = parent,
+			})
+			leaf.Shape = Enum.PartType.Ball
+		end
+	end
+
+	-- hallway furniture, alternating along both sides
+	for i, x in { -145, -105, -65, -25, 15, 55, 95, 135 } do
+		local z = (i % 2 == 0) and -12.5 or 12.5
+		local yaw = (i % 2 == 0) and 0 or math.pi
+		local kind = i % 4
+		if kind == 0 then
+			vending(x, z, yaw, Palette.DetentionRed)
+		elseif kind == 1 then
+			noticeBoard(x, z, yaw)
+		elseif kind == 2 then
+			vending(x, z, yaw, Palette.LockerBlue)
+		else
+			fountain(x, z, yaw)
+		end
+		bin(x + 12, z * 0.86)
+		planter(x + 22, z * 0.9)
+	end
+
+	-- cafeteria + gym extras
+	vending(-186, 40, math.pi / 2, Palette.CashGreen)
+	vending(-186, 78, math.pi / 2, Palette.BusYellow)
+	bin(-192, 60)
+	for _, spot in { Vector3.new(196, 34, 0), Vector3.new(196, 86, 0) } do
+		bin(spot.X, spot.Y)
+	end
+	planter(-40, 100)
+	planter(40, 100)
+end
+
+-- Dense treeline just inside the perimeter walls, so the horizon reads as woods.
+local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, number) -> ())
+	local rng = Random.new(2026)
+	for i = 1, 90 do
+		local angle = (i / 90) * math.pi * 2
+		local dist = rng:NextNumber(238, 268)
+		local pos = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
+		treeFn(parent, pos, rng:NextNumber(1.1, 2.3))
+	end
+end
+
 local function buildPerimeter(parent: Instance)
 	for _, spec in {
 		{ size = Vector3.new(560, 6, 2), cf = CFrame.new(0, 3, -279) },
@@ -1001,6 +1176,8 @@ function MapService.Build(): Map
 	buildHoops(folder, Vector3.new(215, 0, 60))
 	buildRoad(folder)
 	buildCanopy(folder)
+	buildProps(folder)
+	buildTreeline(folder, buildTree)
 	buildCheckerFloor(folder, Vector3.new(-215, 0, 60), Vector2.new(70, 70))
 	buildLeaves(folder, Vector3.new(0, 0, 150))
 	for _, pos in { Vector3.new(-34, 0, 96), Vector3.new(34, 0, 96), Vector3.new(-60, 0, 130), Vector3.new(60, 0, 130) } do
