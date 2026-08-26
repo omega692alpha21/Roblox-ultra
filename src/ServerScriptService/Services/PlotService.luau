@@ -82,6 +82,24 @@ local function spawnStudentModel(player: Player, member: CrewMember, slotIndex: 
 	model.Parent = plot.model
 	StudentGen.Stand(model, slotCf)
 	StudentGen.PlayAnim(model, "idle")
+	-- glowing floor ring under Epic and better
+	local entry = Students.Get(member.id)
+	if entry then
+		local rarityIndex = table.find({ "Common", "Rare", "Epic", "Legendary", "Mythic", "Secret" }, entry.rarity.name) or 1
+		if rarityIndex >= 3 then
+			local ring = Instance.new("Part")
+			ring.Name = "RarityRing"
+			ring.Shape = Enum.PartType.Cylinder
+			ring.Size = Vector3.new(0.15, 5.4, 5.4)
+			ring.CFrame = slotCf * CFrame.new(0, 0.08, 0) * CFrame.Angles(0, 0, math.rad(90))
+			ring.Color = entry.rarity.color
+			ring.Material = Enum.Material.Neon
+			ring.Transparency = 0.35
+			ring.Anchored = true
+			ring.CanCollide = false
+			ring.Parent = model
+		end
+	end
 	crewModels[player] = crewModels[player] or {}
 	crewModels[player][member.uid] = model
 	for _, fn in modelAddedCallbacks do

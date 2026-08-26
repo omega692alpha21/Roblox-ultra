@@ -573,6 +573,113 @@ local function buildHoops(parent: Instance, center: Vector3)
 	signText(board, "LEGENDS 21\nVISITORS 3", Palette.BusYellow, Enum.NormalId.Front)
 end
 
+-- Glass canopy over the main hallway: tinted panels on the existing light beams.
+local function buildCanopy(parent: Instance)
+	for x = -150, 150, 60 do
+		part({
+			Name = "CanopyPanel",
+			Size = Vector3.new(60, 0.5, 30),
+			CFrame = CFrame.new(x + 30 <= 150 and x + 30 or 150, 14.4, 0),
+			Color = Color3.fromRGB(160, 205, 230),
+			Material = Enum.Material.Glass,
+			Transparency = 0.55,
+			Parent = parent,
+		})
+	end
+	for _, side in { -1, 1 } do
+		part({
+			Name = "CanopyEdge",
+			Size = Vector3.new(320, 0.8, 1.2),
+			CFrame = CFrame.new(0, 14.4, side * 14.6),
+			Color = Palette.LockerBlueDark,
+			Parent = parent,
+		})
+	end
+end
+
+-- Checkered cafeteria floor tiles.
+local function buildCheckerFloor(parent: Instance, center: Vector3, size: Vector2)
+	local tile = 10
+	local cols, rows = math.floor(size.X / tile), math.floor(size.Y / tile)
+	for i = 0, cols - 1 do
+		for j = 0, rows - 1 do
+			if (i + j) % 2 == 0 then
+				part({
+					Name = "CheckerTile",
+					Size = Vector3.new(tile - 0.4, 0.2, tile - 0.4),
+					CFrame = CFrame.new(
+						center.X - size.X / 2 + tile / 2 + i * tile,
+						0.11,
+						center.Z - size.Y / 2 + tile / 2 + j * tile
+					),
+					Color = Color3.fromRGB(222, 100, 90),
+					Parent = parent,
+				})
+			end
+		end
+	end
+end
+
+-- Flowerbeds: planter box + colored flower balls.
+local function buildFlowerbed(parent: Instance, center: Vector3)
+	part({
+		Name = "PlanterBox",
+		Size = Vector3.new(10, 1.6, 4),
+		CFrame = CFrame.new(center + Vector3.new(0, 0.8, 0)),
+		Color = Color3.fromRGB(105, 76, 48),
+		Material = Enum.Material.Wood,
+		Parent = parent,
+	})
+	local rng = Random.new(math.floor(center.X * 13 + center.Z * 7))
+	local colors = {
+		Color3.fromRGB(240, 96, 130),
+		Color3.fromRGB(245, 197, 49),
+		Color3.fromRGB(180, 75, 217),
+		Color3.fromRGB(255, 255, 255),
+	}
+	for i = 1, 6 do
+		local flower = part({
+			Name = "Flower",
+			Size = Vector3.one * rng:NextNumber(0.9, 1.4),
+			CFrame = CFrame.new(center + Vector3.new(-4 + i * 1.35, 1.9 + rng:NextNumber(0, 0.3), rng:NextNumber(-1, 1))),
+			Color = colors[rng:NextInteger(1, #colors)],
+			Parent = parent,
+		})
+		flower.Shape = Enum.PartType.Ball
+	end
+end
+
+-- Ambient falling leaves over the courtyard.
+local function buildLeaves(parent: Instance, center: Vector3)
+	local emitterPart = part({
+		Name = "LeafEmitter",
+		Size = Vector3.new(100, 1, 60),
+		CFrame = CFrame.new(center + Vector3.new(0, 26, 0)),
+		Transparency = 1,
+		CanCollide = false,
+		Parent = parent,
+	})
+	local leaves = Instance.new("ParticleEmitter")
+	leaves.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 190, 90)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 180, 70)),
+	})
+	leaves.Rate = 4
+	leaves.Lifetime = NumberRange.new(6, 9)
+	leaves.Speed = NumberRange.new(2, 4)
+	leaves.Acceleration = Vector3.new(1.5, -2.5, 0.8)
+	leaves.Rotation = NumberRange.new(0, 360)
+	leaves.RotSpeed = NumberRange.new(-90, 90)
+	leaves.Size = NumberSequence.new(0.35)
+	leaves.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(0.9, 0.3),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	leaves.EmissionDirection = Enum.NormalId.Bottom
+	leaves.Parent = emitterPart
+end
+
 local function buildRoad(parent: Instance)
 	part({
 		Name = "Road",
@@ -611,19 +718,31 @@ local function buildPerimeter(parent: Instance)
 	end
 end
 
+-- Real terrain: grass base under the campus + rolling hills outside the walls.
+local function buildTerrain()
+	local terrain = workspace.Terrain
+	terrain:FillBlock(CFrame.new(0, -2.1, 0), Vector3.new(680, 4, 680), Enum.Material.Grass)
+	local rng = Random.new(7)
+	for i = 1, 26 do
+		local angle = (i / 26) * math.pi * 2
+		local dist = rng:NextNumber(330, 420)
+		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(-6, 8), math.sin(angle) * dist)
+		terrain:FillBall(pos, rng:NextNumber(28, 64), Enum.Material.Grass)
+	end
+	-- a few distant rocky peaks for the horizon
+	for i = 1, 8 do
+		local angle = (i / 8) * math.pi * 2 + 0.3
+		local dist = rng:NextNumber(430, 520)
+		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(10, 30), math.sin(angle) * dist)
+		terrain:FillBall(pos, rng:NextNumber(40, 80), Enum.Material.Rock)
+	end
+end
+
 function MapService.Build(): Map
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
 
-	-- ground
-	part({
-		Name = "Ground",
-		Size = Vector3.new(560, 2, 560),
-		CFrame = CFrame.new(0, -1.5, 0),
-		Color = Color3.fromRGB(116, 158, 96),
-		Material = Enum.Material.Grass,
-		Parent = folder,
-	})
+	buildTerrain()
 
 	-- hallway (the conveyor) along the X axis
 	part({
@@ -723,6 +842,12 @@ function MapService.Build(): Map
 	buildFlagpole(folder)
 	buildHoops(folder, Vector3.new(215, 0, 60))
 	buildRoad(folder)
+	buildCanopy(folder)
+	buildCheckerFloor(folder, Vector3.new(-215, 0, 60), Vector2.new(70, 70))
+	buildLeaves(folder, Vector3.new(0, 0, 150))
+	for _, pos in { Vector3.new(-34, 0, 96), Vector3.new(34, 0, 96), Vector3.new(-60, 0, 130), Vector3.new(60, 0, 130) } do
+		buildFlowerbed(folder, pos)
+	end
 	for _, pos in {
 		Vector3.new(-40, 0, 130), Vector3.new(45, 0, 128), Vector3.new(-15, 0, 172),
 		Vector3.new(30, 0, 175), Vector3.new(-52, 0, 168), Vector3.new(55, 0, 150),

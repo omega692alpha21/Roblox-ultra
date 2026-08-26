@@ -66,8 +66,61 @@ local function paintCharacter(model: Model, rng: Random)
 	end
 end
 
+local HAIR_COLORS = {
+	Color3.fromRGB(25, 20, 15),
+	Color3.fromRGB(60, 40, 25),
+	Color3.fromRGB(90, 60, 35),
+	Color3.fromRGB(215, 180, 90),
+	Color3.fromRGB(180, 90, 40),
+	Color3.fromRGB(60, 90, 200),
+	Color3.fromRGB(240, 120, 170),
+}
+
+-- Part-built hair so heads aren't bald blocks. Skipped when the prop roll is a cap.
+local function addHair(model: Model, rng: Random)
+	local head = model:FindFirstChild("Head") :: BasePart?
+	if not head then
+		return
+	end
+	local color = HAIR_COLORS[rng:NextInteger(1, #HAIR_COLORS)]
+	local style = rng:NextInteger(1, 4)
+	local pieces: { BasePart } = {}
+	local function piece(size: Vector3, offset: CFrame)
+		local p = Instance.new("Part")
+		p.Size = size
+		p.Color = color
+		p.CanCollide = false
+		p.Massless = true
+		p.CFrame = head.CFrame * offset
+		table.insert(pieces, p)
+	end
+	if style == 1 then -- flat top
+		piece(Vector3.new(1.25, 0.4, 1.15), CFrame.new(0, 0.72, 0))
+	elseif style == 2 then -- bowl cut with fringe
+		piece(Vector3.new(1.25, 0.4, 1.15), CFrame.new(0, 0.72, 0))
+		piece(Vector3.new(1.25, 0.35, 0.18), CFrame.new(0, 0.48, -0.55))
+		piece(Vector3.new(0.18, 0.6, 1.15), CFrame.new(-0.56, 0.4, 0))
+		piece(Vector3.new(0.18, 0.6, 1.15), CFrame.new(0.56, 0.4, 0))
+	elseif style == 3 then -- ponytail
+		piece(Vector3.new(1.25, 0.4, 1.15), CFrame.new(0, 0.72, 0))
+		piece(Vector3.new(0.4, 1, 0.35), CFrame.new(0, 0.15, 0.68) * CFrame.Angles(math.rad(12), 0, 0))
+	else -- spiky
+		for i = -1, 1 do
+			piece(Vector3.new(0.3, 0.55, 0.3), CFrame.new(i * 0.35, 0.85, 0) * CFrame.Angles(0, 0, math.rad(i * 12)))
+		end
+		piece(Vector3.new(1.25, 0.3, 1.15), CFrame.new(0, 0.65, 0))
+	end
+	for _, p in pieces do
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = head
+		weld.Part1 = p
+		weld.Parent = p
+		p.Parent = model
+	end
+end
+
 -- Simple part-built props so students don't all look identical.
-local function addProp(model: Model, rng: Random, rarityName: string)
+local function addProp(model: Model, rng: Random, rarityName: string): number
 	local head = model:FindFirstChild("Head") :: BasePart?
 	local torso = (model:FindFirstChild("UpperTorso") or model:FindFirstChild("Torso")) :: BasePart?
 	local kind = rng:NextInteger(1, 4)
@@ -135,6 +188,7 @@ local function addProp(model: Model, rng: Random, rarityName: string)
 		weld.Parent = crown
 		crown.Parent = model
 	end
+	return kind
 end
 
 local function addBillboard(model: Model, defName: string, rarityName: string, income: number, color: Color3)
@@ -239,7 +293,10 @@ function StudentGen.Create(defId: string): Model?
 		humanoid.EvaluateStateMachine = false
 	end
 	paintCharacter(model, rng)
-	addProp(model, rng, rarity.name)
+	local propKind = addProp(model, rng, rarity.name)
+	if propKind ~= 1 then -- caps replace hair
+		addHair(model, rng)
+	end
 	addBillboard(model, def.name, rarity.name, def.income, rarity.color)
 
 	-- anchor only the root: limbs stay free so Motor6D animations can play

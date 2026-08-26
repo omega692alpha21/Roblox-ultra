@@ -94,6 +94,13 @@ local function setupLighting()
 	rays.Intensity = 0.08
 	rays.Spread = 0.6
 	rays.Parent = Lighting
+
+	-- dynamic clouds (no assets needed)
+	local clouds = Instance.new("Clouds")
+	clouds.Cover = 0.55
+	clouds.Density = 0.22
+	clouds.Color = Color3.fromRGB(255, 252, 245)
+	clouds.Parent = workspace.Terrain
 end
 
 function EffectsService.Init()
