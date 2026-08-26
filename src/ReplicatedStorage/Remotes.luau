@@ -30,6 +30,7 @@ local EVENTS = {
 	"JoinClique", -- (cliqueId: string)
 	"QuizAnswer", -- (questionIndex: number, answerIndex: number)
 	"Punch",
+	"Sprint", -- (on: boolean)
 }
 
 local FUNCTIONS = {

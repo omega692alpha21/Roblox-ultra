@@ -36,6 +36,7 @@ return {
 
 	-- Speed pass
 	SpeedPassBonus = 6, -- added walkspeed
+	SprintBonus = 8, -- extra walkspeed while holding sprint
 
 	-- School RPG layer
 	ClassBellIntervalSeconds = 300, -- time between class bells

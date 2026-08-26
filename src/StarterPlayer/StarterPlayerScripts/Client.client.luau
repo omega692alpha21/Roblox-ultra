@@ -26,6 +26,7 @@ require(Controllers.QuizController).Init(gui)
 require(Controllers.CliqueController).Init(gui)
 require(Controllers.LeaderboardController).Init(gui)
 require(Controllers.PunchController).Init(gui)
+require(Controllers.SprintController).Init(gui)
 require(Controllers.TutorialController).Init(gui)
 require(Controllers.DialogueController).Init(gui)
 

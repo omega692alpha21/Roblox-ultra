@@ -48,6 +48,9 @@ function StealService.RefreshWalkSpeed(player: Player)
 	if clique then
 		speed += clique.walkSpeedBonus
 	end
+	if player:GetAttribute("Sprinting") == true then
+		speed += GameConfig.SprintBonus
+	end
 	if carrying[player] then
 		local mult = GameConfig.CarrySpeedMultiplier
 		if clique and clique.carrySpeedMultOverride then
@@ -206,6 +209,11 @@ local function tryGrab(thief: Player, owner: Player, plot: MapService.Plot, uid:
 end
 
 function StealService.Init()
+	Remotes.Get("Sprint").OnServerEvent:Connect(function(player, on)
+		player:SetAttribute("Sprinting", on == true)
+		StealService.RefreshWalkSpeed(player)
+	end)
+
 	PlotService.SetCarriedPredicate(function(uid)
 		for _, carry in carrying do
 			if carry.uid == uid then

@@ -361,6 +361,112 @@ task.spawn(function()
 	end)
 end)
 
+-- ===== cinematic intro after PLAY =====
+local function runCinematic()
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	camera.CameraType = Enum.CameraType.Scriptable
+
+	local cine = Instance.new("ScreenGui")
+	cine.Name = "Cinematic"
+	cine.IgnoreGuiInset = true
+	cine.DisplayOrder = 999
+	cine.Parent = playerGui
+
+	local function bar(anchorY: number, posY: number): Frame
+		local f = Instance.new("Frame")
+		f.AnchorPoint = Vector2.new(0, anchorY)
+		f.Position = UDim2.fromScale(0, posY)
+		f.Size = UDim2.fromScale(1, 0.11)
+		f.BackgroundColor3 = Color3.new(0, 0, 0)
+		f.BorderSizePixel = 0
+		f.Parent = cine
+		return f
+	end
+	bar(0, 0)
+	bar(1, 1)
+
+	local shotLabel = Instance.new("TextLabel")
+	shotLabel.AnchorPoint = Vector2.new(0.5, 1)
+	shotLabel.Position = UDim2.fromScale(0.5, 0.985)
+	shotLabel.Size = UDim2.fromScale(0.9, 0.07)
+	shotLabel.BackgroundTransparency = 1
+	shotLabel.Font = Enum.Font.FredokaOne
+	shotLabel.TextScaled = true
+	shotLabel.TextColor3 = YELLOW
+	shotLabel.TextStrokeTransparency = 0.5
+	shotLabel.Parent = cine
+
+	local skipped = false
+	local skip = Instance.new("TextButton")
+	skip.AnchorPoint = Vector2.new(1, 0)
+	skip.Position = UDim2.new(1, -16, 0, 14)
+	skip.Size = UDim2.fromOffset(110, 40)
+	skip.BackgroundColor3 = Color3.fromRGB(44, 58, 41)
+	skip.Font = Enum.Font.FredokaOne
+	skip.Text = "SKIP >>"
+	skip.TextScaled = true
+	skip.TextColor3 = CHALK
+	skip.Parent = cine
+	local skipCorner = Instance.new("UICorner")
+	skipCorner.CornerRadius = UDim.new(0, 10)
+	skipCorner.Parent = skip
+	skip.Activated:Connect(function()
+		skipped = true
+	end)
+
+	local shots = {
+		{
+			from = CFrame.lookAt(Vector3.new(-20, 85, 245), Vector3.new(0, 8, 40)),
+			to = CFrame.lookAt(Vector3.new(15, 45, 155), Vector3.new(0, 8, 30)),
+			dur = 3,
+			label = "CRUMBWORTH HIGH",
+		},
+		{
+			from = CFrame.lookAt(Vector3.new(-150, 8, 21), Vector3.new(-40, 7, -2)),
+			to = CFrame.lookAt(Vector3.new(-10, 8, 21), Vector3.new(100, 7, -2)),
+			dur = 3,
+			label = "RECRUIT YOUR CREW",
+		},
+		{
+			from = CFrame.lookAt(Vector3.new(70, 24, 195), Vector3.new(0, 5, 128)),
+			to = CFrame.lookAt(Vector3.new(-60, 15, 175), Vector3.new(0, 5, 122)),
+			dur = 3,
+			label = "RULE THE SCHOOL",
+		},
+	}
+
+	for _, shot in shots do
+		if skipped then
+			break
+		end
+		camera.CFrame = shot.from
+		shotLabel.Text = shot.label
+		shotLabel.TextTransparency = 1
+		TweenService:Create(shotLabel, TweenInfo.new(0.4), { TextTransparency = 0 }):Play()
+		local move = TweenService:Create(camera, TweenInfo.new(shot.dur, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { CFrame = shot.to })
+		move:Play()
+		local t0 = os.clock()
+		while os.clock() - t0 < shot.dur do
+			if skipped then
+				move:Cancel()
+				break
+			end
+			task.wait(0.05)
+		end
+	end
+
+	cine:Destroy()
+	camera.CameraType = Enum.CameraType.Custom
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		camera.CameraSubject = humanoid
+	end
+end
+
 playButton.Activated:Connect(function()
 	playButton.Active = false
 	local fade = TweenInfo.new(0.5)
@@ -378,4 +484,5 @@ playButton.Activated:Connect(function()
 		driftConn:Disconnect()
 		gui:Destroy()
 	end)
+	runCinematic()
 end)
