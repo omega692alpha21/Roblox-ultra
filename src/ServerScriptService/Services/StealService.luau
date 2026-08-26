@@ -121,15 +121,15 @@ local function completeSteal(thief: Player)
 		Remotes.Get("Notify"):FireClient(thief, "No free desk — the student went home!", "bad")
 		return
 	end
-	local removedDefId = victim.Parent and PlotService.RemoveStudent(victim, carry.uid) or nil
-	if not removedDefId then
+	local removed = victim.Parent and PlotService.RemoveStudent(victim, carry.uid) or nil
+	if not removed then
 		cancelCarry(thief)
 		return
 	end
 	endCarry(thief)
-	PlotService.AddStudent(thief, removedDefId)
-	Signals.Stole:Fire(thief, victim, removedDefId)
-	local entry = Students.Get(removedDefId)
+	PlotService.AddStudent(thief, removed.id, removed.mut, removed.star)
+	Signals.Stole:Fire(thief, victim, removed.id)
+	local entry = Students.Get(removed.id)
 	local studentName = entry and entry.def.name or "student"
 	Remotes.Get("Notify"):FireClient(thief, "STOLEN! " .. studentName .. " joined your crew. (+10 aura)", "aura")
 	if victim.Parent then
@@ -158,7 +158,12 @@ local function tryGrab(thief: Player, owner: Player, plot: MapService.Plot, uid:
 	end
 	-- the desk model disappears while carried; data stays with the victim until deposit
 	local deskModel = PlotService.GetStudentModel(owner, uid)
+	local carriedMut: string? = nil
+	local carriedStar = false
 	if deskModel then
+		local mutAttr = deskModel:GetAttribute("Mut")
+		carriedMut = typeof(mutAttr) == "string" and mutAttr or nil
+		carriedStar = deskModel:GetAttribute("Star") == true
 		deskModel:Destroy()
 	end
 
@@ -166,6 +171,7 @@ local function tryGrab(thief: Player, owner: Player, plot: MapService.Plot, uid:
 	local character = thief.Character
 	if carryModel and character then
 		carryModel.Name = "Carried"
+		StudentGen.Decorate(carryModel, defId, carriedMut, carriedStar)
 		carryModel.Parent = character
 	end
 

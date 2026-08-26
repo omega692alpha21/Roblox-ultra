@@ -452,6 +452,147 @@ local function buildStatues(parent: Instance)
 	end
 end
 
+-- Three walls + a window band around a zone, leaving the side facing `openDir` open.
+local function buildZoneWalls(parent: Instance, center: Vector3, size: Vector2, openDir: Vector3)
+	local height = 14
+	local sides = {
+		{ dir = Vector3.new(0, 0, -1), cf = CFrame.new(center + Vector3.new(0, 0, -size.Y / 2)), len = size.X },
+		{ dir = Vector3.new(0, 0, 1), cf = CFrame.new(center + Vector3.new(0, 0, size.Y / 2)), len = size.X },
+		{ dir = Vector3.new(-1, 0, 0), cf = CFrame.new(center + Vector3.new(-size.X / 2, 0, 0)) * CFrame.Angles(0, math.rad(90), 0), len = size.Y },
+		{ dir = Vector3.new(1, 0, 0), cf = CFrame.new(center + Vector3.new(size.X / 2, 0, 0)) * CFrame.Angles(0, math.rad(90), 0), len = size.Y },
+	}
+	for _, side in sides do
+		if side.dir:Dot(openDir) > 0.5 then
+			continue
+		end
+		-- lower wall, window band, upper band
+		part({
+			Name = "ZoneWallLower",
+			Size = Vector3.new(side.len, 6, 2),
+			CFrame = side.cf * CFrame.new(0, 3, 0),
+			Color = Color3.fromRGB(226, 218, 196),
+			Material = Enum.Material.Brick,
+			Parent = parent,
+		})
+		part({
+			Name = "ZoneWallWindows",
+			Size = Vector3.new(side.len, 4, 1.2),
+			CFrame = side.cf * CFrame.new(0, 8, 0),
+			Color = Color3.fromRGB(150, 200, 225),
+			Material = Enum.Material.Glass,
+			Transparency = 0.35,
+			Parent = parent,
+		})
+		part({
+			Name = "ZoneWallUpper",
+			Size = Vector3.new(side.len, height - 10, 2),
+			CFrame = side.cf * CFrame.new(0, 10 + (height - 10) / 2, 0),
+			Color = Color3.fromRGB(226, 218, 196),
+			Material = Enum.Material.Brick,
+			Parent = parent,
+		})
+	end
+end
+
+local function buildEntranceArch(parent: Instance)
+	for _, x in { -20, 20 } do
+		part({
+			Name = "ArchPillar",
+			Size = Vector3.new(4, 18, 4),
+			CFrame = CFrame.new(x, 9, 104),
+			Color = Color3.fromRGB(150, 100, 70),
+			Material = Enum.Material.Brick,
+			Parent = parent,
+		})
+	end
+	local beam = part({
+		Name = "ArchBeam",
+		Size = Vector3.new(48, 6, 3),
+		CFrame = CFrame.new(0, 20, 104),
+		Color = Palette.Blackboard,
+		Parent = parent,
+	})
+	signText(beam, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Front)
+	signText(beam, "GO LEGENDS!", Palette.BusYellow, Enum.NormalId.Back)
+end
+
+local function buildFlagpole(parent: Instance)
+	part({
+		Name = "Flagpole",
+		Size = Vector3.new(0.8, 26, 0.8),
+		CFrame = CFrame.new(0, 13, 150),
+		Color = Color3.fromRGB(190, 190, 195),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	})
+	local flag = part({
+		Name = "Flag",
+		Size = Vector3.new(9, 5, 0.3),
+		CFrame = CFrame.new(5.3, 22.5, 150),
+		Color = Palette.CashGreen,
+		Parent = parent,
+	})
+	signText(flag, "$", Palette.BusYellow, Enum.NormalId.Front)
+	signText(flag, "$", Palette.BusYellow, Enum.NormalId.Back)
+end
+
+local function buildHoops(parent: Instance, center: Vector3)
+	for _, side in { -1, 1 } do
+		local base = center + Vector3.new(side * 30, 0, 0)
+		part({
+			Name = "HoopPole",
+			Size = Vector3.new(1, 12, 1),
+			CFrame = CFrame.new(base + Vector3.new(0, 6, 0)),
+			Color = Color3.fromRGB(190, 190, 195),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+		part({
+			Name = "HoopBoard",
+			Size = Vector3.new(1, 4.5, 7),
+			CFrame = CFrame.new(base + Vector3.new(side * -0.9, 11.5, 0)),
+			Color = Palette.White,
+			Parent = parent,
+		})
+		local ring = part({
+			Name = "HoopRing",
+			Size = Vector3.new(0.4, 2.6, 2.6),
+			CFrame = CFrame.new(base + Vector3.new(side * -2.6, 10, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+			Color = Color3.fromRGB(230, 120, 60),
+			Parent = parent,
+		})
+		ring.Shape = Enum.PartType.Cylinder
+	end
+	local board = part({
+		Name = "GymScoreboard",
+		Size = Vector3.new(16, 8, 1),
+		CFrame = CFrame.new(center + Vector3.new(0, 12, -34)),
+		Color = Palette.Blackboard,
+		Parent = parent,
+	})
+	signText(board, "LEGENDS 21\nVISITORS 3", Palette.BusYellow, Enum.NormalId.Front)
+end
+
+local function buildRoad(parent: Instance)
+	part({
+		Name = "Road",
+		Size = Vector3.new(200, 0.4, 16),
+		CFrame = CFrame.new(-160, -0.3, 120),
+		Color = Color3.fromRGB(70, 70, 74),
+		Material = Enum.Material.Asphalt,
+		Parent = parent,
+	})
+	for x = -240, -80, 20 do
+		part({
+			Name = "RoadStripe",
+			Size = Vector3.new(6, 0.2, 0.8),
+			CFrame = CFrame.new(x, -0.05, 120),
+			Color = Palette.BusYellow,
+			Parent = parent,
+		})
+	end
+end
+
 local function buildPerimeter(parent: Instance)
 	for _, spec in {
 		{ size = Vector3.new(560, 6, 2), cf = CFrame.new(0, 3, -279) },
@@ -573,6 +714,15 @@ function MapService.Build(): Map
 	buildGymMarkings(folder, Vector3.new(215, 0, 60))
 	buildStatues(folder)
 	buildPerimeter(folder)
+	buildZoneWalls(folder, Vector3.new(-215, 0, 60), Vector2.new(70, 70), Vector3.new(1, 0, 0))
+	buildZoneWalls(folder, Vector3.new(-215, 0, -60), Vector2.new(70, 70), Vector3.new(1, 0, 0))
+	buildZoneWalls(folder, Vector3.new(215, 0, 60), Vector2.new(70, 70), Vector3.new(-1, 0, 0))
+	buildZoneWalls(folder, Vector3.new(215, 0, -60), Vector2.new(70, 70), Vector3.new(-1, 0, 0))
+	buildZoneWalls(folder, Vector3.new(0, 0, -150), Vector2.new(80, 60), Vector3.new(0, 0, 1))
+	buildEntranceArch(folder)
+	buildFlagpole(folder)
+	buildHoops(folder, Vector3.new(215, 0, 60))
+	buildRoad(folder)
 	for _, pos in {
 		Vector3.new(-40, 0, 130), Vector3.new(45, 0, 128), Vector3.new(-15, 0, 172),
 		Vector3.new(30, 0, 175), Vector3.new(-52, 0, 168), Vector3.new(55, 0, 150),

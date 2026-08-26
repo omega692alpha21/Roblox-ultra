@@ -30,9 +30,15 @@ local walkers: { Walker } = {}
 local startPos: Vector3 = Vector3.zero
 local endPos: Vector3 = Vector3.zero
 
--- Server-wide luck multiplier from events (config flag) + per-buy player luck applies at roll time.
+local rushUntil = 0
+
+-- Server-wide luck multiplier: config event flag x active Secret Rush window.
 local function serverLuck(): number
-	return GameConfig.EventLuckMultiplier or 1
+	local luck = GameConfig.EventLuckMultiplier or 1
+	if os.clock() < rushUntil then
+		luck *= GameConfig.SecretRushLuckMult
+	end
+	return luck
 end
 
 local function spawnWalker()
@@ -50,17 +56,22 @@ local function spawnWalker()
 			end
 		end
 	end
-	local rarity = Students.RollRarity(rng, serverLuck() * bestLuck)
+	local totalLuck = serverLuck() * bestLuck
+	local rarity = Students.RollRarity(rng, totalLuck)
 	local def = rarity.students[rng:NextInteger(1, #rarity.students)]
+	local mut = Students.RollMutation(rng, totalLuck)
+	local mutation = Students.GetMutation(mut)
+	local cost = math.ceil(def.cost * (mutation and mutation.mult or 1))
 	local model = StudentGen.Create(def.id)
 	if not model then
 		return
 	end
 	model.Name = "Walker_" .. def.id
+	StudentGen.Decorate(model, def.id, mut, false)
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Recruit"
-	prompt.ObjectText = def.name .. "  $" .. NumberFormat.Abbreviate(def.cost)
+	prompt.ObjectText = (mutation and mutation.name .. " " or "") .. def.name .. "  $" .. NumberFormat.Abbreviate(cost)
 	prompt.HoldDuration = 0.35
 	prompt.MaxActivationDistance = 14
 	prompt.RequiresLineOfSight = false
@@ -85,14 +96,18 @@ local function spawnWalker()
 			Remotes.Get("Notify"):FireClient(player, "Your homeroom is full! Rebirth or get the +2 Slots pass.", "bad")
 			return
 		end
-		if not EconomyService.TrySpend(player, def.cost) then
-			Remotes.Get("Notify"):FireClient(player, "Not enough lunch money! Need $" .. NumberFormat.Abbreviate(def.cost), "bad")
+		if not EconomyService.TrySpend(player, cost) then
+			Remotes.Get("Notify"):FireClient(player, "Not enough lunch money! Need $" .. NumberFormat.Abbreviate(cost), "bad")
 			return
 		end
 		walker.bought = true
-		PlotService.AddStudent(player, def.id)
+		PlotService.AddStudent(player, def.id, mut)
 		Signals.Recruited:Fire(player, def.id)
-		Remotes.Get("Notify"):FireClient(player, "Recruited " .. def.name .. "!", "good")
+		Remotes.Get("Notify"):FireClient(
+			player,
+			"Recruited " .. (mutation and mutation.name .. " " or "") .. def.name .. "!",
+			mutation and "aura" or "good"
+		)
 		if rarity.name == "Secret" or rarity.name == "Mythic" then
 			Remotes.Get("Notify"):FireAllClients(
 				player.DisplayName .. " recruited " .. rarity.name:upper() .. " " .. def.name .. "!",
@@ -116,6 +131,23 @@ function ConveyorService.Init(map: { conveyorStart: Vector3, conveyorEnd: Vector
 		while true do
 			task.wait(GameConfig.ConveyorSpawnInterval)
 			spawnWalker()
+		end
+	end)
+
+	-- Secret Rush: recurring hype window with massively boosted odds
+	task.spawn(function()
+		while true do
+			task.wait(rng:NextNumber(GameConfig.SecretRushMinInterval, GameConfig.SecretRushMaxInterval))
+			rushUntil = os.clock() + GameConfig.SecretRushDuration
+			Remotes.Get("Notify"):FireAllClients(
+				("SECRET RUSH! %dx luck in the hallway for %d seconds — GO GO GO!"):format(
+					GameConfig.SecretRushLuckMult,
+					GameConfig.SecretRushDuration
+				),
+				"announce"
+			)
+			task.wait(GameConfig.SecretRushDuration)
+			Remotes.Get("Notify"):FireAllClients("Secret Rush is over. Back to class.", "info")
 		end
 	end)
 

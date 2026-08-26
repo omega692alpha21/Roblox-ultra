@@ -17,6 +17,7 @@ local Controllers = script.Parent.Controllers
 
 require(Controllers.NotifyController).Init(gui)
 require(Controllers.HudController).Init(gui)
+require(Controllers.CrewController).Init(gui)
 require(Controllers.StoreController).Init(gui)
 require(Controllers.RebirthController).Init(gui)
 require(Controllers.RewardsController).Init(gui)

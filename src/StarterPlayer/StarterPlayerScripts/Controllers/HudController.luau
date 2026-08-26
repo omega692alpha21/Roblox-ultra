@@ -92,7 +92,7 @@ function HudController.Init(gui: ScreenGui)
 	local nav = UIBuilder.Frame({
 		Name = "NavRail",
 		Position = UDim2.fromOffset(12, 150),
-		Size = UDim2.fromOffset(84, 6 * 62),
+		Size = UDim2.fromOffset(84, 7 * 62),
 		BackgroundTransparency = 1,
 		Parent = gui,
 	})
@@ -100,6 +100,7 @@ function HudController.Init(gui: ScreenGui)
 	navLayout.Padding = UDim.new(0, 8)
 	navLayout.Parent = nav
 	local navItems = {
+		{ label = "CREW", panel = "Crew", color = Palette.AuraPurple },
 		{ label = "STORE", panel = "Store", color = Palette.CashGreen },
 		{ label = "GRADES", panel = "Rebirth", color = Palette.LockerBlue },
 		{ label = "REWARDS", panel = "Rewards", color = Palette.BusYellow },

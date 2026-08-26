@@ -18,7 +18,9 @@ local EVENTS = {
 	"SpinResult", -- (prizeIndex: number, label: string)
 	"LeaderboardUpdate", -- (kind: "cash"|"aura", rows: {{name, value}})
 	"OfflineEarnings", -- (amount: number, awaySeconds: number)
+	"CrewState", -- (crew: {{uid, id, mut, star}})
 	-- client -> server
+	"FuseStudent", -- (defId: string)
 	"DoRebirth",
 	"ClaimPlaytime", -- (index: number)
 	"SpinWheel",
@@ -31,6 +33,7 @@ local EVENTS = {
 
 local FUNCTIONS = {
 	"GetRewardState", -- () -> state table
+	"GetCrew", -- () -> crew list
 }
 
 local Remotes = {}

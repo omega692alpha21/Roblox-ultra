@@ -75,12 +75,28 @@ function EconomyService.BaseIncome(player: Player): number
 	end
 	local total = 0
 	for _, member in profile.crew do
-		local entry = Students.Get(member.id)
-		if entry then
-			total += entry.def.income
-		end
+		total += Students.IncomeFor(member.id, member.mut, member.star)
 	end
 	return total
+end
+
+-- The richest loaded player wears the bounty crown; robbing them pays bonus aura.
+local function updateBounty()
+	local richest: Player? = nil
+	local richestCash = -1
+	for _, player in Players:GetPlayers() do
+		local profile = DataService.Get(player)
+		if profile and profile.cash > richestCash then
+			richestCash = profile.cash
+			richest = player
+		end
+	end
+	for _, player in Players:GetPlayers() do
+		local isBounty = player == richest and #Players:GetPlayers() > 1
+		if (player:GetAttribute("Bounty") == true) ~= isBounty then
+			player:SetAttribute("Bounty", isBounty)
+		end
+	end
 end
 
 function EconomyService.AddCash(player: Player, amount: number, countsAsEarned: boolean?)
@@ -164,6 +180,7 @@ function EconomyService.Init()
 	task.spawn(function()
 		while true do
 			task.wait(GameConfig.IncomeTickSeconds)
+			updateBounty()
 			for _, player in Players:GetPlayers() do
 				if not DataService.IsLoaded(player) then
 					continue

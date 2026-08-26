@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Students = require(ReplicatedStorage.Config.Students)
+local Remotes = require(ReplicatedStorage.Remotes)
 local MapService = require(script.Parent.MapService)
 local StudentGen = require(script.Parent.StudentGen)
 local DataService = require(script.Parent.DataService)
@@ -55,26 +56,36 @@ function PlotService.CrewCount(player: Player): number
 	return profile and #profile.crew or 0
 end
 
-local function spawnStudentModel(player: Player, uid: string, defId: string, slotIndex: number)
+type CrewMember = { uid: string, id: string, mut: string?, star: boolean? }
+
+local function pushCrew(player: Player)
+	local profile = DataService.Get(player)
+	if profile then
+		Remotes.Get("CrewState"):FireClient(player, profile.crew)
+	end
+end
+
+local function spawnStudentModel(player: Player, member: CrewMember, slotIndex: number)
 	local plot = playerPlot[player]
 	if not plot then
 		return
 	end
-	local model = StudentGen.Create(defId)
+	local model = StudentGen.Create(member.id)
 	if not model then
 		return
 	end
-	model.Name = "Crew_" .. uid
-	model:SetAttribute("Uid", uid)
+	model.Name = "Crew_" .. member.uid
+	model:SetAttribute("Uid", member.uid)
 	model:SetAttribute("OwnerUserId", player.UserId)
+	StudentGen.Decorate(model, member.id, member.mut, member.star)
 	local slotCf = plot.deskSlots[slotIndex] or plot.deskSlots[#plot.deskSlots]
 	model.Parent = plot.model
 	StudentGen.Stand(model, slotCf)
 	StudentGen.PlayAnim(model, "idle")
 	crewModels[player] = crewModels[player] or {}
-	crewModels[player][uid] = model
+	crewModels[player][member.uid] = model
 	for _, fn in modelAddedCallbacks do
-		task.spawn(fn, player, plot, model, uid, defId)
+		task.spawn(fn, player, plot, model, member.uid, member.id)
 	end
 end
 
@@ -94,14 +105,15 @@ function PlotService.RebuildCrew(player: Player)
 	crewModels[player] = {}
 	for i, member in profile.crew do
 		if not (carriedPredicate and carriedPredicate(member.uid)) then
-			spawnStudentModel(player, member.uid, member.id, i)
+			spawnStudentModel(player, member, i)
 		end
 	end
+	pushCrew(player)
 	Signals.CrewChanged:Fire(player)
 end
 
 -- Add a student to the player's crew (validates a free slot). Returns the uid.
-function PlotService.AddStudent(player: Player, defId: string): string?
+function PlotService.AddStudent(player: Player, defId: string, mut: string?, star: boolean?): string?
 	local profile = DataService.Get(player)
 	if not profile or not playerPlot[player] then
 		return nil
@@ -112,15 +124,16 @@ function PlotService.AddStudent(player: Player, defId: string): string?
 	if not Students.Get(defId) then
 		return nil
 	end
-	local uid = HttpService:GenerateGUID(false)
-	table.insert(profile.crew, { uid = uid, id = defId })
-	spawnStudentModel(player, uid, defId, #profile.crew)
+	local member: CrewMember = { uid = HttpService:GenerateGUID(false), id = defId, mut = mut, star = star }
+	table.insert(profile.crew, member)
+	spawnStudentModel(player, member, #profile.crew)
+	pushCrew(player)
 	Signals.CrewChanged:Fire(player)
-	return uid
+	return member.uid
 end
 
--- Remove by uid (steal transfer / rebirth). Returns the defId that was removed.
-function PlotService.RemoveStudent(player: Player, uid: string): string?
+-- Remove by uid (steal transfer / rebirth). Returns a copy of the removed member.
+function PlotService.RemoveStudent(player: Player, uid: string): CrewMember?
 	local profile = DataService.Get(player)
 	if not profile then
 		return nil
@@ -135,10 +148,45 @@ function PlotService.RemoveStudent(player: Player, uid: string): string?
 			end
 			-- re-seat remaining students so desks fill front-first
 			PlotService.RebuildCrew(player)
-			return member.id
+			return table.clone(member)
 		end
 	end
 	return nil
+end
+
+-- Fuse N duplicates of one student into a Star version (keeps the best mutation).
+function PlotService.FuseStudent(player: Player, defId: string): boolean
+	local profile = DataService.Get(player)
+	if not profile or not Students.Get(defId) then
+		return false
+	end
+	local candidates: { number } = {}
+	for i, member in profile.crew do
+		if member.id == defId and not member.star then
+			table.insert(candidates, i)
+		end
+	end
+	if #candidates < Students.FuseCount then
+		return false
+	end
+	-- keep the most valuable mutation among the consumed copies
+	local bestMut: string? = nil
+	local bestMult = 1
+	for i = 1, Students.FuseCount do
+		local member = profile.crew[candidates[i]]
+		local mutation = Students.GetMutation(member.mut)
+		if mutation and mutation.mult > bestMult then
+			bestMult = mutation.mult
+			bestMut = mutation.id
+		end
+	end
+	-- remove back-to-front so indexes stay valid
+	for i = Students.FuseCount, 1, -1 do
+		table.remove(profile.crew, candidates[i])
+	end
+	table.insert(profile.crew, { uid = HttpService:GenerateGUID(false), id = defId, mut = bestMut, star = true })
+	PlotService.RebuildCrew(player)
+	return true
 end
 
 function PlotService.GetStudentModel(player: Player, uid: string): Model?
@@ -187,6 +235,33 @@ end
 
 function PlotService.Init(builtMap: MapService.Map)
 	map = builtMap
+
+	Remotes.GetFunction("GetCrew").OnServerInvoke = function(player)
+		local profile = DataService.Get(player)
+		return profile and profile.crew or {}
+	end
+	local fuseDebounce: { [Player]: number } = {}
+	Remotes.Get("FuseStudent").OnServerEvent:Connect(function(player, defId)
+		if typeof(defId) ~= "string" then
+			return
+		end
+		local now = os.clock()
+		if now - (fuseDebounce[player] or 0) < 0.5 then
+			return
+		end
+		fuseDebounce[player] = now
+		if PlotService.FuseStudent(player, defId) then
+			local entry = Students.Get(defId)
+			Remotes.Get("Notify"):FireClient(
+				player,
+				("FUSED! ★ %s joined your crew (x%d income)."):format(entry and entry.def.name or defId, Students.StarIncomeMult),
+				"aura"
+			)
+		else
+			Remotes.Get("Notify"):FireClient(player, "Fusing needs 3 un-starred copies of the same student.", "bad")
+		end
+	end)
+
 	Players.PlayerAdded:Connect(assignPlot)
 	for _, player in Players:GetPlayers() do
 		if not playerPlot[player] then

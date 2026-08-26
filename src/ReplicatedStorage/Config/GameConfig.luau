@@ -57,6 +57,15 @@ return {
 	EventLuckMultiplier = 1, -- e.g. 2 for a "2x Luck Weekend"
 	EventCashMultiplier = 1, -- e.g. 2 for a "2x Cash Hour"
 
+	-- Secret Rush: recurring in-server hype window with boosted odds
+	SecretRushMinInterval = 1080, -- seconds between rushes (min)
+	SecretRushMaxInterval = 1560, -- (max)
+	SecretRushDuration = 75,
+	SecretRushLuckMult = 5,
+
+	-- Bounty: the richest player in the server wears a crown; robbing them pays extra
+	BountyStealAuraBonus = 15,
+
 	-- Misc
 	AutosaveSeconds = 60,
 	LeaderboardPushSeconds = 120,

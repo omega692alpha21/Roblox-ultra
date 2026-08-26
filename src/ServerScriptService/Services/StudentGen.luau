@@ -151,6 +151,7 @@ local function addBillboard(model: Model, defName: string, rarityName: string, i
 	billboard.Parent = head
 
 	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Name = "StudentName"
 	nameLabel.Size = UDim2.fromScale(1, 0.45)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Font = Enum.Font.FredokaOne
@@ -277,6 +278,64 @@ function StudentGen.Create(defId: string): Model?
 	-- attribute so other services can identify the def without parsing names
 	model:SetAttribute("StudentId", defId)
 	return model
+end
+
+-- Apply mutation + star visuals and corrected income text to a generated student.
+function StudentGen.Decorate(model: Model, defId: string, mut: string?, star: boolean?)
+	model:SetAttribute("Mut", mut)
+	model:SetAttribute("Star", star == true)
+	local entry = Students.Get(defId)
+	local mutation = Students.GetMutation(mut)
+	local head = model:FindFirstChild("Head")
+	local billboard = head and head:FindFirstChild("NameTag") :: BillboardGui?
+	if billboard and entry then
+		local nameLabel = billboard:FindFirstChild("StudentName") :: TextLabel?
+		local infoLabel = billboard:FindFirstChild("Info") :: TextLabel?
+		if nameLabel then
+			local prefix = ""
+			if star then
+				prefix = "★ "
+			end
+			if mutation then
+				prefix ..= mutation.name .. " "
+				nameLabel.TextColor3 = mutation.color
+			end
+			nameLabel.Text = prefix .. entry.def.name
+		end
+		if infoLabel then
+			infoLabel.Text = "$" .. NumberFormat.Abbreviate(Students.IncomeFor(defId, mut, star)) .. "/s"
+		end
+	end
+	local root = (model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")) :: BasePart?
+	if mutation then
+		local tint = Instance.new("Highlight")
+		tint.Name = "MutationTint"
+		tint.FillColor = mutation.color
+		tint.FillTransparency = 0.7
+		tint.OutlineColor = mutation.color
+		tint.OutlineTransparency = 0.2
+		tint.Parent = model
+		if root and (mut == "radioactive" or mut == "shiny") then
+			local particles = Instance.new("ParticleEmitter")
+			particles.Color = ColorSequence.new(mutation.color)
+			particles.Rate = mut == "radioactive" and 14 or 6
+			particles.Lifetime = NumberRange.new(0.5, 1.1)
+			particles.Speed = NumberRange.new(1, 2)
+			particles.Size = NumberSequence.new(0.3)
+			particles.LightEmission = 1
+			particles.Parent = root
+		end
+	end
+	if star and root then
+		local sparkle = Instance.new("ParticleEmitter")
+		sparkle.Color = ColorSequence.new(Palette.BusYellow)
+		sparkle.Rate = 8
+		sparkle.Lifetime = NumberRange.new(0.4, 0.9)
+		sparkle.Speed = NumberRange.new(2, 3)
+		sparkle.Size = NumberSequence.new(0.25)
+		sparkle.LightEmission = 1
+		sparkle.Parent = root
+	end
 end
 
 -- Roblox-owned default R15 animations (usable by any experience).

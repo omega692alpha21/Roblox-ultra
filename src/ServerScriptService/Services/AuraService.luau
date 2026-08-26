@@ -54,8 +54,9 @@ local function updateOverhead(player: Player)
 		grade.TextStrokeTransparency = 0.3
 		grade.Parent = billboard
 	end
-	local rank = Rebirths.RankFor(profile.aura);
-	(billboard:FindFirstChild("Title") :: TextLabel).Text = rank .. " · " .. NumberFormat.Abbreviate(profile.aura) .. " aura";
+	local rank = Rebirths.RankFor(profile.aura)
+	local crown = player:GetAttribute("Bounty") == true and "👑 " or "";
+	(billboard:FindFirstChild("Title") :: TextLabel).Text = crown .. rank .. " · " .. NumberFormat.Abbreviate(profile.aura) .. " aura";
 	(billboard:FindFirstChild("Grade") :: TextLabel).Text = Rebirths.GradeName(profile.grade)
 	player:SetAttribute("Rank", rank)
 end
@@ -76,8 +77,12 @@ function AuraService.Add(player: Player, amount: number)
 end
 
 function AuraService.Init()
-	Signals.Stole:Connect(function(thief)
-		AuraService.Add(thief, GameConfig.RepPerSteal)
+	Signals.Stole:Connect(function(thief, victim)
+		local bonus = 0
+		if victim and victim:GetAttribute("Bounty") == true then
+			bonus = GameConfig.BountyStealAuraBonus
+		end
+		AuraService.Add(thief, GameConfig.RepPerSteal + bonus)
 	end)
 	Signals.ThiefHit:Connect(function(puncher)
 		AuraService.Add(puncher, GameConfig.RepPerThiefHit)
@@ -98,6 +103,9 @@ function AuraService.Init()
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function()
 			task.wait(0.5)
+			updateOverhead(player)
+		end)
+		player:GetAttributeChangedSignal("Bounty"):Connect(function()
 			updateOverhead(player)
 		end)
 	end)

@@ -92,9 +92,56 @@ local Rarities: { Rarity } = {
 	},
 }
 
+export type Mutation = {
+	id: string,
+	name: string,
+	weight: number,
+	mult: number,
+	color: Color3,
+}
+
+-- Mutations roll independently of rarity when a student spawns in the hallway.
+-- A mutated student costs (cost x mult) and earns (income x mult).
+local Mutations: { Mutation } = {
+	{ id = "shiny", name = "SHINY", weight = 10, mult = 1.5, color = Color3.fromRGB(240, 248, 255) },
+	{ id = "golden", name = "GOLDEN", weight = 4, mult = 2.5, color = Color3.fromRGB(245, 197, 49) },
+	{ id = "radioactive", name = "RADIOACTIVE", weight = 1, mult = 5, color = Color3.fromRGB(96, 255, 96) },
+}
+local MUTATION_NONE_WEIGHT = 85
+
 local Students = {
 	Rarities = Rarities,
+	Mutations = Mutations,
+	StarIncomeMult = 3, -- fused (Star) students earn this multiple
+	FuseCount = 3, -- duplicates consumed per fusion
 }
+
+function Students.GetMutation(id: string?): Mutation?
+	if not id then
+		return nil
+	end
+	for _, mutation in Mutations do
+		if mutation.id == id then
+			return mutation
+		end
+	end
+	return nil
+end
+
+function Students.RollMutation(rng: Random, luckMult: number): string?
+	local total = MUTATION_NONE_WEIGHT
+	for _, mutation in Mutations do
+		total += mutation.weight * luckMult
+	end
+	local pick = rng:NextNumber() * total
+	for _, mutation in Mutations do
+		pick -= mutation.weight * luckMult
+		if pick <= 0 then
+			return mutation.id
+		end
+	end
+	return nil
+end
 
 local byId: { [string]: { def: StudentDef, rarity: Rarity } } = {}
 for _, rarity in Rarities do
@@ -107,6 +154,23 @@ end
 -- (e.g. a student removed from the config after players saved one).
 function Students.Get(id: string): ({ def: StudentDef, rarity: Rarity }?)
 	return byId[id]
+end
+
+-- Full income/s for one crew member including mutation + star bonuses.
+function Students.IncomeFor(defId: string, mut: string?, star: boolean?): number
+	local entry = byId[defId]
+	if not entry then
+		return 0
+	end
+	local income = entry.def.income
+	local mutation = Students.GetMutation(mut)
+	if mutation then
+		income *= mutation.mult
+	end
+	if star then
+		income *= Students.StarIncomeMult
+	end
+	return income
 end
 
 -- Weighted rarity roll. luckMult multiplies the weight of everything above Common.
