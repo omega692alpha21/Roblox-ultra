@@ -18,6 +18,11 @@ local Signals = require(script.Parent.Parent.Signals)
 local EconomyService = {}
 
 local uncollected: { [Player]: number } = {}
+local periodMult = 1 -- school-day period bonus (e.g. Lunch Rush), set by SchoolClock
+
+function EconomyService.SetPeriodMult(mult: number)
+	periodMult = mult
+end
 local friendBonus: { [Player]: number } = {}
 local collectDebounce: { [Player]: number } = {}
 
@@ -185,7 +190,10 @@ function EconomyService.Init()
 				if not DataService.IsLoaded(player) then
 					continue
 				end
-				local income = EconomyService.BaseIncome(player) * EconomyService.Multiplier(player)
+				local income = EconomyService.BaseIncome(player)
+					* EconomyService.Multiplier(player)
+					* periodMult
+					* (GameConfig.EventCashMultiplier or 1)
 				player:SetAttribute("Income", math.floor(income))
 				local profile = DataService.Get(player)
 				if profile then

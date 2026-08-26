@@ -135,13 +135,9 @@ function ClassService.Init()
 	Players.PlayerRemoving:Connect(function(player)
 		sessions[player] = nil
 	end)
-
-	task.spawn(function()
-		while true do
-			task.wait(GameConfig.ClassBellIntervalSeconds)
-			startBell()
-		end
-	end)
 end
+
+-- SchoolClock rings the bell as part of the school-day cycle.
+ClassService.StartBell = startBell
 
 return ClassService

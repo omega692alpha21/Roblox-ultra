@@ -55,7 +55,7 @@ function HudController.Init(gui: ScreenGui)
 		Name = "GradeBadge",
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, 10),
-		Size = UDim2.fromOffset(250, 42),
+		Size = UDim2.fromOffset(260, 58),
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.1,
 		Parent = gui,
@@ -63,8 +63,16 @@ function HudController.Init(gui: ScreenGui)
 	UIBuilder.Round(gradeBadge, 12)
 	UIBuilder.Stroke(gradeBadge, Palette.LockerBlue, 3)
 	local gradeLabel = UIBuilder.Label({
-		Size = UDim2.fromScale(1, 1),
+		Position = UDim2.fromOffset(0, 4),
+		Size = UDim2.new(1, 0, 0, 28),
 		Text = "Freshman Year",
+		Parent = gradeBadge,
+	})
+	local periodLabel = UIBuilder.Label({
+		Position = UDim2.fromOffset(0, 34),
+		Size = UDim2.new(1, 0, 0, 20),
+		Text = "",
+		TextColor3 = Palette.BusYellow,
 		Parent = gradeBadge,
 	})
 
@@ -145,6 +153,14 @@ function HudController.Init(gui: ScreenGui)
 		local grade = player:GetAttribute("Grade")
 		local gradeNum = typeof(grade) == "number" and grade or 0
 		gradeLabel.Text = ("%s · x%.1f"):format(Rebirths.GradeName(gradeNum), Rebirths.Multiplier(gradeNum))
+
+		local period = ReplicatedStorage:GetAttribute("Period")
+		local periodEnds = ReplicatedStorage:GetAttribute("PeriodEndsAt")
+		if typeof(period) == "string" and typeof(periodEnds) == "number" then
+			periodLabel.Text = period:upper() .. " · " .. NumberFormat.Clock(periodEnds - workspace:GetServerTimeNow())
+		else
+			periodLabel.Text = "SCHOOL'S IN SESSION"
+		end
 
 		local lockUntil = player:GetAttribute("LockUntil")
 		if typeof(lockUntil) == "number" then

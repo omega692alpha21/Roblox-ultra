@@ -241,13 +241,14 @@ local function addBillboard(model: Model, defName: string, rarityName: string, i
 end
 
 -- Creates an anchored, non-colliding student NPC model for the given student id.
-function StudentGen.Create(defId: string): Model?
+-- seedSuffix varies the look for ambient NPCs that reuse a roster id.
+function StudentGen.Create(defId: string, seedSuffix: string?): Model?
 	local entry = Students.Get(defId)
 	if not entry then
 		return nil
 	end
 	local def, rarity = entry.def, entry.rarity
-	local rng = Random.new(seedFromString(defId))
+	local rng = Random.new(seedFromString(defId .. (seedSuffix or "")))
 
 	local ok, model = pcall(function()
 		local desc = Instance.new("HumanoidDescription")

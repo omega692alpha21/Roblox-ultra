@@ -27,5 +27,6 @@ require(Controllers.CliqueController).Init(gui)
 require(Controllers.LeaderboardController).Init(gui)
 require(Controllers.PunchController).Init(gui)
 require(Controllers.TutorialController).Init(gui)
+require(Controllers.DialogueController).Init(gui)
 
 print("[LunchMoneyLegends] client ready")

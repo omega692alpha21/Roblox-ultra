@@ -19,6 +19,7 @@ local EVENTS = {
 	"LeaderboardUpdate", -- (kind: "cash"|"aura", rows: {{name, value}})
 	"OfflineEarnings", -- (amount: number, awaySeconds: number)
 	"CrewState", -- (crew: {{uid, id, mut, star}})
+	"Dialogue", -- (speaker: string, lines: {string})
 	-- client -> server
 	"FuseStudent", -- (defId: string)
 	"DoRebirth",
