@@ -7,7 +7,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage.Remotes)
 local ClassService = require(script.Parent.ClassService)
+local CurfewService = require(script.Parent.CurfewService)
 local EconomyService = require(script.Parent.EconomyService)
+local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 
 local SchoolClock = {}
 
@@ -37,6 +39,15 @@ local PERIODS: { Period } = {
 		incomeMult = 1.5,
 		announce = "LUNCH RUSH! All crews earn 1.5x lunch money — cafeteria is popping!",
 		kind = "announce",
+	},
+	{ name = "Free Period", duration = 150 },
+	{
+		name = "Lights Out",
+		duration = GameConfig.CurfewNightSeconds,
+		-- CurfewService announces, darkens the sky, and runs the aura/detention loop
+		onStart = function()
+			CurfewService.StartNight()
+		end,
 	},
 }
 

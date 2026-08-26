@@ -39,6 +39,11 @@ function StealService.RefreshWalkSpeed(player: Player)
 	if not humanoid then
 		return
 	end
+	local detention = player:GetAttribute("DetentionUntil")
+	if typeof(detention) == "number" and detention > os.clock() then
+		humanoid.WalkSpeed = 0
+		return
+	end
 	local speed = 16
 	if player:GetAttribute("PassSpeed") then
 		speed += GameConfig.SpeedPassBonus

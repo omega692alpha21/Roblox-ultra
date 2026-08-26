@@ -31,6 +31,7 @@ export type Map = {
 	trophyAuraBoard: BasePart,
 	cliqueBoards: { [string]: BasePart },
 	dormBeds: { BasePart },
+	detentionSpot: Vector3,
 	folder: Folder,
 }
 
@@ -1304,6 +1305,20 @@ function MapService.Build(): Map
 	buildDorm(folder, Vector3.new(195, 0, 200), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
 	buildPath(folder, Vector3.new(-60, 0, 150), Vector3.new(-170, 0, 195), 8)
 	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(170, 0, 195), 8)
+
+	-- detention room: where curfew-breakers get dragged after dark
+	local detentionCenter = Vector3.new(-100, 0, -210)
+	buildZone(folder, "Detention", detentionCenter, Vector2.new(36, 28), Color3.fromRGB(126, 126, 132), "DETENTION", Enum.Material.Concrete)
+	do
+		local dx0, dx1 = detentionCenter.X - 18, detentionCenter.X + 18
+		local dz0, dz1 = detentionCenter.Z - 14, detentionCenter.Z + 14
+		buildWallRun(folder, Vector3.new(dx0, 0, dz0), Vector3.new(dx1, 0, dz0), {})
+		buildWallRun(folder, Vector3.new(dx0, 0, dz1), Vector3.new(dx1, 0, dz1), { { at = 18, width = 10 } })
+		buildWallRun(folder, Vector3.new(dx0, 0, dz0), Vector3.new(dx0, 0, dz1), {})
+		buildWallRun(folder, Vector3.new(dx1, 0, dz0), Vector3.new(dx1, 0, dz1), {})
+		part({ Name = "DetentionRoof", Size = Vector3.new(40, 1.4, 32), CFrame = CFrame.new(detentionCenter.X, 16.8, detentionCenter.Z), Color = Color3.fromRGB(84, 98, 110), Material = Enum.Material.Slate, Parent = folder })
+	end
+	buildPath(folder, Vector3.new(-40, 0, -150), Vector3.new(-95, 0, -195), 6)
 	buildEntranceArch(folder)
 	buildFlagpole(folder)
 	buildHoops(folder, Vector3.new(215, 0, 60))
@@ -1347,6 +1362,7 @@ function MapService.Build(): Map
 		trophyAuraBoard = trophyAuraBoard,
 		cliqueBoards = cliqueBoards,
 		dormBeds = dormBeds,
+		detentionSpot = detentionCenter,
 		folder = folder,
 	}
 end

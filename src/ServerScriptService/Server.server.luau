@@ -32,6 +32,7 @@ local MissionService = require(Services.MissionService)
 local RivalService = require(Services.RivalService)
 local CoinService = require(Services.CoinService)
 local DormService = require(Services.DormService)
+local CurfewService = require(Services.CurfewService)
 
 DataService.Init()
 
@@ -61,5 +62,6 @@ MissionService.Init()
 RivalService.Init()
 CoinService.Init()
 DormService.Init(map)
+CurfewService.Init(map)
 
 print("[LunchMoneyLegends] server ready — welcome to Crumbworth High")

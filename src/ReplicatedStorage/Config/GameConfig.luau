@@ -74,6 +74,16 @@ return {
 	RivalEscapeReturnSeconds = 15,
 	RivalFoilAura = 3,
 
+	-- Curfew: after Lights Out, being outdoors farms aura but risks detention
+	CurfewNightSeconds = 120,
+	CurfewTickSeconds = 5,
+	CurfewAuraCap = 6, -- per-tick aura ramps 1,2,3... up to this
+	CurfewCatchBase = 0.04, -- prefect catch chance on the first tick outside
+	CurfewCatchRamp = 0.025, -- extra catch chance per consecutive tick
+	CurfewCatchMax = 0.35,
+	DetentionSeconds = 12,
+	DetentionAuraPenalty = 5,
+
 	-- Campus coin pickups
 	CoinValueMin = 25,
 	CoinValueMax = 75,
