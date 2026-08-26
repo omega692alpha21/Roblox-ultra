@@ -1,0 +1,35 @@
+{
+  "name": "lunch-money-legends",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "src/ReplicatedStorage",
+      "$ignoreUnknownInstances": true
+    },
+    "ServerScriptService": {
+      "$path": "src/ServerScriptService",
+      "$ignoreUnknownInstances": true
+    },
+    "StarterPlayer": {
+      "$ignoreUnknownInstances": true,
+      "StarterPlayerScripts": {
+        "$path": "src/StarterPlayer/StarterPlayerScripts",
+        "$ignoreUnknownInstances": true
+      }
+    },
+    "Workspace": {
+      "$ignoreUnknownInstances": true
+    },
+    "Lighting": {
+      "$ignoreUnknownInstances": true,
+      "$properties": {
+        "Brightness": 2,
+        "EnvironmentDiffuseScale": 1,
+        "EnvironmentSpecularScale": 1
+      }
+    },
+    "SoundService": {
+      "$ignoreUnknownInstances": true
+    }
+  }
+}

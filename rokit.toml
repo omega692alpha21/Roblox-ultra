@@ -1,0 +1,3 @@
+# Toolchain for this project. Install rokit (https://github.com/rojo-rbx/rokit), then run: rokit install
+[tools]
+rojo = "rojo-rbx/rojo@7.4.4"
