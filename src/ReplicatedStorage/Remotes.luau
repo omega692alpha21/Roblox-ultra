@@ -33,6 +33,7 @@ local EVENTS = {
 	"Punch",
 	"Sprint", -- (on: boolean)
 	"ClientDiagnostic", -- (failures: {string}) UI self-check report
+	"ChooseCharacter", -- (outfit: "boy" | "girl")
 }
 
 local FUNCTIONS = {

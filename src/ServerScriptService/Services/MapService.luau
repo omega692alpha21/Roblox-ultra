@@ -1550,6 +1550,15 @@ function MapService.Build(): Map
 
 	buildTerrain()
 
+	-- solid interior base floor: no terrain grass inside the school
+	tag(part({
+		Name = "SchoolBaseFloor",
+		Size = Vector3.new(336, 1, 168),
+		CFrame = CFrame.new(0, -0.55, 0),
+		Color = Color3.fromRGB(196, 194, 188),
+		Parent = folder,
+	}), "TexFloorTile")
+
 	-- hallway (the conveyor) along the X axis
 	tag(part({
 		Name = "HallwayFloor",

@@ -34,6 +34,7 @@ export type Profile = {
 	social: { [string]: boolean },
 	missions: { [string]: number }, -- mission giver id -> completed count
 	rep: { [string]: number }, -- reputation tracks: popular/smart/athletic/creative/troublemaker
+	outfit: string?, -- starter character: "boy" | "girl"
 }
 
 local function template(): Profile

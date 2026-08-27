@@ -33,6 +33,7 @@ local ORDER = {
 	"ScreenFxController",
 	"SprintController",
 	"TutorialController",
+	"CharacterSelectController",
 	"DialogueController",
 }
 

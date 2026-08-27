@@ -52,6 +52,7 @@ local BOOT: { { name: string, init: (typeof(map)) -> () } } = {
 	{ name = "DodgeballService", init = function() (require(Services.DodgeballService) :: any).Init() end },
 	{ name = "EventDirector", init = function() (require(Services.EventDirector) :: any).Init() end },
 	{ name = "TextureService", init = function() (require(Services.TextureService) :: any).Init() end },
+	{ name = "CharacterService", init = function() (require(Services.CharacterService) :: any).Init() end },
 	{ name = "DiagnosticsService", init = function() (require(Services.DiagnosticsService) :: any).Init() end },
 }
 for _, entry in BOOT do
