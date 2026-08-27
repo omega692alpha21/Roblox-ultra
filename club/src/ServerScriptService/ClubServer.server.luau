@@ -10,14 +10,15 @@ Remotes.Init()
 
 -- gilded night: the estate glows warm against a deep star sky
 Lighting.ClockTime = 0.15
-Lighting.Brightness = 2.4
+Lighting.Brightness = 1.6
 Lighting.GlobalShadows = true
 Lighting.ShadowSoftness = 0.12
-Lighting.EnvironmentDiffuseScale = 0.6
+Lighting.EnvironmentDiffuseScale = 0.5
 Lighting.EnvironmentSpecularScale = 0.7
-Lighting.Ambient = Color3.fromRGB(58, 56, 64)
-Lighting.OutdoorAmbient = Color3.fromRGB(78, 82, 104)
-Lighting.ExposureCompensation = 0.65
+-- rich night: readable everywhere, but the marble and gold stay moody
+Lighting.Ambient = Color3.fromRGB(36, 35, 42)
+Lighting.OutdoorAmbient = Color3.fromRGB(54, 58, 76)
+Lighting.ExposureCompensation = 0.15
 
 local sky = Instance.new("Sky")
 sky.SkyboxFt = "rbxassetid://118975540614116"
@@ -39,14 +40,14 @@ atmosphere.Haze = 1.4
 atmosphere.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
-bloom.Intensity = 1.3
-bloom.Size = 48
-bloom.Threshold = 1.3
+bloom.Intensity = 0.9
+bloom.Size = 40
+bloom.Threshold = 1.6
 bloom.Parent = Lighting
 
 local grade = Instance.new("ColorCorrectionEffect")
-grade.Brightness = 0.05
-grade.Contrast = 0.06
+grade.Brightness = 0
+grade.Contrast = 0.05
 grade.Saturation = 0.12
 grade.TintColor = Color3.fromRGB(244, 240, 246)
 grade.Parent = Lighting

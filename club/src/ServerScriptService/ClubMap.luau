@@ -20,15 +20,15 @@ local WALNUT = Color3.fromRGB(46, 32, 21)
 local VELVET = Color3.fromRGB(74, 20, 24)
 local WATER = Color3.fromRGB(70, 130, 160)
 
-local PYR_CENTER_Z = -36
-local PYR_TIERS = 13
-local PYR_TIER_H = 8
-local PYR_BASE_HALF = 90
-local PYR_TOP_HALF = 10
+local PYR_CENTER_Z = -80
+local PYR_TIERS = 15
+local PYR_TIER_H = 9
+local PYR_BASE_HALF = 140
+local PYR_TOP_HALF = 12
 local DOOR_Z = PYR_CENTER_Z + PYR_BASE_HALF - 4 -- north face
-local HALL_CENTER = Vector3.new(0, 0, -60)
-local HALL_R = 30
-local HALL_H = 24
+local HALL_CENTER = Vector3.new(0, 0, -80)
+local HALL_R = 75
+local HALL_H = 38
 
 local function part(props: { [string]: any }): Part
 	local p = Instance.new("Part")
@@ -305,15 +305,15 @@ end
 local function buildEstate(folder: Folder, meshes: { [string]: Model? })
 	part({
 		Name = "Grounds",
-		Size = Vector3.new(380, 2, 380),
-		CFrame = CFrame.new(0, -1, 10),
+		Size = Vector3.new(500, 2, 500),
+		CFrame = CFrame.new(0, -1, 20),
 		Color = GRANITE,
 		Material = Enum.Material.Granite,
 		Parent = folder,
 	})
 
 	-- the boulevard: marble walkways flanking a long reflecting pool
-	local zNear, zFar = DOOR_Z + 10, 148
+	local zNear, zFar = DOOR_Z + 10, 184
 	local mid = (zNear + zFar) / 2
 	local length = zFar - zNear
 	part({
@@ -396,7 +396,7 @@ local function buildEstate(folder: Folder, meshes: { [string]: Model? })
 	local rng = Random.new(7)
 	for i = 0, 13 do
 		local a = i / 14 * math.pi * 2
-		local d = rng:NextNumber(95, 150)
+		local d = rng:NextNumber(125, 215)
 		local x, z = math.sin(a) * d, math.cos(a) * d + 10
 		if math.abs(x) > 30 or z > 150 or z < PYR_CENTER_Z - PYR_BASE_HALF - 10 then
 			crystalCluster(folder, meshes.gem, Vector3.new(x, 0, z), i * 13 + 5)
@@ -415,7 +415,7 @@ local function buildPyramid(folder: Folder): (BasePart, BasePart, BasePart)
 			part({ Name = name, Size = size, CFrame = cf, Color = MARBLE, Material = Enum.Material.Marble, Parent = folder })
 		end
 		if t <= 1 then
-			local gap = 11
+			local gap = 14
 			local segW = half - gap
 			slab("PyrN", Vector3.new(segW, PYR_TIER_H, thick), CFrame.new(-(gap + segW / 2), y, zc + half - thick / 2))
 			slab("PyrN", Vector3.new(segW, PYR_TIER_H, thick), CFrame.new(gap + segW / 2, y, zc + half - thick / 2))
@@ -466,8 +466,8 @@ local function buildPyramid(folder: Folder): (BasePart, BasePart, BasePart)
 	-- the marquee over the entrance
 	local marquee = part({
 		Name = "Marquee",
-		Size = Vector3.new(34, 6, 0.8),
-		CFrame = CFrame.new(0, 21, PYR_CENTER_Z + PYR_BASE_HALF - 10),
+		Size = Vector3.new(46, 7.5, 0.8),
+		CFrame = CFrame.new(0, 28, PYR_CENTER_Z + PYR_BASE_HALF - 12),
 		Color = GRANITE,
 		Material = Enum.Material.Slate,
 		CanCollide = false,
@@ -476,8 +476,8 @@ local function buildPyramid(folder: Folder): (BasePart, BasePart, BasePart)
 	signText(marquee, "MILLIONS CLUB", GOLD_BRIGHT, Enum.NormalId.Front)
 	local sub = part({
 		Name = "MarqueeSub",
-		Size = Vector3.new(26, 2, 0.6),
-		CFrame = CFrame.new(0, 17.4, PYR_CENTER_Z + PYR_BASE_HALF - 10),
+		Size = Vector3.new(34, 2.6, 0.6),
+		CFrame = CFrame.new(0, 23, PYR_CENTER_Z + PYR_BASE_HALF - 12),
 		Color = GRANITE,
 		Material = Enum.Material.Slate,
 		CanCollide = false,
@@ -488,11 +488,11 @@ local function buildPyramid(folder: Folder): (BasePart, BasePart, BasePart)
 	-- geometric panels flanking the doors
 	local faceZ = PYR_CENTER_Z + PYR_BASE_HALF + 0.4
 	local geos = { Config.Textures.Geo1, Config.Textures.Geo2, Config.Textures.Geo3 }
-	for i, x in { -26, 26, -36 } do
+	for i, x in { -34, 34, -46 } do
 		local p = part({
 			Name = "FacePanel",
-			Size = Vector3.new(6, 7.5, 0.5),
-			CFrame = CFrame.new(x, 6, faceZ),
+			Size = Vector3.new(8, 10, 0.5),
+			CFrame = CFrame.new(x, 7, faceZ),
 			Color = GRANITE,
 			Material = Enum.Material.Slate,
 			CanCollide = false,
@@ -504,16 +504,16 @@ local function buildPyramid(folder: Folder): (BasePart, BasePart, BasePart)
 	-- the grand doors: tall gold, and a gate part that owns the prompt
 	local doorL = part({
 		Name = "DoorL",
-		Size = Vector3.new(6.5, 16, 1.2),
-		CFrame = CFrame.new(-3.25, 8, DOOR_Z),
+		Size = Vector3.new(7, 18, 1.2),
+		CFrame = CFrame.new(-3.5, 9, DOOR_Z),
 		Color = GOLD,
 		Material = Enum.Material.Metal,
 		Parent = folder,
 	})
 	local doorR = part({
 		Name = "DoorR",
-		Size = Vector3.new(6.5, 16, 1.2),
-		CFrame = CFrame.new(3.25, 8, DOOR_Z),
+		Size = Vector3.new(7, 18, 1.2),
+		CFrame = CFrame.new(3.5, 9, DOOR_Z),
 		Color = GOLD,
 		Material = Enum.Material.Metal,
 		Parent = folder,
@@ -522,8 +522,8 @@ local function buildPyramid(folder: Folder): (BasePart, BasePart, BasePart)
 	decal(doorR, Enum.NormalId.Front, Config.Textures.Geo1)
 	local gate = part({
 		Name = "DoorGate",
-		Size = Vector3.new(14, 16, 0.4),
-		CFrame = CFrame.new(0, 8, DOOR_Z + 1.2),
+		Size = Vector3.new(15, 18, 0.4),
+		CFrame = CFrame.new(0, 9, DOOR_Z + 1.2),
 		Transparency = 1,
 		CanCollide = false,
 		Parent = folder,
@@ -715,8 +715,8 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 		if not isEntry then
 			local lower = part({
 				Name = "HallWainscot",
-				Size = Vector3.new(segW, 9, 1.2),
-				CFrame = cf * CFrame.new(0, 4.5, 0),
+				Size = Vector3.new(segW, 13, 1.2),
+				CFrame = cf * CFrame.new(0, 6.5, 0),
 				Color = WALNUT,
 				Material = Enum.Material.Wood,
 				Parent = folder,
@@ -724,8 +724,8 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 			tex(lower, Enum.NormalId.Back, Config.Textures.Wainscot, 12, 9)
 			local upper = part({
 				Name = "HallDamask",
-				Size = Vector3.new(segW, HALL_H - 9, 1.2),
-				CFrame = cf * CFrame.new(0, 9 + (HALL_H - 9) / 2, 0),
+				Size = Vector3.new(segW, HALL_H - 13, 1.2),
+				CFrame = cf * CFrame.new(0, 13 + (HALL_H - 13) / 2, 0),
 				Color = Color3.fromRGB(48, 30, 34),
 				Material = Enum.Material.Fabric,
 				Parent = folder,
@@ -733,8 +733,8 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 			tex(upper, Enum.NormalId.Back, Config.Textures.Damask, 12, 12)
 			part({
 				Name = "GiltRail",
-				Size = Vector3.new(segW, 0.4, 1.6),
-				CFrame = cf * CFrame.new(0, 9.2, 0),
+				Size = Vector3.new(segW, 0.5, 1.6),
+				CFrame = cf * CFrame.new(0, 13.2, 0),
 				Color = GOLD,
 				Material = Enum.Material.Metal,
 				CanCollide = false,
@@ -744,8 +744,8 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 			for _, side in { -1, 1 } do
 				part({
 					Name = "EntryJamb",
-					Size = Vector3.new((segW - 12) / 2, HALL_H, 1.2),
-					CFrame = cf * CFrame.new(side * (segW / 2 - (segW - 12) / 4), HALL_H / 2, 0),
+					Size = Vector3.new((segW - 18) / 2, HALL_H, 1.2),
+					CFrame = cf * CFrame.new(side * (segW / 2 - (segW - 18) / 4), HALL_H / 2, 0),
 					Color = WALNUT,
 					Material = Enum.Material.Wood,
 					Parent = folder,
@@ -753,8 +753,8 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 			end
 			part({
 				Name = "EntryLintel",
-				Size = Vector3.new(12, HALL_H - 13, 1.2),
-				CFrame = cf * CFrame.new(0, 13 + (HALL_H - 13) / 2, 0),
+				Size = Vector3.new(18, HALL_H - 19, 1.2),
+				CFrame = cf * CFrame.new(0, 19 + (HALL_H - 19) / 2, 0),
 				Color = WALNUT,
 				Material = Enum.Material.Wood,
 				Parent = folder,
@@ -765,16 +765,16 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 		placeMesh(meshes.column, folder, "HallColumn",
 			CFrame.new(cx + math.sin(va) * (HALL_R - 2.5), 0, cz + math.cos(va) * (HALL_R - 2.5)), HALL_H / 11.7)
 		if not isEntry then
-			placeMesh(meshes.candelabra, folder, "HallCandelabra", cf * CFrame.new(-9, 0, 3), 1.1)
-			placeMesh(meshes.candelabra, folder, "HallCandelabra", cf * CFrame.new(9, 0, 3), 1.1)
+			placeMesh(meshes.candelabra, folder, "HallCandelabra", cf * CFrame.new(-20, 0, 4), 1.6)
+			placeMesh(meshes.candelabra, folder, "HallCandelabra", cf * CFrame.new(20, 0, 4), 1.6)
 		end
 
 		if i == 5 then
 			-- the golden lift to the GOLD chamber, opposite the entry
 			goldGate = part({
 				Name = "Gate_GOLD",
-				Size = Vector3.new(8, 12, 0.8),
-				CFrame = cf * CFrame.new(0, 6, -1),
+				Size = Vector3.new(14, 20, 0.8),
+				CFrame = cf * CFrame.new(0, 10, -1),
 				Color = GOLD,
 				Material = Enum.Material.Metal,
 				Parent = folder,
@@ -782,48 +782,48 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 			decal(goldGate :: BasePart, Enum.NormalId.Back, Config.Textures.Geo2)
 			local plaque = part({
 				Name = "GatePlaque",
-				Size = Vector3.new(7, 1.1, 0.3),
-				CFrame = cf * CFrame.new(0, 13, -1.2),
+				Size = Vector3.new(12, 1.9, 0.3),
+				CFrame = cf * CFrame.new(0, 21.6, -1.2),
 				Color = GRANITE,
 				Material = Enum.Material.Metal,
 				CanCollide = false,
 				Parent = folder,
 			})
-			signText(plaque, "THE GOLD CHAMBER", GOLD_BRIGHT, Enum.NormalId.Back, 26)
+			signText(plaque, "THE GOLD CHAMBER", GOLD_BRIGHT, Enum.NormalId.Back, 44)
 		elseif i == 3 then
 			-- THE FOUNDING 100 registry wall
 			registryWall = part({
 				Name = "RegistryWall",
-				Size = Vector3.new(16, 10, 0.6),
-				CFrame = cf * CFrame.new(0, 7, -1),
+				Size = Vector3.new(30, 18, 0.6),
+				CFrame = cf * CFrame.new(0, 11, -1),
 				Color = GRANITE,
 				Material = Enum.Material.Slate,
 				Parent = folder,
 			})
 			part({
 				Name = "RegistryFrame",
-				Size = Vector3.new(17, 11, 0.4),
-				CFrame = cf * CFrame.new(0, 7, -0.7),
+				Size = Vector3.new(31, 19, 0.4),
+				CFrame = cf * CFrame.new(0, 11, -0.7),
 				Color = GOLD,
 				Material = Enum.Material.Metal,
 				CanCollide = false,
 				Parent = folder,
 			})
-			signText(registryWall :: BasePart, "THE FOUNDING 100", GOLD_BRIGHT, Enum.NormalId.Back, 40)
+			signText(registryWall :: BasePart, "THE FOUNDING 100", GOLD_BRIGHT, Enum.NormalId.Back, 72)
 		elseif i == 7 then
 			-- fireplace
 			part({
 				Name = "Fireplace",
-				Size = Vector3.new(12, 9, 2),
-				CFrame = cf * CFrame.new(0, 4.5, -1.2),
+				Size = Vector3.new(26, 16, 2),
+				CFrame = cf * CFrame.new(0, 8, -1.2),
 				Color = GRANITE,
 				Material = Enum.Material.Slate,
 				Parent = folder,
 			})
 			part({
 				Name = "FireplaceMouth",
-				Size = Vector3.new(7, 5.5, 1.4),
-				CFrame = cf * CFrame.new(0, 2.75, -1.9),
+				Size = Vector3.new(16, 10, 1.4),
+				CFrame = cf * CFrame.new(0, 5, -1.9),
 				Color = Color3.fromRGB(10, 9, 12),
 				Material = Enum.Material.Slate,
 				CanCollide = false,
@@ -831,24 +831,24 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 			})
 			part({
 				Name = "Mantel",
-				Size = Vector3.new(14, 0.8, 3),
-				CFrame = cf * CFrame.new(0, 9.3, -1.2),
+				Size = Vector3.new(30, 1.4, 4),
+				CFrame = cf * CFrame.new(0, 16.6, -1.2),
 				Color = WALNUT,
 				Material = Enum.Material.Wood,
 				CanCollide = false,
 				Parent = folder,
 			})
-			local ember = glowOrb(folder, (cf * CFrame.new(0, 1.8, -1.9)).Position, 1.4, Color3.fromRGB(255, 150, 60))
+			local ember = glowOrb(folder, (cf * CFrame.new(0, 3, -1.9)).Position, 2.6, Color3.fromRGB(255, 150, 60))
 			local fire = Instance.new("Fire")
-			fire.Size = 5
-			fire.Heat = 8
+			fire.Size = 12
+			fire.Heat = 10
 			fire.Parent = ember
 		elseif not isEntry then
-			for _, ox in { -8, 8 } do
+			for _, ox in { -16, 16 } do
 				local p = part({
 					Name = "HallGeoPanel",
-					Size = Vector3.new(5.6, 7, 0.5),
-					CFrame = cf * CFrame.new(ox, 14, -1.3),
+					Size = Vector3.new(9, 11.5, 0.5),
+					CFrame = cf * CFrame.new(ox, 21, -1.3),
 					Color = GRANITE,
 					Material = Enum.Material.Slate,
 					CanCollide = false,
@@ -859,25 +859,26 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 		end
 	end
 
-	placeMesh(meshes.chandelier, folder, "GrandChandelier", CFrame.new(cx - 13, HALL_H - 9, cz), 2.6)
-	placeMesh(meshes.chandelier, folder, "GrandChandelier", CFrame.new(cx + 13, HALL_H - 9, cz), 2.6)
+	for _, spot in { Vector3.new(-32, 0, 0), Vector3.new(32, 0, 0), Vector3.new(0, 0, -32), Vector3.new(0, 0, 32) } do
+		placeMesh(meshes.chandelier, folder, "GrandChandelier", CFrame.new(cx + spot.X, HALL_H - 11, cz + spot.Z), 3.6)
+	end
 
 	-- the central fountain — marble and gold, lit from within
 	part({
 		Name = "HallFountainDais",
 		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(1.4, 14, 14),
+		Size = Vector3.new(1.6, 30, 30),
 		CFrame = CFrame.new(cx, 0.7, cz) * CFrame.Angles(0, 0, math.rad(90)),
 		Color = MARBLE_WHITE,
 		Material = Enum.Material.Marble,
 		Parent = folder,
 	})
-	fountain(folder, Vector3.new(cx, 1.4, cz), 5)
+	fountain(folder, Vector3.new(cx, 1.5, cz), 10)
 	part({
 		Name = "FountainCrown",
 		Shape = Enum.PartType.Ball,
-		Size = Vector3.new(2.2, 2.2, 2.2),
-		CFrame = CFrame.new(cx, 8.4, cz),
+		Size = Vector3.new(3.4, 3.4, 3.4),
+		CFrame = CFrame.new(cx, 10.6, cz),
 		Color = GOLD_BRIGHT,
 		Material = Enum.Material.Neon,
 		CanCollide = false,
@@ -885,23 +886,28 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 	})
 
 	-- the circle of wingbacks around the fountain
-	for i = 1, 12 do
-		local a = (i - 1) / 12 * math.pi * 2
-		local pos = Vector3.new(cx + math.sin(a) * 16, 0, cz + math.cos(a) * 16)
-		local facing = CFrame.lookAt(pos, Vector3.new(cx, 0, cz))
-		placeMesh(meshes.wingback, folder, "CircleChair", facing * CFrame.Angles(0, math.pi, 0), 1.05)
-		local seat = Instance.new("Seat")
-		seat.Name = "CircleSeat" .. i
-		seat.Size = Vector3.new(3, 0.4, 3)
-		seat.CFrame = facing * CFrame.new(0, 1.6, 0)
-		seat.Anchored = true
-		seat.Transparency = 1
-		seat.Parent = folder
+	local seatIndex = 0
+	for _, ring in { { r = 24, n = 12 }, { r = 44, n = 16 } } do
+		for i = 1, ring.n do
+			seatIndex += 1
+			local a = (i - 1) / ring.n * math.pi * 2 + (ring.r > 30 and math.pi / ring.n or 0)
+			local pos = Vector3.new(cx + math.sin(a) * ring.r, 0, cz + math.cos(a) * ring.r)
+			local facing = CFrame.lookAt(pos, Vector3.new(cx, 0, cz))
+			placeMesh(meshes.wingback, folder, "CircleChair", facing * CFrame.Angles(0, math.pi, 0), 1.05)
+			local seat = Instance.new("Seat")
+			seat.Name = "CircleSeat" .. seatIndex
+			seat.Size = Vector3.new(3, 0.4, 3)
+			seat.CFrame = facing * CFrame.new(0, 1.6, 0)
+			seat.Anchored = true
+			seat.Transparency = 1
+			seat.Parent = folder
+		end
 	end
 
-	fillLight(folder, Vector3.new(cx - 13, HALL_H - 9, cz), GOLD_BRIGHT, 2.4, 60)
-	fillLight(folder, Vector3.new(cx + 13, HALL_H - 9, cz), GOLD_BRIGHT, 2.4, 60)
-	fillLight(folder, Vector3.new(cx, 14, cz), Color3.fromRGB(215, 225, 255), 1.2, 55)
+	for _, spot in { Vector3.new(-32, 0, 0), Vector3.new(32, 0, 0), Vector3.new(0, 0, -32), Vector3.new(0, 0, 32) } do
+		fillLight(folder, Vector3.new(cx + spot.X, HALL_H - 11, cz + spot.Z), GOLD_BRIGHT, 2.0, 70)
+	end
+	fillLight(folder, Vector3.new(cx, 20, cz), Color3.fromRGB(215, 225, 255), 1.1, 90)
 
 	return registryWall :: BasePart, goldGate :: BasePart
 end
@@ -914,7 +920,7 @@ local function buildAtrium(folder: Folder, meshes: { [string]: Model? })
 
 	local floor = part({
 		Name = "AtriumFloor",
-		Size = Vector3.new(14, 1, length),
+		Size = Vector3.new(20, 1, length),
 		CFrame = CFrame.new(0, -0.5, mid),
 		Color = MARBLE,
 		Material = Enum.Material.Marble,
@@ -923,7 +929,7 @@ local function buildAtrium(folder: Folder, meshes: { [string]: Model? })
 	local _ = floor
 	part({
 		Name = "AtriumCarpet",
-		Size = Vector3.new(6, 0.15, length),
+		Size = Vector3.new(9, 0.15, length),
 		CFrame = CFrame.new(0, 0.08, mid),
 		Color = Color3.fromRGB(122, 28, 38),
 		Material = Enum.Material.Fabric,
@@ -932,8 +938,8 @@ local function buildAtrium(folder: Folder, meshes: { [string]: Model? })
 	})
 	local ceiling = part({
 		Name = "AtriumCeiling",
-		Size = Vector3.new(14, 1, length),
-		CFrame = CFrame.new(0, 12.5, mid),
+		Size = Vector3.new(20, 1, length),
+		CFrame = CFrame.new(0, 18.5, mid),
 		Color = Color3.fromRGB(26, 20, 15),
 		Material = Enum.Material.Wood,
 		Parent = folder,
@@ -943,8 +949,8 @@ local function buildAtrium(folder: Folder, meshes: { [string]: Model? })
 	for _, side in { -1, 1 } do
 		local wall = part({
 			Name = "AtriumWall",
-			Size = Vector3.new(1, 13, length),
-			CFrame = CFrame.new(side * 7.5, 6, mid),
+			Size = Vector3.new(1, 19, length),
+			CFrame = CFrame.new(side * 10.5, 9, mid),
 			Color = MARBLE,
 			Material = Enum.Material.Marble,
 			Parent = folder,
@@ -959,18 +965,18 @@ local function buildAtrium(folder: Folder, meshes: { [string]: Model? })
 			break
 		end
 		local side = (i % 2 == 0) and -1 or 1
-		placeMesh(meshes.candelabra, folder, "AtriumCandelabra", CFrame.new(side * 5.6, 0, z), 1.0)
+		placeMesh(meshes.candelabra, folder, "AtriumCandelabra", CFrame.new(side * 8, 0, z), 1.3)
 		local p = part({
 			Name = "AtriumGeoPanel",
-			Size = Vector3.new(0.4, 5.5, 4.4),
-			CFrame = CFrame.new(-side * 7.2, 6.4, z),
+			Size = Vector3.new(0.4, 8, 6.4),
+			CFrame = CFrame.new(-side * 10.2, 8.4, z),
 			Color = GRANITE,
 			Material = Enum.Material.Slate,
 			CanCollide = false,
 			Parent = folder,
 		})
 		decal(p, side < 0 and Enum.NormalId.Left or Enum.NormalId.Right, geos[(i % 3) + 1])
-		fillLight(folder, Vector3.new(0, 9, z), GOLD_BRIGHT, 1.1, 24)
+		fillLight(folder, Vector3.new(0, 13, z), GOLD_BRIGHT, 1.1, 30)
 	end
 end
 
@@ -995,7 +1001,7 @@ function ClubMap.Build(): Map
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Name = "BoulevardSpawn"
 	spawn.Size = Vector3.new(14, 1, 8)
-	spawn.CFrame = CFrame.new(16, 0.6, 140)
+	spawn.CFrame = CFrame.new(16, 0.6, 176)
 	spawn.Anchored = true
 	spawn.Neutral = true
 	spawn.Transparency = 1
@@ -1021,7 +1027,7 @@ function ClubMap.Build(): Map
 	local descents: { BasePart } = {}
 
 	local goldLanding, goldPad = buildChamber(folder, meshes, {
-		name = "Gold", y = 40, r = 22, h = 13,
+		name = "Gold", y = 52, r = 40, h = 16,
 		floorColor = Color3.fromRGB(96, 78, 40),
 		wallColor = Color3.fromRGB(210, 190, 140),
 		accent = GOLD,
@@ -1030,7 +1036,7 @@ function ClubMap.Build(): Map
 	table.insert(descents, goldPad)
 
 	local platLanding, platPad = buildChamber(folder, meshes, {
-		name = "Platinum", y = 62, r = 15, h = 12,
+		name = "Platinum", y = 78, r = 28, h = 14,
 		floorColor = Color3.fromRGB(200, 204, 212),
 		wallColor = MARBLE_WHITE,
 		accent = Color3.fromRGB(226, 230, 236),
@@ -1038,7 +1044,7 @@ function ClubMap.Build(): Map
 	table.insert(descents, platPad)
 
 	local blackLanding, blackPad = buildChamber(folder, meshes, {
-		name = "Black", y = 80, r = 11, h = 11,
+		name = "Black", y = 100, r = 18, h = 12,
 		floorColor = Color3.fromRGB(18, 17, 21),
 		wallColor = Color3.fromRGB(28, 27, 32),
 		accent = GOLD,
@@ -1046,7 +1052,7 @@ function ClubMap.Build(): Map
 	table.insert(descents, blackPad)
 
 	local crownLanding, crownPad = buildChamber(folder, meshes, {
-		name = "Crown", y = 96, r = 7, h = 9,
+		name = "Crown", y = 118, r = 11, h = 9,
 		floorColor = Color3.fromRGB(120, 96, 44),
 		wallColor = Color3.fromRGB(160, 130, 62),
 		accent = GOLD_BRIGHT,
@@ -1069,12 +1075,12 @@ function ClubMap.Build(): Map
 		table.insert(gates, { tier = tier, door = door :: BasePart, landing = landing })
 		local _ = name
 	end
-	chamberGate("Gold", "PLATINUM", 40, 22, platLanding)
-	chamberGate("Platinum", "BLACK", 62, 15, blackLanding)
-	chamberGate("Black", "CROWN", 80, 11, crownLanding)
+	chamberGate("Gold", "PLATINUM", 52, 40, platLanding)
+	chamberGate("Platinum", "BLACK", 78, 28, blackLanding)
+	chamberGate("Black", "CROWN", 100, 18, crownLanding)
 
 	-- the crown chamber gets its jewel
-	local crownJewel = placeMesh(meshes.gem, folder, "CrownJewel", CFrame.new(0, 100.5, PYR_CENTER_Z), 2.4)
+	local crownJewel = placeMesh(meshes.gem, folder, "CrownJewel", CFrame.new(0, 122.5, PYR_CENTER_Z), 3.0)
 	if crownJewel then
 		for _, p in crownJewel:GetDescendants() do
 			if p:IsA("BasePart") then
@@ -1084,7 +1090,7 @@ function ClubMap.Build(): Map
 				p.Reflectance = 0.4
 			end
 		end
-		fillLight(folder, Vector3.new(0, 101, PYR_CENTER_Z), GOLD_BRIGHT, 2.6, 26)
+		fillLight(folder, Vector3.new(0, 123, PYR_CENTER_Z), GOLD_BRIGHT, 2.6, 34)
 	end
 
 	return {
@@ -1096,7 +1102,7 @@ function ClubMap.Build(): Map
 		descents = descents,
 		registryWall = registryWall,
 		hallCenter = HALL_CENTER,
-		hallPoint = Vector3.new(HALL_CENTER.X, 3, HALL_CENTER.Z + 24),
+		hallPoint = Vector3.new(HALL_CENTER.X, 3, HALL_CENTER.Z + 58),
 	}
 end
 
