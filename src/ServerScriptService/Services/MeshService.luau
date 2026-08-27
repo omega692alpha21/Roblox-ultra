@@ -10,6 +10,8 @@ local MeshService = {}
 local ASSETS = {
 	Tree = 128757271025486,
 	Hedge = 88569427739236,
+	Palm = 120929000216583,
+	Arch = 76176860283975,
 }
 
 local rng = Random.new(17)
@@ -78,6 +80,37 @@ function MeshService.Init(map: { folder: Folder })
 			trunk:Destroy()
 		end
 		print(("[MeshService] replaced %d trees with mesh trees"):format(#trunks))
+	end
+
+	-- palms: swap the box palms in the courtyard for real fronds
+	local palmTemplate = loadTemplate(ASSETS.Palm)
+	if palmTemplate then
+		local palmParts: { BasePart } = {}
+		for _, child in map.folder:GetDescendants() do
+			if child:IsA("BasePart") and (child.Name == "PalmTrunk" or child.Name == "PalmLeaf") then
+				table.insert(palmParts, child)
+			end
+		end
+		for _, spot in { Vector3.new(-14, 0, 176), Vector3.new(14, 0, 176) } do
+			local clone = palmTemplate:Clone()
+			clone.Name = "MeshPalm"
+			clone:ScaleTo(1.35)
+			local _, size = clone:GetBoundingBox()
+			clone:PivotTo(CFrame.new(spot + Vector3.new(0, size.Y / 2, 0)) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0))
+			clone.Parent = map.folder
+		end
+		for _, part in palmParts do
+			part:Destroy()
+		end
+	end
+
+	-- grand entrance arch over the doorway
+	local archTemplate = loadTemplate(ASSETS.Arch)
+	if archTemplate then
+		local clone = archTemplate:Clone()
+		clone.Name = "MeshEntranceArch"
+		clone:PivotTo(CFrame.new(0, 13.2 + 8.5, 84))
+		clone.Parent = map.folder
 	end
 
 	local hedgeTemplate = loadTemplate(ASSETS.Hedge)

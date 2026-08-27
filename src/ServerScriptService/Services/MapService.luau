@@ -1804,6 +1804,13 @@ function MapService.Build(): Map
 	buildPortico(folder, 60)
 	buildFrontYard(folder)
 	detailHallway(folder)
+	for _, zc in { -52, 52 } do
+		for _, xc in { -117, -39, 39, 117 } do
+			for _, off in { -14, 14 } do
+				part({ Name = "RoomCeilingDot", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 2.2, 2.2), CFrame = CFrame.new(xc + off, 26.0, zc) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(255, 248, 230), Material = Enum.Material.Neon, Parent = folder })
+			end
+		end
+	end
 	for _, zRow in { -8, 8 } do
 		for i = 0, 19 do
 			part({ Name = "CeilingDot", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 2.2, 2.2), CFrame = CFrame.new(-152 + i * 16, 26.0, zRow) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(255, 248, 230), Material = Enum.Material.Neon, Parent = folder })
