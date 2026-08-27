@@ -158,6 +158,7 @@ function ToyService.Give(player: Player, id: string)
 	if character and character:FindFirstChild(def.name) then
 		return -- already in hand
 	end
+	player:SetAttribute("Owns_" .. def.id, true)
 	local tool = template:Clone()
 	tool.Parent = backpack
 end
@@ -308,6 +309,7 @@ local function initRestore()
 				if def.ammoPerBuy > 0 then
 					setAmmo(player, def.id, math.max(ammoOf(player, def.id), 99))
 				end
+				player:SetAttribute("Owns_" .. def.id, true)
 				ToyService.Give(player, def.id)
 			end
 		end
@@ -399,9 +401,17 @@ function ToyService.Init()
 		end
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-		local tool = character and character:FindFirstChild(def.name)
-		if not root or not tool then
-			return -- must actually be holding it
+		if not root then
+			return
+		end
+		-- ownership, not "currently equipped": the HUD action button is the
+		-- control surface, and Roblox does not give tools a reliable fire
+		-- button on phones
+		if def.ammoPerBuy == 0 then
+			local owned = player:GetAttribute("Owns_" .. def.id) == true
+			if not owned then
+				return
+			end
 		end
 		local now = os.clock()
 		if now - (lastFire[player] or 0) < def.cooldown then
