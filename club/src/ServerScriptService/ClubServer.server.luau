@@ -10,14 +10,15 @@ Remotes.Init()
 
 -- deep-night ritual lighting under a painted star sky
 Lighting.ClockTime = 0.15
-Lighting.Brightness = 1.7
+Lighting.Brightness = 2.4
 Lighting.GlobalShadows = true
-Lighting.ShadowSoftness = 0.08
-Lighting.EnvironmentDiffuseScale = 0.35
+Lighting.ShadowSoftness = 0.12
+Lighting.EnvironmentDiffuseScale = 0.6
 Lighting.EnvironmentSpecularScale = 0.6
-Lighting.Ambient = Color3.fromRGB(20, 20, 27)
-Lighting.OutdoorAmbient = Color3.fromRGB(26, 30, 46)
-Lighting.ExposureCompensation = 0.35
+-- bright moonlit night: dark is the mood, but the player must always see
+Lighting.Ambient = Color3.fromRGB(56, 56, 68)
+Lighting.OutdoorAmbient = Color3.fromRGB(74, 82, 108)
+Lighting.ExposureCompensation = 0.7
 
 local sky = Instance.new("Sky")
 sky.SkyboxFt = "rbxassetid://118975540614116" -- the moon face
@@ -31,11 +32,11 @@ sky.StarCount = 0
 sky.Parent = Lighting
 
 local atmosphere = Instance.new("Atmosphere")
-atmosphere.Density = 0.42
-atmosphere.Color = Color3.fromRGB(58, 64, 94)
-atmosphere.Decay = Color3.fromRGB(14, 18, 38)
+atmosphere.Density = 0.26
+atmosphere.Color = Color3.fromRGB(76, 84, 116)
+atmosphere.Decay = Color3.fromRGB(34, 40, 66)
 atmosphere.Glare = 0.2
-atmosphere.Haze = 2.4
+atmosphere.Haze = 1.5
 atmosphere.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
@@ -45,9 +46,10 @@ bloom.Threshold = 1.35
 bloom.Parent = Lighting
 
 local grade = Instance.new("ColorCorrectionEffect")
-grade.Contrast = 0.12
+grade.Brightness = 0.05
+grade.Contrast = 0.06
 grade.Saturation = 0.1
-grade.TintColor = Color3.fromRGB(236, 232, 246)
+grade.TintColor = Color3.fromRGB(238, 236, 248)
 grade.Parent = Lighting
 
 local ClubMap = require(script.Parent.ClubMap)

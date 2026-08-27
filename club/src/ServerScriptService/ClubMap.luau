@@ -87,9 +87,9 @@ local function flame(parent: Instance, pos: Vector3, scale: number): BasePart
 		Parent = parent,
 	})
 	local light = Instance.new("PointLight")
-	light.Color = Color3.fromRGB(255, 160, 70)
-	light.Brightness = 1.6 * scale
-	light.Range = 16 * scale
+	light.Color = Color3.fromRGB(255, 170, 85)
+	light.Brightness = 2.8 * scale
+	light.Range = 24 * scale
 	light.Parent = core
 	local fire = Instance.new("Fire")
 	fire.Size = 3 * scale
@@ -201,9 +201,9 @@ local function loadMesh(assetId: number): Model?
 			end
 			if style.material == Enum.Material.Neon then
 				local light = Instance.new("PointLight")
-				light.Color = Color3.fromRGB(255, 190, 110)
-				light.Brightness = 0.8
-				light.Range = 14
+				light.Color = Color3.fromRGB(255, 200, 125)
+				light.Brightness = 2
+				light.Range = 30
 				light.Parent = p
 			end
 		end
@@ -225,6 +225,84 @@ local function placeMesh(template: Model?, parent: Instance, name: string, cf: C
 	clone:PivotTo(cf)
 	clone.Parent = parent
 	return clone
+end
+
+
+-- Cool blue-white lanterns: always lit, everywhere the player needs to see.
+-- Deliberately a different color from the orange path torches so the
+-- "flames that guard the path" riddle stays unambiguous.
+local function moonLantern(parent: Instance, pos: Vector3)
+	part({
+		Name = "LanternPost",
+		Size = Vector3.new(0.7, 5.5, 0.7),
+		CFrame = CFrame.new(pos + Vector3.new(0, 2.75, 0)),
+		Color = Color3.fromRGB(38, 37, 42),
+		Material = Enum.Material.Slate,
+		Parent = parent,
+	})
+	local orb = part({
+		Name = "LanternOrb",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.new(1.5, 1.5, 1.5),
+		CFrame = CFrame.new(pos + Vector3.new(0, 6.2, 0)),
+		Color = Color3.fromRGB(188, 205, 255),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		Parent = parent,
+	})
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(175, 195, 255)
+	light.Brightness = 1.9
+	light.Range = 38
+	light.Shadows = false
+	light.Parent = orb
+end
+
+-- invisible fill lights so no interior ever goes black, whatever fails to load
+local function fillLight(parent: Instance, pos: Vector3, color: Color3, brightness: number, range: number)
+	local anchor = part({
+		Name = "FillLight",
+		Size = Vector3.new(0.4, 0.4, 0.4),
+		Transparency = 1,
+		CanCollide = false,
+		CFrame = CFrame.new(pos),
+		Parent = parent,
+	})
+	local light = Instance.new("PointLight")
+	light.Color = color
+	light.Brightness = brightness
+	light.Range = range
+	light.Shadows = false
+	light.Parent = anchor
+end
+
+local function buildLightingFill(folder: Folder)
+	-- grounds: a ring of lanterns, plus pairs at the spawn and the stones
+	for _, pos in {
+		Vector3.new(-9, 0, 132), Vector3.new(9, 0, 132), -- spawn
+		Vector3.new(-34, 0, 92), Vector3.new(34, 0, 92), -- founders' stone / keypad side
+		Vector3.new(-56, 0, 76), Vector3.new(56, 0, 76), -- obelisk / monument
+		Vector3.new(-72, 0, 34), Vector3.new(72, 0, 34), -- toward the marked tree
+		Vector3.new(-110, 0, -20), Vector3.new(110, 0, -20),
+		Vector3.new(-110, 0, -90), Vector3.new(110, 0, -90),
+		Vector3.new(-60, 0, -150), Vector3.new(60, 0, -150), -- lodge ring
+		Vector3.new(0, 0, -160),
+	} do
+		moonLantern(folder, pos)
+	end
+
+	-- hallway: warm fill between the torches
+	for _, z in { 30, 6, -18, -42 } do
+		fillLight(folder, Vector3.new(0, 8.5, z), Color3.fromRGB(255, 214, 150), 1.1, 26)
+	end
+
+	-- grand hall: big warm cores at the chandeliers, cool wash over the circle
+	fillLight(folder, HALL_CENTER + Vector3.new(-13, HALL_H - 9, 0), Color3.fromRGB(255, 214, 150), 2.4, 60)
+	fillLight(folder, HALL_CENTER + Vector3.new(13, HALL_H - 9, 0), Color3.fromRGB(255, 214, 150), 2.4, 60)
+	fillLight(folder, HALL_CENTER + Vector3.new(0, 14, 0), Color3.fromRGB(205, 215, 255), 1.2, 55)
+	-- entrance tunnel and door
+	fillLight(folder, Vector3.new(0, 9, DOOR_Z + 4), Color3.fromRGB(255, 214, 150), 1.4, 30)
+	fillLight(folder, Vector3.new(0, 9, DOOR_Z + 16), Color3.fromRGB(205, 215, 255), 1.2, 34)
 end
 
 -- ---------------------------------------------------------------- grounds ---
@@ -412,8 +490,8 @@ local function buildFacade(folder: Folder): (BasePart, BasePart, BasePart, { Bas
 	})
 	local capLight = Instance.new("PointLight")
 	capLight.Color = Color3.fromRGB(255, 200, 100)
-	capLight.Brightness = 3
-	capLight.Range = 60
+	capLight.Brightness = 4
+	capLight.Range = 90
 	capLight.Parent = folder:FindFirstChild("Capstone")
 	flame(folder, Vector3.new(0, capY + 8, PYR_CENTER_Z), 2.4)
 	-- the eye: a gold sigil over the entrance
@@ -918,6 +996,7 @@ function ClubMap.Build(): Map
 	}
 	local chairs, altar, gates, missionBoard, memberGate = buildGrandHall(folder, meshes)
 	buildTrees(folder, loadMesh(Config.Meshes.Tree))
+	buildLightingFill(folder)
 
 	local wrong = folder:FindFirstChild("PortraitWrong") :: BasePart
 	return {
