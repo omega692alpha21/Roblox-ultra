@@ -72,11 +72,10 @@ function SprintController.Init(gui: ScreenGui)
 		}, function()
 			setSprint(not sprinting)
 		end)
-		Layout.Square(button, 0.86)
-		Layout.FitText(button, 34)
+		Layout.FitText(button, 30)
 		UIBuilder.Round(button, 999)
 		UIBuilder.Stroke(button, Palette.White, 3)
-		button.Parent = Layout.ActionBar(gui)
+		Layout.ActionSlot(button, "Sprint", gui)
 	end
 end
 

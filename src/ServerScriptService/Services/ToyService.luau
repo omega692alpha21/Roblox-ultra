@@ -15,6 +15,7 @@ local Remotes = require(ReplicatedStorage.Remotes)
 local AuraService = require(script.Parent.AuraService)
 local ActionAnim = require(script.Parent.ActionAnim)
 local EffectsService = require(script.Parent.EffectsService)
+local VitalsService = require(script.Parent.VitalsService)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 local Signals = require(script.Parent.Parent.Signals)
@@ -305,6 +306,11 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 				if root and (root.Position - at).Magnitude < 16 then
 					knock(character :: Model, at, 62)
 					Remotes.Get("ScreenFx"):FireClient(other, "shake", 1.2)
+					if other ~= shooter then
+						-- closer to the bang, more of it
+						local falloff = 1 - (root.Position - at).Magnitude / 16
+						VitalsService.Damage(other, 8 + 14 * falloff, shooter)
+					end
 				end
 			end
 			Remotes.Get("Notify"):FireAllClients(shooter.DisplayName .. " set off a FIRECRACKER!", "info")
@@ -320,7 +326,7 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 				"Impact",
 				16
 			)
-			Remotes.Get("ScreenFx"):FireClient(hitPlayer, "shake", 0.7)
+			VitalsService.Damage(hitPlayer, def.id == "slingshot" and 14 or 7, shooter)
 			if def.id == "snowball" then
 				slowTarget(hitPlayer, 3)
 				Remotes.Get("Notify"):FireClient(hitPlayer, "❄️ " .. shooter.DisplayName .. " got you with a snowball!", "info")
@@ -451,7 +457,7 @@ function ToyService.Init()
 		TEMPLATES[def.id] = buildTool(def)
 	end
 
-	Remotes.Get("UseToy").OnServerEvent:Connect(function(player, toyId, aimPoint)
+	Remotes.Get("UseToy").OnServerEvent:Connect(function(player: Player, toyId, aimPoint)
 		if typeof(toyId) ~= "string" or typeof(aimPoint) ~= "Vector3" then
 			return
 		end

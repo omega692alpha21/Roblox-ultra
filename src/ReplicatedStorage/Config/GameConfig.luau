@@ -57,6 +57,7 @@ return {
 	PunchCooldownSeconds = 0.6,
 	PunchRange = 8,
 	PunchKnockback = 40,
+	PunchDamage = 9,
 	RepPerThiefHit = 2,
 	RepPerSteal = 10,
 

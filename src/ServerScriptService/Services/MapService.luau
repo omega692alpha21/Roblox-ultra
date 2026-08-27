@@ -3048,10 +3048,13 @@ local function detailCorridor(parent: Instance)
 	local LOCKER_DARK = Color3.fromRGB(30, 58, 122)
 	local rng = Random.new(91)
 	for _, spec in {
-		{ z = 79.6, face = -1 }, -- south wall of the corridor
-		{ z = 60.4, face = 1 }, -- north wall
+		{ z = 79.6, face = -1, banks = { -196, -168, -140, -112, 112, 140, 168, 196 } },
+		-- the north wall moved out with the widening, and the banks with it;
+		-- past x = 172 there is no wall on this side any more, only the way
+		-- through to the far rooms
+		{ z = 50.4, face = 1, banks = { -160, -128, 128, 160 } },
 	} do
-		for _, bankX in { -196, -168, -140, -112, 112, 140, 168, 196 } do
+		for _, bankX in spec.banks do
 			for i = 0, 5 do
 				local lx = bankX - 12 + i * 4.2
 				local open = rng:NextNumber() < 0.22
@@ -3078,7 +3081,7 @@ local function detailCorridor(parent: Instance)
 			part({ Name = "LockerTop", Size = Vector3.new(26, 0.6, 3.4), CFrame = CFrame.new(bankX, 9.3, spec.z + spec.face * 1.6), Color = LOCKER_DARK, Material = Enum.Material.Metal, Parent = parent })
 		end
 		-- water coolers between banks
-		for _, wx in { -126, 126 } do
+		for _, wx in { -110, 110 } do
 			part({ Name = "CoolerBody", Size = Vector3.new(3, 5, 2.6), CFrame = CFrame.new(wx, 2.5, spec.z + spec.face * 1.4), Color = Color3.fromRGB(226, 228, 232), Material = Enum.Material.SmoothPlastic, Parent = parent })
 			part({ Name = "CoolerBottle", Size = Vector3.new(2.4, 3.4, 2.4), CFrame = CFrame.new(wx, 6.7, spec.z + spec.face * 1.4), Color = Color3.fromRGB(150, 206, 226), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
 		end
@@ -3093,10 +3096,10 @@ local function detailCorridor(parent: Instance)
 	end
 	-- recessed ceiling panels down the corridor
 	for i = 0, 26 do
-		part({ Name = "CeilingPanel", Size = Vector3.new(10, 0.3, 6), CFrame = CFrame.new(-208 + i * 16, 15.6, 70), Color = Color3.fromRGB(255, 250, 236), Material = Enum.Material.Neon, Parent = parent })
+		part({ Name = "CeilingPanel", Size = Vector3.new(10, 0.3, 6), CFrame = CFrame.new(-208 + i * 16, 15.1, 65), Color = Color3.fromRGB(255, 250, 236), Material = Enum.Material.Neon, Parent = parent })
 	end
 	-- tiled centre band on the floor
-	tag(part({ Name = "CorridorTileBand", Size = Vector3.new(440, 0.12, 6), CFrame = CFrame.new(0, 0.08, 70), Color = Color3.fromRGB(212, 208, 198), Material = Enum.Material.CeramicTiles, Parent = parent }), "TexFloorTile")
+	tag(part({ Name = "CorridorTileBand", Size = Vector3.new(440, 0.12, 10), CFrame = CFrame.new(0, 0.08, 65), Color = Color3.fromRGB(212, 208, 198), Material = Enum.Material.CeramicTiles, Parent = parent }), "TexFloorTile")
 end
 
 function MapService.Build(): Map
@@ -3181,15 +3184,15 @@ end
 	-- main corridor floor + stripe (the conveyor line)
 	tag(part({
 		Name = "HallwayFloor",
-		Size = Vector3.new(448, 1, 22),
-		CFrame = CFrame.new(0, -0.5, 70),
+		Size = Vector3.new(448, 1, 32),
+		CFrame = CFrame.new(0, -0.5, 65),
 		Color = Color3.fromRGB(196, 194, 188),
 		Parent = folder,
 	}), "TexFloorTile")
 	part({
 		Name = "HallwayStripe",
 		Size = Vector3.new(440, 0.2, 2.4),
-		CFrame = CFrame.new(0, 0.11, 70),
+		CFrame = CFrame.new(0, 0.11, 65),
 		Color = Palette.BusYellow,
 		Material = Enum.Material.Neon,
 		Parent = folder,
@@ -3294,8 +3297,11 @@ end
 		W(Vector3.new(-162, 0, 81), Vector3.new(-150, 0, 81), {})
 		W(Vector3.new(-94, 0, 81), Vector3.new(-88, 0, 81), {})
 		W(Vector3.new(-88, 0, 81), Vector3.new(-60, 0, 81), { { at = 14, width = 8 } })
-		-- z=52: courtyard south colonnade (two arches to the corridor)
-		W(Vector3.new(-172, 0, 59), Vector3.new(-60, 0, 59), { { at = 32, width = 16 }, { at = 80, width = 16 } })
+		-- z=49: courtyard south colonnade. It used to stand at z=59, which left
+		-- the main hallway 22 studs across -- narrow enough that two students
+		-- and a professor filled it. Ten studs off the courtyard's south end
+		-- buys a hall you can actually move through.
+		W(Vector3.new(-172, 0, 49), Vector3.new(-60, 0, 49), { { at = 32, width = 18 }, { at = 80, width = 18 } })
 		-- z=-52: cafeteria front (door) + courtyard north wall (arch)
 		W(Vector3.new(-224, 0, -52), Vector3.new(-184, 0, -52), { { at = 20, width = 12 } })
 		W(Vector3.new(-172, 0, -52), Vector3.new(-60, 0, -52), { { at = 56, width = 16 } })
@@ -3306,9 +3312,9 @@ end
 		W(Vector3.new(-94, 0, -64), Vector3.new(-88, 0, -64), {})
 		W(Vector3.new(-88, 0, -64), Vector3.new(-60, 0, -64), { { at = 14, width = 10 } })
 		-- x=-184: outer column onto inner corridor (cafeteria + principal doors)
-		W(Vector3.new(-184, 0, -52), Vector3.new(-184, 0, 64), { { at = 29, width = 12 }, { at = 87, width = 12 } })
+		W(Vector3.new(-184, 0, -52), Vector3.new(-184, 0, 49), { { at = 29, width = 12 }, { at = 87, width = 12 } })
 		-- x=-172: inner corridor onto courtyard (two arches)
-		W(Vector3.new(-172, 0, -52), Vector3.new(-172, 0, 52), { { at = 28, width = 14 }, { at = 76, width = 14 } })
+		W(Vector3.new(-172, 0, -52), Vector3.new(-172, 0, 49), { { at = 28, width = 14 }, { at = 76, width = 14 } })
 		-- room separators, south row then north row
 		W(Vector3.new(-156, 0, 81), Vector3.new(-156, 0, 124), {})
 		W(Vector3.new(-88, 0, 81), Vector3.new(-88, 0, 124), {})
@@ -3661,8 +3667,8 @@ end
 		library = LIBRARY,
 		tennis = TENNIS,
 		pool = POOL,
-		conveyorStart = Vector3.new(-190, 0, 70),
-		conveyorEnd = Vector3.new(190, 0, 70),
+		conveyorStart = Vector3.new(-190, 0, 65),
+		conveyorEnd = Vector3.new(190, 0, 65),
 		trophyCashBoard = trophyCashBoard,
 		trophyAuraBoard = trophyAuraBoard,
 		cliqueBoards = cliqueBoards,

@@ -67,7 +67,10 @@ function MinimapController.Init(gui: ScreenGui)
 	-- map floating on top of every menu
 	local frame = Instance.new("Frame")
 	frame.Name = "Minimap"
-	frame.Position = UDim2.fromScale(Layout.EdgeX, Layout.MinimapY)
+	-- top right, under Roblox's avatar chip. It used to sit top left, where it
+	-- shared a band with everything else the player had to read.
+	frame.AnchorPoint = Vector2.new(1, 0)
+	frame.Position = UDim2.fromScale(1 - Layout.EdgeX, Layout.MinimapY)
 	Layout.Square(frame, Layout.MinimapH)
 	frame.BackgroundColor3 = Color3.fromRGB(28, 34, 42)
 	frame.BackgroundTransparency = 0.08
@@ -196,6 +199,49 @@ function MinimapController.Init(gui: ScreenGui)
 	north.ZIndex = 26
 	north.Parent = frame
 
+	-- A compass ribbon above the map. The map itself rotates, which tells you
+	-- where things are; the ribbon tells you which way you are pointing, which
+	-- is the question you actually ask before you set off down a corridor.
+	local compass = Instance.new("Frame")
+	compass.Name = "Compass"
+	compass.AnchorPoint = Vector2.new(1, 0)
+	compass.Position = UDim2.fromScale(1 - Layout.EdgeX, Layout.CompassY)
+	compass.Size = UDim2.fromScale(Layout.CompassW, Layout.CompassH)
+	compass.BackgroundColor3 = Color3.fromRGB(18, 22, 28)
+	compass.BackgroundTransparency = 0.35
+	compass.ClipsDescendants = true
+	compass.ZIndex = 20
+	compass.Parent = gui
+	local compassRound = Instance.new("UICorner")
+	compassRound.CornerRadius = UDim.new(0.4, 0)
+	compassRound.Parent = compass
+
+	local HEADINGS = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" }
+	local ticks: { TextLabel } = {}
+	for index, name in HEADINGS do
+		local tick = Instance.new("TextLabel")
+		tick.Name = "Tick" .. name
+		tick.AnchorPoint = Vector2.new(0.5, 0.5)
+		tick.Size = UDim2.fromScale(0.14, 0.9)
+		tick.BackgroundTransparency = 1
+		tick.Font = Enum.Font.FredokaOne
+		tick.Text = name
+		tick.TextScaled = true
+		tick.TextColor3 = if name == "N" then Color3.fromRGB(245, 197, 49) else Color3.fromRGB(226, 230, 238)
+		tick.ZIndex = 21
+		tick.Parent = compass
+		ticks[index] = tick
+	end
+	-- the heading you are on, marked in the middle
+	local needle = Instance.new("Frame")
+	needle.AnchorPoint = Vector2.new(0.5, 1)
+	needle.Position = UDim2.fromScale(0.5, 1)
+	needle.Size = UDim2.fromScale(0.006, 0.5)
+	needle.BackgroundColor3 = Color3.fromRGB(245, 197, 49)
+	needle.BorderSizePixel = 0
+	needle.ZIndex = 22
+	needle.Parent = compass
+
 	RunService.RenderStepped:Connect(function()
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -204,13 +250,20 @@ function MinimapController.Init(gui: ScreenGui)
 			return
 		end
 		local pos = root.Position
-		local yaw = 0
-		if MAP_ROT then
-			local look = camera.CFrame.LookVector
-			yaw = math.atan2(look.X, look.Z)
-		end
+		local look = camera.CFrame.LookVector
+		local yaw = if MAP_ROT then math.atan2(look.X, look.Z) else 0
 		world.Rotation = math.deg(yaw)
 		north.Rotation = math.deg(yaw)
+
+		-- the ribbon shows 180 degrees at a time, so a heading is half a turn
+		-- from either edge and nothing ever pops in at the centre
+		local heading = math.deg(math.atan2(-look.X, -look.Z)) % 360
+		for index, tick in ticks do
+			local bearing = (index - 1) * 45
+			local delta = (bearing - heading + 540) % 360 - 180
+			tick.Position = UDim2.fromScale(0.5 + delta / 180, 0.5)
+			tick.Visible = math.abs(delta) < 95
+		end
 
 		-- offset the world so the player's world position lands at the centre
 		local cosY, sinY = math.cos(yaw), math.sin(yaw)

@@ -30,19 +30,25 @@ E = c("EdgeX")
 Z = {}
 
 mm = c("MinimapH")
-Z["minimap"] = (E, c("MinimapY"), E + sq(mm), c("MinimapY") + mm)
-
-menu_tile = c("MenuTileH") * c("MenuRailH")
-Z["menu rail"] = (E, c("MenuRailY"), E + sq(menu_tile), c("MenuRailY") + c("MenuRailH"))
-
-tool_tile = c("ToolTileH") * c("ToolRailH")
-Z["tool rail"] = (1 - E - sq(tool_tile), c("ToolRailY"), 1 - E, c("ToolRailY") + c("ToolRailH"))
+mmy = c("MinimapY")
+Z["minimap"] = (1 - E - sq(mm), mmy, 1 - E, mmy + mm)
+cy, cw, ch = c("CompassY"), c("CompassW"), c("CompassH")
+Z["compass"] = (1 - E - cw, cy, 1 - E, cy + ch)
 
 Z["pills"] = (0.5 - c("PillsW") / 2, c("PillsY"), 0.5 + c("PillsW") / 2, c("PillsY") + c("PillsH"))
 Z["goal chip"] = (0.5 - c("GoalW") / 2, c("GoalY"), 0.5 + c("GoalW") / 2, c("GoalY") + c("GoalH"))
 
-aw, ah = c("ActionW"), c("ActionH")
-Z["action bar"] = (c("ActionRight") - aw, c("ActionBottom") - ah, c("ActionRight"), c("ActionBottom"))
+vw, vh = c("VitalsW"), c("VitalsH")
+vx, vb = c("VitalsX"), c("VitalsBottom")
+Z["vitals"] = (vx - vw / 2, vb - vh, vx + vw / 2, vb)
+
+hw, hh, hb = c("HotbarW"), c("HotbarH"), c("HotbarBottom")
+Z["hotbar"] = (vx - hw / 2, hb - hh, vx + hw / 2, hb)
+
+# the action cluster: each button is a square placed by its centre
+for m in re.finditer(r'(\w+) = \{ x = ([0-9.]+), y = ([0-9.]+), size = ([0-9.]+) \}', src):
+    name, ax, ay, size = m.group(1), float(m.group(2)), float(m.group(3)), float(m.group(4))
+    Z["action " + name] = (ax - sq(size) / 2, ay - size / 2, ax + sq(size) / 2, ay + size / 2)
 
 R = {}
 for m in re.finditer(r'(\w+) = \{ ([0-9.]+), ([0-9.]+), ([0-9.]+), ([0-9.]+) \}', src):

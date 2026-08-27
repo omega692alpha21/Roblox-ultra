@@ -34,8 +34,7 @@ function PunchController.Init(gui: ScreenGui)
 	end, false, Enum.KeyCode.F, Enum.KeyCode.ButtonX)
 
 	if UserInputService.TouchEnabled then
-		-- shares the one bottom-right action bar; no more hand-placed offsets
-		-- colliding with RUN and THROW
+		-- the primary action: the biggest circle, nearest the thumb
 		local button = UIBuilder.Button({
 			Name = "PunchButton",
 			Text = "👊",
@@ -43,11 +42,10 @@ function PunchController.Init(gui: ScreenGui)
 			BackgroundTransparency = 0.15,
 			LayoutOrder = Layout.Order.Punch,
 		}, punch)
-		Layout.Square(button, 0.86)
-		Layout.FitText(button, 34)
+		Layout.FitText(button, 38)
 		UIBuilder.Round(button, 999)
 		UIBuilder.Stroke(button, Palette.White, 3)
-		button.Parent = Layout.ActionBar(gui)
+		Layout.ActionSlot(button, "Punch", gui)
 	end
 end
 

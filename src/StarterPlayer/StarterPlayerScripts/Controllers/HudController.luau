@@ -25,18 +25,7 @@ local HudController = {}
 
 local player = Players.LocalPlayer
 
--- The left rail: what the player checks about themselves — report card,
--- quests, profile, crew — plus a way into everything else. Tools live on the
--- right, under the thumb that throws them.
--- Four tiles is what the left band fits between Roblox's top bar and its
--- movement thumbstick. Report card, quests, profile — and everything else
--- behind MORE.
-local RAIL = {
-	{ icon = "📕", panel = "Classes", color = Palette.LockerBlue },
-	{ icon = "📋", panel = "Quests", color = Palette.BusYellow },
-	{ icon = "⭐", panel = "Rep", color = Palette.AuraPurple },
-}
-
+-- Everything behind the MENU chip in the vitals block.
 local MORE = {
 	{ label = "REP", panel = "Rep", icon = "⭐", color = Palette.BusYellow },
 	{ label = "GRADES", panel = "Rebirth", icon = "🎓", color = Palette.LockerBlue },
@@ -94,32 +83,11 @@ function HudController.Init(gui: ScreenGui)
 	local lockLabel, lockPill = pill(top, 4, Palette.DetentionRed)
 	lockPill.Visible = false
 
-	-- ---------------- left edge: the menu rail ----------------
-	local rail = Layout.Rail(gui, "MenuRail", "left")
-
-	local function railTile(order: number, icon: string, color: Color3, onClick: () -> ())
-		local button = UIBuilder.Button({
-			Text = icon,
-			BackgroundColor3 = Palette.PanelBg,
-			BackgroundTransparency = 0.2,
-			LayoutOrder = order,
-		}, onClick)
-		Layout.Square(button, Layout.MenuTileH)
-		Layout.FitText(button, 30)
-		UIBuilder.Round(button, 999)
-		UIBuilder.Stroke(button, color, 2)
-		button.Parent = rail
-		return button
-	end
-
-	for index, item in RAIL do
-		railTile(index, item.icon, item.color, function()
-			UIBuilder.Toggle(item.panel)
-		end)
-	end
-	railTile(#RAIL + 1, "☰", Palette.White, function()
-		UIBuilder.Toggle("Menu")
-	end)
+	-- The left edge used to carry a rail of four round tiles. It is empty now:
+	-- the reference layout the game is being matched to puts one MENU chip in
+	-- the vitals block and nothing else along the sides, and every complaint
+	-- about this HUD has been that there was too much of it. The panels are
+	-- unchanged -- MENU opens the same grid the rail's ☰ tile opened.
 
 	-- ---------------- the MORE hub ----------------
 	local _, menuContent = UIBuilder.Panel(gui, "Menu", "MENU")

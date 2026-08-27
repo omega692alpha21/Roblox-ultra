@@ -1,6 +1,8 @@
 --!strict
--- Punches: knockback only (no health damage), server-validated cooldown + range.
+-- Punches: knockback and health, server-validated cooldown + range.
 -- Primary purpose is catching thieves; the Gym is the free-for-all flex zone.
+-- A landed punch takes health off now (VitalsService owns the number), which
+-- is what gives a scrap an end other than both parties getting bored.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,6 +15,7 @@ local RivalService = require(script.Parent.RivalService)
 local DodgeballService = require(script.Parent.DodgeballService)
 local ActionAnim = require(script.Parent.ActionAnim)
 local EffectsService = require(script.Parent.EffectsService)
+local VitalsService = require(script.Parent.VitalsService)
 local Signals = require(script.Parent.Parent.Signals)
 
 local FightService = {}
@@ -102,8 +105,8 @@ local function onPunch(player: Player)
 		"PunchHit",
 		18
 	)
-	Remotes.Get("ScreenFx"):FireClient(target, "shake", 1.1)
 	Remotes.Get("ScreenFx"):FireClient(player, "shake", 0.55)
+	VitalsService.Damage(target, GameConfig.PunchDamage, player)
 
 	if StealService.IsCarrying(target) then
 		Signals.ThiefHit:Fire(player, target)

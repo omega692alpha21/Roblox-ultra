@@ -58,31 +58,50 @@ Layout.GoalY = 0.215
 Layout.GoalW = 0.42
 Layout.GoalH = 0.048
 
--- ---------------- left band ----------------
-Layout.MinimapY = 0.15
+-- ---------------- top right: the minimap ----------------
+-- Under Roblox's avatar chip, not beside it. The compass ticks ride on the
+-- top edge of the same square.
+Layout.MinimapY = 0.19
 Layout.MinimapH = 0.17 -- square, so 0.17 of height
 
-Layout.MenuRailY = 0.35
-Layout.MenuRailW = 0.30 -- a generous max width; the squares are much narrower
-Layout.MenuRailH = 0.34
-Layout.MenuTiles = 4
-Layout.MenuTileH = 0.22 -- of the rail => 0.075 of the screen
-Layout.MenuTileGap = 0.04 -- of the rail
+-- the compass ribbon sits under the map, not over it: above the map is
+-- Roblox's avatar chip on one side and our own status pills on the other
+Layout.CompassY = 0.375
+Layout.CompassW = 0.22
+Layout.CompassH = 0.028
 
--- ---------------- right band ----------------
-Layout.ToolRailY = 0.18
-Layout.ToolRailW = 0.30
-Layout.ToolRailH = 0.26
-Layout.ToolTiles = 3
-Layout.ToolTileH = 0.30 -- of the rail => 0.078 of the screen
-Layout.ToolTileGap = 0.05 -- of the rail
+-- ---------------- bottom centre: the vitals stack ----------------
+-- The whole readout the player actually watches lives in one block, centred
+-- between Roblox's thumbstick and its jump button:
+--
+--   [ ][ ][ ][ ][ ][ ]        hotbar, one square per toy
+--   ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔          experience
+--   120/120 ████████  HP
+--     78/100 ██████   ENR
+--   MENU     LEVEL 4   40/160
+--
+-- x 0.26-0.66 keeps it clear of the thumbstick (0-0.24) and leaves the
+-- bottom-right corner to the action buttons and Roblox's jump.
+Layout.VitalsX = 0.46 -- centre
+Layout.VitalsBottom = 0.985
+Layout.VitalsW = 0.40
+Layout.VitalsH = 0.105
 
--- ---------------- bottom centre ----------------
-Layout.ActionRight = 0.78
-Layout.ActionBottom = 0.96
-Layout.ActionW = 0.34
-Layout.ActionH = 0.115
-Layout.ActionGap = 0.04 -- of the action row
+Layout.HotbarBottom = 0.872
+Layout.HotbarW = 0.40
+Layout.HotbarH = 0.068
+Layout.HotbarGap = 0.012 -- of the row
+
+-- ---------------- bottom right: the action cluster ----------------
+-- Explicit positions rather than a row. A row of equal buttons gives the
+-- thumb nothing to aim at; an arc with one big primary is what every action
+-- game on a phone does, and it is reachable without looking.
+-- Everything stays left of x = 0.79 so it never fights Roblox's jump button.
+Layout.Actions = {
+	Punch = { x = 0.745, y = 0.855, size = 0.130 },
+	Sprint = { x = 0.745, y = 0.702, size = 0.098 },
+	Toy = { x = 0.641, y = 0.700, size = 0.098 },
+}
 
 Layout.ReticleY = 0.42
 Layout.ReticleH = 0.05
@@ -116,52 +135,39 @@ function Layout.FitText(label: GuiObject, maxSize: number?)
 	constraint.Parent = label
 end
 
--- The vertical rails: a scale-sized column of square tiles pinned to an edge.
-function Layout.Rail(gui: Instance, name: string, side: string): Frame
-	local existing = gui:FindFirstChild(name)
-	if existing and existing:IsA("Frame") then
-		return existing
+-- One action button, placed at its own spot in the bottom-right cluster.
+function Layout.ActionSlot(button: GuiObject, name: string, gui: Instance)
+	local slot = Layout.Actions[name]
+	if not slot then
+		error("no action slot named " .. name)
 	end
-	local left = side == "left"
-	local rail = Instance.new("Frame")
-	rail.Name = name
-	rail.AnchorPoint = Vector2.new(left and 0 or 1, 0)
-	rail.Position = UDim2.fromScale(left and Layout.EdgeX or 1 - Layout.EdgeX, left and Layout.MenuRailY or Layout.ToolRailY)
-	rail.Size = UDim2.fromScale(
-		left and Layout.MenuRailW or Layout.ToolRailW,
-		left and Layout.MenuRailH or Layout.ToolRailH
-	)
-	rail.BackgroundTransparency = 1
-	rail.ZIndex = 28
-	rail.Parent = gui
-	local list = Instance.new("UIListLayout")
-	list.Padding = UDim.new(left and Layout.MenuTileGap or Layout.ToolTileGap, 0)
-	list.HorizontalAlignment = left and Enum.HorizontalAlignment.Left or Enum.HorizontalAlignment.Right
-	list.SortOrder = Enum.SortOrder.LayoutOrder
-	list.Parent = rail
-	return rail
+	button.AnchorPoint = Vector2.new(0.5, 0.5)
+	button.Position = UDim2.fromScale(slot.x, slot.y)
+	button.ZIndex = 30
+	Layout.Square(button, slot.size)
+	button.Parent = gui
 end
 
--- The thumb row: bottom centre-right, clear of the jump control.
-function Layout.ActionBar(gui: ScreenGui): Frame
-	local existing = gui:FindFirstChild("ActionBar")
+-- The hotbar: a centred row of squares sitting on top of the vitals block.
+function Layout.Hotbar(gui: Instance): Frame
+	local existing = gui:FindFirstChild("Hotbar")
 	if existing and existing:IsA("Frame") then
 		return existing
 	end
 	local row = Instance.new("Frame")
-	row.Name = "ActionBar"
-	row.AnchorPoint = Vector2.new(1, 1)
-	row.Position = UDim2.fromScale(Layout.ActionRight, Layout.ActionBottom)
-	row.Size = UDim2.fromScale(Layout.ActionW, Layout.ActionH)
+	row.Name = "Hotbar"
+	row.AnchorPoint = Vector2.new(0.5, 1)
+	row.Position = UDim2.fromScale(Layout.VitalsX, Layout.HotbarBottom)
+	row.Size = UDim2.fromScale(Layout.HotbarW, Layout.HotbarH)
 	row.BackgroundTransparency = 1
-	row.ZIndex = 30
+	row.ZIndex = 28
 	row.Parent = gui
 	local list = Instance.new("UIListLayout")
 	list.FillDirection = Enum.FillDirection.Horizontal
-	list.HorizontalAlignment = Enum.HorizontalAlignment.Right
-	list.VerticalAlignment = Enum.VerticalAlignment.Center
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.VerticalAlignment = Enum.VerticalAlignment.Bottom
 	list.SortOrder = Enum.SortOrder.LayoutOrder
-	list.Padding = UDim.new(Layout.ActionGap, 0)
+	list.Padding = UDim.new(Layout.HotbarGap, 0)
 	list.Parent = row
 	return row
 end

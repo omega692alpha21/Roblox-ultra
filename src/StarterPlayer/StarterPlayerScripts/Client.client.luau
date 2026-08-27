@@ -85,6 +85,7 @@ local ORDER = {
 	"AimController",
 	"ToyController",
 	"MinimapController",
+	"VitalsController",
 }
 
 local results: { { name: string, ok: boolean, err: string? } } = {}

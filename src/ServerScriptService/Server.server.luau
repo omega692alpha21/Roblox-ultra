@@ -123,6 +123,7 @@ local BOOT: { { name: string, init: (typeof(map)) -> () } } = {
 	{ name = "CoinService", init = function() (require(Services.CoinService) :: any).Init() end },
 	{ name = "DormService", init = function(m) (require(Services.DormService) :: any).Init(m) end },
 	{ name = "JailService", init = function(m) (require(Services.JailService) :: any).Init(m) end },
+	{ name = "VitalsService", init = function() (require(Services.VitalsService) :: any).Init() end },
 	{ name = "ToyService", init = function() (require(Services.ToyService) :: any).Init() end },
 	{ name = "CurfewService", init = function(m) (require(Services.CurfewService) :: any).Init(m) end },
 	{ name = "CosmeticsService", init = function() (require(Services.CosmeticsService) :: any).Init() end },

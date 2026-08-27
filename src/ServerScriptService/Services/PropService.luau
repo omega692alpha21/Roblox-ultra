@@ -126,6 +126,57 @@ local KINDS: { [string]: Spec } = {
 	Barrel2                   = { id = 137466861438801, collide = true, shadow = true }, -- Barrel_01
 	Barrel3                   = { id = 100228655878895, collide = true, shadow = true }, -- Barrel_02
 	CarvedWoodenElephant      = { id = 71500731093006 }, -- carved_wooden_elephant
+	BrassVase2                = { id = 117118221566481 }, -- brass_vase_04
+	CeramicVase               = { id = 107242389929769 }, -- ceramic_vase_03
+	OldTyre                   = { id = 138750461099167, collide = true }, -- old_tyre
+	StandingPictureFrame2     = { id = 83371553583632 }, -- standing_picture_frame_02
+	WoodenDisplayShelves      = { id = 131105447179036, collide = true, shadow = true }, -- wooden_display_shelves_01
+	Plunger                   = { id = 82952335344759 }, -- plunger
+	WoodenCandlestick         = { id = 92341578491112 }, -- wooden_candlestick
+	BrassPot                  = { id = 116477191696998 }, -- brass_pot_02
+	SmallWoodenTable          = { id = 120402394704423 }, -- small_wooden_table_01
+	WoodenCuttingBoard        = { id = 77026380912130 }, -- wooden_cutting_board
+	CeramicPot                = { id = 128976646539588 }, -- ceramic_pot
+	HangingPictureFrame       = { id = 121776581363585 }, -- hanging_picture_frame_02
+	BrassPot2                 = { id = 113372792848583 }, -- brass_pot_01
+	GothicCommode             = { id = 126589965258040, collide = true, shadow = true }, -- GothicCommode_01
+	Lemon                     = { id = 110633496676342 }, -- lemon
+	CoffeeTableRound          = { id = 70882963582266 }, -- coffee_table_round_01
+	PlasticContainer          = { id = 113477650901770 }, -- plastic_container
+	VintagePocketWatch        = { id = 94192815591693 }, -- vintage_pocket_watch
+	RoundWoodenTable          = { id = 138287887381487, collide = true }, -- round_wooden_table_02
+	BarberShopChair           = { id = 138665121076198, collide = true, shadow = true }, -- BarberShopChair_01
+	Dustpan                   = { id = 124371627845930 }, -- dustpan
+	BrassPan                  = { id = 118908440668679 }, -- brass_pan_01
+	PasticTorch6v             = { id = 96431669084464 }, -- pastic_torch_6v
+	VintageStapler            = { id = 102526825700317 }, -- vintage_stapler
+	Lightbulb                 = { id = 88377644599277 }, -- lightbulb_01
+	UtilityBox                = { id = 79909879419835, collide = true, shadow = true }, -- utility_box_01
+	Trashbag                  = { id = 133628495248093 }, -- trashbag
+	WoodenBowl                = { id = 104633307513995 }, -- wooden_bowl_02
+	CassettePlayer            = { id = 123785149146047 }, -- cassette_player
+	WoodenBucket              = { id = 103962641021836 }, -- wooden_bucket_01
+	WoodenCrate               = { id = 74118742326619 }, -- wooden_crate_02
+	YellowOnion               = { id = 129159045306001 }, -- yellow_onion
+	GallineraTable            = { id = 76002482768354 }, -- gallinera_table
+	Jug                       = { id = 86572501144001 }, -- jug_01
+	PaintedWoodenSofa         = { id = 95908870932684, collide = true, shadow = true }, -- painted_wooden_sofa
+	PlasticCrate              = { id = 125744390275225 }, -- plastic_crate_02
+	LanternChandelier         = { id = 124300527624006, collide = true, shadow = true }, -- lantern_chandelier_01
+	MetalJug                  = { id = 120279096603553 }, -- metal_jug
+	WoodenLadder              = { id = 103098036895687, collide = true, shadow = true }, -- wooden_ladder_02
+	UtilityBox2               = { id = 106152410169244, collide = true, shadow = true }, -- utility_box_02
+	FoldingWoodenStool        = { id = 76669705345683 }, -- folding_wooden_stool
+	WornMetalRack             = { id = 79924212652418, collide = true, shadow = true }, -- worn_metal_rack
+	SideTableTall             = { id = 92153216784490, collide = true }, -- side_table_tall_01
+	LightbulbLed              = { id = 128327226815671 }, -- lightbulb_led
+	MetalStool                = { id = 113566560285712 }, -- metal_stool_02
+	MetalStool2               = { id = 92716018039156, collide = true, shadow = true }, -- metal_stool_03
+	WoodenCrate2              = { id = 107814356032114 }, -- wooden_crate_01
+	ChineseCommode            = { id = 91478365582567, collide = true, shadow = true }, -- chinese_commode
+	FoodLychee                = { id = 123847040107892 }, -- food_lychee_01
+	GardenGloves              = { id = 130165421270216 }, -- garden_gloves_01
+	BrassVase3                = { id = 87396335003397 }, -- brass_vase_02
 }
 
 local templates: { [string]: Model } = {}

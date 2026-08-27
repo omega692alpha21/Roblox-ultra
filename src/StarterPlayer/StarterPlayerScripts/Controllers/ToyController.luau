@@ -45,7 +45,6 @@ function ToyController.Init(gui: ScreenGui)
 	-- ---- the action button ----
 	local action = Instance.new("TextButton")
 	action.Name = "ToyAction"
-	Layout.Square(action, 1)
 	action.LayoutOrder = Layout.Order.Toy
 	action.BackgroundColor3 = Color3.fromRGB(226, 74, 62)
 	action.Font = Enum.Font.FredokaOne
@@ -55,8 +54,8 @@ function ToyController.Init(gui: ScreenGui)
 	action.AutoButtonColor = true
 	action.ZIndex = 30
 	action.Visible = false
-	action.Parent = Layout.ActionBar(gui)
-	Layout.FitText(action, 40)
+	Layout.ActionSlot(action, "Toy", gui)
+	Layout.FitText(action, 34)
 	local round = Instance.new("UICorner")
 	round.CornerRadius = UDim.new(1, 0)
 	round.Parent = action
@@ -75,11 +74,12 @@ function ToyController.Init(gui: ScreenGui)
 		-- solves the arc that lands there
 		local aim = AimController.Point() or (camera.CFrame.Position + camera.CFrame.LookVector * 80)
 		Remotes.Get("UseToy"):FireServer(selected, aim)
-		-- a quick squash so the tap feels answered
-		-- the aspect constraint keeps it square; only the box changes
-		action.Size = UDim2.fromScale(1, 0.86)
+		-- a quick squash so the tap feels answered; the aspect constraint keeps
+		-- it square, so only the bounding box moves
+		local slot = Layout.Actions.Toy.size
+		action.Size = UDim2.fromScale(1, slot * 0.86)
 		task.delay(0.08, function()
-			action.Size = UDim2.fromScale(1, 1)
+			action.Size = UDim2.fromScale(1, slot)
 		end)
 	end
 	action.Activated:Connect(fire)
@@ -90,14 +90,17 @@ function ToyController.Init(gui: ScreenGui)
 		return Enum.ContextActionResult.Pass
 	end, false, Enum.KeyCode.F, Enum.KeyCode.ButtonR2)
 
-	-- ---- the tool rail, right edge ----
-	local rail = Layout.Rail(gui, "ToolRail", "right")
+	-- ---- the hotbar, bottom centre ----
+	-- The toys used to live in a rail down the right edge, which put them in
+	-- the same band as the action buttons and made the corner unreadable. They
+	-- are slots now, over the health bars, where a game puts its items.
+	local rail = Layout.Hotbar(gui)
 
 	local chips: { [string]: TextButton } = {}
 	for index, toy in TOYS do
 		local chip = Instance.new("TextButton")
 		chip.Name = toy.id
-		Layout.Square(chip, Layout.ToolTileH)
+		Layout.Square(chip, 1)
 		chip.LayoutOrder = index
 		chip.BackgroundColor3 = Color3.fromRGB(30, 34, 44)
 		chip.BackgroundTransparency = 0.15
