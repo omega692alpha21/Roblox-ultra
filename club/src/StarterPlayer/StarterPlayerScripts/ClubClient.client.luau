@@ -116,7 +116,7 @@ local function tagPicker(parent: Instance, title: string, options: { string }, s
 	for _, option in options do
 		local b: TextButton
 		b = button({ Text = option, TextScaled = false, TextSize = 11, BackgroundColor3 = Color3.fromRGB(40, 38, 44), TextColor3 = CREAM }, function()
-			selected[option] = if selected[option] then nil else true
+			(selected :: any)[option] = if selected[option] then nil else true
 			b.BackgroundColor3 = if selected[option] then GOLD else Color3.fromRGB(40, 38, 44)
 			b.TextColor3 = if selected[option] then BG else CREAM
 		end)
