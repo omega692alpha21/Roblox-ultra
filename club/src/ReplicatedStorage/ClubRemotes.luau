@@ -6,21 +6,11 @@ local FOLDER = "ClubRemotes"
 local EVENTS = {
 	"Notify", -- (message, kind)
 	"SetProfile", -- client -> server (interests: {string}, lookingFor: {string})
-	"RequestJoin", -- client -> server: prompt the patron purchase
-	"OpenKeypad", -- server -> client: show the keypad
-	"Initiated", -- server -> client: the doors are open (cinematic)
-	"RepChanged", -- server -> client (rep, rankName, reason)
-	"Convocation", -- server -> client (phase, secondsLeft)
-	"Fragment", -- server -> client (text)
-	"OpenFounding", -- server -> client: show the cult-founding panel
+	"RequestJoin", -- client -> server (tierName?: string) prompt a purchase
 }
 local FUNCTIONS = {
 	"GetDirectory", -- () -> { { userId, name, interests, lookingFor } }
 	"GetMyProfile", -- () -> profile
-	"SubmitCode", -- (code: string) -> { ok: boolean, message: string }
-	"GetMissions", -- () -> { { id, text, done, rep } }
-	"GetFragments", -- () -> { string }
-	"FoundCult", -- (name, sigilIndex, colorIndex) -> { ok, message }
 }
 
 local Remotes = {}

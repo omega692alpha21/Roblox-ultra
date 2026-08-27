@@ -1,6 +1,6 @@
 --!strict
--- CULT — server bootstrap. Every system boots isolated: one failure warns
--- loudly and leaves the rest of the world standing.
+-- MILLIONS CLUB — server bootstrap. Every system boots isolated: one failure
+-- warns loudly and leaves the rest of the world standing.
 
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,20 +8,19 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remotes = require(ReplicatedStorage.Club.ClubRemotes)
 Remotes.Init()
 
--- deep-night ritual lighting under a painted star sky
+-- gilded night: the estate glows warm against a deep star sky
 Lighting.ClockTime = 0.15
 Lighting.Brightness = 2.4
 Lighting.GlobalShadows = true
 Lighting.ShadowSoftness = 0.12
 Lighting.EnvironmentDiffuseScale = 0.6
-Lighting.EnvironmentSpecularScale = 0.6
--- bright moonlit night: dark is the mood, but the player must always see
-Lighting.Ambient = Color3.fromRGB(56, 56, 68)
-Lighting.OutdoorAmbient = Color3.fromRGB(74, 82, 108)
-Lighting.ExposureCompensation = 0.7
+Lighting.EnvironmentSpecularScale = 0.7
+Lighting.Ambient = Color3.fromRGB(58, 56, 64)
+Lighting.OutdoorAmbient = Color3.fromRGB(78, 82, 104)
+Lighting.ExposureCompensation = 0.65
 
 local sky = Instance.new("Sky")
-sky.SkyboxFt = "rbxassetid://118975540614116" -- the moon face
+sky.SkyboxFt = "rbxassetid://118975540614116"
 sky.SkyboxBk = "rbxassetid://83074969930157"
 sky.SkyboxLf = "rbxassetid://79429743980832"
 sky.SkyboxRt = "rbxassetid://82929303517531"
@@ -32,40 +31,35 @@ sky.StarCount = 0
 sky.Parent = Lighting
 
 local atmosphere = Instance.new("Atmosphere")
-atmosphere.Density = 0.26
-atmosphere.Color = Color3.fromRGB(76, 84, 116)
-atmosphere.Decay = Color3.fromRGB(34, 40, 66)
-atmosphere.Glare = 0.2
-atmosphere.Haze = 1.5
+atmosphere.Density = 0.24
+atmosphere.Color = Color3.fromRGB(84, 88, 116)
+atmosphere.Decay = Color3.fromRGB(40, 44, 68)
+atmosphere.Glare = 0.25
+atmosphere.Haze = 1.4
 atmosphere.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
-bloom.Intensity = 1.2
-bloom.Size = 44
-bloom.Threshold = 1.35
+bloom.Intensity = 1.3
+bloom.Size = 48
+bloom.Threshold = 1.3
 bloom.Parent = Lighting
 
 local grade = Instance.new("ColorCorrectionEffect")
 grade.Brightness = 0.05
 grade.Contrast = 0.06
-grade.Saturation = 0.1
-grade.TintColor = Color3.fromRGB(238, 236, 248)
+grade.Saturation = 0.12
+grade.TintColor = Color3.fromRGB(244, 240, 246)
 grade.Parent = Lighting
 
 local ClubMap = require(script.Parent.ClubMap)
-local Rep = require(script.Parent.Rep)
-local Initiation = require(script.Parent.Initiation)
-local Convocation = require(script.Parent.Convocation)
-local Missions = require(script.Parent.Missions)
-local Gates = require(script.Parent.Gates)
-local Cults = require(script.Parent.Cults)
 local Membership = require(script.Parent.Membership)
+local Gates = require(script.Parent.Gates)
 local Profiles = require(script.Parent.Profiles)
-local Robes = require(script.Parent.Robes)
+local Gems = require(script.Parent.Gems)
 
 local okBuild, mapOrErr = xpcall(ClubMap.Build, debug.traceback)
 if not okBuild then
-	warn("[CULT] MAP BUILD FAILED:\n" .. tostring(mapOrErr))
+	warn("[MC] MAP BUILD FAILED:\n" .. tostring(mapOrErr))
 	local sign = Instance.new("Part")
 	sign.Anchored = true
 	sign.Size = Vector3.new(40, 12, 1)
@@ -91,29 +85,16 @@ end
 local map = mapOrErr :: any
 
 local BOOT: { { name: string, init: () -> () } } = {
-	{ name = "Rep", init = function() Rep.Init() end },
-	{ name = "Initiation", init = function() Initiation.Init(map) end },
 	{ name = "Membership", init = function() Membership.Init(map) end },
 	{ name = "Gates", init = function() Gates.Init(map) end },
-	{ name = "Cults", init = function() Cults.Init(map) end },
-	{ name = "Convocation", init = function() Convocation.Init(map) end },
-	{ name = "Missions", init = function() Missions.Init(map) end },
 	{ name = "Profiles", init = function() (Profiles :: any).Init() end },
-	{ name = "Robes", init = function() Robes.Init() end },
+	{ name = "Gems", init = function() Gems.Init() end },
 }
 for _, entry in BOOT do
 	local ok, err = pcall(entry.init :: any)
 	if not ok then
-		warn(("[CULT] %s.Init failed: %s"):format(entry.name, tostring(err)))
+		warn(("[MC] %s.Init failed: %s"):format(entry.name, tostring(err)))
 	end
 end
 
--- the seat claim and the altar's answers cross module boundaries
-Initiation.OnInitiated(function(player)
-	Membership.OnInitiated(player)
-end)
-Initiation.SetAltarHandler(function(player, answer): (boolean, string)
-	return Missions.AnswerAltar(player, answer)
-end)
-
-print(("[CULT] build %d ready"):format(game.PlaceVersion))
+print(("[MC] build %d ready"):format(game.PlaceVersion))
