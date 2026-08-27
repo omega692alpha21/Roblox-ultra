@@ -26,11 +26,29 @@ local TextureIds = require(ReplicatedStorage.Config.TextureIds)
 
 local TextureService = {}
 
-type Surface = { variant: string, material: Enum.Material }
+type Surface = { variant: string, material: Enum.Material, ownsColour: boolean? }
+
+-- Roblox multiplies BasePart.Color into a variant's colour map. When the map
+-- is a photograph of red brick, a red brick part multiplies red by red and the
+-- wall comes out nearly black. Lift the part toward white, keeping a trace of
+-- its hue so an accent wall is still an accent wall.
+local WHITE = Color3.new(1, 1, 1)
+
+local function lift(color: Color3): Color3
+	local peak = math.max(color.R, color.G, color.B)
+	if peak < 0.02 then
+		return Color3.fromRGB(196, 196, 196)
+	end
+	local full = Color3.new(color.R / peak, color.G / peak, color.B / peak)
+	return full:Lerp(WHITE, 0.62)
+end
 
 local function dress(part: BasePart, surface: Surface)
 	part.Material = surface.material
 	part.MaterialVariant = surface.variant
+	if surface.ownsColour then
+		part.Color = lift(part.Color)
+	end
 end
 
 -- Windows keep a decal: the panes and mullions are a picture, and tiling them

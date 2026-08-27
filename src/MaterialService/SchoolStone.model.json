@@ -2,9 +2,9 @@
   "className": "MaterialVariant",
   "properties": {
     "BaseMaterial": "Slate",
-    "StudsPerTile": 12,
-    "ColorMap": "rbxassetid://71126166805305",
-    "NormalMap": "rbxassetid://77726696864808",
-    "RoughnessMap": "rbxassetid://75645935067087"
+    "StudsPerTile": 6,
+    "ColorMap": "rbxassetid://73527330653395",
+    "NormalMap": "rbxassetid://107755735470500",
+    "RoughnessMap": "rbxassetid://139901957570530"
   }
 }

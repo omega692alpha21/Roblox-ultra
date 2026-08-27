@@ -2,9 +2,9 @@
   "className": "MaterialVariant",
   "properties": {
     "BaseMaterial": "CeramicTiles",
-    "StudsPerTile": 8,
-    "ColorMap": "rbxassetid://91812351321037",
-    "NormalMap": "rbxassetid://102133518090427",
-    "RoughnessMap": "rbxassetid://91245967744063"
+    "StudsPerTile": 15,
+    "ColorMap": "rbxassetid://89534706794676",
+    "NormalMap": "rbxassetid://86714046061283",
+    "RoughnessMap": "rbxassetid://71661961305256"
   }
 }
