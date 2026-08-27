@@ -15,9 +15,62 @@ local MapService = require(Services.MapService)
 local PlotService = require(Services.PlotService)
 local EconomyService = require(Services.EconomyService)
 
+-- unmistakable proof-of-life: shows game + build even if everything below dies
+do
+	local beacon = Instance.new("Part")
+	beacon.Name = "BootBeacon"
+	beacon.Anchored = true
+	beacon.CanCollide = false
+	beacon.Transparency = 1
+	beacon.Size = Vector3.new(1, 1, 1)
+	beacon.Position = Vector3.new(0, 40, 22)
+	beacon.Parent = workspace
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.fromScale(30, 8)
+	gui.AlwaysOnTop = true
+	gui.MaxDistance = 500
+	gui.Parent = beacon
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.FredokaOne
+	label.TextScaled = true
+	label.TextColor3 = Color3.fromRGB(255, 196, 60)
+	label.TextStrokeTransparency = 0.2
+	label.Text = "DETENTION · build " .. tostring(game.PlaceVersion)
+	label.Parent = gui
+	task.delay(20, function()
+		beacon:Destroy() -- proof shown; get out of the way
+	end)
+end
+
 DataService.Init()
 
-local map = MapService.Build()
+local okBuild, mapOrErr = xpcall(MapService.Build, debug.traceback)
+if not okBuild then
+	warn("[DETENTION] MAP BUILD FAILED:\n" .. tostring(mapOrErr))
+	local sign = Instance.new("Part")
+	sign.Anchored = true
+	sign.Size = Vector3.new(40, 12, 1)
+	sign.Position = Vector3.new(0, 8, 30)
+	sign.Color = Color3.fromRGB(190, 46, 46)
+	sign.Parent = workspace
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Front
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 20
+	gui.Parent = sign
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.FredokaOne
+	label.TextScaled = true
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Text = "MAP BUILD FAILED — screenshot this + tell the dev"
+	label.Parent = gui
+	return
+end
+local map = mapOrErr :: any
 
 PlotService.Init(map)
 EconomyService.Init()
