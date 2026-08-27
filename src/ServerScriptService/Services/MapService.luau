@@ -1020,9 +1020,9 @@ end
 -- Dense treeline just inside the perimeter walls, so the horizon reads as woods.
 local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, number) -> ())
 	local rng = Random.new(2026)
-	for i = 1, 90 do
-		local angle = (i / 90) * math.pi * 2
-		local dist = rng:NextNumber(295, 340)
+	for i = 1, 190 do
+		local angle = (i / 190) * math.pi * 2 + rng:NextNumber(-0.02, 0.02)
+		local dist = rng:NextNumber(292, 372)
 		local pos = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
 		treeFn(parent, pos, rng:NextNumber(1.1, 2.3))
 	end
@@ -1049,6 +1049,14 @@ end
 -- Real terrain: grass base under the campus + rolling hills outside the walls.
 local function buildTerrain()
 	local terrain = workspace.Terrain
+	-- painterly terrain palette: warm grass, pale stone, so the horizon reads
+	-- as painted hills instead of default grey rock
+	pcall(function()
+		terrain:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(104, 158, 70))
+		terrain:SetMaterialColor(Enum.Material.Rock, Color3.fromRGB(150, 152, 148))
+		terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(140, 108, 72))
+		terrain:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(88, 146, 62))
+	end)
 	terrain:FillBlock(CFrame.new(0, -2.1, 0), Vector3.new(680, 4, 680), Enum.Material.Grass)
 	local rng = Random.new(7)
 	for i = 1, 26 do
@@ -1075,7 +1083,8 @@ local function buildTerrain()
 		local angle = (i / 8) * math.pi * 2 + 0.3
 		local dist = rng:NextNumber(430, 520)
 		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(10, 30), math.sin(angle) * dist)
-		terrain:FillBall(pos, rng:NextNumber(40, 80), Enum.Material.Rock)
+		terrain:FillBall(pos, rng:NextNumber(40, 80), Enum.Material.Grass)
+		terrain:FillBall(pos + Vector3.new(0, 26, 0), rng:NextNumber(16, 30), Enum.Material.Rock)
 	end
 end
 

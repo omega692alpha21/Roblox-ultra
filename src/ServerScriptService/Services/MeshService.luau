@@ -26,22 +26,30 @@ local rng = Random.new(17)
 
 -- painterly pipeline: these meshes carry UVs; shading is baked into painted
 -- textures assigned at runtime (import drops glTF materials, keeps UVs)
-local TEXTURES: { [number]: { string } } = {
-	[ASSETS.Tree] = { "rbxassetid://90233154274220", "rbxassetid://134583843090546" },
-	[ASSETS.Tree2] = { "rbxassetid://90233154274220", "rbxassetid://134583843090546" },
-	[ASSETS.Conifer] = { "rbxassetid://90233154274220", "rbxassetid://134583843090546" },
-	[ASSETS.Rock1] = { "rbxassetid://72515799328452" },
-	[ASSETS.Rock2] = { "rbxassetid://72515799328452" },
-	[ASSETS.Tuft] = { "rbxassetid://125982551958174" },
-}
-
 -- Roblox's GLB import ignores glTF material colors, so each asset carries a
 -- node-name -> {color, material} style map applied after load.
 type Style = { color: Color3, material: Enum.Material? }
 local STYLES: { [number]: { [string]: Style } } = {
 	[ASSETS.Tree] = {
-		part0 = { color = Color3.fromRGB(107, 77, 48), material = Enum.Material.Wood },
-		part1 = { color = Color3.fromRGB(77, 140, 64), material = Enum.Material.Grass },
+		part0 = { color = Color3.fromRGB(96, 68, 44), material = Enum.Material.Wood },
+		part1 = { color = Color3.fromRGB(86, 152, 66), material = Enum.Material.Grass },
+	},
+	[ASSETS.Tree2] = {
+		part0 = { color = Color3.fromRGB(104, 74, 48), material = Enum.Material.Wood },
+		part1 = { color = Color3.fromRGB(72, 138, 58), material = Enum.Material.Grass },
+	},
+	[ASSETS.Conifer] = {
+		part0 = { color = Color3.fromRGB(88, 62, 40), material = Enum.Material.Wood },
+		part1 = { color = Color3.fromRGB(46, 104, 62), material = Enum.Material.Grass },
+	},
+	[ASSETS.Rock1] = {
+		part0 = { color = Color3.fromRGB(178, 178, 182), material = Enum.Material.Rock },
+	},
+	[ASSETS.Rock2] = {
+		part0 = { color = Color3.fromRGB(166, 168, 174), material = Enum.Material.Rock },
+	},
+	[ASSETS.Tuft] = {
+		part0 = { color = Color3.fromRGB(96, 162, 68), material = Enum.Material.Grass },
 	},
 	[ASSETS.Hedge] = {
 		part0 = { color = Color3.fromRGB(56, 107, 51), material = Enum.Material.Grass },
@@ -128,31 +136,34 @@ local function loadTemplate(assetId: number): Model?
 			end
 		end
 	end
-	-- painterly: baked-shading textures override flat styles entirely
-	local textures = TEXTURES[assetId]
-	if textures then
-		local ordered: { BasePart } = {}
-		for _, part in template:GetDescendants() do
-			if part:IsA("BasePart") then
-				table.insert(ordered, part)
-			end
-		end
-		table.sort(ordered, function(a, b)
-			return a.Name < b.Name
-		end)
-		for i, part in ordered do
-			if part:IsA("MeshPart") then
-				part.TextureID = textures[math.min(i, #textures)]
-				part.Color = Color3.new(1, 1, 1)
-				part.Material = Enum.Material.SmoothPlastic
-			end
-		end
-	end
+	-- NOTE: MeshPart.TextureID is not settable at runtime, so painterly
+	-- textures cannot be applied here. Flora reads through per-part colours
+	-- plus per-instance hue variation instead (see tintClone below).
 	result:Destroy()
 	if #template:GetChildren() == 0 then
 		return nil
 	end
 	return template
+end
+
+-- Nudge each clone's greens so no two trees are identical — the thing that
+-- makes stylised foliage read as painted rather than stamped.
+local function tintClone(model: Model, seed: number)
+	local r = Random.new(seed)
+	local warm = r:NextNumber(-0.06, 0.08)
+	local light = r:NextNumber(-0.07, 0.09)
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			local h, sat, v = part.Color:ToHSV()
+			if sat > 0.15 then
+				part.Color = Color3.fromHSV(
+					math.clamp(h + warm * 0.12, 0, 1),
+					math.clamp(sat + warm, 0, 1),
+					math.clamp(v + light, 0.05, 1)
+				)
+			end
+		end
+	end
 end
 
 function MeshService.Init(map: { folder: Folder })
@@ -178,6 +189,7 @@ function MeshService.Init(map: { folder: Folder })
 			local base = trunk.Position - Vector3.new(0, trunk.Size.Y / 2, 0)
 			local clone = ((flip and treeTemplate2) and treeTemplate2 or treeTemplate):Clone()
 			clone.Name = "MeshTree"
+			tintClone(clone, math.floor(trunk.Position.X * 7 + trunk.Position.Z * 13))
 			clone:ScaleTo(scale)
 			local _, size = clone:GetBoundingBox()
 			clone:PivotTo(CFrame.new(base + Vector3.new(0, size.Y / 2, 0)) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0))
@@ -324,6 +336,7 @@ function MeshService.Init(map: { folder: Folder })
 		if template then
 			local clone = template:Clone()
 			clone.Name = "PaintRock"
+			tintClone(clone, i * 31 + 5)
 			clone:ScaleTo(scatterRng:NextNumber(0.8, 2.2))
 			clone:PivotTo(CFrame.new(pos + Vector3.new(0, 1.2, 0)) * CFrame.Angles(0, scatterRng:NextNumber(0, math.pi * 2), 0))
 			clone.Parent = map.folder
@@ -336,6 +349,7 @@ function MeshService.Init(map: { folder: Folder })
 			if math.abs(x) > 24 or z > 130 then -- keep walkways clean
 				local clone = tuft:Clone()
 				clone.Name = "PaintTuft"
+				tintClone(clone, math.floor(x * 3 + z * 11))
 				clone:ScaleTo(scatterRng:NextNumber(0.8, 1.6))
 				clone:PivotTo(CFrame.new(x, 0.1, z) * CFrame.Angles(0, scatterRng:NextNumber(0, math.pi * 2), 0))
 				clone.Parent = map.folder
@@ -346,6 +360,7 @@ function MeshService.Init(map: { folder: Folder })
 		for _, spot in { Vector3.new(-30, 0, 96), Vector3.new(30, 0, 96), Vector3.new(-52, 0, 118), Vector3.new(52, 0, 118) } do
 			local clone = conifer:Clone()
 			clone.Name = "PaintConifer"
+			tintClone(clone, math.floor(spot.X * 5 + spot.Z * 3))
 			clone:ScaleTo(scatterRng:NextNumber(1.1, 1.5))
 			local _, size = clone:GetBoundingBox()
 			clone:PivotTo(CFrame.new(spot + Vector3.new(0, size.Y / 2, 0)))
