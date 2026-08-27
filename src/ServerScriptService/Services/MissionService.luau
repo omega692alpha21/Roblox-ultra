@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Students = require(ReplicatedStorage.Config.Students)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local Remotes = require(ReplicatedStorage.Remotes)
+local JailService = require(script.Parent.JailService)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 local AuraService = require(script.Parent.AuraService)
@@ -219,8 +220,10 @@ local function talk(player: Player, giver: Giver)
 		AuraService.Add(player, mission.aura)
 		profile.missions[giver.id] = (profile.missions[giver.id] or 0) + 1
 		perPlayer[giver.id] = nil
+		-- staff reward good students with a hall pass they can flash at curfew
+		JailService.GrantHallPass(player, 1, "for helping " .. giver.name)
 		local lines = table.clone(mission.done)
-		table.insert(lines, ("REWARD: $%s + %d aura"):format(NumberFormat.Abbreviate(cash), mission.aura))
+		table.insert(lines, ("REWARD: $%s + %d aura + 1 hall pass"):format(NumberFormat.Abbreviate(cash), mission.aura))
 		Remotes.Get("Dialogue"):FireClient(player, giver.name, lines)
 	end
 end

@@ -13,6 +13,7 @@ local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Remotes)
 local AuraService = require(script.Parent.AuraService)
 local StealService = require(script.Parent.StealService)
+local JailService = require(script.Parent.JailService)
 
 local CurfewService = {}
 
@@ -42,25 +43,25 @@ end
 
 local function sendToDetention(player: Player)
 	local character = player.Character
-	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	if not root or not humanoid then
+	if not character or not character:FindFirstChild("HumanoidRootPart") then
 		return
 	end
-	root.CFrame = CFrame.new(detentionSpot + Vector3.new(rng:NextNumber(-6, 6), 4, rng:NextNumber(-4, 4)))
-	player:SetAttribute("DetentionUntil", os.clock() + GameConfig.DetentionSeconds)
-	humanoid.WalkSpeed = 0
+	local served = JailService.Jail(player)
 	AuraService.Add(player, -GameConfig.DetentionAuraPenalty)
+	if served <= 0 then
+		Remotes.Get("Notify"):FireClient(player, ("A prefect caught you — but your Jail Pass got you out. -%d aura."):format(GameConfig.DetentionAuraPenalty), "bad")
+		return
+	end
 	Remotes.Get("Notify"):FireClient(
 		player,
-		("BUSTED! A prefect caught you after dark. Detention %ds, -%d aura."):format(
-			GameConfig.DetentionSeconds,
+		("BUSTED! A prefect caught you after dark. %ds in detention, -%d aura."):format(
+			served,
 			GameConfig.DetentionAuraPenalty
 		),
 		"bad"
 	)
 	Remotes.Get("Notify"):FireAllClients(player.DisplayName .. " got dragged to DETENTION for breaking curfew!", "info")
-	task.delay(GameConfig.DetentionSeconds, function()
+	task.delay(served, function()
 		if player.Parent then
 			player:SetAttribute("DetentionUntil", nil)
 			StealService.RefreshWalkSpeed(player)

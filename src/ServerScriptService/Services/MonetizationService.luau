@@ -61,6 +61,8 @@ local function grantProduct(player: Player, productKey: string): boolean
 		local amount = math.floor(product.cash * mult)
 		EconomyService.AddCash(player, amount, false)
 		Remotes.Get("Notify"):FireClient(player, "+$" .. NumberFormat.Abbreviate(amount) .. " lunch money!", "good")
+	elseif product.hallPasses then
+		require(script.Parent.JailService).GrantHallPass(player, product.hallPasses, "from the front office")
 	elseif product.spins then
 		profile.spinTokens += product.spins
 		Remotes.Get("Notify"):FireClient(player, "+" .. product.spins .. " wheel spins!", "good")

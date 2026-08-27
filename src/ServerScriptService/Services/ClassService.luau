@@ -11,6 +11,7 @@ local Questions = require(ReplicatedStorage.Config.Quizzes)
 local Cliques = require(ReplicatedStorage.Config.Cliques)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local Remotes = require(ReplicatedStorage.Remotes)
+local JailService = require(script.Parent.JailService)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 local Signals = require(script.Parent.Parent.Signals)
@@ -53,6 +54,10 @@ local function finishQuiz(player: Player, session: Session)
 		player:SetAttribute("LuckMult", GameConfig.QuizLuckBuffMultiplier)
 		player:SetAttribute("LuckUntil", os.clock() + GameConfig.QuizLuckBuffSeconds)
 		Signals.QuizWon:Fire(player)
+	end
+	-- a clean sweep is what a good student trades for a hall pass
+	if session.correct >= 3 then
+		JailService.GrantHallPass(player, 1, "for acing the quiz")
 	end
 	Remotes.Get("QuizResult"):FireClient(player, session.correct, cash, passed and GameConfig.QuizRepReward or 0)
 	if passed then

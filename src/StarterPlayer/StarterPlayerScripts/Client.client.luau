@@ -36,6 +36,7 @@ local ORDER = {
 	"CharacterSelectController",
 	"GraphicsHintController",
 	"DialogueController",
+	"JailController",
 }
 
 local results: { { name: string, ok: boolean, err: string? } } = {}

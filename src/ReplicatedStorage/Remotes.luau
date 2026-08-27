@@ -34,6 +34,8 @@ local EVENTS = {
 	"Sprint", -- (on: boolean)
 	"ClientDiagnostic", -- (failures: {string}) UI self-check report
 	"ChooseCharacter", -- (outfit: "boy" | "girl")
+	"JailState", -- server -> client (secondsLeft: number, canSkip: boolean)
+	"RequestJailSkip", -- client -> server: use the pass, or get the purchase prompt
 }
 
 local FUNCTIONS = {

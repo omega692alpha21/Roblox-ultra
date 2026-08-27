@@ -119,6 +119,7 @@ local BOOT: { { name: string, init: (typeof(map)) -> () } } = {
 	{ name = "RivalService", init = function() (require(Services.RivalService) :: any).Init() end },
 	{ name = "CoinService", init = function() (require(Services.CoinService) :: any).Init() end },
 	{ name = "DormService", init = function(m) (require(Services.DormService) :: any).Init(m) end },
+	{ name = "JailService", init = function(m) (require(Services.JailService) :: any).Init(m) end },
 	{ name = "CurfewService", init = function(m) (require(Services.CurfewService) :: any).Init(m) end },
 	{ name = "CosmeticsService", init = function() (require(Services.CosmeticsService) :: any).Init() end },
 	{ name = "ReputationService", init = function() (require(Services.ReputationService) :: any).Init() end },

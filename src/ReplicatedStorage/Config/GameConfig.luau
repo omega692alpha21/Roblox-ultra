@@ -86,7 +86,7 @@ return {
 	CurfewCatchBase = 0.04, -- prefect catch chance on the first tick outside
 	CurfewCatchRamp = 0.025, -- extra catch chance per consecutive tick
 	CurfewCatchMax = 0.35,
-	DetentionSeconds = 12,
+	DetentionSeconds = 75,
 	DetentionAuraPenalty = 5,
 
 	-- Campus coin pickups

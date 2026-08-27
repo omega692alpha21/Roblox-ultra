@@ -12,6 +12,7 @@ local Products = {
 		ExtraSlots = { id = 1963374270, name = "+2 Crew Slots", price = 249, desc = "Two extra desks in your homeroom" },
 		ExtendedLock = { id = 1962906271, name = "Extended Lock", price = 179, desc = "+30s base lock duration" },
 		Speed = { id = 1961970283, name = "Speed Sneakers", price = 99, desc = "+6 walkspeed, always" },
+		JailPass = { id = 1965384440, name = "Get Out of Detention", price = 149, desc = "Walk out of any detention sentence instantly" },
 
 		-- Cosmetic-only passes: zero gameplay effect, pure flex. This is where
 		-- the top-grossing Roblox games actually make their money.
@@ -24,6 +25,7 @@ local Products = {
 	-- Developer products (repeatable purchases).
 	-- cash amounts are multiplied by the buyer's grade multiplier at grant time.
 	DevProducts = {
+		HallPasses = { id = 3710112263, name = "3 Hall Passes", price = 75, hallPasses = 3 },
 		CashSmall = { id = 3709990881, name = "Small Stack", price = 49, cash = 5000 },
 		CashMedium = { id = 3709990901, name = "Backpack of Cash", price = 149, cash = 20000 },
 		CashLarge = { id = 3709990905, name = "Locker of Cash", price = 399, cash = 65000 },
