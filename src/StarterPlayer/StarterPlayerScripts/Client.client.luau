@@ -31,7 +31,6 @@ local ORDER = {
 	"LeaderboardController",
 	"PunchController",
 	"ScreenFxController",
-	"SurfaceArtController",
 	"SprintController",
 	"TutorialController",
 	"DialogueController",
