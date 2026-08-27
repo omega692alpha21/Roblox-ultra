@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
+local PropSizes = require(ReplicatedStorage.Config.PropSizes)
 
 export type Plot = {
 	index: number,
@@ -1718,6 +1719,89 @@ local function prop(kind: string, cf: CFrame, options: { scale: number?, hang: b
 	})
 end
 
+-- Naming a coordinate for every prop stops scaling somewhere around fifty of
+-- them, and a room dressed by hand at that size reads as a showroom anyway:
+-- everything squared up, evenly spaced, nothing where a person would have left
+-- it. Clutter is scattered instead -- a rectangle of clear floor, a pool of
+-- things that plausibly live there, and a seeded RNG so the same school comes
+-- out of every server.
+--
+-- Sizes come from PropSizes, which is measured off the uploaded meshes
+-- (tools/prop_registry.py). That is also what keeps the pools honest: a kind
+-- whose model has not uploaded is simply absent from the table, so it drops
+-- out of the pool instead of leaving a hole in the room.
+type Zone = {
+	min: Vector2,
+	max: Vector2,
+	y: number,
+	pool: { string },
+	count: number,
+	seed: number,
+	margin: number?,
+}
+
+local function scatter(zone: Zone)
+	local available = {}
+	for _, kind in zone.pool do
+		if PropSizes[kind] then
+			table.insert(available, kind)
+		end
+	end
+	if #available == 0 then
+		return
+	end
+
+	local rng = Random.new(zone.seed)
+	local margin = zone.margin or 1
+	local placed: { { at: Vector2, radius: number } } = {}
+
+	-- Seed the occupancy with anything already placed by hand inside this
+	-- rectangle. Without this the scatter cheerfully drops a planter through
+	-- the dorm chest of drawers, because it only knows about its own picks.
+	for _, existing in propRequests do
+		local size = PropSizes[existing.kind]
+		if not size then
+			continue
+		end
+		local at = Vector2.new(existing.cframe.Position.X, existing.cframe.Position.Z)
+		local radius = math.sqrt(size.X * size.X + size.Z * size.Z) * 0.5 + 0.5
+		if at.X > zone.min.X - radius and at.X < zone.max.X + radius
+			and at.Y > zone.min.Y - radius and at.Y < zone.max.Y + radius then
+			table.insert(placed, { at = at, radius = radius })
+		end
+	end
+	local prior = #placed
+
+	local attempts = 0
+	while #placed - prior < zone.count and attempts < zone.count * 40 do
+		attempts += 1
+		local kind = available[rng:NextInteger(1, #available)]
+		local size = PropSizes[kind]
+		-- circumradius: props are dropped at a random yaw, and half the longest
+		-- side is not far enough for a box turned forty-five degrees
+		local radius = math.sqrt(size.X * size.X + size.Z * size.Z) * 0.5 + 0.5
+		local inset = margin + radius
+		if zone.max.X - zone.min.X < inset * 2 or zone.max.Y - zone.min.Y < inset * 2 then
+			continue
+		end
+		local at = Vector2.new(
+			rng:NextNumber(zone.min.X + inset, zone.max.X - inset),
+			rng:NextNumber(zone.min.Y + inset, zone.max.Y - inset)
+		)
+		local clear = true
+		for _, other in placed do
+			if (at - other.at).Magnitude < radius + other.radius then
+				clear = false
+				break
+			end
+		end
+		if clear then
+			table.insert(placed, { at = at, radius = radius })
+			prop(kind, CFrame.new(at.X, zone.y, at.Y) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0))
+		end
+	end
+end
+
 local function buildInteriorWall(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } })
 	local dir = (to - from)
 	local length = dir.Magnitude
@@ -2339,6 +2423,61 @@ local function furnishProps()
 	-- stacking chairs along the gym wall, left out after an assembly
 	for i = 0, 3 do
 		prop("MonoblocChair", CFrame.new(-44, 0, -76 + i * 9) * CFrame.Angles(0, math.rad(90 + i * 7), 0))
+	end
+
+	-- ---------------- scattered clutter ----------------
+	local MAINTENANCE = {
+		"WoodenCrate", "WoodenCrate2", "Barrel", "Barrel2", "Barrel3", "WineBarrel",
+		"WoodenBucket", "WoodenBucket2", "PlasticCrate", "PlasticContainer",
+		"IndustrialPasticContainer", "MetalToolbox", "MetalToolChest", "HandTruck",
+		"WoodenLadder", "WoodenLadder2", "WornMetalRack", "UtilityBox", "UtilityBox2",
+		"Trashbag", "OldTyre", "CompostBag", "WoodenBroom", "SteelFrameShelves",
+	}
+	local SPORTS = {
+		"MetalStool", "MetalStool2", "MetalStool3", "FoldingWoodenStool", "WoodenStool",
+		"MonoblocChair", "Bin", "Lifebuoy", "OldTyre", "WoodenCrate", "PlasticCrate",
+	}
+	local KITCHEN = {
+		"BrassPot", "BrassPot2", "BrassPan", "PotEnamel", "MetalJug", "Jug",
+		"VintageMicrowave", "VintageElectricKettle", "PlasticThermos", "WoodenBowl",
+		"WoodenCuttingBoard", "LongLifeFood", "RussianFoodCans", "PlasticBottleGallon",
+		"HamburgerBuns", "CarrotCake", "BrassGoblets",
+	}
+	local CLASSROOM_CLUTTER = {
+		"WoodenCrate2", "PlasticCrate", "MetalStool", "FoldingWoodenStool", "Bin",
+		"SteelShelves2", "WoodenDisplayShelves", "PottedPlant", "CeramicPot",
+		"MedicalBox", "PlasticContainer", "SmallWoodenTable",
+	}
+	local GARDEN = {
+		"PlanterBox", "PlanterBox2", "PlanterBox3", "PlanterPot", "CeramicPot",
+		"Shrub", "Flowers", "SeedingTray", "WateringCanMetal", "GardenSprinkler",
+		"GardenGloves", "CompostBag", "WoodenBucket", "Fern",
+	}
+	local TERRACE = {
+		"PicnicTable", "OutdoorTableChairSet", "RoundWoodenTable", "RoundWoodenTable2",
+		"MonoblocChair", "Bench", "Stool", "PlanterBox2", "Shrub", "Bin",
+	}
+
+	for _, zone in {
+		-- the gym keeps its equipment down the flanks
+		{ min = Vector2.new(-48, -118), max = Vector2.new(-42, -70), y = 0, pool = MAINTENANCE, count = 12, seed = 3101 },
+		{ min = Vector2.new(42, -118), max = Vector2.new(48, -70), y = 0, pool = SPORTS, count = 10, seed = 3102 },
+		-- the servery end of the cafeteria
+		{ min = Vector2.new(-221, 49), max = Vector2.new(-208, 58), y = 0, pool = KITCHEN, count = 10, seed = 3103 },
+		-- the wall behind the desks in room 101 and in the classroom wing
+		{ min = Vector2.new(-105, -120), max = Vector2.new(-99, -98), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3104 },
+		{ min = Vector2.new(-37, -174), max = Vector2.new(-31, -150), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3105 },
+		-- the courtyard edges, left and right of the way through
+		{ min = Vector2.new(-40, 34), max = Vector2.new(-30, 66), y = 0, pool = GARDEN, count = 8, seed = 3106 },
+		{ min = Vector2.new(30, 34), max = Vector2.new(40, 66), y = 0, pool = GARDEN, count = 8, seed = 3107 },
+		-- the lawn either side of the front approach
+		{ min = Vector2.new(-104, 166), max = Vector2.new(-70, 182), y = 0, pool = TERRACE, count = 7, seed = 3108 },
+		{ min = Vector2.new(70, 166), max = Vector2.new(104, 182), y = 0, pool = TERRACE, count = 7, seed = 3109 },
+		-- the dorm yards
+		{ min = Vector2.new(-198, -234), max = Vector2.new(-180, -214), y = 0, pool = GARDEN, count = 6, seed = 3110 },
+		{ min = Vector2.new(180, -234), max = Vector2.new(198, -214), y = 0, pool = GARDEN, count = 6, seed = 3111 },
+	} do
+		scatter(zone)
 	end
 end
 

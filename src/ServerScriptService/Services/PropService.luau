@@ -35,73 +35,86 @@ type Spec = {
 }
 
 local KINDS: { [string]: Spec } = {
-	SchoolDesk        = { id = 126069129781784, collide = true, shadow = true }, -- SchoolDesk_01
-	SchoolChair       = { id = 86158548904779, collide = true, shadow = true }, -- SchoolChair_01
-	OfficeDesk        = { id = 117814615626586, collide = true, shadow = true }, -- metal_office_desk
-	Chalkboard        = { id = 139944048015518, collide = true, shadow = true }, -- standing_chalkboard_01
-	ProjectorScreen   = { id = 131655294209917, collide = true, shadow = true }, -- projector_screen
-	Bookshelf         = { id = 111602596532178, collide = true, shadow = true }, -- wooden_bookshelf_worn
-	Shelf             = { id = 137144936926067, collide = true }, -- Shelf_01
-	SteelShelves      = { id = 91674694775035, collide = true, shadow = true, height = 7.6 }, -- steel_frame_shelves_01
-	SteelShelves2     = { id = 99718506671397, collide = true, shadow = true }, -- steel_frame_shelves_02
-	Clock             = { id = 106161527319573 }, -- wall_clock
-	Laptop            = { id = 96677810707224 }, -- classic_laptop
-	Stationery        = { id = 100753846020322 }, -- stationery_supplies
-	Notepads          = { id = 105565813304178 }, -- office_notepads
-	Clipboard         = { id = 90168931687194 }, -- clipboard
-	BunsenBurner      = { id = 81032639006463, height = 1.6 }, -- bunsen_burner
-	FireAlarm         = { id = 98131827261163 }, -- fire_alarm
-	Extinguisher      = { id = 131695449907539 }, -- korean_fire_extinguisher_01
-	Bin               = { id = 126919211473706, collide = true, shadow = true }, -- metal_trash_can
-	WetFloorSign      = { id = 107435536316777 }, -- WetFloorSign_01
-	Table             = { id = 122521126242415, collide = true, shadow = true }, -- WoodenTable_01
-	Table2            = { id = 123419682616772, collide = true, shadow = true, height = 2.6 }, -- WoodenTable_02
-	Chair             = { id = 80649589645922, collide = true, shadow = true }, -- painted_wooden_chair_01
-	Chair2            = { id = 112600921595081, collide = true, shadow = true }, -- painted_wooden_chair_02
-	ArmChair          = { id = 88145396024229, collide = true, shadow = true }, -- ArmChair_01
-	Sofa              = { id = 79468777414524, collide = true, shadow = true }, -- Sofa_01
-	Sofa2             = { id = 133723905884518, collide = true, shadow = true }, -- sofa_02
-	CoffeeTable       = { id = 137973075496954, collide = true, shadow = true }, -- CoffeeTable_01
-	SideTable         = { id = 86712479843395, collide = true }, -- side_table_01
-	CeilingLamp       = { id = 98027871412059 }, -- modern_ceiling_lamp_01
-	HangingLamp       = { id = 124810221769461 }, -- hanging_industrial_lamp
-	PictureFrame      = { id = 81473145650091 }, -- hanging_picture_frame_01
-	FramedPicture     = { id = 130744622926853, height = 3.0 }, -- fancy_picture_frame_01
-	Mirror            = { id = 120484942977643, height = 6.0 }, -- ornate_mirror_01
-	WhaleStatue       = { id = 116718562861995, collide = true, shadow = true }, -- bronze_whale_statue
-	RayStatue         = { id = 87190526341526, collide = true, shadow = true }, -- bronze_ray_statue
-	Vase1             = { id = 87120354073238 }, -- ceramic_vase_01
-	Vase2             = { id = 130031543289854 }, -- ceramic_vase_02
-	Vase4             = { id = 102825265055851 }, -- ceramic_vase_04
-	PlanterPot        = { id = 124661438204654, collide = true, shadow = true, height = 3.0 }, -- planter_pot_clay
-	PlanterBox        = { id = 113872556961325, collide = true, shadow = true, height = 3.0 }, -- planter_box_01
-	PottedPlant       = { id = 89872840198833, collide = true, shadow = true, height = 5.0 }, -- potted_plant_04
-	Fern              = { id = 135549914398327, height = 2.4 }, -- fern_02
-	GrandfatherClock  = { id = 84888811691565, collide = true, shadow = true }, -- vintage_grandfather_clock_01
-	Ottoman           = { id = 78973120937191, collide = true }, -- Ottoman_01
-	GreenChair        = { id = 78669780292687, collide = true, shadow = true }, -- GreenChair_01
-	MonoblocChair     = { id = 86571827154400, collide = true, shadow = true }, -- plastic_monobloc_chair_01
-	DiningTable       = { id = 94741391255177, collide = true, shadow = true }, -- dining_table
-	Bench             = { id = 86648726154092, collide = true, shadow = true }, -- painted_wooden_bench
-	Stool             = { id = 74494801771360, collide = true }, -- painted_wooden_stool
-	PicnicTable       = { id = 97016302613378, collide = true, shadow = true }, -- wooden_picnic_table
-	Football          = { id = 105621271624992 }, -- football
-	AmericanFootball  = { id = 123915785017900 }, -- american_football
-	Baseball          = { id = 109187983055213, height = 0.6 }, -- baseball_01
-	Dartboard         = { id = 106988540336353 }, -- dartboard
-	Shrub             = { id = 71075652346137, height = 2.4 }, -- shrub_sorrel_01
-	Flowers           = { id = 90264835526433, height = 2.2 }, -- flower_empodium
-	SecurityLight     = { id = 104637861058231 }, -- security_light
-	IndustrialLamp    = { id = 103547721975286 }, -- industrial_wall_lamp
-	DayBed            = { id = 116924375324086, collide = true, shadow = true }, -- vintage_day_bed
-	Nightstand        = { id = 130982122619949, collide = true }, -- ClassicNightstand_01
-	Cabinet           = { id = 83654954415616, collide = true, shadow = true }, -- painted_wooden_cabinet_02
-	Drawer            = { id = 82735970642864, collide = true, shadow = true }, -- vintage_wooden_drawer_01
-	Pillows           = { id = 127318947076582 }, -- throw_pillows_01
-	Boombox           = { id = 90347549099634 }, -- boombox
-	Television        = { id = 122585087743766, height = 3.0 }, -- Television_01
-	LoungeChair       = { id = 122382011809504, collide = true, shadow = true }, -- mid_century_lounge_chair
-	ModernCoffeeTable = { id = 137187962446170, collide = true, shadow = true }, -- modern_coffee_table_01
+	SchoolDesk                = { id = 126069129781784, collide = true, shadow = true }, -- SchoolDesk_01
+	SchoolChair               = { id = 86158548904779, collide = true, shadow = true }, -- SchoolChair_01
+	OfficeDesk                = { id = 117814615626586, collide = true, shadow = true }, -- metal_office_desk
+	Chalkboard                = { id = 139944048015518, collide = true, shadow = true }, -- standing_chalkboard_01
+	ProjectorScreen           = { id = 131655294209917, collide = true, shadow = true }, -- projector_screen
+	Bookshelf                 = { id = 111602596532178, collide = true, shadow = true }, -- wooden_bookshelf_worn
+	Shelf                     = { id = 137144936926067, collide = true }, -- Shelf_01
+	SteelShelves              = { id = 91674694775035, collide = true, shadow = true, height = 7.6 }, -- steel_frame_shelves_01
+	SteelShelves2             = { id = 99718506671397, collide = true, shadow = true }, -- steel_frame_shelves_02
+	Clock                     = { id = 106161527319573 }, -- wall_clock
+	Laptop                    = { id = 96677810707224 }, -- classic_laptop
+	Stationery                = { id = 100753846020322 }, -- stationery_supplies
+	Notepads                  = { id = 105565813304178 }, -- office_notepads
+	Clipboard                 = { id = 90168931687194 }, -- clipboard
+	BunsenBurner              = { id = 81032639006463, height = 1.6 }, -- bunsen_burner
+	FireAlarm                 = { id = 98131827261163 }, -- fire_alarm
+	Extinguisher              = { id = 131695449907539 }, -- korean_fire_extinguisher_01
+	Bin                       = { id = 126919211473706, collide = true, shadow = true }, -- metal_trash_can
+	WetFloorSign              = { id = 107435536316777 }, -- WetFloorSign_01
+	Table                     = { id = 122521126242415, collide = true, shadow = true }, -- WoodenTable_01
+	Table2                    = { id = 123419682616772, collide = true, shadow = true, height = 2.6 }, -- WoodenTable_02
+	Chair                     = { id = 80649589645922, collide = true, shadow = true }, -- painted_wooden_chair_01
+	Chair2                    = { id = 112600921595081, collide = true, shadow = true }, -- painted_wooden_chair_02
+	ArmChair                  = { id = 88145396024229, collide = true, shadow = true }, -- ArmChair_01
+	Sofa                      = { id = 79468777414524, collide = true, shadow = true }, -- Sofa_01
+	Sofa2                     = { id = 133723905884518, collide = true, shadow = true }, -- sofa_02
+	CoffeeTable               = { id = 137973075496954, collide = true, shadow = true }, -- CoffeeTable_01
+	SideTable                 = { id = 86712479843395, collide = true }, -- side_table_01
+	CeilingLamp               = { id = 98027871412059 }, -- modern_ceiling_lamp_01
+	HangingLamp               = { id = 124810221769461 }, -- hanging_industrial_lamp
+	PictureFrame              = { id = 81473145650091 }, -- hanging_picture_frame_01
+	FramedPicture             = { id = 130744622926853, height = 3.0 }, -- fancy_picture_frame_01
+	Mirror                    = { id = 120484942977643, height = 6.0 }, -- ornate_mirror_01
+	WhaleStatue               = { id = 116718562861995, collide = true, shadow = true }, -- bronze_whale_statue
+	RayStatue                 = { id = 87190526341526, collide = true, shadow = true }, -- bronze_ray_statue
+	Vase1                     = { id = 87120354073238 }, -- ceramic_vase_01
+	Vase2                     = { id = 130031543289854 }, -- ceramic_vase_02
+	Vase4                     = { id = 102825265055851 }, -- ceramic_vase_04
+	PlanterPot                = { id = 124661438204654, collide = true, shadow = true, height = 3.0 }, -- planter_pot_clay
+	PlanterBox                = { id = 113872556961325, collide = true, shadow = true, height = 3.0 }, -- planter_box_01
+	PottedPlant               = { id = 89872840198833, collide = true, shadow = true, height = 5.0 }, -- potted_plant_04
+	Fern                      = { id = 135549914398327, height = 2.4 }, -- fern_02
+	GrandfatherClock          = { id = 84888811691565, collide = true, shadow = true }, -- vintage_grandfather_clock_01
+	Ottoman                   = { id = 78973120937191, collide = true }, -- Ottoman_01
+	GreenChair                = { id = 78669780292687, collide = true, shadow = true }, -- GreenChair_01
+	MonoblocChair             = { id = 86571827154400, collide = true, shadow = true }, -- plastic_monobloc_chair_01
+	DiningTable               = { id = 94741391255177, collide = true, shadow = true }, -- dining_table
+	Bench                     = { id = 86648726154092, collide = true, shadow = true }, -- painted_wooden_bench
+	Stool                     = { id = 74494801771360, collide = true }, -- painted_wooden_stool
+	PicnicTable               = { id = 97016302613378, collide = true, shadow = true }, -- wooden_picnic_table
+	Football                  = { id = 105621271624992 }, -- football
+	AmericanFootball          = { id = 123915785017900 }, -- american_football
+	Baseball                  = { id = 109187983055213, height = 0.6 }, -- baseball_01
+	Dartboard                 = { id = 106988540336353 }, -- dartboard
+	Shrub                     = { id = 71075652346137, height = 2.4 }, -- shrub_sorrel_01
+	Flowers                   = { id = 90264835526433, height = 2.2 }, -- flower_empodium
+	SecurityLight             = { id = 104637861058231 }, -- security_light
+	IndustrialLamp            = { id = 103547721975286 }, -- industrial_wall_lamp
+	DayBed                    = { id = 116924375324086, collide = true, shadow = true }, -- vintage_day_bed
+	Nightstand                = { id = 130982122619949, collide = true }, -- ClassicNightstand_01
+	Cabinet                   = { id = 83654954415616, collide = true, shadow = true }, -- painted_wooden_cabinet_02
+	Drawer                    = { id = 82735970642864, collide = true, shadow = true }, -- vintage_wooden_drawer_01
+	Pillows                   = { id = 127318947076582 }, -- throw_pillows_01
+	Boombox                   = { id = 90347549099634 }, -- boombox
+	Television                = { id = 122585087743766, height = 3.0 }, -- Television_01
+	LoungeChair               = { id = 122382011809504, collide = true, shadow = true }, -- mid_century_lounge_chair
+	ModernCoffeeTable         = { id = 137187962446170, collide = true, shadow = true }, -- modern_coffee_table_01
+	WoodenTable               = { id = 109570767950582, collide = true }, -- wooden_table_02
+	PaintedWoodenNightstand   = { id = 93442239894311, collide = true }, -- painted_wooden_nightstand
+	PaintedWoodenTable        = { id = 73281471038236, collide = true, shadow = true }, -- painted_wooden_table
+	ChineseSofa               = { id = 86656395758763, collide = true, shadow = true }, -- chinese_sofa
+	CheeseBox                 = { id = 139305509669180 }, -- CheeseBox_01
+	ChineseStool              = { id = 105576794308039, collide = true }, -- chinese_stool
+	RollershutterDoor         = { id = 71432382047330, collide = true, shadow = true }, -- rollershutter_door
+	RollershutterWindow       = { id = 96940771997953, collide = true, shadow = true }, -- rollershutter_window_01
+	RollershutterWindow2      = { id = 118898409844007, collide = true, shadow = true }, -- rollershutter_window_02
+	RollershutterWindow3      = { id = 79993644194357, collide = true, shadow = true }, -- rollershutter_window_03
+	RussianFoodCans           = { id = 115810519531435 }, -- russian_food_cans_01
+	StandingPictureFrame      = { id = 111567700931369 }, -- standing_picture_frame_01
+	Croissant                 = { id = 90439090296327 }, -- croissant
 }
 
 local templates: { [string]: Model } = {}

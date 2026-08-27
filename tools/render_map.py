@@ -42,7 +42,19 @@ Vector3.yAxis = Vector3.new(0, 1, 0)
 Vector3.xAxis = Vector3.new(1, 0, 0)
 Vector3.zAxis = Vector3.new(0, 0, 1)
 
-Vector2 = { new = function(x, y) return {X=x or 0, Y=y or 0} end }
+local v2mt = {}
+v2mt.__index = function(v, k)
+  if k == "Magnitude" then return math.sqrt(v.X*v.X + v.Y*v.Y) end
+  if k == "Unit" then local m = math.sqrt(v.X*v.X + v.Y*v.Y); return setmetatable({X=v.X/m, Y=v.Y/m}, v2mt) end
+  return nil
+end
+v2mt.__add = function(a, b) return setmetatable({X=a.X+b.X, Y=a.Y+b.Y}, v2mt) end
+v2mt.__sub = function(a, b) return setmetatable({X=a.X-b.X, Y=a.Y-b.Y}, v2mt) end
+v2mt.__mul = function(a, b)
+  if type(a) == "number" then return setmetatable({X=a*b.X, Y=a*b.Y}, v2mt) end
+  return setmetatable({X=a.X*b, Y=a.Y*b}, v2mt)
+end
+Vector2 = { new = function(x, y) return setmetatable({X=x or 0, Y=y or 0}, v2mt) end }
 
 Color3 = {
   new = function(r, g, b) return {R=r or 0, G=g or 0, B=b or 0} end,
@@ -223,6 +235,7 @@ map_src = map_src.replace("--!strict", "")
 map_src = map_src.replace('local ReplicatedStorage = game:GetService("ReplicatedStorage")', "")
 map_src = map_src.replace("local Palette = require(ReplicatedStorage.Shared.Palette)", "")
 map_src = map_src.replace("local GameConfig = require(ReplicatedStorage.Config.GameConfig)", "")
+map_src = map_src.replace("local PropSizes = require(ReplicatedStorage.Config.PropSizes)", "local PropSizes = __PropSizes")
 map_src = map_src.replace("local Cliques = require(ReplicatedStorage.Config.Cliques)", "local Cliques = __Cliques")
 map_src = map_src.replace(
     "local StudentGen = require(script.Parent.StudentGen) :: any",
@@ -276,6 +289,7 @@ program = (
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Shared/Palette.luau"), "Palette")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/GameConfig.luau"), "GameConfig")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/Cliques.luau"), "__Cliques")
+    + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/PropSizes.luau"), "__PropSizes")
     + "local __MapService\n"
     + map_src
     + EXPORT
