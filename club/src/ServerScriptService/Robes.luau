@@ -68,12 +68,13 @@ end
 local function buildRobeParts(root: BasePart, tier: Config.Tier): Model
 	local robe = Instance.new("Model")
 	robe.Name = "RobeForm"
+	local BLACK = Color3.fromRGB(16, 15, 18)
 	local function piece(className: string, name: string, size: Vector3, offset: CFrame, color: Color3?, material: Enum.Material?): BasePart
 		local p = Instance.new(className) :: BasePart
 		p.Name = name
 		p.Size = size
 		p.CFrame = root.CFrame * offset
-		p.Color = color or tier.robe
+		p.Color = color or BLACK
 		p.Material = material or Enum.Material.Fabric
 		p.Anchored = false
 		p.CanCollide = false
@@ -107,7 +108,7 @@ local function buildRobeParts(root: BasePart, tier: Config.Tier): Model
 		piece("Part", "Robe_Sleeve", Vector3.new(0.8, 2.3, 1.15),
 			CFrame.new(side * 1.6, 1.25, 0) * CFrame.Angles(0, 0, side * math.rad(-7)))
 		piece("Part", "Robe_Cuff", Vector3.new(0.9, 0.35, 1.25),
-			CFrame.new(side * 1.78, 0.2, 0) * CFrame.Angles(0, 0, side * math.rad(-7)), tier.trim, Enum.Material.SmoothPlastic)
+			CFrame.new(side * 1.78, 0.2, 0) * CFrame.Angles(0, 0, side * math.rad(-7)), Color3.fromRGB(34, 32, 38), Enum.Material.SmoothPlastic)
 	end
 	-- the hood: collar, deep sides, tilted back, pointed peak
 	piece("Part", "Robe_Collar", Vector3.new(1.8, 0.55, 1.55), CFrame.new(0, 2.95, 0))
@@ -118,18 +119,17 @@ local function buildRobeParts(root: BasePart, tier: Config.Tier): Model
 	piece("WedgePart", "Robe_HoodPeak", Vector3.new(1.3, 1.0, 1.2), CFrame.new(0, 4.95, 0.35) * CFrame.Angles(0, math.rad(180), 0))
 	-- darkness where a face would never be
 	piece("Part", "Robe_Void", Vector3.new(1.35, 1.35, 0.2), CFrame.new(0, 3.7, 0.45), Color3.fromRGB(5, 5, 7), Enum.Material.SmoothPlastic)
-	-- hem in the tier color
-	piece("Part", "Robe_Hem", Vector3.new(3.36, 0.16, 2.36), CFrame.new(0, -2.15, 0), tier.trim, Enum.Material.SmoothPlastic)
+	piece("Part", "Robe_Hem", Vector3.new(3.36, 0.16, 2.36), CFrame.new(0, -2.15, 0), Color3.fromRGB(34, 32, 38), Enum.Material.SmoothPlastic)
+	local _ = tier
 
 	robe.PrimaryPart = robe:FindFirstChild("Robe_Collar") :: BasePart
 	return robe
 end
 
 local function buildRobe(root: BasePart, tier: Config.Tier): Model
+	-- one robe. Black. For everyone — the Crown holder included. Status
+	-- lives in the tag and the doors that open, not on the cloth.
 	local robe = buildRobeParts(root, tier)
-	pcall(function()
-		robe:ScaleTo(tier.scale)
-	end)
 	local _ = robeTemplate -- mesh robe retired; kept loaded for map displays
 	return robe
 end
@@ -159,24 +159,11 @@ local function dress(player: Player, character: Model)
 		return
 	end
 
-	-- the CROWN robe alone is luminous
-	if tier.name == "CROWN" then
-		local light = Instance.new("PointLight")
-		light.Color = tier.trim
-		light.Brightness = 1.0
-		light.Range = 16
-		light.Shadows = false
-		light.Parent = primary
-		local sparkles = Instance.new("Sparkles")
-		sparkles.SparkleColor = tier.trim
-		sparkles.Parent = primary
-	end
-
 	-- the tag above the hood — the only identity anyone sees
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "TierTag"
 	billboard.Size = UDim2.fromScale(6, 1.4)
-	billboard.StudsOffset = Vector3.new(0, 3.6 * tier.scale, 0)
+	billboard.StudsOffset = Vector3.new(0, 3.2, 0)
 	billboard.AlwaysOnTop = false
 	billboard.MaxDistance = 90
 	billboard.Parent = primary

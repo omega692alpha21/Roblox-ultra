@@ -425,29 +425,26 @@ navButton("DIRECTORY", function()
 	panel.Visible = false
 end)
 
--- ------------------------------------------------- gem spin (local only) ---
--- Every gem's hover bob and spin runs here, on the client, so the server
--- never streams animation frames. Purely visual; costs nothing on the wire.
-local RunService = game:GetService("RunService")
-RunService.RenderStepped:Connect(function()
-	local t = os.clock()
-	local spin = CFrame.new(0, 3.2 + math.sin(t * 1.4) * 0.25, 0) * CFrame.Angles(0, t * 0.8, 0)
-	for _, other in Players:GetPlayers() do
-		local character = other.Character
-		local gem = character and character:FindFirstChild("GemForm")
-		local primary = gem and (gem :: Model).PrimaryPart
-		local weld = primary and primary:FindFirstChild("GemWeld")
-		if weld and weld:IsA("Weld") then
-			weld.C0 = spin
-		end
-		-- your own tier tag duplicates the chip — hide it locally only
-		if other == player and primary then
-			local tag = primary:FindFirstChild("TierTag")
-			if tag and tag:IsA("BillboardGui") and tag.Enabled then
-				tag.Enabled = false
+-- ------------------------------------------- own robe out of the way ---
+-- Your own robe, its tag and any effects are hidden from your own camera
+-- only, via local property sets that nothing overwrites. Others see you.
+task.spawn(function()
+	while true do
+		local character = player.Character
+		local robe = character and character:FindFirstChild("RobeForm")
+		if robe then
+			for _, p in (robe :: Model):GetDescendants() do
+				if p:IsA("BasePart") and p.Transparency < 1 then
+					p.Transparency = 1
+				elseif p:IsA("BillboardGui") and p.Enabled then
+					p.Enabled = false
+				elseif (p:IsA("Sparkles") or p:IsA("ParticleEmitter") or p:IsA("Fire") or p:IsA("PointLight")) and (p :: any).Enabled then
+					(p :: any).Enabled = false
+				end
 			end
 		end
+		task.wait(0.4)
 	end
 end)
 
-print("[MC] client ready")
+print("[ROBES] client ready")
