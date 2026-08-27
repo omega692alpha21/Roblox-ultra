@@ -50,7 +50,7 @@ function Gates.Init(map: any)
 		local opening = false
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.ActionText = "Enter"
-		prompt.ObjectText = "MILLIONS CLUB"
+		prompt.ObjectText = "ROBES"
 		prompt.HoldDuration = 0.4
 		prompt.MaxActivationDistance = 12
 		prompt.RequiresLineOfSight = false
@@ -75,7 +75,7 @@ function Gates.Init(map: any)
 				local price = tonumber(ReplicatedStorage:GetAttribute("SeatPrice")) or 0
 				Remotes.Get("Notify"):FireClient(player, "Members only.", "bad")
 				if price > 0 then
-					Remotes.Get("Notify"):FireClient(player, ("Seat № %d costs %s R$."):format(
+					Remotes.Get("Notify"):FireClient(player, ("Robe № %d costs %s R$."):format(
 						(tonumber(ReplicatedStorage:GetAttribute("SeatCount")) or 0) + 1, fmt(price)
 					), "info")
 				end

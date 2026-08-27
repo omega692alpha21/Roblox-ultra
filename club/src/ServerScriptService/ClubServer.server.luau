@@ -56,7 +56,7 @@ local ClubMap = require(script.Parent.ClubMap)
 local Membership = require(script.Parent.Membership)
 local Gates = require(script.Parent.Gates)
 local Profiles = require(script.Parent.Profiles)
-local Gems = require(script.Parent.Gems)
+local Robes = require(script.Parent.Robes)
 
 local okBuild, mapOrErr = xpcall(ClubMap.Build, debug.traceback)
 if not okBuild then
@@ -89,7 +89,7 @@ local BOOT: { { name: string, init: () -> () } } = {
 	{ name = "Membership", init = function() Membership.Init(map) end },
 	{ name = "Gates", init = function() Gates.Init(map) end },
 	{ name = "Profiles", init = function() (Profiles :: any).Init() end },
-	{ name = "Gems", init = function() Gems.Init() end },
+	{ name = "Robes", init = function() Robes.Init() end },
 }
 for _, entry in BOOT do
 	local ok, err = pcall(entry.init :: any)

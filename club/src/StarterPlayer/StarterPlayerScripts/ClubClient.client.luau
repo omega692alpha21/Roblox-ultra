@@ -18,7 +18,7 @@ local BG = Color3.fromRGB(18, 16, 20)
 local CREAM = Color3.fromRGB(240, 234, 222)
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "MillionsClubUI"
+gui.Name = "RobesUI"
 gui.ResetOnSpawn = false
 gui.Parent = playerGui
 
@@ -85,7 +85,7 @@ end
 
 -- ------------------------------------------------------------------- chip ---
 local chip = framed(UDim2.fromOffset(300, 48), UDim2.new(0.5, 0, 0, 10), Vector2.new(0.5, 0))
-local chipLabel = label({ Size = UDim2.new(1, 0, 0.6, 0), Text = "MILLIONS CLUB", TextColor3 = GOLD, Parent = chip })
+local chipLabel = label({ Size = UDim2.new(1, 0, 0.6, 0), Text = "ROBES", TextColor3 = GOLD, Parent = chip })
 local chipSub = label({ Position = UDim2.fromScale(0, 0.6), Size = UDim2.new(1, 0, 0.4, 0), Text = "", TextColor3 = CREAM, TextTransparency = 0.2, Parent = chip })
 
 task.spawn(function()
@@ -95,13 +95,13 @@ task.spawn(function()
 		local count = tonumber(ReplicatedStorage:GetAttribute("SeatCount")) or 0
 		local price = tonumber(ReplicatedStorage:GetAttribute("SeatPrice")) or 0
 		if tier ~= "GUEST" then
-			chipLabel.Text = "💎 " .. tier
+			chipLabel.Text = "◆ " .. tier .. " ROBE"
 			chipSub.Text = if typeof(seat) == "number" then ("SEAT № %d OF %d"):format(seat, Config.FoundingSeats) else "MEMBER"
 		else
-			chipLabel.Text = "MILLIONS CLUB"
+			chipLabel.Text = "ROBES"
 			chipSub.Text = if count >= Config.FoundingSeats
-				then "MEMBERSHIP CLOSED FOREVER"
-				else ("SEAT № %d · %s R$"):format(count + 1, fmt(price))
+				then "ALL 100 ROBES GRANTED"
+				else ("ROBE № %d · %s R$"):format(count + 1, fmt(price))
 		end
 		task.wait(2)
 	end
@@ -153,7 +153,7 @@ label({ Position = UDim2.fromOffset(14, 10), Size = UDim2.new(1, -28, 0, 30), Te
 label({
 	Position = UDim2.fromOffset(14, 42),
 	Size = UDim2.new(1, -28, 0, 34),
-	Text = "100 memberships. Ever. Then four chambers above —\neach smaller, higher, and harder to ignore.",
+	Text = "100 robes. Ever. Then four robes above —\neach rarer, higher, and harder to ignore.",
 	TextScaled = false,
 	TextSize = 13,
 	TextWrapped = true,
@@ -203,15 +203,15 @@ local function refreshLadder()
 	local count = tonumber(ReplicatedStorage:GetAttribute("SeatCount")) or 0
 	local price = tonumber(ReplicatedStorage:GetAttribute("SeatPrice")) or 0
 	if count >= Config.FoundingSeats then
-		ladderRow(1, "MEMBERSHIP", "CLOSED", "All 100 seats claimed. Forever.", "")
+		ladderRow(1, "THE ROBE", "GRANTED", "All 100 robes granted. Forever.", "")
 	else
-		ladderRow(1, ("MEMBERSHIP · SEAT № %d"):format(count + 1), fmt(price) .. " R$", ("%d of %d seats remain"):format(Config.FoundingSeats - count, Config.FoundingSeats), "")
+		ladderRow(1, ("THE ROBE · № %d"):format(count + 1), fmt(price) .. " R$", ("%d of %d robes remain"):format(Config.FoundingSeats - count, Config.FoundingSeats), "")
 	end
 	local details: { [string]: string } = {
-		GOLD = "The Gold Chamber, higher in the pyramid",
-		PLATINUM = "The Platinum Chamber, higher still",
-		BLACK = "The Black Chamber, beneath the capstone",
-		CROWN = "The capstone itself. One will ever exist.",
+		GOLD = "Gold cloth + the Gold Chamber",
+		PLATINUM = "Platinum cloth + the Platinum Chamber",
+		BLACK = "True black + the Black Chamber",
+		CROWN = "The luminous robe. One will ever exist.",
 	}
 	local order = 2
 	for _, tier in Config.Tiers do

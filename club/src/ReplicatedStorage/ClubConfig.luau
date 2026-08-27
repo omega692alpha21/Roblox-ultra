@@ -8,8 +8,8 @@ export type Tier = {
 	name: string,
 	passId: number,
 	price: number, -- Robux, for display; real price lives on the pass
-	gem: Color3,
-	glow: Color3,
+	robe: Color3, -- the cloth
+	trim: Color3, -- the hem, and the tag color
 	scale: number,
 	chamber: string, -- chamber key this tier unlocks (and all below it)
 }
@@ -33,12 +33,12 @@ local Config = {
 	-- tier ladder. GUEST and MEMBER are not sold here (guest is default,
 	-- MEMBER comes from a seat); the rest are upgrade passes.
 	Tiers = {
-		{ name = "GUEST", passId = 0, price = 0, gem = Color3.fromRGB(126, 132, 140), glow = Color3.fromRGB(150, 158, 170), scale = 0.85, chamber = "" },
-		{ name = "MEMBER", passId = 0, price = 0, gem = Color3.fromRGB(214, 228, 238), glow = Color3.fromRGB(210, 230, 255), scale = 1.0, chamber = "GrandHall" },
-		{ name = "GOLD", passId = 1962120439, price = 2_000_000, gem = Color3.fromRGB(230, 180, 60), glow = Color3.fromRGB(255, 206, 100), scale = 1.1, chamber = "Gold" },
-		{ name = "PLATINUM", passId = 1962030446, price = 5_000_000, gem = Color3.fromRGB(226, 230, 236), glow = Color3.fromRGB(240, 245, 255), scale = 1.2, chamber = "Platinum" },
-		{ name = "BLACK", passId = 1963482428, price = 20_000_000, gem = Color3.fromRGB(24, 22, 28), glow = Color3.fromRGB(150, 120, 255), scale = 1.3, chamber = "Black" },
-		{ name = "CROWN", passId = 1962798435, price = 100_000_000, gem = Color3.fromRGB(255, 200, 60), glow = Color3.fromRGB(255, 220, 120), scale = 1.6, chamber = "Crown" },
+		{ name = "GUEST", passId = 0, price = 0, robe = Color3.fromRGB(88, 86, 90), trim = Color3.fromRGB(64, 62, 66), scale = 0.95, chamber = "" },
+		{ name = "MEMBER", passId = 0, price = 0, robe = Color3.fromRGB(33, 31, 38), trim = Color3.fromRGB(224, 220, 232), scale = 1.0, chamber = "GrandHall" },
+		{ name = "GOLD", passId = 1962120439, price = 2_000_000, robe = Color3.fromRGB(148, 112, 40), trim = Color3.fromRGB(255, 208, 110), scale = 1.02, chamber = "Gold" },
+		{ name = "PLATINUM", passId = 1962030446, price = 5_000_000, robe = Color3.fromRGB(212, 216, 226), trim = Color3.fromRGB(246, 249, 255), scale = 1.05, chamber = "Platinum" },
+		{ name = "BLACK", passId = 1963482428, price = 20_000_000, robe = Color3.fromRGB(12, 11, 14), trim = Color3.fromRGB(150, 120, 255), scale = 1.08, chamber = "Black" },
+		{ name = "CROWN", passId = 1962798435, price = 100_000_000, robe = Color3.fromRGB(232, 190, 80), trim = Color3.fromRGB(255, 240, 180), scale = 1.14, chamber = "Crown" },
 	} :: { Tier },
 
 	-- uploaded, approved, owned by the creator

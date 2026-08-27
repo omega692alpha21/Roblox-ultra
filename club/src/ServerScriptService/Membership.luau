@@ -147,11 +147,11 @@ end
 function Membership.PromptJoin(player: Player)
 	local batch = Config.ActiveBatch(#roster)
 	if not batch or batch.passId == 0 then
-		Remotes.Get("Notify"):FireClient(player, "Membership sales open soon.", "info")
+		Remotes.Get("Notify"):FireClient(player, "The robes are not yet for sale.", "info")
 		return
 	end
 	if #roster >= Config.FoundingSeats then
-		Remotes.Get("Notify"):FireClient(player, "🔒 All 100 memberships are claimed. Forever.", "bad")
+		Remotes.Get("Notify"):FireClient(player, "🔒 All 100 robes are granted. Forever.", "bad")
 		return
 	end
 	MarketplaceService:PromptGamePassPurchase(player, batch.passId)
@@ -185,7 +185,7 @@ function Membership.Init(_map: any)
 				resolve(player)
 				local seat = player:GetAttribute("Seat")
 				if typeof(seat) == "number" and seat > 0 then
-					broadcast(("👑 %s claimed seat № %d of %d. %d remain."):format(
+					broadcast(("👑 %s was granted robe № %d of %d. %d remain."):format(
 						player.DisplayName, seat, Config.FoundingSeats,
 						math.max(0, Config.FoundingSeats - #roster)
 					))

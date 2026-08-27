@@ -479,7 +479,7 @@ local function buildPyramid(folder: Model): (BasePart, BasePart, BasePart)
 		CanCollide = false,
 		Parent = folder,
 	})
-	signText(marquee, "MILLIONS CLUB", GOLD_BRIGHT, Enum.NormalId.Front)
+	signText(marquee, "ROBES", GOLD_BRIGHT, Enum.NormalId.Front)
 	local sub = part({
 		Name = "MarqueeSub",
 		Size = Vector3.new(34, 2.6, 0.6),
@@ -489,7 +489,7 @@ local function buildPyramid(folder: Model): (BasePart, BasePart, BasePart)
 		CanCollide = false,
 		Parent = folder,
 	})
-	signText(sub, "100 MEMBERSHIPS · EVER", Color3.fromRGB(210, 205, 195), Enum.NormalId.Front, 42)
+	signText(sub, "100 ROBES · EVER", Color3.fromRGB(210, 205, 195), Enum.NormalId.Front, 42)
 
 	-- geometric panels flanking the doors
 	local faceZ = PYR_CENTER_Z + PYR_BASE_HALF + 0.4
@@ -552,7 +552,7 @@ local function buildPyramid(folder: Model): (BasePart, BasePart, BasePart)
 		Parent = folder,
 	})
 	local _ = pricePlinth
-	local priceLabel = signText(priceBoard, "MEMBERSHIP\nSEAT № 1\n800,000 R$", GOLD_BRIGHT, Enum.NormalId.Front, 34)
+	local priceLabel = signText(priceBoard, "THE ROBE\n№ 1 OF 100\n800,000 R$", GOLD_BRIGHT, Enum.NormalId.Front, 34)
 
 	local priceValue = priceLabel
 	task.spawn(function()
@@ -560,9 +560,9 @@ local function buildPyramid(folder: Model): (BasePart, BasePart, BasePart)
 			local count = tonumber(ReplicatedStorage:GetAttribute("SeatCount")) or 0
 			local price = tonumber(ReplicatedStorage:GetAttribute("SeatPrice")) or 0
 			if count >= Config.FoundingSeats then
-				priceValue.Text = "MEMBERSHIP\nCLOSED\nFOREVER"
+				priceValue.Text = "THE ROBES\nARE ALL\nGRANTED"
 			elseif price > 0 then
-				priceValue.Text = ("MEMBERSHIP\nSEAT № %d\n%s R$"):format(count + 1, commas(price))
+				priceValue.Text = ("THE ROBE\n№ %d OF 100\n%s R$"):format(count + 1, commas(price))
 			end
 			task.wait(5)
 		end
@@ -1024,6 +1024,7 @@ function ClubMap.Build(): Map
 		wingback = loadMesh(Config.Meshes.Wingback),
 		lamppost = loadMesh(Config.Meshes.Lamppost),
 		gem = loadMesh(Config.Meshes.Gem),
+		cloak = loadMesh(Config.Meshes.Cloak),
 	}
 
 	buildEstate(folder, meshes)
