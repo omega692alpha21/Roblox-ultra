@@ -8,7 +8,12 @@ local InsertService = game:GetService("InsertService")
 local MeshService = {}
 
 local ASSETS = {
-	Tree = 128757271025486,
+	Tree = 123176989211719,
+	Tree2 = 111930697390035,
+	Conifer = 93706083038898,
+	Rock1 = 95711606920237,
+	Rock2 = 87573270384038,
+	Tuft = 75016121552871,
 	Hedge = 88569427739236,
 	Palm = 120929000216583,
 	Arch = 76176860283975,
@@ -18,6 +23,17 @@ local ASSETS = {
 }
 
 local rng = Random.new(17)
+
+-- painterly pipeline: these meshes carry UVs; shading is baked into painted
+-- textures assigned at runtime (import drops glTF materials, keeps UVs)
+local TEXTURES: { [number]: { string } } = {
+	[ASSETS.Tree] = { "rbxassetid://74529926286988", "rbxassetid://137509817678545" },
+	[ASSETS.Tree2] = { "rbxassetid://74529926286988", "rbxassetid://137509817678545" },
+	[ASSETS.Conifer] = { "rbxassetid://74529926286988", "rbxassetid://137509817678545" },
+	[ASSETS.Rock1] = { "rbxassetid://135718983358766" },
+	[ASSETS.Rock2] = { "rbxassetid://135718983358766" },
+	[ASSETS.Tuft] = { "rbxassetid://104458814889341" },
+}
 
 -- Roblox's GLB import ignores glTF material colors, so each asset carries a
 -- node-name -> {color, material} style map applied after load.
@@ -112,6 +128,26 @@ local function loadTemplate(assetId: number): Model?
 			end
 		end
 	end
+	-- painterly: baked-shading textures override flat styles entirely
+	local textures = TEXTURES[assetId]
+	if textures then
+		local ordered: { BasePart } = {}
+		for _, part in template:GetDescendants() do
+			if part:IsA("BasePart") then
+				table.insert(ordered, part)
+			end
+		end
+		table.sort(ordered, function(a, b)
+			return a.Name < b.Name
+		end)
+		for i, part in ordered do
+			if part:IsA("MeshPart") then
+				part.TextureID = textures[math.min(i, #textures)]
+				part.Color = Color3.new(1, 1, 1)
+				part.Material = Enum.Material.SmoothPlastic
+			end
+		end
+	end
 	result:Destroy()
 	if #template:GetChildren() == 0 then
 		return nil
@@ -121,6 +157,7 @@ end
 
 function MeshService.Init(map: { folder: Folder })
 	local treeTemplate = loadTemplate(ASSETS.Tree)
+	local treeTemplate2 = loadTemplate(ASSETS.Tree2)
 	if treeTemplate then
 		-- collect the box trees first, then swap each for a mesh tree
 		local trunks: { BasePart } = {}
@@ -134,10 +171,12 @@ function MeshService.Init(map: { folder: Folder })
 				end
 			end
 		end
+		local flip = false
 		for _, trunk in trunks do
+			flip = not flip
 			local scale = math.clamp(trunk.Size.Y / 7, 0.55, 2.6)
 			local base = trunk.Position - Vector3.new(0, trunk.Size.Y / 2, 0)
-			local clone = treeTemplate:Clone()
+			local clone = ((flip and treeTemplate2) and treeTemplate2 or treeTemplate):Clone()
 			clone.Name = "MeshTree"
 			clone:ScaleTo(scale)
 			local _, size = clone:GetBoundingBox()
@@ -268,6 +307,49 @@ function MeshService.Init(map: { folder: Folder })
 		end
 		for _, head in heads do
 			head:Destroy()
+		end
+	end
+
+	-- painterly scatter: rocks along the treeline, grass tufts on the lawns
+	local rock1 = loadTemplate(ASSETS.Rock1)
+	local rock2 = loadTemplate(ASSETS.Rock2)
+	local tuft = loadTemplate(ASSETS.Tuft)
+	local conifer = loadTemplate(ASSETS.Conifer)
+	local scatterRng = Random.new(41)
+	for i = 0, 15 do
+		local a = i / 16 * math.pi * 2
+		local d = scatterRng:NextNumber(120, 165)
+		local pos = Vector3.new(math.sin(a) * d, 0, math.cos(a) * d + 100)
+		local template = (i % 2 == 0) and rock1 or rock2
+		if template then
+			local clone = template:Clone()
+			clone.Name = "PaintRock"
+			clone:ScaleTo(scatterRng:NextNumber(0.8, 2.2))
+			clone:PivotTo(CFrame.new(pos + Vector3.new(0, 1.2, 0)) * CFrame.Angles(0, scatterRng:NextNumber(0, math.pi * 2), 0))
+			clone.Parent = map.folder
+		end
+	end
+	if tuft then
+		for _ = 1, 90 do
+			local x = scatterRng:NextNumber(-140, 140)
+			local z = scatterRng:NextNumber(-30, 210)
+			if math.abs(x) > 24 or z > 130 then -- keep walkways clean
+				local clone = tuft:Clone()
+				clone.Name = "PaintTuft"
+				clone:ScaleTo(scatterRng:NextNumber(0.8, 1.6))
+				clone:PivotTo(CFrame.new(x, 0.1, z) * CFrame.Angles(0, scatterRng:NextNumber(0, math.pi * 2), 0))
+				clone.Parent = map.folder
+			end
+		end
+	end
+	if conifer then
+		for _, spot in { Vector3.new(-30, 0, 96), Vector3.new(30, 0, 96), Vector3.new(-52, 0, 118), Vector3.new(52, 0, 118) } do
+			local clone = conifer:Clone()
+			clone.Name = "PaintConifer"
+			clone:ScaleTo(scatterRng:NextNumber(1.1, 1.5))
+			local _, size = clone:GetBoundingBox()
+			clone:PivotTo(CFrame.new(spot + Vector3.new(0, size.Y / 2, 0)))
+			clone.Parent = map.folder
 		end
 	end
 

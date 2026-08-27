@@ -104,7 +104,7 @@ local function setupLighting()
 	Lighting.EnvironmentDiffuseScale = 1
 	Lighting.EnvironmentSpecularScale = 1
 	Lighting.GlobalShadows = true
-	Lighting.ShadowSoftness = 0.12
+	Lighting.ShadowSoftness = 0.22
 	Lighting.ExposureCompensation = 0.1
 	Lighting.Ambient = Color3.fromRGB(120, 118, 110)
 	Lighting.OutdoorAmbient = Color3.fromRGB(130, 135, 125)
@@ -125,7 +125,7 @@ local function setupLighting()
 	bloom.Parent = Lighting
 
 	local color = Instance.new("ColorCorrectionEffect")
-	color.Saturation = 0.24
+	color.Saturation = 0.3
 	color.Contrast = 0.06
 	color.TintColor = Color3.fromRGB(255, 250, 240)
 	color.Parent = Lighting
@@ -142,10 +142,21 @@ local function setupLighting()
 	rays.Spread = 0.6
 	rays.Parent = Lighting
 
-	-- dynamic clouds (no assets needed)
+	-- painted cumulus skybox (the anime sky is half the look)
+	local sky = Instance.new("Sky")
+	sky.SkyboxFt = "rbxassetid://121551770769255"
+	sky.SkyboxBk = "rbxassetid://115007466005880"
+	sky.SkyboxLf = "rbxassetid://140564987029974"
+	sky.SkyboxRt = "rbxassetid://74714793037291"
+	sky.SkyboxUp = "rbxassetid://112410446557476"
+	sky.SkyboxDn = "rbxassetid://85988275555967"
+	sky.SunAngularSize = 14
+	sky.Parent = Lighting
+
+	-- soft dynamic clouds drift in front of the painted ones
 	local clouds = Instance.new("Clouds")
-	clouds.Cover = 0.55
-	clouds.Density = 0.22
+	clouds.Cover = 0.32
+	clouds.Density = 0.18
 	clouds.Color = Color3.fromRGB(255, 252, 245)
 	clouds.Parent = workspace.Terrain
 end
