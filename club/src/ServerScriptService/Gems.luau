@@ -115,7 +115,7 @@ local function dress(player: Player, character: Model)
 			p.Color = tier.gem
 			p.Material = Enum.Material.Glass
 			p.Transparency = if tier.name == "BLACK" then 0.02 else 0.12
-			p.Reflectance = if tier.name == "BLACK" then 0.4 else 0.28
+			p.Reflectance = 0
 		end
 	end
 	if not primary then
@@ -144,14 +144,16 @@ local function dress(player: Player, character: Model)
 	-- the glow and the glint
 	local light = Instance.new("PointLight")
 	light.Color = tier.glow
-	light.Brightness = if tier.name == "GUEST" then 0.6 else 1.6
-	light.Range = if tier.name == "CROWN" then 30 else 14
+	light.Brightness = if tier.name == "CROWN" then 1.0 else 0.35
+	light.Range = if tier.name == "CROWN" then 16 else 8
 	light.Shadows = false
 	light.Parent = primary
-	local sparkles = Instance.new("Sparkles")
-	sparkles.SparkleColor = tier.glow
-	sparkles.Enabled = tier.name ~= "GUEST"
-	sparkles.Parent = primary
+	-- only the one Crown Jewel sparkles; everyone else is a quiet stone
+	if tier.name == "CROWN" then
+		local sparkles = Instance.new("Sparkles")
+		sparkles.SparkleColor = tier.glow
+		sparkles.Parent = primary
+	end
 
 	-- tier title floating over the stone — the only identity anyone sees
 	local billboard = Instance.new("BillboardGui")
