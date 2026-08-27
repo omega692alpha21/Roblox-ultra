@@ -41,7 +41,8 @@ function ToyController.Init(gui: ScreenGui)
 	-- ---- the action button ----
 	local action = Instance.new("TextButton")
 	action.Name = "ToyAction"
-	action.Size = UDim2.new(0, 0, Layout.ToyButtonScale, 0)
+	-- the bar is already sized against the screen; this is a fraction of the bar
+	action.Size = UDim2.new(0, 0, 1, 0)
 	action.LayoutOrder = Layout.Order.Toy
 	action.BackgroundColor3 = Color3.fromRGB(226, 74, 62)
 	action.Font = Enum.Font.FredokaOne
@@ -88,7 +89,8 @@ function ToyController.Init(gui: ScreenGui)
 		-- a quick squash so the tap feels answered
 		action.Size = UDim2.new(0, 0, Layout.ToyButtonScale * 0.9, 0)
 		task.delay(0.08, function()
-			action.Size = UDim2.new(0, 0, Layout.ToyButtonScale, 0)
+			-- the bar is already sized against the screen; this is a fraction of the bar
+	action.Size = UDim2.new(0, 0, 1, 0)
 		end)
 	end
 	action.Activated:Connect(fire)

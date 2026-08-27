@@ -102,8 +102,10 @@ function HudController.Init(gui: ScreenGui)
 		Name = "MenuRail",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -Layout.Margin, 0.5, 0),
-		Size = UDim2.new(0, Layout.h(Layout.RailIcon), 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
+		Size = UDim2.fromOffset(
+			Layout.h(Layout.RailIcon),
+			Layout.h(Layout.RailIcon * 5 + Layout.RailGap * 4)
+		),
 		BackgroundTransparency = 1,
 		Parent = gui,
 	})
@@ -115,13 +117,12 @@ function HudController.Init(gui: ScreenGui)
 
 	local function railTile(order: number, icon: string, color: Color3, onClick: () -> ())
 		local button = UIBuilder.Button({
-			Size = UDim2.new(0, 0, Layout.RailIcon, 0),
+			Size = UDim2.fromOffset(Layout.h(Layout.RailIcon), Layout.h(Layout.RailIcon)),
 			Text = icon,
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.2,
 			LayoutOrder = order,
 		}, onClick)
-		Layout.Ratio(button, 1)
 		Layout.FitText(button, 0.055)
 		UIBuilder.Round(button, Layout.h(0.022))
 		UIBuilder.Stroke(button, color, 2)

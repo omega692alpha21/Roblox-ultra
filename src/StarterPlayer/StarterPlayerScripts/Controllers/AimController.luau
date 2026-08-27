@@ -24,8 +24,8 @@ local player = Players.LocalPlayer
 -- what you hit.
 local RETICLE_Y = 0.42
 local MAX_RANGE = 400
--- how far off the reticle a target can be, in reticle-widths, and still snap
-local ASSIST_PIXELS = 46
+-- how far off the reticle a target can snap to it, as a fraction of screen height
+local ASSIST_FRACTION = 0.06
 local ASSIST_RANGE = 220
 
 local reticle: Frame? = nil
@@ -95,12 +95,12 @@ function AimController.SetEnabled(on: boolean)
 end
 
 function AimController.Init(gui: ScreenGui)
-	local size = Layout.px(26)
 	local frame = Instance.new("Frame")
 	frame.Name = "Reticle"
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	frame.Position = UDim2.fromScale(0.5, RETICLE_Y)
-	frame.Size = UDim2.fromOffset(size, size)
+	frame.Size = UDim2.new(0, 0, 0.055, 0)
+	Layout.Ratio(frame, 1)
 	frame.BackgroundTransparency = 1
 	frame.ZIndex = 25
 	frame.Visible = false
@@ -114,8 +114,8 @@ function AimController.Init(gui: ScreenGui)
 		tick.AnchorPoint = Vector2.new(0.5, 0.5)
 		tick.Position = UDim2.fromScale(0.5 + offset.X * 0.5, 0.5 + offset.Y * 0.5)
 		tick.Size = if offset.X == 0
-			then UDim2.fromOffset(Layout.px(2), Layout.px(8))
-			else UDim2.fromOffset(Layout.px(8), Layout.px(2))
+			then UDim2.fromScale(0.09, 0.3)
+			else UDim2.fromScale(0.3, 0.09)
 		tick.BackgroundColor3 = Color3.fromRGB(255, 250, 240)
 		tick.BorderSizePixel = 0
 		tick.ZIndex = 25
@@ -125,7 +125,7 @@ function AimController.Init(gui: ScreenGui)
 	pip.Name = "Pip"
 	pip.AnchorPoint = Vector2.new(0.5, 0.5)
 	pip.Position = UDim2.fromScale(0.5, 0.5)
-	pip.Size = UDim2.fromOffset(Layout.px(4), Layout.px(4))
+	pip.Size = UDim2.fromScale(0.16, 0.16)
 	pip.BackgroundColor3 = Color3.fromRGB(255, 250, 240)
 	pip.BorderSizePixel = 0
 	pip.ZIndex = 26
@@ -168,7 +168,7 @@ function AimController.Init(gui: ScreenGui)
 		-- something, snap to their chest. Aiming stays yours; this only forgives
 		-- the last few pixels, which matters a lot on a phone.
 		local best: BasePart? = nil
-		local bestDistance = ASSIST_PIXELS * Layout.Scale
+		local bestDistance = viewport.Y * ASSIST_FRACTION
 		for _, root in targets do
 			local screen, onScreen = camera:WorldToViewportPoint(root.Position)
 			if onScreen then
@@ -187,10 +187,8 @@ function AimController.Init(gui: ScreenGui)
 				tick.BackgroundColor3 = color
 			end
 		end
-		frame.Size = UDim2.fromOffset(
-			best and Layout.px(20) or size,
-			best and Layout.px(20) or size
-		)
+		-- the reticle tightens when it has something to lock onto
+		frame.Size = UDim2.new(0, 0, best and 0.042 or 0.055, 0)
 	end)
 end
 

@@ -100,7 +100,11 @@ Layout.Order = {
 	Toy = 30,
 }
 
-local function makeRow(gui: Instance, name: string, heightScale: number, bottomScale: number): Frame
+-- Explicit pixel sizes, derived from the measured screen. AutomaticSize on a
+-- row whose children are sized *relative to that row* is a circular
+-- dependency, and it resolves to zero — which is how the toy buttons
+-- disappeared.
+local function makeRow(gui: Instance, name: string, heightScale: number, bottomScale: number, widthScale: number): Frame
 	local existing = gui:FindFirstChild(name)
 	if existing and existing:IsA("Frame") then
 		return existing
@@ -109,8 +113,7 @@ local function makeRow(gui: Instance, name: string, heightScale: number, bottomS
 	row.Name = name
 	row.AnchorPoint = Vector2.new(1, 1)
 	row.Position = UDim2.new(1, -Layout.Margin, 1 - bottomScale, 0)
-	row.Size = UDim2.new(0, 0, heightScale, 0)
-	row.AutomaticSize = Enum.AutomaticSize.X
+	row.Size = UDim2.fromOffset(Layout.h(widthScale), Layout.h(heightScale))
 	row.BackgroundTransparency = 1
 	row.ZIndex = 30
 	row.Parent = gui
@@ -125,11 +128,18 @@ local function makeRow(gui: Instance, name: string, heightScale: number, bottomS
 end
 
 function Layout.ActionBar(gui: ScreenGui): Frame
-	return makeRow(gui, "ActionBar", Layout.ToyButtonScale, Layout.BarBottom)
+	-- three buttons plus the gaps between them
+	return makeRow(gui, "ActionBar", Layout.ToyButtonScale, Layout.BarBottom, Layout.ToyButtonScale * 3 + 0.05)
 end
 
 function Layout.ChipRow(gui: ScreenGui): Frame
-	return makeRow(gui, "ChipRow", Layout.ChipScale, Layout.BarBottom + Layout.ToyButtonScale + 0.014)
+	return makeRow(
+		gui,
+		"ChipRow",
+		Layout.ChipScale,
+		Layout.BarBottom + Layout.ToyButtonScale + 0.014,
+		Layout.ChipScale * 4 + 0.04
+	)
 end
 
 -- Legacy helper: still used by the panels, now against a real measurement.
