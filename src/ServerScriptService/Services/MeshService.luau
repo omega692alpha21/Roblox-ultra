@@ -19,6 +19,42 @@ local ASSETS = {
 
 local rng = Random.new(17)
 
+-- Roblox's GLB import ignores glTF material colors, so each asset carries a
+-- node-name -> {color, material} style map applied after load.
+type Style = { color: Color3, material: Enum.Material? }
+local STYLES: { [number]: { [string]: Style } } = {
+	[ASSETS.Tree] = {
+		part0 = { color = Color3.fromRGB(107, 77, 48), material = Enum.Material.Wood },
+		part1 = { color = Color3.fromRGB(77, 140, 64), material = Enum.Material.Grass },
+	},
+	[ASSETS.Hedge] = {
+		part0 = { color = Color3.fromRGB(56, 107, 51), material = Enum.Material.Grass },
+	},
+	[ASSETS.Palm] = {
+		part0 = { color = Color3.fromRGB(122, 92, 61), material = Enum.Material.Wood },
+		part1 = { color = Color3.fromRGB(61, 128, 56), material = Enum.Material.Grass },
+		part2 = { color = Color3.fromRGB(89, 66, 41) },
+	},
+	[ASSETS.Arch] = {
+		part0 = { color = Color3.fromRGB(224, 219, 204), material = Enum.Material.Concrete },
+	},
+	[ASSETS.LockerBank] = {
+		part0 = { color = Color3.fromRGB(36, 64, 140) },
+		part1 = { color = Color3.fromRGB(59, 102, 194) },
+		part2 = { color = Color3.fromRGB(20, 38, 89) },
+		part3 = { color = Color3.fromRGB(209, 212, 219), material = Enum.Material.Metal },
+	},
+	[ASSETS.Bench] = {
+		part0 = { color = Color3.fromRGB(140, 102, 61), material = Enum.Material.Wood },
+		part1 = { color = Color3.fromRGB(41, 43, 51), material = Enum.Material.Metal },
+	},
+	[ASSETS.Lamppost] = {
+		part0 = { color = Color3.fromRGB(33, 36, 43), material = Enum.Material.Metal },
+		part1 = { color = Color3.fromRGB(33, 36, 43), material = Enum.Material.Metal },
+		part2 = { color = Color3.fromRGB(255, 237, 184), material = Enum.Material.Neon },
+	},
+}
+
 local function loadTemplate(assetId: number): Model?
 	local ok, result = pcall(function()
 		return InsertService:LoadAsset(assetId)
@@ -36,11 +72,44 @@ local function loadTemplate(assetId: number): Model?
 			child.Parent = template
 		end
 	end
+	local styles = STYLES[assetId]
+	local unstyled: { BasePart } = {}
 	for _, part in template:GetDescendants() do
 		if part:IsA("BasePart") then
 			part.Anchored = true
 			part.CanCollide = false
 			part.CastShadow = true
+			local style = styles and (styles :: any)[part.Name]
+			if style then
+				part.Color = style.color
+				if style.material then
+					part.Material = style.material
+				end
+			else
+				table.insert(unstyled, part)
+			end
+		end
+	end
+	-- fallback: importer renamed nodes — apply styles in name order
+	if styles and #unstyled > 0 then
+		local ordered: { Style } = {}
+		for i = 0, 9 do
+			local style = (styles :: any)["part" .. i]
+			if style then
+				table.insert(ordered, style)
+			end
+		end
+		table.sort(unstyled, function(a, b)
+			return a.Name < b.Name
+		end)
+		for i, part in unstyled do
+			local style = ordered[math.min(i, #ordered)]
+			if style then
+				part.Color = style.color
+				if style.material then
+					part.Material = style.material
+				end
+			end
 		end
 	end
 	result:Destroy()

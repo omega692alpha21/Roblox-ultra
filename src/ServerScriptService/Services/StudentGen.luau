@@ -48,6 +48,14 @@ local function seedFromString(s: string): number
 	return seed
 end
 
+local function hideDefaultName(model: Model)
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+	end
+end
+
 local function paintCharacter(model: Model, rng: Random)
 	local skin = SKIN_TONES[rng:NextInteger(1, #SKIN_TONES)]
 	local shirt = SHIRT_COLORS[rng:NextInteger(1, #SHIRT_COLORS)]
@@ -335,6 +343,7 @@ function StudentGen.Create(defId: string, seedSuffix: string?): Model?
 
 	-- attribute so other services can identify the def without parsing names
 	model:SetAttribute("StudentId", defId)
+	hideDefaultName(model)
 	return model
 end
 
