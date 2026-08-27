@@ -1560,33 +1560,14 @@ function MapService.Build(): Map
 	-- navy locker banks lining both hallway walls (reference-look lockers)
 	for _, zSide in { -13.2, 13.2 } do
 		for _, bankX in { -130, -90, -50, 50, 90, 130 } do
-			local bank = part({
+			tag(part({
 				Name = "LockerBank",
 				Size = Vector3.new(24, 8.4, 1.6),
 				CFrame = CFrame.new(bankX, 4.2, zSide),
 				Color = Color3.fromRGB(46, 84, 168),
-				Material = Enum.Material.Metal,
+				Material = Enum.Material.SmoothPlastic,
 				Parent = folder,
-			})
-			local _ = bank
-			for door = 0, 9 do
-				local doorX = bankX - 10.8 + door * 2.4
-				part({
-					Name = "LockerDoor",
-					Size = Vector3.new(2.1, 7.8, 0.3),
-					CFrame = CFrame.new(doorX, 4.2, zSide + (zSide > 0 and -1.0 or 1.0)),
-					Color = Color3.fromRGB(58, 104, 196),
-					Material = Enum.Material.SmoothPlastic,
-					Parent = folder,
-				})
-				part({
-					Name = "LockerVent",
-					Size = Vector3.new(1.4, 0.5, 0.1),
-					CFrame = CFrame.new(doorX, 6.6, zSide + (zSide > 0 and -1.2 or 1.2)),
-					Color = Color3.fromRGB(30, 56, 118),
-					Parent = folder,
-				})
-			end
+			}), "TexLocker")
 		end
 	end
 

@@ -42,6 +42,12 @@ function TextureService.Init()
 			applied += 1
 		end
 	end
+	for _, part in CollectionService:GetTagged("TexLocker") do
+		if part:IsA("BasePart") then
+			apply(part, TextureIds.Lockers, { Enum.NormalId.Front, Enum.NormalId.Back }, 8, 8.4)
+			applied += 1
+		end
+	end
 	for _, part in CollectionService:GetTagged("TexRoof") do
 		if part:IsA("BasePart") then
 			apply(part, TextureIds.Shingles, { Enum.NormalId.Top }, 8, 8)
