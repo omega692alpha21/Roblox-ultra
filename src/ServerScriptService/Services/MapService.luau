@@ -1179,9 +1179,9 @@ local function buildInteriorWall(parent: Instance, from: Vector3, to: Vector3, g
 		end
 		local mid = from + unit * ((a + b) / 2)
 		local cf = CFrame.lookAt(mid, mid + perp)
-		part({ Name = "InnerWainscot", Size = Vector3.new(segLen, 4.6, 1.6), CFrame = cf * CFrame.new(0, 2.3, 0) , Color = Color3.fromRGB(94, 118, 158), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		tag(part({ Name = "InnerWainscot", Size = Vector3.new(segLen, 4.6, 1.6), CFrame = cf * CFrame.new(0, 2.3, 0) , Color = Color3.fromRGB(94, 118, 158), Material = Enum.Material.SmoothPlastic, Parent = parent }), "TexWood")
 		part({ Name = "InnerWainscotCap", Size = Vector3.new(segLen, 0.5, 1.8), CFrame = cf * CFrame.new(0, 4.75, 0) , Color = Color3.fromRGB(226, 222, 210), Material = Enum.Material.SmoothPlastic, Parent = parent })
-		part({ Name = "InnerWallUpper", Size = Vector3.new(segLen, 10.6, 1.4), CFrame = cf * CFrame.new(0, 10.3, 0) , Color = Color3.fromRGB(238, 234, 224), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		tag(part({ Name = "InnerWallUpper", Size = Vector3.new(segLen, 10.6, 1.4), CFrame = cf * CFrame.new(0, 10.3, 0) , Color = Color3.fromRGB(238, 234, 224), Material = Enum.Material.SmoothPlastic, Parent = parent }), "TexPlaster")
 	end
 	for _, gap in gaps do
 		local mid = from + unit * gap.at
@@ -2381,14 +2381,14 @@ function MapService.Build(): Map
 
 	-- ---------------- roofs (flat slabs; courtyards stay open) ----------------
 	local function roofSlab(cx: number, cz: number, sx: number, sz: number, y: number?)
-		part({
+		tag(part({
 			Name = "RoofSlab",
 			Size = Vector3.new(sx, 1.2, sz),
 			CFrame = CFrame.new(cx, y or 16.2, cz),
-			Color = Color3.fromRGB(96, 108, 120),
-			Material = Enum.Material.Slate,
+			Color = Color3.fromRGB(228, 226, 220),
+			Material = Enum.Material.SmoothPlastic,
 			Parent = folder,
-		})
+		}), "TexCeiling")
 	end
 	roofSlab(0, 102, 448, 44) -- south rooms + lobby (pitched roof sits above)
 	roofSlab(0, 70, 448, 22) -- corridor
