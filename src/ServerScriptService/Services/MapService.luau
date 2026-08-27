@@ -584,7 +584,7 @@ local function buildBanners(parent: Instance)
 		local banner = part({
 			Name = "Banner" .. i,
 			Size = Vector3.new(8, 4.5, 0.3),
-			CFrame = CFrame.new(-90 + (i - 1) * 60, 11.6, 0) * CFrame.Angles(0, math.rad(90), 0),
+			CFrame = CFrame.new(-90 + (i - 1) * 60, 11.6, 0) ,
 			Color = colors[i],
 			Parent = parent,
 		})
@@ -599,8 +599,8 @@ local function buildZoneWalls(parent: Instance, center: Vector3, size: Vector2, 
 	local sides = {
 		{ dir = Vector3.new(0, 0, -1), cf = CFrame.new(center + Vector3.new(0, 0, -size.Y / 2)), len = size.X },
 		{ dir = Vector3.new(0, 0, 1), cf = CFrame.new(center + Vector3.new(0, 0, size.Y / 2)), len = size.X },
-		{ dir = Vector3.new(-1, 0, 0), cf = CFrame.new(center + Vector3.new(-size.X / 2, 0, 0)) * CFrame.Angles(0, math.rad(90), 0), len = size.Y },
-		{ dir = Vector3.new(1, 0, 0), cf = CFrame.new(center + Vector3.new(size.X / 2, 0, 0)) * CFrame.Angles(0, math.rad(90), 0), len = size.Y },
+		{ dir = Vector3.new(-1, 0, 0), cf = CFrame.new(center + Vector3.new(-size.X / 2, 0, 0)) , len = size.Y },
+		{ dir = Vector3.new(1, 0, 0), cf = CFrame.new(center + Vector3.new(size.X / 2, 0, 0)) , len = size.Y },
 	}
 	for _, side in sides do
 		if side.dir:Dot(openDir) > 0.5 then
@@ -1022,7 +1022,7 @@ local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, numbe
 	local rng = Random.new(2026)
 	for i = 1, 90 do
 		local angle = (i / 90) * math.pi * 2
-		local dist = rng:NextNumber(238, 268)
+		local dist = rng:NextNumber(295, 340)
 		local pos = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
 		treeFn(parent, pos, rng:NextNumber(1.1, 2.3))
 	end
@@ -1062,15 +1062,10 @@ local function buildTerrain()
 
 	-- no terrain under any interior floor (air-carved, so no grass blades either)
 	for _, region in {
-		{ cf = CFrame.new(0, -2.3, 0), size = Vector3.new(330, 5, 162) }, -- main building
-		{ cf = CFrame.new(-215, -2.3, 60), size = Vector3.new(64, 5, 64) },
-		{ cf = CFrame.new(-215, -2.3, -60), size = Vector3.new(64, 5, 64) },
-		{ cf = CFrame.new(215, -2.3, 60), size = Vector3.new(64, 5, 64) },
-		{ cf = CFrame.new(215, -2.3, -60), size = Vector3.new(64, 5, 64) },
-		{ cf = CFrame.new(0, -2.3, -150), size = Vector3.new(74, 5, 54) },
-		{ cf = CFrame.new(-195, -2.3, 200), size = Vector3.new(64, 5, 54) },
-		{ cf = CFrame.new(195, -2.3, 200), size = Vector3.new(64, 5, 54) },
-		{ cf = CFrame.new(-100, -2.3, -210), size = Vector3.new(30, 5, 22) },
+		{ cf = CFrame.new(0, -2.3, 0), size = Vector3.new(452, 5, 252) }, -- main building (plan footprint)
+		{ cf = CFrame.new(0, -2.3, -135), size = Vector3.new(104, 5, 26) }, -- gym protrusion
+		{ cf = CFrame.new(-140, -2.3, 200), size = Vector3.new(64, 5, 54) }, -- boys dorm
+		{ cf = CFrame.new(140, -2.3, 200), size = Vector3.new(64, 5, 54) }, -- girls dorm
 	} do
 		terrain:FillBlock(region.cf, region.size, Enum.Material.Air)
 	end
@@ -1114,29 +1109,29 @@ local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: 
 		end
 		local mid = from + unit * ((a + b) / 2)
 		local cf = CFrame.lookAt(mid, mid + perp)
-		tag(part({ Name = "ShellBrickLow", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 3, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
-		tag(part({ Name = "ShellWindow", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }), "TexWindow")
+		tag(part({ Name = "ShellBrickLow", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 3, 0) , Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+		tag(part({ Name = "ShellWindow", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 8, 0) , Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }), "TexWindow")
 		local mullions = math.floor(segLen / 9)
 		for m2 = 1, mullions - 1 do
-			part({ Name = "ShellMullion", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m2 * 9, 8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "ShellMullion", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m2 * 9, 8, 0) , Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 		end
-		tag(part({ Name = "ShellBrickHigh", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+		tag(part({ Name = "ShellBrickHigh", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 13, 0) , Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
 		-- white frames around the first-story windows (reference-art trim)
-		part({ Name = "ShellSill", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 5.8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
-		part({ Name = "ShellLintel", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 10.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "ShellSill", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 5.8, 0) , Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "ShellLintel", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 10.2, 0) , Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 		if tall then
 			-- second story: floor band, framed window band, brick, high parapet
-			part({ Name = "ShellFloorBand", Size = Vector3.new(segLen, 1.4, 2.6), CFrame = cf * CFrame.new(0, 16.6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
-			tag(part({ Name = "ShellWindow2", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 19.5, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }), "TexWindow")
+			part({ Name = "ShellFloorBand", Size = Vector3.new(segLen, 1.4, 2.6), CFrame = cf * CFrame.new(0, 16.6, 0) , Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+			tag(part({ Name = "ShellWindow2", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 19.5, 0) , Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }), "TexWindow")
 			local mullions2 = math.floor(segLen / 9)
 			for m3 = 1, mullions2 - 1 do
-				part({ Name = "ShellMullion2", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m3 * 9, 19.5, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+				part({ Name = "ShellMullion2", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m3 * 9, 19.5, 0) , Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 			end
-			part({ Name = "ShellLintel2", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 21.8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
-			tag(part({ Name = "ShellBrickTop", Size = Vector3.new(segLen, 3.6, 2), CFrame = cf * CFrame.new(0, 24, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
-			part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 26.4, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "ShellLintel2", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 21.8, 0) , Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+			tag(part({ Name = "ShellBrickTop", Size = Vector3.new(segLen, 3.6, 2), CFrame = cf * CFrame.new(0, 24, 0) , Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+			part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 26.4, 0) , Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 		else
-			part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 16.6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 16.6, 0) , Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 		end
 	end
 	-- door frames at each gap
@@ -1144,14 +1139,58 @@ local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: 
 		local mid = from + unit * gap.at
 		local cf = CFrame.lookAt(mid, mid + perp)
 		for _, side in { -1, 1 } do
-			part({ Name = "DoorPost", Size = Vector3.new(1.6, 12, 2.6), CFrame = cf * CFrame.new(side * (gap.width / 2 + 0.8), 6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "DoorPost", Size = Vector3.new(1.6, 12, 2.6), CFrame = cf * CFrame.new(side * (gap.width / 2 + 0.8), 6, 0) , Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 		end
-		part({ Name = "DoorLintel", Size = Vector3.new(gap.width + 4, 2, 2.8), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "DoorLintel", Size = Vector3.new(gap.width + 4, 2, 2.8), CFrame = cf * CFrame.new(0, 13, 0) , Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 		if tall then
 			-- fill the second story above the doorway so the wall reads solid
-			tag(part({ Name = "GapUpperBrick", Size = Vector3.new(gap.width + 4, 12.4, 2), CFrame = cf * CFrame.new(0, 20.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
-			part({ Name = "GapParapet", Size = Vector3.new(gap.width + 4, 1.2, 2.8), CFrame = cf * CFrame.new(0, 26.4, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+			tag(part({ Name = "GapUpperBrick", Size = Vector3.new(gap.width + 4, 12.4, 2), CFrame = cf * CFrame.new(0, 20.2, 0) , Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+			part({ Name = "GapParapet", Size = Vector3.new(gap.width + 4, 1.2, 2.8), CFrame = cf * CFrame.new(0, 26.4, 0) , Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 		end
+	end
+end
+
+-- Clean interior partitions: navy wainscot + warm white upper, solid, with
+-- framed door gaps. (The window-band builder is for exterior facades only.)
+local function buildInteriorWall(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } })
+	local dir = (to - from)
+	local length = dir.Magnitude
+	local unit = dir.Unit
+	local perp = Vector3.new(-unit.Z, 0, unit.X)
+	local cuts = { 0, length }
+	for _, gap in gaps do
+		table.insert(cuts, math.clamp(gap.at - gap.width / 2, 0, length))
+		table.insert(cuts, math.clamp(gap.at + gap.width / 2, 0, length))
+	end
+	table.sort(cuts)
+	for i = 1, #cuts - 1 do
+		local a, b = cuts[i], cuts[i + 1]
+		local isGap = false
+		for _, gap in gaps do
+			local mid = (a + b) / 2
+			if mid > gap.at - gap.width / 2 and mid < gap.at + gap.width / 2 then
+				isGap = true
+				break
+			end
+		end
+		local segLen = b - a
+		if isGap or segLen < 0.8 then
+			continue
+		end
+		local mid = from + unit * ((a + b) / 2)
+		local cf = CFrame.lookAt(mid, mid + perp)
+		part({ Name = "InnerWainscot", Size = Vector3.new(segLen, 4.6, 1.6), CFrame = cf * CFrame.new(0, 2.3, 0) , Color = Color3.fromRGB(94, 118, 158), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		part({ Name = "InnerWainscotCap", Size = Vector3.new(segLen, 0.5, 1.8), CFrame = cf * CFrame.new(0, 4.75, 0) , Color = Color3.fromRGB(226, 222, 210), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		part({ Name = "InnerWallUpper", Size = Vector3.new(segLen, 10.6, 1.4), CFrame = cf * CFrame.new(0, 10.3, 0) , Color = Color3.fromRGB(238, 234, 224), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	end
+	for _, gap in gaps do
+		local mid = from + unit * gap.at
+		local cf = CFrame.lookAt(mid, mid + perp)
+		for _, side in { -1, 1 } do
+			part({ Name = "InnerDoorPost", Size = Vector3.new(1.2, 11, 1.9), CFrame = cf * CFrame.new(side * (gap.width / 2 + 0.6), 5.5, 0) , Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
+		end
+		part({ Name = "InnerDoorLintel", Size = Vector3.new(gap.width + 2.6, 1.6, 1.9), CFrame = cf * CFrame.new(0, 11.8, 0) , Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
+		part({ Name = "InnerDoorHeader", Size = Vector3.new(gap.width + 2.6, 3.9, 1.4), CFrame = cf * CFrame.new(0, 14.7, 0) , Color = Color3.fromRGB(238, 234, 224), Material = Enum.Material.SmoothPlastic, Parent = parent })
 	end
 end
 
@@ -1494,17 +1533,17 @@ local function buildCourtyardWings(parent: Instance)
 			if segLen2 > 1 then
 				local segMid = wing.from + unit * ((seg[1] + seg[2]) / 2)
 				local segCf = CFrame.lookAt(segMid, segMid + wing.inner)
-				tag(part({ Name = "WingBackLow", Size = Vector3.new(segLen2, 10, 1.6), CFrame = segCf * CFrame.new(0, 5, -8) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(105, 118, 138), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
+				tag(part({ Name = "WingBackLow", Size = Vector3.new(segLen2, 10, 1.6), CFrame = segCf * CFrame.new(0, 5, -8) , Color = Color3.fromRGB(105, 118, 138), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
 			end
 		end
-		tag(part({ Name = "WingBackHigh", Size = Vector3.new(length, 9, 1.6), CFrame = cf * CFrame.new(0, 15, -8) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(105, 118, 138), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
+		tag(part({ Name = "WingBackHigh", Size = Vector3.new(length, 9, 1.6), CFrame = cf * CFrame.new(0, 15, -8) , Color = Color3.fromRGB(105, 118, 138), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
 		-- second-floor balcony slab + railing
-		part({ Name = "WingBalcony", Size = Vector3.new(length, 1, 9), CFrame = cf * CFrame.new(0, 10.2, -3.5) * CFrame.Angles(0, math.rad(90), 0), Color = STONE, Material = Enum.Material.Concrete, Parent = parent })
-		part({ Name = "WingRailTop", Size = Vector3.new(length, 0.5, 0.5), CFrame = cf * CFrame.new(0, 13.4, 0.6) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(235, 235, 235), Parent = parent })
-		part({ Name = "WingRailPanel", Size = Vector3.new(length, 2.2, 0.25), CFrame = cf * CFrame.new(0, 12.2, 0.6) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(210, 214, 220), Transparency = 0.25, Parent = parent })
+		part({ Name = "WingBalcony", Size = Vector3.new(length, 1, 9), CFrame = cf * CFrame.new(0, 10.2, -3.5) , Color = STONE, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "WingRailTop", Size = Vector3.new(length, 0.5, 0.5), CFrame = cf * CFrame.new(0, 13.4, 0.6) , Color = Color3.fromRGB(235, 235, 235), Parent = parent })
+		part({ Name = "WingRailPanel", Size = Vector3.new(length, 2.2, 0.25), CFrame = cf * CFrame.new(0, 12.2, 0.6) , Color = Color3.fromRGB(210, 214, 220), Transparency = 0.25, Parent = parent })
 		-- flat roof + parapet
-		part({ Name = "WingTopRoof", Size = Vector3.new(length + 2, 1, 11), CFrame = cf * CFrame.new(0, 20.2, -3) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(154, 158, 164), Material = Enum.Material.Concrete, Parent = parent })
-		part({ Name = "WingTopParapet", Size = Vector3.new(length + 2, 1.6, 0.6), CFrame = cf * CFrame.new(0, 21.3, 2.2) * CFrame.Angles(0, math.rad(90), 0), Color = STONE, Parent = parent })
+		part({ Name = "WingTopRoof", Size = Vector3.new(length + 2, 1, 11), CFrame = cf * CFrame.new(0, 20.2, -3) , Color = Color3.fromRGB(154, 158, 164), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "WingTopParapet", Size = Vector3.new(length + 2, 1.6, 0.6), CFrame = cf * CFrame.new(0, 21.3, 2.2) , Color = STONE, Parent = parent })
 		-- ground colonnade (cylindrical columns on the courtyard side)
 		local count = math.floor(length / 10)
 		for i = 0, count do
@@ -1632,6 +1671,263 @@ local function detailGym(parent: Instance)
 	part({ Name = "GymRim", Size = Vector3.new(1.6, 0.3, 1.6), CFrame = CFrame.new(c.X, 8.2, c.Z - 31.6), Color = Color3.fromRGB(226, 100, 60), Material = Enum.Material.Neon, Parent = parent })
 end
 
+
+-- Three-storey exterior facade: brick piers, tall framed windows per floor,
+-- white trim banding between floors, dentil cornice at the top. This is what
+-- makes the school read as a civic academy instead of a strip mall.
+local FACADE_H = 38
+local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } })
+	local BRICK = Color3.fromRGB(138, 78, 62)
+	local TRIM = Color3.fromRGB(238, 236, 228)
+	local dir = (to - from)
+	local length = dir.Magnitude
+	local unit = dir.Unit
+	local perp = Vector3.new(-unit.Z, 0, unit.X)
+	local cuts = { 0, length }
+	for _, gap in gaps do
+		table.insert(cuts, math.clamp(gap.at - gap.width / 2, 0, length))
+		table.insert(cuts, math.clamp(gap.at + gap.width / 2, 0, length))
+	end
+	table.sort(cuts)
+	for i = 1, #cuts - 1 do
+		local a, b = cuts[i], cuts[i + 1]
+		local isGap = false
+		for _, gap in gaps do
+			local mid = (a + b) / 2
+			if mid > gap.at - gap.width / 2 and mid < gap.at + gap.width / 2 then
+				isGap = true
+				break
+			end
+		end
+		local segLen = b - a
+		if isGap or segLen < 1 then
+			continue
+		end
+		local mid = from + unit * ((a + b) / 2)
+		local cf = CFrame.lookAt(mid, mid + perp)
+		local function slab(name: string, w: number, h: number, d: number, y: number, color: Color3, mat: Enum.Material, texTag: string?)
+			local p = part({ Name = name, Size = Vector3.new(w, h, d), CFrame = cf * CFrame.new(0, y, 0) , Color = color, Material = mat, Parent = parent })
+			if texTag then
+				tag(p, texTag)
+			end
+			return p
+		end
+		-- base course
+		slab("FacadeBase", segLen, 3.2, 2.6, 1.6, Color3.fromRGB(198, 194, 184), Enum.Material.Concrete)
+		-- three storeys of solid brick with punched, white-framed windows
+		for floor = 0, 2 do
+			local y0 = 3.2 + floor * 11.6
+			-- the wall itself is brick, full height of the storey
+			slab("FacadeBrick", segLen, 11.6, 2.2, y0 + 5.8, BRICK, Enum.Material.Brick, "TexBrick")
+			-- punched windows: one per bay, brick left between them
+			local bays = math.max(1, math.round(segLen / 16))
+			local pitch = segLen / bays
+			local winW = math.min(7.5, pitch * 0.5)
+			for m = 0, bays - 1 do
+				local wx = -segLen / 2 + (m + 0.5) * pitch
+				part({ Name = "FacadeWinFrame", Size = Vector3.new(winW + 2.0, 8.4, 2.6), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+				local pane = part({ Name = "FacadeWindow", Size = Vector3.new(winW, 6.6, 2.9), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = Color3.fromRGB(96, 138, 170), Material = Enum.Material.SmoothPlastic, Reflectance = 0.3, Parent = parent })
+				tag(pane, "TexWindow")
+				-- muntin cross
+				part({ Name = "Muntin", Size = Vector3.new(0.45, 6.6, 3.0), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+				part({ Name = "Muntin", Size = Vector3.new(winW, 0.45, 3.0), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+				-- sill under each window
+				part({ Name = "FacadeSill", Size = Vector3.new(winW + 2.6, 0.6, 2.5), CFrame = cf * CFrame.new(wx, y0 + 1.7, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+			end
+			-- slim string course between storeys only
+			if floor < 2 then
+				slab("FacadeStringCourse", segLen + 0.4, 0.9, 2.5, y0 + 11.4, TRIM, Enum.Material.Concrete)
+			end
+		end
+		-- cornice + dentils
+		slab("FacadeCornice", segLen + 0.6, 1.8, 3.2, FACADE_H - 0.6, TRIM, Enum.Material.Concrete)
+		local dentils = math.floor(segLen / 4)
+		for dI = 0, dentils do
+			part({ Name = "Dentil", Size = Vector3.new(1.6, 1.0, 2.9), CFrame = cf * CFrame.new(-segLen / 2 + dI * 4, FACADE_H - 2.2, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		end
+	end
+	for _, gap in gaps do
+		local mid = from + unit * gap.at
+		local cf = CFrame.lookAt(mid, mid + perp)
+		for _, side in { -1, 1 } do
+			part({ Name = "FacadeDoorPost", Size = Vector3.new(2.4, 15, 3.0), CFrame = cf * CFrame.new(side * (gap.width / 2 + 1.2), 7.5, 0) , Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent })
+		end
+		part({ Name = "FacadeDoorLintel", Size = Vector3.new(gap.width + 5, 2.4, 3.0), CFrame = cf * CFrame.new(0, 16.2, 0) , Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent })
+		tag(part({ Name = "FacadeGapBrick", Size = Vector3.new(gap.width + 5, 20, 2.2), CFrame = cf * CFrame.new(0, 27.4, 0) , Color = Color3.fromRGB(138, 78, 62), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+	end
+end
+
+-- ============================ GRAND FACADE ============================
+-- The reference is a civic brick academy: pitched slate roofs with dormers,
+-- a central clock tower over a columned portico, corner towers with
+-- crenellations, white trim banding every floor, and hedges hugging the base.
+local function buildGrandFacade(parent: Instance)
+	local BRICK = Color3.fromRGB(138, 78, 62)
+	local TRIM = Color3.fromRGB(238, 236, 228)
+	local SLATE = Color3.fromRGB(64, 74, 84)
+	local Z = 124 -- south facade line
+
+	local function trimBand(x: number, y: number, z: number, w: number, d: number, h: number?)
+		part({ Name = "FacadeTrim", Size = Vector3.new(w, h or 1.4, d), CFrame = CFrame.new(x, y, z), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+
+	-- ---- pitched roofs over the room rows (wedge pairs) ----
+	local function pitchedRoof(cx: number, cz: number, w: number, d: number, h: number, baseY: number)
+		for _, side in { -1, 1 } do
+			local wedge = Instance.new("WedgePart")
+			wedge.Name = "PitchRoof"
+			wedge.Anchored = true
+			wedge.Size = Vector3.new(w, h, d / 2)
+			wedge.CFrame = CFrame.new(cx, baseY + h / 2, cz + side * d / 4)
+				* CFrame.Angles(0, side > 0 and 0 or math.rad(180), 0)
+			wedge.Color = SLATE
+			wedge.Material = Enum.Material.Slate
+			wedge.Parent = parent
+		end
+		-- eaves overhang
+		trimBand(cx, baseY - 0.3, cz + d / 2, w + 4, 2.4, 1.2)
+		trimBand(cx, baseY - 0.3, cz - d / 2, w + 4, 2.4, 1.2)
+	end
+
+	-- dormer windows punched into a pitched roof face
+	local function dormers(cx: number, cz: number, w: number, count: number, baseY: number, face: number)
+		for i = 1, count do
+			local x = cx - w / 2 + (i - 0.5) * (w / count)
+			local z = cz + face * 9
+			part({ Name = "DormerBody", Size = Vector3.new(7, 7, 8), CFrame = CFrame.new(x, baseY + 3.4, z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
+			local roof = Instance.new("WedgePart")
+			roof.Name = "DormerRoof"
+			roof.Anchored = true
+			roof.Size = Vector3.new(8.4, 3.4, 4.6)
+			roof.CFrame = CFrame.new(x, baseY + 8.6, z + face * 1.8) * CFrame.Angles(0, face > 0 and 0 or math.rad(180), 0)
+			roof.Color = SLATE
+			roof.Material = Enum.Material.Slate
+			roof.Parent = parent
+			local pane = part({ Name = "DormerWindow", Size = Vector3.new(4.4, 4.6, 0.5), CFrame = CFrame.new(x, baseY + 3.6, z + face * 4.1), Color = Color3.fromRGB(196, 224, 240), Material = Enum.Material.Glass, Transparency = 0.25, Parent = parent })
+			tag(pane, "TexWindow")
+			trimBand(x, baseY + 6.1, z + face * 4.2, 5.4, 0.7, 0.7)
+			trimBand(x, baseY + 1.1, z + face * 4.2, 5.4, 0.7, 0.7)
+		end
+	end
+
+	pitchedRoof(-142, 100, 164, 48, 14, 38.0)
+	pitchedRoof(142, 100, 164, 48, 14, 38.0)
+	dormers(-142, 100, 150, 5, 38.0, 1)
+	dormers(142, 100, 150, 5, 38.0, 1)
+	pitchedRoof(-142, -94, 164, 60, 15, 38.0)
+	pitchedRoof(142, -94, 164, 60, 15, 38.0)
+	pitchedRoof(-198, 0, 52, 128, 12, 38.0)
+	pitchedRoof(198, 0, 52, 128, 12, 38.0)
+	-- gym: taller, its own ridge
+	pitchedRoof(0, -105, 104, 86, 18, 38.0)
+
+	-- ---- central block: portico, clock tower, grand steps ----
+	-- projecting entrance bay (the white stone block in the reference)
+	part({ Name = "EntryBay", Size = Vector3.new(56, 46, 14), CFrame = CFrame.new(0, 23, Z + 5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	trimBand(0, 46.4, Z + 5, 60, 16, 2.2)
+	-- pediment over the bay
+	local ped = Instance.new("WedgePart")
+	ped.Name = "Pediment"
+	ped.Anchored = true
+	ped.Size = Vector3.new(56, 8, 7)
+	ped.CFrame = CFrame.new(0, 51.6, Z + 8.5) * CFrame.Angles(0, 0, 0)
+	ped.Color = TRIM
+	ped.Material = Enum.Material.Concrete
+	ped.Parent = parent
+	local ped2 = Instance.new("WedgePart")
+	ped2.Name = "Pediment"
+	ped2.Anchored = true
+	ped2.Size = Vector3.new(56, 8, 7)
+	ped2.CFrame = CFrame.new(0, 51.6, Z + 1.5) * CFrame.Angles(0, math.rad(180), 0)
+	ped2.Color = TRIM
+	ped2.Material = Enum.Material.Concrete
+	ped2.Parent = parent
+
+	-- portico columns
+	for i = -2, 2 do
+		if i ~= 0 then
+			part({ Name = "PorticoColumn", Shape = Enum.PartType.Cylinder, Size = Vector3.new(34, 3.4, 3.4), CFrame = CFrame.new(i * 11, 17, Z + 13) * CFrame.Angles(0, 0, math.rad(90)), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "ColumnCap", Size = Vector3.new(4.6, 1.2, 4.6), CFrame = CFrame.new(i * 11, 34.3, Z + 13), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "ColumnBase", Size = Vector3.new(4.6, 1.2, 4.6), CFrame = CFrame.new(i * 11, 0.6, Z + 13), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		end
+	end
+	part({ Name = "PorticoRoof", Size = Vector3.new(58, 2.2, 16), CFrame = CFrame.new(0, 36, Z + 12), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+
+	-- grand steps
+	for i = 0, 4 do
+		part({ Name = "GrandStep", Size = Vector3.new(46 - i * 2, 1, 12 - i * 1.6), CFrame = CFrame.new(0, 0.5 + i * 0.9, Z + 22 - i * 1.2), Color = Color3.fromRGB(206, 202, 192), Material = Enum.Material.Concrete, Parent = parent })
+	end
+
+	-- clock tower rising behind the portico
+	local towerZ = Z - 6
+	tag(part({ Name = "ClockTower", Size = Vector3.new(24, 62, 24), CFrame = CFrame.new(0, 31, towerZ), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+	trimBand(0, 62.6, towerZ, 26, 26, 2.0)
+	part({ Name = "TowerClockBlock", Size = Vector3.new(25, 15, 25), CFrame = CFrame.new(0, 71, towerZ), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	trimBand(0, 79.2, towerZ, 27.5, 27.5, 2.0)
+	part({ Name = "TowerCap", Size = Vector3.new(21, 6, 21), CFrame = CFrame.new(0, 82.8, towerZ), Color = SLATE, Material = Enum.Material.Slate, Parent = parent })
+	part({ Name = "TowerSpire", Size = Vector3.new(1.5, 11, 1.5), CFrame = CFrame.new(0, 91.2, towerZ), Color = Color3.fromRGB(255, 196, 60), Material = Enum.Material.Metal, Parent = parent })
+	for _, spec in {
+		{ z = towerZ + 12.6, n = Enum.NormalId.Front },
+		{ z = towerZ - 12.6, n = Enum.NormalId.Back },
+	} do
+		local face = part({ Name = "ClockFace", Size = Vector3.new(11, 11, 0.5), CFrame = CFrame.new(0, 71, spec.z), Color = Color3.fromRGB(244, 240, 230), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		local dir = spec.n == Enum.NormalId.Front and 1 or -1
+		part({ Name = "ClockRing", Size = Vector3.new(12.6, 12.6, 0.3), CFrame = CFrame.new(0, 71, spec.z - dir * 0.2), Color = Color3.fromRGB(120, 90, 40), Material = Enum.Material.Metal, Parent = parent })
+		part({ Name = "ClockHour", Size = Vector3.new(0.8, 3.2, 0.25), CFrame = CFrame.new(0, 72.4, spec.z + dir * 0.35), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
+		part({ Name = "ClockMinute", Size = Vector3.new(0.6, 4.2, 0.25), CFrame = CFrame.new(1.3, 71.8, spec.z + dir * 0.36) * CFrame.Angles(0, 0, math.rad(-58)), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
+		local _ = face
+	end
+
+	-- school name over the entrance
+	local sign = part({ Name = "FacadeSign", Size = Vector3.new(40, 5, 1.2), CFrame = CFrame.new(0, 39.6, Z + 12.2), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
+	signText(sign, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Front)
+
+	-- ---- corner towers with crenellations ----
+	for _, corner in { { -224, 124 }, { 224, 124 }, { -224, -124 }, { 224, -124 } } do
+		local cx, cz = corner[1], corner[2]
+		tag(part({ Name = "CornerTower", Size = Vector3.new(32, 52, 32), CFrame = CFrame.new(cx, 26, cz), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+		trimBand(cx, 52.8, cz, 35, 35, 2.0)
+		for i = 0, 5 do
+			for _, edge in { { x = cx - 16 + i * 6.4, z = cz - 16 }, { x = cx - 16 + i * 6.4, z = cz + 16 }, { x = cx - 16, z = cz - 16 + i * 6.4 }, { x = cx + 16, z = cz - 16 + i * 6.4 } } do
+				part({ Name = "Crenel", Size = Vector3.new(3.4, 3.4, 3.4), CFrame = CFrame.new(edge.x, 55.4, edge.z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
+			end
+		end
+		-- arched windows up the tower
+		for _, y in { 12, 26, 40 } do
+			local w = part({ Name = "TowerWindow", Size = Vector3.new(5, 7, 0.6), CFrame = CFrame.new(cx, y, cz + (cz > 0 and 16.2 or -16.2)), Color = Color3.fromRGB(196, 224, 240), Material = Enum.Material.Glass, Transparency = 0.25, Parent = parent })
+			tag(w, "TexWindow")
+			trimBand(cx, y + 4, cz + (cz > 0 and 16.3 or -16.3), 6.4, 0.8, 0.8)
+		end
+	end
+
+	-- ---- white trim banding along the long facades ----
+	for _, spec in {
+		{ z = Z + 1.2, len = 448 },
+		{ z = -Z - 1.2, len = 448 },
+	} do
+		trimBand(0, 14.6, spec.z, spec.len, 2.6, 1.5)
+		trimBand(0, 26.2, spec.z, spec.len, 2.6, 1.5)
+	end
+	for _, x in { -225.2, 225.2 } do
+		part({ Name = "FacadeTrim", Size = Vector3.new(2.6, 1.5, 248), CFrame = CFrame.new(x, 14.6, 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "FacadeTrim", Size = Vector3.new(2.6, 1.5, 248), CFrame = CFrame.new(x, 26.2, 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+
+	-- ---- hedges + lawn strip hugging the front ----
+	for i = 0, 27 do
+		local x = -210 + i * 15.5
+		if math.abs(x) > 34 then
+			part({ Name = "FrontHedge", Size = Vector3.new(13, 4.4, 6), CFrame = CFrame.new(x, 2.2, Z + 26), Color = Color3.fromRGB(58, 108, 56), Material = Enum.Material.Grass, Parent = parent })
+		end
+	end
+	part({ Name = "FrontLawn", Size = Vector3.new(452, 0.5, 26), CFrame = CFrame.new(0, 0.12, Z + 40), Color = Color3.fromRGB(104, 162, 76), Material = Enum.Material.Grass, Parent = parent })
+	-- flanking flag poles
+	for _, fx in { -34, 34 } do
+		part({ Name = "FlagPoleSmall", Size = Vector3.new(0.7, 22, 0.7), CFrame = CFrame.new(fx, 11, Z + 24), Color = Color3.fromRGB(198, 198, 202), Material = Enum.Material.Metal, Parent = parent })
+		part({ Name = "FlagSmall", Size = Vector3.new(6, 3.6, 0.2), CFrame = CFrame.new(fx + 3.2, 19, Z + 24), Color = fx < 0 and Color3.fromRGB(196, 56, 56) or Color3.fromRGB(56, 96, 196), Material = Enum.Material.Fabric, Parent = parent })
+	end
+end
+
 function MapService.Build(): Map
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
@@ -1701,9 +1997,9 @@ function MapService.Build(): Map
 	end
 
 	-- ---------------- room floors (plan rooms, both wings) ----------------
-	buildZone(folder, "Cafeteria", Vector3.new(-204, 0, -29), Vector2.new(40, 70), Color3.fromRGB(235, 214, 156), "CAFETERIA", Enum.Material.CeramicTiles)
+	buildZone(folder, "Cafeteria", Vector3.new(-204, 0, -23), Vector2.new(40, 58), Color3.fromRGB(235, 214, 156), "CAFETERIA", Enum.Material.CeramicTiles)
 	buildZone(folder, "PrincipalsOffice", Vector3.new(-204, 0, 35), Vector2.new(40, 58), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)", Enum.Material.Marble)
-	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(204, 0, -29), Vector2.new(40, 70), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
+	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(204, 0, -23), Vector2.new(40, 58), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
 	buildZone(folder, "Detention", Vector3.new(204, 0, 35), Vector2.new(40, 58), Color3.fromRGB(126, 126, 132), "DETENTION", Enum.Material.Concrete)
 	tag(buildZone(folder, "Classroom101", Vector3.new(-74, 0, -94), Vector2.new(28, 60), Color3.fromRGB(148, 118, 96), "CLASSROOM 101\nPOP QUIZ", Enum.Material.Carpet), "TexCarpet")
 	buildZone(folder, "MusicRoom", Vector3.new(74, 0, -94), Vector2.new(28, 60), Color3.fromRGB(196, 168, 210), "MUSIC ROOM", Enum.Material.Carpet)
@@ -1725,21 +2021,21 @@ function MapService.Build(): Map
 	-- ---------------- walls: exterior (two-story look) ----------------
 	local T = true
 	-- south face: wings + lobby with grand doors
-	buildWallRun(folder, Vector3.new(-224, 0, 124), Vector3.new(-60, 0, 124), {}, T)
-	buildWallRun(folder, Vector3.new(60, 0, 124), Vector3.new(224, 0, 124), {}, T)
-	buildWallRun(folder, Vector3.new(-60, 0, 124), Vector3.new(60, 0, 124), { { at = 44, width = 14 }, { at = 76, width = 14 } }, T)
+	buildFacadeWall(folder, Vector3.new(-224, 0, 124), Vector3.new(-60, 0, 124), {})
+	buildFacadeWall(folder, Vector3.new(60, 0, 124), Vector3.new(224, 0, 124), {})
+	buildFacadeWall(folder, Vector3.new(-60, 0, 124), Vector3.new(60, 0, 124), { { at = 44, width = 14 }, { at = 76, width = 14 } })
 	-- north face (interrupted by the gym block)
-	buildWallRun(folder, Vector3.new(-224, 0, -124), Vector3.new(-60, 0, -124), {}, T)
-	buildWallRun(folder, Vector3.new(60, 0, -124), Vector3.new(224, 0, -124), {}, T)
-	buildWallRun(folder, Vector3.new(-60, 0, -124), Vector3.new(-50, 0, -124), {}, T)
-	buildWallRun(folder, Vector3.new(50, 0, -124), Vector3.new(60, 0, -124), {}, T)
+	buildFacadeWall(folder, Vector3.new(-224, 0, -124), Vector3.new(-60, 0, -124), {})
+	buildFacadeWall(folder, Vector3.new(60, 0, -124), Vector3.new(224, 0, -124), {})
+	buildFacadeWall(folder, Vector3.new(-60, 0, -124), Vector3.new(-50, 0, -124), {})
+	buildFacadeWall(folder, Vector3.new(50, 0, -124), Vector3.new(60, 0, -124), {})
 	-- gym protrusion
-	buildWallRun(folder, Vector3.new(-50, 0, -124), Vector3.new(-50, 0, -146), {}, T)
-	buildWallRun(folder, Vector3.new(50, 0, -146), Vector3.new(50, 0, -124), {}, T)
-	buildWallRun(folder, Vector3.new(-50, 0, -146), Vector3.new(50, 0, -146), {}, T)
+	buildFacadeWall(folder, Vector3.new(-50, 0, -124), Vector3.new(-50, 0, -146), {})
+	buildFacadeWall(folder, Vector3.new(50, 0, -146), Vector3.new(50, 0, -124), {})
+	buildFacadeWall(folder, Vector3.new(-50, 0, -146), Vector3.new(50, 0, -146), {})
 	-- east/west faces
-	buildWallRun(folder, Vector3.new(-224, 0, -124), Vector3.new(-224, 0, 124), {}, T)
-	buildWallRun(folder, Vector3.new(224, 0, 124), Vector3.new(224, 0, -124), {}, T)
+	buildFacadeWall(folder, Vector3.new(-224, 0, -124), Vector3.new(-224, 0, 124), {})
+	buildFacadeWall(folder, Vector3.new(224, 0, 124), Vector3.new(224, 0, -124), {})
 
 	-- ---------------- walls: interior ----------------
 	local function mirrorX(v: Vector3): Vector3
@@ -1748,24 +2044,30 @@ function MapService.Build(): Map
 	local function wingWalls(sgn: number)
 		local function W(a: Vector3, b: Vector3, gaps)
 			if sgn < 0 then
-				buildWallRun(folder, a, b, gaps or {})
+				buildInteriorWall(folder, a, b, gaps or {})
 			else
-				buildWallRun(folder, mirrorX(a), mirrorX(b), gaps or {})
+				buildInteriorWall(folder, mirrorX(a), mirrorX(b), gaps or {})
 			end
 		end
-		-- z=76: south rooms onto main corridor (plot doors + janitor)
-		W(Vector3.new(-224, 0, 76), Vector3.new(-60, 0, 76), { { at = 34, width = 14 }, { at = 102, width = 14 }, { at = 150, width = 8 } })
-		-- z=64: outer column south wall (principal door)
-		W(Vector3.new(-224, 0, 64), Vector3.new(-184, 0, 64), { { at = 20, width = 12 } })
+		-- z=76: plot bays OPEN onto the corridor (their laser gates are the
+		-- front wall); only stubs at bay edges + the janitor room front
+		W(Vector3.new(-224, 0, 76), Vector3.new(-218, 0, 76), {})
+		W(Vector3.new(-162, 0, 76), Vector3.new(-150, 0, 76), {})
+		W(Vector3.new(-94, 0, 76), Vector3.new(-88, 0, 76), {})
+		W(Vector3.new(-88, 0, 76), Vector3.new(-60, 0, 76), { { at = 14, width = 8 } })
 		-- z=52: courtyard south colonnade (two arches to the corridor)
 		W(Vector3.new(-172, 0, 52), Vector3.new(-60, 0, 52), { { at = 32, width = 16 }, { at = 80, width = 16 } })
-		-- z=-52: courtyard north wall (arch to wing corridor)
+		-- z=-52: cafeteria front (door) + courtyard north wall (arch)
+		W(Vector3.new(-224, 0, -52), Vector3.new(-184, 0, -52), { { at = 20, width = 12 } })
 		W(Vector3.new(-172, 0, -52), Vector3.new(-60, 0, -52), { { at = 56, width = 16 } })
-		-- z=-64: north rooms onto wing corridor (plots + classroom + corridor mouth)
-		W(Vector3.new(-224, 0, -64), Vector3.new(-184, 0, -64), {}) -- cafeteria north (no door)
-		W(Vector3.new(-172, 0, -64), Vector3.new(-60, 0, -64), { { at = 50, width = 14 }, { at = 92, width = 10 } })
+		-- z=-64: north plot bays OPEN onto the full-width wing corridor;
+		-- stubs at bay edges + the classroom front with its door
+		W(Vector3.new(-224, 0, -64), Vector3.new(-218, 0, -64), {})
+		W(Vector3.new(-162, 0, -64), Vector3.new(-150, 0, -64), {})
+		W(Vector3.new(-94, 0, -64), Vector3.new(-88, 0, -64), {})
+		W(Vector3.new(-88, 0, -64), Vector3.new(-60, 0, -64), { { at = 14, width = 10 } })
 		-- x=-184: outer column onto inner corridor (cafeteria + principal doors)
-		W(Vector3.new(-184, 0, -64), Vector3.new(-184, 0, 64), { { at = 35, width = 12 }, { at = 99, width = 12 } })
+		W(Vector3.new(-184, 0, -52), Vector3.new(-184, 0, 64), { { at = 29, width = 12 }, { at = 87, width = 12 } })
 		-- x=-172: inner corridor onto courtyard (two arches)
 		W(Vector3.new(-172, 0, -52), Vector3.new(-172, 0, 52), { { at = 28, width = 14 }, { at = 76, width = 14 } })
 		-- room separators, south row then north row
@@ -1773,38 +2075,65 @@ function MapService.Build(): Map
 		W(Vector3.new(-88, 0, 76), Vector3.new(-88, 0, 124), {})
 		W(Vector3.new(-156, 0, -124), Vector3.new(-156, 0, -64), {})
 		W(Vector3.new(-88, 0, -124), Vector3.new(-88, 0, -64), {})
-		-- cafeteria/principal divider
+		-- cafeteria/principal divider (outer column now starts at z=-52)
 		W(Vector3.new(-224, 0, 6), Vector3.new(-184, 0, 6), {})
 	end
 	wingWalls(-1)
 	wingWalls(1)
 
 	-- spine walls
-	buildWallRun(folder, Vector3.new(-60, 0, 76), Vector3.new(-60, 0, 124), {}) -- lobby west
-	buildWallRun(folder, Vector3.new(60, 0, 76), Vector3.new(60, 0, 124), {}) -- lobby east
-	buildWallRun(folder, Vector3.new(-60, 0, -64), Vector3.new(-60, 0, 64), { { at = 70, width = 12 } }) -- atrium west (arch to courtyard)
-	buildWallRun(folder, Vector3.new(60, 0, -64), Vector3.new(60, 0, 64), { { at = 70, width = 12 } }) -- atrium east
-	buildWallRun(folder, Vector3.new(-50, 0, -64), Vector3.new(50, 0, -64), { { at = 50, width = 20 } }) -- gym south (grand doors)
-	buildWallRun(folder, Vector3.new(-60, 0, -64), Vector3.new(-60, 0, -124), {}) -- west flank outer
-	buildWallRun(folder, Vector3.new(60, 0, -124), Vector3.new(60, 0, -64), {}) -- east flank outer
-	buildWallRun(folder, Vector3.new(-50, 0, -64), Vector3.new(-50, 0, -124), {}) -- gym west (flank divider)
-	buildWallRun(folder, Vector3.new(50, 0, -124), Vector3.new(50, 0, -64), {}) -- gym east
+	buildInteriorWall(folder, Vector3.new(-60, 0, 76), Vector3.new(-60, 0, 124), {}) -- lobby west
+	buildInteriorWall(folder, Vector3.new(60, 0, 76), Vector3.new(60, 0, 124), {}) -- lobby east
+	buildInteriorWall(folder, Vector3.new(-60, 0, -64), Vector3.new(-60, 0, 64), { { at = 70, width = 12 } }) -- atrium west (arch to courtyard)
+	buildInteriorWall(folder, Vector3.new(60, 0, -64), Vector3.new(60, 0, 64), { { at = 70, width = 12 } }) -- atrium east
+	buildInteriorWall(folder, Vector3.new(-50, 0, -64), Vector3.new(50, 0, -64), { { at = 50, width = 20 } }) -- gym south (grand doors)
+	buildInteriorWall(folder, Vector3.new(-60, 0, -64), Vector3.new(-60, 0, -124), {}) -- west flank outer
+	buildInteriorWall(folder, Vector3.new(60, 0, -124), Vector3.new(60, 0, -64), {}) -- east flank outer
+	buildInteriorWall(folder, Vector3.new(-50, 0, -64), Vector3.new(-50, 0, -124), {}) -- gym west (flank divider)
+	buildInteriorWall(folder, Vector3.new(50, 0, -124), Vector3.new(50, 0, -64), {}) -- gym east
 
 	-- open doors on the main rooms
 	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-204, 0, 64), Vector3.new(-204, 0, 60)), 12, true)
 	addOpenDoor(folder, CFrame.lookAt(Vector3.new(204, 0, 64), Vector3.new(204, 0, 60)), 12, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-204, 0, -52), Vector3.new(-204, 0, -48)), 12, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(204, 0, -52), Vector3.new(204, 0, -48)), 12, true)
 	addOpenDoor(folder, CFrame.lookAt(Vector3.new(0, 0, -64), Vector3.new(0, 0, -68)), 18, true)
 
-	-- ---------------- lockers along the main corridor ----------------
-	for _, bankX in { -150, -104, -36, 36, 104, 150 } do
+	-- ---------------- lockers on real wall sections ----------------
+	for _, spec in {
+		{ cf = CFrame.new(-74, 4.2, 74.4), rot = 0 }, -- janitor front, west
+		{ cf = CFrame.new(74, 4.2, 74.4), rot = 0 }, -- janitor front, east
+		{ cf = CFrame.new(-58.6, 4.2, 20), rot = 90 }, -- atrium west wall
+		{ cf = CFrame.new(58.6, 4.2, 20), rot = 90 }, -- atrium east wall
+		{ cf = CFrame.new(-58.6, 4.2, -30), rot = 90 },
+		{ cf = CFrame.new(58.6, 4.2, -30), rot = 90 },
+	} do
 		tag(part({
 			Name = "LockerBank",
 			Size = Vector3.new(24, 8.4, 1.6),
-			CFrame = CFrame.new(bankX, 4.2, 77.4),
+			CFrame = spec.cf * CFrame.Angles(0, math.rad(spec.rot), 0),
 			Color = Color3.fromRGB(46, 84, 168),
 			Material = Enum.Material.SmoothPlastic,
 			Parent = folder,
 		}), "TexLocker")
+	end
+	-- columns along the open corridor edges (colonnade + lobby + atrium)
+	for _, colSpec in {
+		{ z = 64, xs = { -160, -132, -104, -76 } },
+		{ z = 64, xs = { 76, 104, 132, 160 } },
+		{ z = 76, xs = { -40, 0, 40 } },
+	} do
+		for _, cx in colSpec.xs do
+			part({
+				Name = "CorridorColumn",
+				Shape = Enum.PartType.Cylinder,
+				Size = Vector3.new(15.4, 1.5, 1.5),
+				CFrame = CFrame.new(cx, 7.7, colSpec.z) * CFrame.Angles(0, 0, math.rad(90)),
+				Color = Color3.fromRGB(238, 234, 224),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = folder,
+			})
+		end
 	end
 	for _, xEnd in { -218, 218 } do
 		local sign = part({
@@ -1827,31 +2156,33 @@ function MapService.Build(): Map
 		part({
 			Name = "RoofSlab",
 			Size = Vector3.new(sx, 1.2, sz),
-			CFrame = CFrame.new(cx, y or 17.2, cz),
+			CFrame = CFrame.new(cx, y or 16.2, cz),
 			Color = Color3.fromRGB(96, 108, 120),
 			Material = Enum.Material.Slate,
 			Parent = folder,
 		})
 	end
-	roofSlab(0, 100, 448, 48) -- south rooms + lobby
+	roofSlab(0, 100, 448, 48) -- south rooms + lobby (pitched roof sits above)
 	roofSlab(0, 70, 448, 12) -- corridor
-	roofSlab(-198, 0, 52, 128) -- west outer col + inner corridor
-	roofSlab(198, 0, 52, 128) -- east outer col + inner corridor
 	roofSlab(-116, 58, 112, 12) -- west colonnade
 	roofSlab(116, 58, 112, 12) -- east colonnade
 	roofSlab(-116, -58, 112, 12) -- west north leg
 	roofSlab(116, -58, 112, 12) -- east north leg
 	roofSlab(0, 0, 120, 128) -- atrium (with skylight ring)
-	roofSlab(-142, -94, 164, 60) -- west north rooms
-	roofSlab(142, -94, 164, 60) -- east north rooms
+	roofSlab(-142, 100, 168, 50) -- west south rooms
+	roofSlab(142, 100, 168, 50) -- east south rooms
+	roofSlab(-142, -94, 168, 62) -- west north rooms
+	roofSlab(142, -94, 168, 62) -- east north rooms
+	roofSlab(-198, 0, 54, 130) -- west outer column
+	roofSlab(198, 0, 54, 130) -- east outer column
+	roofSlab(0, -105, 106, 88, 26.2) -- gym: double height
 	roofSlab(-55, -94, 10, 60) -- west flank
 	roofSlab(55, -94, 10, 60) -- east flank
-	roofSlab(0, -105, 104, 86, 24.4) -- gym hall, taller
 	-- atrium skylight
 	part({
 		Name = "Skylight",
 		Size = Vector3.new(44, 0.6, 44),
-		CFrame = CFrame.new(0, 17.4, 6),
+		CFrame = CFrame.new(0, 16.4, 6),
 		Color = Color3.fromRGB(170, 215, 240),
 		Material = Enum.Material.Glass,
 		Transparency = 0.45,
@@ -1860,7 +2191,7 @@ function MapService.Build(): Map
 
 	-- ---------------- signature interiors ----------------
 	buildFountain(folder, Vector3.new(0, 0, 6)) -- atrium centerpiece
-	buildCafeteriaTables(folder, Vector3.new(-204, 0, -29))
+	buildCafeteriaTables(folder, Vector3.new(-204, 0, -23))
 	buildGymMarkings(folder, Vector3.new(0, 0, -105))
 	buildHoops(folder, Vector3.new(0, 0, -105))
 	-- gym stage at the north end
@@ -1926,11 +2257,7 @@ function MapService.Build(): Map
 	local crest = part({ Name = "LobbyCrest", Size = Vector3.new(16, 10, 0.8), CFrame = CFrame.new(0, 8, 78), Color = Palette.Blackboard, Parent = folder })
 	signText(crest, "CRUMBWORTH HIGH\nEST. 1954", Palette.BusYellow, Enum.NormalId.Back)
 
-	-- corner towers on the plan's four corners
-	buildCornerTower(folder, -224, -124)
-	buildCornerTower(folder, 224, -124)
-	buildCornerTower(folder, -224, 124)
-	buildCornerTower(folder, 224, 124)
+	buildGrandFacade(folder)
 
 	-- ---------------- outside: entrance, dorms, grounds ----------------
 	buildPath(folder, Vector3.new(0, 0, 124), Vector3.new(0, 0, 170), 14)
