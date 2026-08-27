@@ -122,7 +122,10 @@ local function setup(player: Player, character: Model)
 	player:SetAttribute("HealthMax", MAX_HEALTH)
 end
 
-function VitalsService.Init()
+function VitalsService.Init(map: any?)
+	if map and map.infirmary then
+		infirmary = map.infirmary
+	end
 	local function join(player: Player)
 		player:SetAttribute("Energy", ENERGY_MAX)
 		player:SetAttribute("EnergyMax", ENERGY_MAX)

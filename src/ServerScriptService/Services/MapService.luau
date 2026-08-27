@@ -39,6 +39,7 @@ export type Map = {
 	cliqueBoards: { [string]: BasePart },
 	dormBeds: { BasePart },
 	detentionSpot: Vector3,
+	infirmary: Vector3,
 	folder: Folder,
 }
 
@@ -2271,18 +2272,20 @@ local function furnishProps()
 	-- ---------------- lobby ----------------
 	-- the clock tower comes down through the middle of the lobby, so the
 	-- seating goes in the two side bays rather than across the doors
-	prop("Sofa", CFrame.new(30, 0, 112) * CFrame.Angles(0, math.rad(90), 0))
-	prop("Sofa2", CFrame.new(40, 0, 112) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("CoffeeTable", CFrame.new(35, 0, 112))
-	prop("ArmChair", CFrame.new(35, 0, 106))
-	prop("ArmChair", CFrame.new(35, 0, 118) * CFrame.Angles(0, math.pi, 0))
+	-- the lobby stairs come down through x 41..51, so the seating stays inside
+	-- them rather than under them
+	prop("Sofa", CFrame.new(26, 0, 112) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Sofa2", CFrame.new(36, 0, 112) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("CoffeeTable", CFrame.new(31, 0, 112))
+	prop("ArmChair", CFrame.new(31, 0, 106))
+	prop("ArmChair", CFrame.new(31, 0, 118) * CFrame.Angles(0, math.pi, 0))
 	prop("GrandfatherClock", CFrame.new(56, 0, 119) * CFrame.Angles(0, math.rad(-90), 0))
 	prop("WhaleStatue", CFrame.new(-34, 0, 108), { scale = 2.0 })
-	prop("RayStatue", CFrame.new(-45, 0, 108), { scale = 2.0 })
+	prop("RayStatue", CFrame.new(-56, 0, 112), { scale = 2.0 })
 	prop("Vase1", CFrame.new(-38, 3.8, 92))
 	prop("Vase2", CFrame.new(-22, 3.8, 92))
 	row("PlanterPot", 0, 0, { { -56, 86 }, { 56, 86 }, { -56, 118 } })
-	row("PottedPlant", 0, 0, { { -50, 100 }, { 50, 106 } })
+	row("PottedPlant", 0, 0, { { -56, 100 }, { 56, 96 } })
 	prop("Clock", CFrame.new(-40, 12, 102.8))
 
 	-- ---------------- atrium ----------------
@@ -2299,31 +2302,11 @@ local function furnishProps()
 	row("FireAlarm", 8, 90, { { -58.4, 40 } })
 	row("FireAlarm", 8, -90, { { 58.4, 40 } })
 
-	-- ---------------- classroom 101 (west wing) ----------------
-	prop("OfficeDesk", CFrame.new(-84, 0, -118))
-	prop("Laptop", CFrame.new(-84, 2.9, -118))
-	prop("Stationery", CFrame.new(-80, 2.9, -118))
-	prop("Chalkboard", CFrame.new(-68, 0, -117) * CFrame.Angles(0, math.rad(-30), 0))
-	prop("Bookshelf", CFrame.new(-104, 0, -110) * CFrame.Angles(0, math.rad(90), 0))
-	prop("SteelShelves", CFrame.new(-104, 0, -100) * CFrame.Angles(0, math.rad(90), 0))
-	prop("Bin", CFrame.new(-64, 0, -100))
-	prop("Extinguisher", CFrame.new(-64, 0, -117))
-	prop("PottedPlant", CFrame.new(-104, 0, -119))
-	prop("Clock", CFrame.new(-74, 11, -120.4))
-
-	-- ---------------- classroom wing (z = -150) ----------------
-	prop("OfficeDesk", CFrame.new(0, 0, -172))
-	prop("Laptop", CFrame.new(0, 2.9, -172))
-	prop("Notepads", CFrame.new(3.4, 2.9, -172))
-	prop("Chalkboard", CFrame.new(-16, 0, -175) * CFrame.Angles(0, math.rad(20), 0))
-	prop("ProjectorScreen", CFrame.new(16, 0, -176))
-	prop("Bookshelf", CFrame.new(36, 0, -162) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("SteelShelves2", CFrame.new(36, 0, -150) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("BunsenBurner", CFrame.new(-3.4, 2.9, -172))
-	prop("Bin", CFrame.new(36, 0, -128))
-	prop("Extinguisher", CFrame.new(-36, 0, -128))
-	prop("PottedPlant", CFrame.new(-36, 0, -174))
-	prop("Clock", CFrame.new(0, 11, -178.4))
+	-- Room 101, the Music Room, the two science pavilions and the gym are
+	-- dressed in furnishSubjectRooms, which knows what each room is for. What
+	-- used to be here put a teacher's desk at x = -104, inside the homeroom
+	-- next door, and a whole second classroom at z = -172 -- a field north of
+	-- the gym.
 
 	-- ---------------- library ----------------
 	-- four study tables on the reading carpet, two chairs each
@@ -2404,12 +2387,10 @@ local function furnishProps()
 
 	-- ---------------- second dressing pass ----------------
 	-- the pieces that turn a furnished room into an inhabited one
-	prop("Ottoman", CFrame.new(27, 0, 106))
-	prop("GreenChair", CFrame.new(-46, 0, 96) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Ottoman", CFrame.new(23, 0, 106))
+	prop("GreenChair", CFrame.new(-56, 0, 96) * CFrame.Angles(0, math.rad(90), 0))
 	prop("FramedPicture", CFrame.new(-44, 9, 102.8))
 	prop("FramedPicture", CFrame.new(38, 9, 102.8))
-	prop("Shelf", CFrame.new(-104, 0, -104) * CFrame.Angles(0, math.rad(90), 0))
-	prop("Clipboard", CFrame.new(-86, 2.9, -118))
 	prop("Table2", CFrame.new(0, 0, -216))
 	prop("Chair", CFrame.new(0, 0, -220) * CFrame.Angles(0, math.pi, 0))
 	prop("Fern", CFrame.new(-35, 0, -209))
@@ -2464,9 +2445,9 @@ local function furnishProps()
 		{ min = Vector2.new(42, -118), max = Vector2.new(48, -70), y = 0, pool = SPORTS, count = 10, seed = 3102 },
 		-- the servery end of the cafeteria
 		{ min = Vector2.new(-221, 49), max = Vector2.new(-208, 58), y = 0, pool = KITCHEN, count = 10, seed = 3103 },
-		-- the wall behind the desks in room 101 and in the classroom wing
-		{ min = Vector2.new(-105, -120), max = Vector2.new(-99, -98), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3104 },
-		{ min = Vector2.new(-37, -174), max = Vector2.new(-31, -150), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3105 },
+		-- the back of the two homerooms flanking each wing corridor
+		{ min = Vector2.new(-150, -120), max = Vector2.new(-140, -100), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3104 },
+		{ min = Vector2.new(140, -120), max = Vector2.new(150, -100), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3105 },
 		-- the courtyard edges, left and right of the way through
 		{ min = Vector2.new(-40, 34), max = Vector2.new(-30, 66), y = 0, pool = GARDEN, count = 8, seed = 3106 },
 		{ min = Vector2.new(30, 34), max = Vector2.new(40, 66), y = 0, pool = GARDEN, count = 8, seed = 3107 },
@@ -2481,73 +2462,10 @@ local function furnishProps()
 	end
 end
 
-local function furnishClassroom(parent: Instance)
-	local c = Vector3.new(0, 0, -150)
-	-- whiteboards on the far wall
-	for _, x in { -18, 6 } do
-		part({ Name = "Whiteboard", Size = Vector3.new(20, 8, 0.5), CFrame = CFrame.new(c.X + x + 6, 7, c.Z - 28), Color = Color3.fromRGB(244, 244, 244), Material = Enum.Material.SmoothPlastic, Parent = parent })
-		part({ Name = "BoardFrame", Size = Vector3.new(21, 0.8, 0.6), CFrame = CFrame.new(c.X + x + 6, 2.8, c.Z - 28), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent })
-	end
-	-- corkboards + bookshelf on the side wall
-	part({ Name = "Corkboard", Size = Vector3.new(0.5, 6, 10), CFrame = CFrame.new(c.X + 38, 7, c.Z + 6), Color = Color3.fromRGB(196, 156, 108), Parent = parent })
-	part({ Name = "Bookshelf", Size = Vector3.new(1.6, 9, 14), CFrame = CFrame.new(c.X + 38.5, 4.5, c.Z - 12), Color = Color3.fromRGB(140, 104, 76), Material = Enum.Material.Wood, Parent = parent })
-	for row = 0, 2 do
-		for slot = 0, 4 do
-			part({ Name = "ShelfBook", Size = Vector3.new(1.0, 1.6, 1.6), CFrame = CFrame.new(c.X + 38.3, 2.4 + row * 2.6, c.Z - 17.5 + slot * 2.6), Color = ({ Color3.fromRGB(214, 82, 60), Color3.fromRGB(90, 140, 200), Color3.fromRGB(110, 180, 110), Color3.fromRGB(240, 214, 120), Color3.fromRGB(168, 90, 220) })[slot + 1], Parent = parent })
-		end
-	end
-	-- desks + blue chairs in rows
-	for row = 0, 1 do
-		for col = 0, 3 do
-			local dx, dz = c.X - 24 + col * 14, c.Z - 8 + row * 14
-			local unit = Instance.new("Folder")
-			unit.Name = "DeskUnit"
-			unit.Parent = parent
-			part({ Name = "DeskTop", Size = Vector3.new(8, 0.5, 4), CFrame = CFrame.new(dx, 3.4, dz), Color = Color3.fromRGB(214, 200, 176), Material = Enum.Material.WoodPlanks, Parent = unit })
-			for _, leg in { { -3.5, -1.5 }, { 3.5, -1.5 }, { -3.5, 1.5 }, { 3.5, 1.5 } } do
-				part({ Name = "DeskLeg", Size = Vector3.new(0.4, 3.2, 0.4), CFrame = CFrame.new(dx + leg[1], 1.6, dz + leg[2]), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = unit })
-			end
-			local seat = Instance.new("Folder")
-			seat.Name = "ChairUnit"
-			seat.Parent = parent
-			part({ Name = "ChairSeat", Size = Vector3.new(2.6, 0.4, 2.4), CFrame = CFrame.new(dx, 2.2, dz + 3.4), Color = Color3.fromRGB(58, 104, 196), Parent = seat })
-			part({ Name = "ChairBack", Size = Vector3.new(2.6, 2.6, 0.4), CFrame = CFrame.new(dx, 3.7, dz + 4.5), Color = Color3.fromRGB(58, 104, 196), Parent = seat })
-			prop("SchoolDesk", CFrame.new(dx, 0, dz) * CFrame.Angles(0, math.pi, 0), { fallback = unit })
-			prop("SchoolChair", CFrame.new(dx, 0, dz + 3.6) * CFrame.Angles(0, math.pi, 0), { fallback = seat })
-		end
-	end
-	-- drop-ceiling: full grid texture + glowing panels
-	tag(part({ Name = "ClassCeiling", Size = Vector3.new(78, 0.6, 58), CFrame = CFrame.new(c.X, 14.2, c.Z), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
-	for _, x in { -20, 8 } do
-		for _, z in { -14, 2 } do
-			part({ Name = "CeilingPanel", Size = Vector3.new(10, 0.3, 4), CFrame = CFrame.new(c.X + x, 13.6, c.Z + z), Color = Color3.fromRGB(250, 250, 240), Material = Enum.Material.Neon, Parent = parent })
-		end
-	end
-	-- salmon feature walls like the reference classroom
-	part({ Name = "ClassWallSalmon", Size = Vector3.new(0.8, 13, 56), CFrame = CFrame.new(c.X + 39.2, 7, c.Z), Color = Color3.fromRGB(205, 122, 92), Parent = parent })
-	part({ Name = "ClassWallSalmon2", Size = Vector3.new(24, 13, 0.8), CFrame = CFrame.new(c.X + 27, 7, c.Z - 29.2), Color = Color3.fromRGB(205, 122, 92), Parent = parent })
-end
-
-local function furnishCafeteria(parent: Instance)
-	local c = Vector3.new(-215, 0, 60)
-	-- warm accent wall panels
-	for _, z in { c.Z - 33, c.Z + 33 } do
-		part({ Name = "CafeAccent", Size = Vector3.new(66, 8, 0.6), CFrame = CFrame.new(c.X, 6, z), Color = Color3.fromRGB(226, 148, 62), Parent = parent })
-	end
-	-- neon rectangle light overhead
-	for _, spec in {
-		{ size = Vector3.new(18, 0.4, 0.8), cf = CFrame.new(c.X, 13.4, c.Z - 5) },
-		{ size = Vector3.new(18, 0.4, 0.8), cf = CFrame.new(c.X, 13.4, c.Z + 5) },
-		{ size = Vector3.new(0.8, 0.4, 10), cf = CFrame.new(c.X - 9, 13.4, c.Z) },
-		{ size = Vector3.new(0.8, 0.4, 10), cf = CFrame.new(c.X + 9, 13.4, c.Z) },
-	} do
-		part({ Name = "CafeNeon", Size = spec.size, CFrame = spec.cf, Color = Color3.fromRGB(255, 244, 214), Material = Enum.Material.Neon, Parent = parent })
-	end
-	-- painted queue squares on the floor
-	for i = 0, 4 do
-		part({ Name = "QueueSquare", Size = Vector3.new(4.4, 0.22, 4.4), CFrame = CFrame.new(c.X - 22 + i * 6, 0.13, c.Z + 26), Color = Color3.fromRGB(240, 240, 240), Transparency = 0.35, Parent = parent })
-	end
-end
+-- furnishClassroom and furnishCafeteria used to live here. Neither was ever
+-- called: one furnished a classroom at z = -150, which is a field north of the
+-- gym, and the other a cafeteria that buildCafeteriaTables already builds. The
+-- rooms that exist are furnished in furnishSubjectRooms.
 
 local function detailGym(parent: Instance)
 	local c = Vector3.new(215, 0, 60)
@@ -3102,6 +3020,847 @@ local function detailCorridor(parent: Instance)
 	tag(part({ Name = "CorridorTileBand", Size = Vector3.new(440, 0.12, 10), CFrame = CFrame.new(0, 0.08, 65), Color = Color3.fromRGB(212, 208, 198), Material = Enum.Material.CeramicTiles, Parent = parent }), "TexFloorTile")
 end
 
+-- ================= THE UPPER FLOOR =================
+-- The school always looked like three storeys from the outside -- the facade
+-- has three bands of windows -- and was one storey deep. This is the second,
+-- built into the band the facade already draws: floor at y = 16, walls to
+-- 31.6, which is exactly the height buildInteriorWall makes when it is handed
+-- a base at that level.
+--
+-- The plan is a ring. South rooms, the upper hall over the main hallway, a
+-- wing down each side and a north row, with the whole middle left open: you
+-- come up the stairs and the atrium and both courtyards fall away beneath
+-- you. A second storey that is merely more corridor is not worth climbing.
+local UPPER_Y = 16
+local UPPER_CEIL = 31.6
+
+-- Each entry is a floor rectangle {x0, z0, x1, z1}. The holes -- the atrium,
+-- the courtyards, the gym, the lobby light well and the four stair wells --
+-- are cut by leaving them out, which is why the south band is in pieces.
+local UPPER_SLABS = {
+	-- south band, around the lobby light well and the two lobby stairs
+	{ -224, 81, -52, 124 },
+	{ -52, 81, -40, 84 },
+	{ -52, 118, -40, 124 },
+	{ -40, 81, -34, 124 },
+	{ -34, 81, 34, 88 },
+	{ -34, 118, 34, 124 },
+	{ 34, 81, 40, 124 },
+	{ 40, 81, 52, 84 },
+	{ 40, 118, 52, 124 },
+	{ 52, 81, 224, 124 },
+	-- the upper hall, straight across over the main hallway
+	{ -224, 49, 224, 81 },
+	-- west wing, around its stair well
+	{ -224, -64, -202, 49 },
+	{ -202, -64, -190, -22 },
+	{ -202, 10, -190, 49 },
+	{ -190, -64, -172, 49 },
+	-- east wing, mirrored
+	{ 172, -64, 190, 49 },
+	{ 190, -64, 202, -22 },
+	{ 190, 10, 202, 49 },
+	{ 202, -64, 224, 49 },
+	-- north band, open over the gym
+	{ -224, -124, -50, -64 },
+	{ 50, -124, 224, -64 },
+}
+
+-- Where the void edges are, so a railing can run along each one.
+local UPPER_RAILS = {
+	{ -172, 49, 172, 49 }, -- the long inner edge over the courtyards
+	{ -60, -64, 60, -64 }, -- over the gym doors
+	{ -172, -64, -172, 49 },
+	{ 172, -64, 172, 49 },
+	{ -50, -124, -50, -64 }, -- the gym well
+	{ 50, -124, 50, -64 },
+	{ -34, 88, 34, 88 }, -- the lobby light well
+	{ -34, 118, 34, 118 },
+	{ -34, 88, -34, 118 },
+	{ 34, 88, 34, 118 },
+}
+
+-- The rooms upstairs. The five timetabled subjects stay on the ground floor
+-- where the professors are; these are the rest of a school, and each one is
+-- built around a single idea rather than being a room with desks in it.
+export type UpperRoom = {
+	name: string,
+	label: string,
+	icon: string,
+	center: Vector3,
+	size: Vector2,
+	color: Color3,
+	floor: Color3,
+}
+
+local UPPER_ROOMS: { UpperRoom } = {
+	{ name = "ArtRoom", label = "ART", icon = "🎨", center = Vector3.new(-190, UPPER_Y, 103), size = Vector2.new(52, 38), color = Color3.fromRGB(236, 132, 88), floor = Color3.fromRGB(176, 122, 88) },
+	{ name = "HistoryRoom", label = "HISTORY", icon = "🏛️", center = Vector3.new(-122, UPPER_Y, 103), size = Vector2.new(52, 38), color = Color3.fromRGB(190, 158, 96), floor = Color3.fromRGB(122, 92, 64) },
+	{ name = "ComputerLab", label = "COMPUTER LAB", icon = "💻", center = Vector3.new(122, UPPER_Y, 103), size = Vector2.new(52, 38), color = Color3.fromRGB(104, 176, 226), floor = Color3.fromRGB(70, 78, 92) },
+	{ name = "LanguageLab", label = "LANGUAGES", icon = "🗣️", center = Vector3.new(190, UPPER_Y, 103), size = Vector2.new(52, 38), color = Color3.fromRGB(140, 200, 150), floor = Color3.fromRGB(126, 130, 120) },
+	{ name = "StudyHall", label = "STUDY HALL", icon = "📖", center = Vector3.new(-190, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(196, 176, 216), floor = Color3.fromRGB(120, 96, 130) },
+	{ name = "DramaStudio", label = "DRAMA", icon = "🎭", center = Vector3.new(-122, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(214, 96, 120), floor = Color3.fromRGB(78, 60, 72) },
+	{ name = "Infirmary", label = "NURSE", icon = "🏥", center = Vector3.new(122, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(232, 240, 244), floor = Color3.fromRGB(206, 224, 226) },
+	{ name = "StaffRoom", label = "STAFF ROOM", icon = "☕", center = Vector3.new(190, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(150, 140, 128), floor = Color3.fromRGB(126, 104, 84) },
+}
+
+-- A flight of stairs as solid blocks: each tread is a box from the ground to
+-- its own top, so there is no gap to fall through and no invisible ramp to
+-- disagree with what you can see. `base` sits at the foot and looks up the
+-- flight, so the climb runs along its LookVector -- local -Z, which is why
+-- every offset here is negative in Z.
+local function buildStair(parent: Instance, base: CFrame, steps: number, rise: number, run: number, width: number)
+	for i = 0, steps - 1 do
+		local top = (i + 1) * rise
+		part({
+			Name = "StairTread",
+			Size = Vector3.new(width, top, run),
+			CFrame = base * CFrame.new(0, top / 2, -(i + 0.5) * run),
+			Color = Color3.fromRGB(214, 208, 196),
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		})
+	end
+	local length = steps * run
+	local climb = steps * rise
+	for _, side in { -1, 1 } do
+		-- a stringer and a rail, so the flight reads as built rather than
+		-- as a stack of boxes
+		local stringer = part({
+			Name = "StairStringer",
+			Size = Vector3.new(1.2, 2.4, math.sqrt(length * length + climb * climb)),
+			CFrame = base
+				* CFrame.new(side * (width / 2 + 0.5), climb / 2, -length / 2)
+				* CFrame.Angles(math.atan2(climb, length), 0, 0),
+			Color = Color3.fromRGB(120, 84, 58),
+			Material = Enum.Material.WoodPlanks,
+			Parent = parent,
+		})
+		stringer.CanCollide = false
+		local rail = part({
+			Name = "StairRail",
+			Size = Vector3.new(0.5, 0.5, math.sqrt(length * length + climb * climb)),
+			CFrame = base
+				* CFrame.new(side * (width / 2 + 0.5), climb / 2 + 3.4, -length / 2)
+				* CFrame.Angles(math.atan2(climb, length), 0, 0),
+			Color = Color3.fromRGB(226, 220, 208),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+		rail.CanCollide = false
+	end
+end
+
+local function buildRailing(parent: Instance, from: Vector3, to: Vector3)
+	local dir = to - from
+	local length = dir.Magnitude
+	if length < 1 then
+		return
+	end
+	local mid = from + dir * 0.5
+	local cf = CFrame.lookAt(mid, mid + Vector3.new(-dir.Unit.Z, 0, dir.Unit.X))
+	part({ Name = "BalconyKick", Size = Vector3.new(length, 1.6, 1.2), CFrame = cf * CFrame.new(0, 0.8, 0), Color = Color3.fromRGB(226, 222, 210), Material = Enum.Material.Concrete, Parent = parent })
+	local top = part({ Name = "BalconyRail", Size = Vector3.new(length, 0.7, 1.4), CFrame = cf * CFrame.new(0, 5.2, 0), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
+	top.CanCollide = true
+	local balusters = math.max(2, math.floor(length / 3.2))
+	for i = 0, balusters do
+		local at = -length / 2 + (length / balusters) * i
+		local post = part({ Name = "Baluster", Size = Vector3.new(0.4, 3.4, 0.4), CFrame = cf * CFrame.new(at, 3.3, 0), Color = Color3.fromRGB(206, 200, 188), Material = Enum.Material.Metal, Parent = parent })
+		post.CanCollide = false
+	end
+	-- an invisible wall so nobody walks between the balusters
+	local guard = part({ Name = "BalconyGuard", Size = Vector3.new(length, 5.4, 1), CFrame = cf * CFrame.new(0, 2.7, 0), Color = Color3.fromRGB(226, 222, 210), Parent = parent })
+	guard.Transparency = 1
+	guard.CanCollide = true
+end
+
+local function buildUpperFloor(parent: Instance)
+	-- ---- the deck ----
+	for index, rect in UPPER_SLABS do
+		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
+		tag(part({
+			Name = "UpperFloor" .. index,
+			Size = Vector3.new(x1 - x0, 1, z1 - z0),
+			CFrame = CFrame.new((x0 + x1) / 2, UPPER_Y - 0.5, (z0 + z1) / 2),
+			Color = Color3.fromRGB(196, 194, 188),
+			Parent = parent,
+		}), "TexFloorTile")
+		-- the underside is the ground floor's ceiling, which it never had
+		tag(part({
+			Name = "UpperSoffit" .. index,
+			Size = Vector3.new(x1 - x0, 0.6, z1 - z0),
+			CFrame = CFrame.new((x0 + x1) / 2, UPPER_Y - 1.3, (z0 + z1) / 2),
+			Color = Color3.fromRGB(238, 234, 224),
+			Parent = parent,
+		}), "TexCeiling")
+		-- and a ceiling over the upper floor itself
+		tag(part({
+			Name = "UpperCeiling" .. index,
+			Size = Vector3.new(x1 - x0, 0.8, z1 - z0),
+			CFrame = CFrame.new((x0 + x1) / 2, UPPER_CEIL, (z0 + z1) / 2),
+			Color = Color3.fromRGB(240, 236, 226),
+			Parent = parent,
+		}), "TexCeiling")
+	end
+
+	-- ---- the edges you can fall off ----
+	for _, rail in UPPER_RAILS do
+		buildRailing(parent, Vector3.new(rail[1], UPPER_Y, rail[2]), Vector3.new(rail[3], UPPER_Y, rail[4]))
+	end
+
+	-- ---- getting up there ----
+	-- two grand flights out of the lobby, one in each wing. 16 treads of 1 by
+	-- 1.8 is a climb Roblox's step height takes without a stutter.
+	for _, sx in { -46, 46 } do
+		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, 117.2), Vector3.new(sx, 0, 90)), 16, 1, 1.8, 10)
+	end
+	for _, sx in { -196, 196 } do
+		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, -21.2), Vector3.new(sx, 0, 6)), 16, 1, 1.8, 10)
+	end
+
+	-- ---- the rooms ----
+	for _, room in UPPER_ROOMS do
+		local halfX, halfZ = room.size.X / 2, room.size.Y / 2
+		tag(part({
+			Name = room.name .. "Floor",
+			Size = Vector3.new(room.size.X, 0.4, room.size.Y),
+			CFrame = CFrame.new(room.center) * CFrame.new(0, 0.2, 0),
+			Color = room.floor,
+			Material = Enum.Material.Carpet,
+			Parent = parent,
+		}), "TexCarpet")
+
+		-- the wall onto the hall, with the door in it, then the two sides
+		local hallSide = if room.center.Z > 0 then -1 else 1
+		local front = room.center.Z + hallSide * halfZ
+		buildInteriorWall(
+			parent,
+			Vector3.new(room.center.X - halfX, UPPER_Y, front),
+			Vector3.new(room.center.X + halfX, UPPER_Y, front),
+			{ { at = halfX, width = 14 } }
+		)
+		for _, side in { -1, 1 } do
+			buildInteriorWall(
+				parent,
+				Vector3.new(room.center.X + side * halfX, UPPER_Y, room.center.Z - halfZ),
+				Vector3.new(room.center.X + side * halfX, UPPER_Y, room.center.Z + halfZ),
+				{}
+			)
+		end
+
+        -- The sign hangs over the door, out in the hall, double sided and lit.
+		-- Finding a room should not require walking into it.
+		local sign = part({
+			Name = room.name .. "Sign",
+			Size = Vector3.new(22, 4.4, 0.6),
+			CFrame = CFrame.new(room.center.X, UPPER_Y + 12.6, front + hallSide * 2.4),
+			Color = Palette.Blackboard,
+			Parent = parent,
+		})
+		sign.CanCollide = false
+		signText(sign, room.icon .. " " .. room.label, room.color, Enum.NormalId.Front)
+		signText(sign, room.icon .. " " .. room.label, room.color, Enum.NormalId.Back)
+		local glow = Instance.new("SurfaceLight")
+		glow.Face = if hallSide < 0 then Enum.NormalId.Front else Enum.NormalId.Back
+		glow.Range = 22
+		glow.Brightness = 1.4
+		glow.Color = room.color
+		glow.Parent = sign
+	end
+end
+
+-- ================= THE SUBJECT ROOMS =================
+-- Five timetabled subjects, five rooms, and each one built around what
+-- happens in it rather than being a box with desks in it. A player should be
+-- able to stand in a doorway and know which lesson they walked into.
+--
+-- Room boxes, from the plan above:
+--   Room 101 (Maths)     x -88..-60   z -124..-64
+--   Music Room           x  60..88    z -124..-64
+--   Greenhouse (Bio)     x -134..-98  z  -45..-11
+--   East Lab (Chemistry) x  98..134   z  -45..-11
+--   Gym                  x -50..50    z -146..-64
+
+local function furnishSubjectRooms(parent: Instance)
+	-- ---------------- Room 101: Mathematics ----------------
+	do
+		local cx = -74
+		prop("OfficeDesk", CFrame.new(cx, 0, -116))
+		prop("Laptop", CFrame.new(cx, 2.9, -116))
+		prop("Notepads", CFrame.new(cx + 3.2, 2.9, -116))
+		prop("Bookshelf", CFrame.new(-86, 0, -110) * CFrame.Angles(0, math.rad(90), 0))
+		prop("SteelShelves2", CFrame.new(-86, 0, -76) * CFrame.Angles(0, math.rad(90), 0))
+		prop("Bin", CFrame.new(-63, 0, -70))
+		prop("Extinguisher", CFrame.new(-63, 0, -114))
+		prop("PottedPlant", CFrame.new(-86, 0, -70))
+		prop("Clock", CFrame.new(cx, 11, -120.4))
+
+		-- the wall of shapes: a maths room says what it is with geometry
+		local shapes = {
+			{ shape = Enum.PartType.Cylinder, size = Vector3.new(0.6, 7, 7), color = Color3.fromRGB(228, 96, 88), z = -108 },
+			{ shape = Enum.PartType.Block, size = Vector3.new(0.6, 6, 6), color = Color3.fromRGB(96, 160, 228), z = -98 },
+			{ shape = Enum.PartType.Ball, size = Vector3.new(6, 6, 6), color = Color3.fromRGB(246, 200, 74), z = -88 },
+		}
+		for _, spec in shapes do
+			local piece = part({
+				Name = "MathShape",
+				Shape = spec.shape,
+				Size = spec.size,
+				CFrame = CFrame.new(-87.2, 9, spec.z) * (spec.shape == Enum.PartType.Cylinder and CFrame.Angles(0, 0, 0) or CFrame.new()),
+				Color = spec.color,
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			})
+			piece.CanCollide = false
+		end
+		-- a number line down the east wall, which is the one thing every
+		-- maths room in the world actually has
+		for i = 0, 10 do
+			local tile = part({
+				Name = "NumberTile",
+				Size = Vector3.new(0.4, 2.4, 2.4),
+				CFrame = CFrame.new(-60.9, 10, -114 + i * 4.4),
+				Color = i % 2 == 0 and Color3.fromRGB(244, 242, 236) or Color3.fromRGB(96, 160, 228),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			})
+			tile.CanCollide = false
+			signText(tile, tostring(i), i % 2 == 0 and Color3.fromRGB(40, 44, 56) or Color3.fromRGB(255, 255, 255), Enum.NormalId.Left)
+		end
+		-- an abacus on a stand by the board
+		local frame = part({ Name = "AbacusFrame", Size = Vector3.new(9, 7, 0.8), CFrame = CFrame.new(-66, 5.5, -119), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
+		frame.CanCollide = false
+		for row = 0, 3 do
+			part({ Name = "AbacusRod", Size = Vector3.new(8, 0.2, 0.2), CFrame = CFrame.new(-66, 3.2 + row * 1.5, -118.6), Color = Color3.fromRGB(200, 196, 186), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			for bead = 0, 6 do
+				local ball = part({
+					Name = "AbacusBead",
+					Shape = Enum.PartType.Ball,
+					Size = Vector3.new(0.9, 0.9, 0.9),
+					CFrame = CFrame.new(-69.4 + bead * 1.15, 3.2 + row * 1.5, -118.6),
+					Color = row % 2 == 0 and Color3.fromRGB(228, 96, 88) or Color3.fromRGB(96, 160, 228),
+					Parent = parent,
+				})
+				ball.CanCollide = false
+			end
+		end
+	end
+
+	-- ---------------- the Music Room ----------------
+	do
+		local cx = 74
+		-- a grand piano: case, lid on its stick, keyboard, three legs, bench
+		local case = part({ Name = "PianoCase", Size = Vector3.new(11, 3.2, 15), CFrame = CFrame.new(cx, 4.2, -112), Color = Color3.fromRGB(22, 22, 26), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		local _ = case
+		part({ Name = "PianoLid", Size = Vector3.new(11, 0.5, 15), CFrame = CFrame.new(cx - 1.8, 7.4, -112) * CFrame.Angles(0, 0, math.rad(-22)), Color = Color3.fromRGB(28, 28, 34), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		part({ Name = "PianoStick", Size = Vector3.new(0.3, 4.4, 0.3), CFrame = CFrame.new(cx + 4.6, 7.6, -108) * CFrame.Angles(math.rad(8), 0, 0), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.Wood, Parent = parent })
+		for i = 0, 21 do
+			part({ Name = "PianoKeyWhite", Size = Vector3.new(0.5, 0.4, 3.4), CFrame = CFrame.new(cx - 5.4 + i * 0.52, 5.9, -104.4), Color = Color3.fromRGB(248, 246, 240), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+			if i % 7 ~= 2 and i % 7 ~= 6 then
+				part({ Name = "PianoKeyBlack", Size = Vector3.new(0.3, 0.5, 2.1), CFrame = CFrame.new(cx - 5.15 + i * 0.52, 6.2, -105.1), Color = Color3.fromRGB(18, 18, 22), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+			end
+		end
+		for _, leg in { { -4.4, -118 }, { 4.4, -118 }, { 0, -105 } } do
+			part({ Name = "PianoLeg", Size = Vector3.new(0.9, 2.6, 0.9), CFrame = CFrame.new(cx + leg[1], 1.3, leg[2]), Color = Color3.fromRGB(22, 22, 26), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		end
+		part({ Name = "PianoBench", Size = Vector3.new(5, 0.6, 2), CFrame = CFrame.new(cx, 2.6, -101), Color = Color3.fromRGB(60, 40, 34), Material = Enum.Material.Fabric, Parent = parent })
+		for _, bx in { -2, 2 } do
+			part({ Name = "PianoBenchLeg", Size = Vector3.new(0.4, 2.3, 1.6), CFrame = CFrame.new(cx + bx, 1.15, -101), Color = Color3.fromRGB(22, 22, 26), Parent = parent })
+		end
+
+		-- risers, so a choir has somewhere to stand
+		for step = 0, 2 do
+			part({
+				Name = "MusicRiser",
+				Size = Vector3.new(24, 1.2 + step * 1.2, 5),
+				CFrame = CFrame.new(cx, (1.2 + step * 1.2) / 2, -92 + step * 5),
+				Color = Color3.fromRGB(96, 70, 54),
+				Material = Enum.Material.WoodPlanks,
+				Parent = parent,
+			})
+		end
+		-- music stands in a row in front of them
+		for i = 0, 5 do
+			local sx = cx - 10 + i * 4
+			part({ Name = "StandPole", Size = Vector3.new(0.25, 4.4, 0.25), CFrame = CFrame.new(sx, 2.2, -78), Color = Color3.fromRGB(40, 42, 48), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "StandTray", Size = Vector3.new(3, 0.2, 2.2), CFrame = CFrame.new(sx, 4.7, -78.4) * CFrame.Angles(math.rad(-58), 0, 0), Color = Color3.fromRGB(40, 42, 48), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "StandFoot", Size = Vector3.new(1.8, 0.2, 1.8), CFrame = CFrame.new(sx, 0.1, -78), Color = Color3.fromRGB(40, 42, 48), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		end
+		-- a stave painted across the wall, with notes on it
+		for line = 0, 4 do
+			part({ Name = "StaveLine", Size = Vector3.new(0.3, 0.25, 24), CFrame = CFrame.new(88.8, 8 + line * 1.4, -96), Color = Color3.fromRGB(40, 44, 56), Parent = parent }).CanCollide = false
+		end
+		for i, note in { 0, 2, 1, 3, 2, 4 } do
+			local head = part({ Name = "StaveNote", Shape = Enum.PartType.Ball, Size = Vector3.new(1.4, 1.4, 1.4), CFrame = CFrame.new(88.6, 8 + note * 1.4, -106 + i * 3.6), Color = Color3.fromRGB(40, 44, 56), Parent = parent })
+			head.CanCollide = false
+			part({ Name = "StaveStem", Size = Vector3.new(0.25, 4, 0.25), CFrame = CFrame.new(88.6, 10 + note * 1.4, -105.4 + i * 3.6), Color = Color3.fromRGB(40, 44, 56), Parent = parent }).CanCollide = false
+		end
+		prop("Bookshelf", CFrame.new(62, 0, -110) * CFrame.Angles(0, math.rad(-90), 0))
+		prop("Boombox", CFrame.new(62.5, 3.2, -76) * CFrame.Angles(0, math.rad(-90), 0))
+		prop("Bin", CFrame.new(63, 0, -70))
+		prop("Clock", CFrame.new(cx, 11, -120.4))
+	end
+
+	-- ---------------- the East Lab: Chemistry ----------------
+	do
+		local cx, cz = 116, -28
+		-- three benches with black tops, a sink and a tap in each
+		for row = 0, 2 do
+			local bz = cz - 10 + row * 9
+			part({ Name = "LabBench", Size = Vector3.new(26, 3, 4), CFrame = CFrame.new(cx, 1.5, bz), Color = Color3.fromRGB(206, 202, 194), Material = Enum.Material.SmoothPlastic, Parent = parent })
+			part({ Name = "LabBenchTop", Size = Vector3.new(27, 0.5, 5), CFrame = CFrame.new(cx, 3.2, bz), Color = Color3.fromRGB(34, 36, 42), Material = Enum.Material.Slate, Parent = parent })
+			part({ Name = "LabSink", Size = Vector3.new(3.4, 0.4, 2.6), CFrame = CFrame.new(cx + 10, 3.3, bz), Color = Color3.fromRGB(180, 186, 192), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "LabTap", Size = Vector3.new(0.3, 2.2, 0.3), CFrame = CFrame.new(cx + 10, 4.5, bz - 1.4), Color = Color3.fromRGB(200, 206, 212), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			prop("BunsenBurner", CFrame.new(cx - 8, 3.5, bz))
+			prop("BunsenBurner", CFrame.new(cx - 2, 3.5, bz))
+			-- glassware: a flask and two beakers per bench
+			local flask = part({ Name = "LabFlask", Shape = Enum.PartType.Ball, Size = Vector3.new(2.2, 2.2, 2.2), CFrame = CFrame.new(cx + 3, 4.4, bz), Color = Color3.fromRGB(196, 232, 240), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+			flask.CanCollide = false
+			part({ Name = "LabFlaskNeck", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.8, 0.7, 0.7), CFrame = CFrame.new(cx + 3, 6, bz) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(196, 232, 240), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }).CanCollide = false
+			for i, tint in { Color3.fromRGB(120, 230, 160), Color3.fromRGB(230, 140, 200) } do
+				local beaker = part({ Name = "LabBeaker", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 1.5, 1.5), CFrame = CFrame.new(cx + 5.5 + i * 2, 4.4, bz) * CFrame.Angles(0, 0, math.rad(90)), Color = tint, Material = Enum.Material.Glass, Transparency = 0.3, Parent = parent })
+				beaker.CanCollide = false
+			end
+		end
+		-- fume cupboard against the back wall
+		part({ Name = "FumeHood", Size = Vector3.new(12, 10, 4), CFrame = CFrame.new(cx - 10, 5, cz - 14.4), Color = Color3.fromRGB(214, 216, 220), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		part({ Name = "FumeGlass", Size = Vector3.new(10.4, 4.6, 0.4), CFrame = CFrame.new(cx - 10, 6, cz - 12.3), Color = Color3.fromRGB(196, 232, 240), Material = Enum.Material.Glass, Transparency = 0.4, Parent = parent }).CanCollide = false
+		-- the periodic table, as an actual grid of tiles
+		for col = 0, 8 do
+			for row = 0, 5 do
+				local tile = part({
+					Name = "ElementTile",
+					Size = Vector3.new(2, 2, 0.3),
+					CFrame = CFrame.new(cx + 5 + (col - 4) * 2.2, 12 - row * 2.2, cz - 16.6),
+					Color = Color3.fromRGB(80 + col * 16, 150 + row * 12, 220 - col * 14),
+					Material = Enum.Material.SmoothPlastic,
+					Parent = parent,
+				})
+				tile.CanCollide = false
+			end
+		end
+		-- safety kit, because a chemistry room without it reads as a kitchen
+		part({ Name = "SafetyShowerPipe", Size = Vector3.new(0.4, 9, 0.4), CFrame = CFrame.new(cx + 15, 4.5, cz + 12), Color = Color3.fromRGB(206, 210, 214), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "SafetyShowerHead", Size = Vector3.new(3, 0.4, 3), CFrame = CFrame.new(cx + 15, 9, cz + 12), Color = Color3.fromRGB(230, 178, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		local hazard = part({ Name = "HazardSign", Size = Vector3.new(5, 5, 0.3), CFrame = CFrame.new(cx - 15, 9, cz - 16.6), Color = Color3.fromRGB(246, 200, 48), Parent = parent })
+		hazard.CanCollide = false
+		signText(hazard, "⚠", Color3.fromRGB(30, 30, 34), Enum.NormalId.Front)
+		prop("Extinguisher", CFrame.new(cx + 16, 0, cz - 13))
+		prop("Bin", CFrame.new(cx - 16, 0, cz + 13))
+		prop("SteelShelves", CFrame.new(cx - 16, 0, cz) * CFrame.Angles(0, math.rad(90), 0))
+	end
+
+	-- ---------------- the Greenhouse: Biology, outdoors ----------------
+	-- The brief for this one is "outdoor". It is a glasshouse, so the floor
+	-- becomes ground and beds, not tile, and everything in it is alive.
+	do
+		local cx, cz = -116, -28
+		tag(part({
+			Name = "GreenhouseGround",
+			Size = Vector3.new(34, 0.6, 32),
+			CFrame = CFrame.new(cx, 0.35, cz),
+			Color = Color3.fromRGB(96, 148, 74),
+			Material = Enum.Material.Grass,
+			Parent = parent,
+		}), "TexGround")
+		-- a path through the middle so the beds are reachable
+		part({ Name = "GreenhousePath", Size = Vector3.new(7, 0.3, 32), CFrame = CFrame.new(cx, 0.7, cz), Color = Color3.fromRGB(178, 162, 132), Material = Enum.Material.Sand, Parent = parent })
+
+		-- raised beds down both sides, planted
+		for _, side in { -1, 1 } do
+			for row = 0, 2 do
+				local bx = cx + side * 10
+				local bz = cz - 10 + row * 10
+				part({ Name = "BedFrame", Size = Vector3.new(9, 2, 8), CFrame = CFrame.new(bx, 1, bz), Color = Color3.fromRGB(126, 92, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
+				part({ Name = "BedSoil", Size = Vector3.new(8, 0.6, 7), CFrame = CFrame.new(bx, 2.1, bz), Color = Color3.fromRGB(74, 54, 38), Material = Enum.Material.Ground, Parent = parent }).CanCollide = false
+				prop("Fern", CFrame.new(bx - 2.2, 2.4, bz))
+				prop("Flowers", CFrame.new(bx + 2.2, 2.4, bz - 1.6))
+				prop("Shrub", CFrame.new(bx + side * 2.6, 2.4, bz + 1.8))
+			end
+		end
+
+		-- a pond at the north end with lilies in it
+		part({ Name = "PondRim", Size = Vector3.new(13, 1.4, 9), CFrame = CFrame.new(cx, 0.7, cz - 13), Color = Color3.fromRGB(140, 136, 126), Material = Enum.Material.Slate, Parent = parent })
+		local water = part({ Name = "PondWater", Size = Vector3.new(11.4, 0.8, 7.4), CFrame = CFrame.new(cx, 1.1, cz - 13), Color = Color3.fromRGB(78, 140, 158), Material = Enum.Material.Glass, Transparency = 0.28, Parent = parent })
+		water.CanCollide = false
+		for i, spot in { { -3, -1 }, { 1, 1.6 }, { 3.4, -1.8 } } do
+			local pad = part({ Name = "LilyPad", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, 2.6, 2.6), CFrame = CFrame.new(cx + spot[1], 1.6, cz - 13 + spot[2]) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(76, 150, 74), Material = Enum.Material.Grass, Parent = parent })
+			pad.CanCollide = false
+			if i == 2 then
+				part({ Name = "LilyFlower", Shape = Enum.PartType.Ball, Size = Vector3.new(1.2, 1.2, 1.2), CFrame = CFrame.new(cx + spot[1], 2.2, cz - 13 + spot[2]), Color = Color3.fromRGB(240, 180, 210), Parent = parent }).CanCollide = false
+			end
+		end
+
+		-- a potting bench, and the tools that belong on it
+		part({ Name = "PottingBench", Size = Vector3.new(10, 0.5, 3.4), CFrame = CFrame.new(cx, 3.2, cz + 13), Color = Color3.fromRGB(140, 104, 68), Material = Enum.Material.WoodPlanks, Parent = parent })
+		for _, lx in { -4.4, 4.4 } do
+			part({ Name = "PottingLeg", Size = Vector3.new(0.6, 3.2, 3), CFrame = CFrame.new(cx + lx, 1.6, cz + 13), Color = Color3.fromRGB(126, 92, 58), Material = Enum.Material.Wood, Parent = parent })
+		end
+		prop("SeedingTray", CFrame.new(cx - 3, 3.5, cz + 13))
+		prop("WateringCanMetal", CFrame.new(cx + 1, 3.5, cz + 13))
+		prop("GardenGloves", CFrame.new(cx + 3.4, 3.5, cz + 13))
+		prop("PlanterPot", CFrame.new(cx - 14, 0.7, cz + 13))
+		prop("PlanterBox", CFrame.new(cx + 14, 0.7, cz + 13))
+
+		-- trellises up the glass, and a tree the roof is built around
+		for _, side in { -1, 1 } do
+			for i = 0, 5 do
+				part({ Name = "Trellis", Size = Vector3.new(0.3, 12, 0.3), CFrame = CFrame.new(cx + side * 16, 6, cz - 12 + i * 5), Color = Color3.fromRGB(150, 116, 76), Material = Enum.Material.Wood, Parent = parent }).CanCollide = false
+			end
+			for i = 0, 3 do
+				part({ Name = "TrellisVine", Size = Vector3.new(0.5, 0.5, 30), CFrame = CFrame.new(cx + side * 15.7, 3 + i * 3, cz), Color = Color3.fromRGB(72, 128, 62), Material = Enum.Material.Grass, Parent = parent }).CanCollide = false
+			end
+		end
+		part({ Name = "GreenhouseTrunk", Size = Vector3.new(2.4, 13, 2.4), CFrame = CFrame.new(cx, 6.5, cz + 6.5), Color = Color3.fromRGB(104, 78, 52), Material = Enum.Material.Wood, Parent = parent })
+		for i = 0, 2 do
+			part({
+				Name = "GreenhouseCanopy",
+				Shape = Enum.PartType.Ball,
+				Size = Vector3.new(13 - i * 2.5, 7 - i, 13 - i * 2.5),
+				CFrame = CFrame.new(cx, 12 + i * 2.4, cz + 6.5),
+				Color = Color3.fromRGB(70 + i * 10, 132 + i * 12, 62),
+				Material = Enum.Material.Grass,
+				Parent = parent,
+			}).CanCollide = false
+		end
+		-- hanging baskets from the ridge
+		for _, hz in { cz - 6, cz + 8 } do
+			part({ Name = "BasketChain", Size = Vector3.new(0.2, 4, 0.2), CFrame = CFrame.new(cx - 6, 15, hz), Color = Color3.fromRGB(180, 176, 168), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "HangingBasket", Shape = Enum.PartType.Ball, Size = Vector3.new(4, 3, 4), CFrame = CFrame.new(cx - 6, 12.4, hz), Color = Color3.fromRGB(86, 148, 70), Material = Enum.Material.Grass, Parent = parent }).CanCollide = false
+		end
+	end
+
+	-- ---------------- the Gym ----------------
+	do
+		-- bleachers down both flanks
+		for _, side in { -1, 1 } do
+			for tier = 0, 3 do
+				part({
+					Name = "Bleacher",
+					Size = Vector3.new(4, 2.4 + tier * 2.4, 60),
+					CFrame = CFrame.new(side * (46 - tier * 4), (2.4 + tier * 2.4) / 2, -100),
+					Color = tier % 2 == 0 and Color3.fromRGB(146, 100, 62) or Color3.fromRGB(122, 84, 52),
+					Material = Enum.Material.WoodPlanks,
+					Parent = parent,
+				})
+			end
+		end
+		-- a scoreboard on the north wall
+		local board = part({ Name = "Scoreboard", Size = Vector3.new(26, 12, 1.2), CFrame = CFrame.new(0, 20, -144.4), Color = Color3.fromRGB(24, 26, 32), Parent = parent })
+		board.CanCollide = false
+		signText(board, "HOME  00 : 00  AWAY", Color3.fromRGB(255, 96, 72), Enum.NormalId.Front)
+		local glow = Instance.new("SurfaceLight")
+		glow.Face = Enum.NormalId.Front
+		glow.Range = 30
+		glow.Brightness = 1.2
+		glow.Color = Color3.fromRGB(255, 120, 90)
+		glow.Parent = board
+		-- climbing ropes and wall bars, the two things every gym has
+		for _, rx in { -30, -18, 18, 30 } do
+			part({ Name = "ClimbRope", Size = Vector3.new(0.5, 22, 0.5), CFrame = CFrame.new(rx, 13, -132), Color = Color3.fromRGB(206, 184, 140), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+		end
+		for bar = 0, 7 do
+			part({ Name = "WallBar", Size = Vector3.new(0.8, 0.8, 14), CFrame = CFrame.new(-49, 3 + bar * 2.2, -76), Color = Color3.fromRGB(196, 158, 104), Material = Enum.Material.Wood, Parent = parent }).CanCollide = false
+		end
+		-- banners for the houses
+		for i, tint in {
+			Color3.fromRGB(214, 72, 64), Color3.fromRGB(72, 128, 214),
+			Color3.fromRGB(238, 190, 60), Color3.fromRGB(84, 178, 108),
+		} do
+			part({
+				Name = "GymBanner",
+				Size = Vector3.new(0.4, 14, 7),
+				CFrame = CFrame.new(49, 22, -126 + (i - 1) * 12),
+				Color = tint,
+				Material = Enum.Material.Fabric,
+				Parent = parent,
+			}).CanCollide = false
+		end
+		prop("Football", CFrame.new(-22, 0, -98))
+		prop("AmericanFootball", CFrame.new(14, 0, -112))
+		prop("Baseball", CFrame.new(4, 0, -90))
+	end
+end
+
+
+-- Each upper room dressed for what it is. The rule is the same as downstairs:
+-- one strong idea per room, built rather than labelled, so you know where you
+-- are the moment you step through the door.
+local function furnishUpperRooms(parent: Instance)
+	local Y = 16
+
+	-- ---- Art (-190, 103) ----
+	for i = 0, 4 do
+		local ex = -206 + i * 8
+		part({ Name = "EaselLeg", Size = Vector3.new(0.4, 7, 0.4), CFrame = CFrame.new(ex, Y + 3.5, 96) * CFrame.Angles(math.rad(-10), 0, 0), Color = Color3.fromRGB(150, 116, 76), Material = Enum.Material.Wood, Parent = parent }).CanCollide = false
+		part({ Name = "EaselCanvas", Size = Vector3.new(5, 5.4, 0.3), CFrame = CFrame.new(ex, Y + 6, 95.4) * CFrame.Angles(math.rad(-10), 0, 0), Color = Color3.fromRGB(248, 246, 238), Parent = parent }).CanCollide = false
+		part({ Name = "EaselTray", Size = Vector3.new(5.4, 0.3, 1.2), CFrame = CFrame.new(ex, Y + 3.1, 95.8), Color = Color3.fromRGB(150, 116, 76), Material = Enum.Material.Wood, Parent = parent }).CanCollide = false
+	end
+	-- a colour wheel on the back wall
+	for i = 0, 11 do
+		local angle = i * math.pi / 6
+		part({
+			Name = "ColourChip",
+			Size = Vector3.new(3.4, 3.4, 0.3),
+			CFrame = CFrame.new(-190 + math.cos(angle) * 7, Y + 12 + math.sin(angle) * 7, 121.4) * CFrame.Angles(0, 0, angle),
+			Color = Color3.fromHSV(i / 12, 0.72, 0.95),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	prop("Table", CFrame.new(-198, Y, 110))
+	prop("Table", CFrame.new(-182, Y, 110))
+	prop("Chair", CFrame.new(-198, Y, 114) * CFrame.Angles(0, math.pi, 0))
+	prop("Chair", CFrame.new(-182, Y, 114) * CFrame.Angles(0, math.pi, 0))
+	prop("Vase1", CFrame.new(-198, Y + 2.1, 110))
+	prop("Bin", CFrame.new(-206, Y, 90))
+	prop("SteelShelves2", CFrame.new(-212, Y, 100) * CFrame.Angles(0, math.rad(90), 0))
+
+	-- ---- History (-122, 103) ----
+	-- a timeline down the back wall, and cases under it
+	for i = 0, 7 do
+		local tx = -144 + i * 6.4
+		part({ Name = "TimelineBar", Size = Vector3.new(6.4, 0.4, 0.3), CFrame = CFrame.new(tx, Y + 12, 121.4), Color = Color3.fromRGB(212, 178, 96), Parent = parent }).CanCollide = false
+		part({ Name = "TimelinePin", Size = Vector3.new(3.4, 4.2, 0.3), CFrame = CFrame.new(tx, Y + (i % 2 == 0 and 15 or 9), 121.4), Color = Color3.fromRGB(228, 220, 196), Parent = parent }).CanCollide = false
+	end
+	for _, dx in { -136, -122, -108 } do
+		part({ Name = "DisplayCase", Size = Vector3.new(8, 6, 4), CFrame = CFrame.new(dx, Y + 3, 116), Color = Color3.fromRGB(92, 62, 44), Material = Enum.Material.WoodPlanks, Parent = parent })
+		part({ Name = "DisplayGlass", Size = Vector3.new(7.4, 4.4, 3.6), CFrame = CFrame.new(dx, Y + 4, 116), Color = Color3.fromRGB(206, 232, 240), Material = Enum.Material.Glass, Transparency = 0.55, Parent = parent }).CanCollide = false
+	end
+	prop("GrandfatherClock", CFrame.new(-146, Y, 108) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Table", CFrame.new(-122, Y, 98))
+	prop("Chair2", CFrame.new(-128, Y, 98) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Chair2", CFrame.new(-116, Y, 98) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("Bookshelf", CFrame.new(-98, Y, 108) * CFrame.Angles(0, math.rad(-90), 0))
+
+	-- ---- Computer Lab (122, 103) ----
+	for row = 0, 1 do
+		for col = 0, 4 do
+			local mx = 106 + col * 8
+			local mz = 96 + row * 12
+			part({ Name = "LabDesk", Size = Vector3.new(7, 0.4, 4), CFrame = CFrame.new(mx, Y + 2.8, mz), Color = Color3.fromRGB(58, 62, 70), Material = Enum.Material.SmoothPlastic, Parent = parent })
+			for _, lx in { -3, 3 } do
+				part({ Name = "LabDeskLeg", Size = Vector3.new(0.3, 2.8, 3.4), CFrame = CFrame.new(mx + lx, Y + 1.4, mz), Color = Color3.fromRGB(80, 84, 92), Material = Enum.Material.Metal, Parent = parent })
+			end
+			part({ Name = "MonitorStand", Size = Vector3.new(0.5, 1.4, 0.5), CFrame = CFrame.new(mx, Y + 3.7, mz - 1), Color = Color3.fromRGB(40, 42, 48), Parent = parent }).CanCollide = false
+			local screen = part({ Name = "Monitor", Size = Vector3.new(5, 3, 0.4), CFrame = CFrame.new(mx, Y + 5.9, mz - 1), Color = Color3.fromRGB(28, 30, 36), Parent = parent })
+			screen.CanCollide = false
+			part({ Name = "MonitorGlow", Size = Vector3.new(4.4, 2.4, 0.15), CFrame = CFrame.new(mx, Y + 5.9, mz - 1.25), Color = Color3.fromRGB(96, 172, 226), Material = Enum.Material.Neon, Parent = parent }).CanCollide = false
+			part({ Name = "Keyboard", Size = Vector3.new(3.4, 0.2, 1.2), CFrame = CFrame.new(mx, Y + 3.1, mz + 0.8), Color = Color3.fromRGB(226, 224, 218), Parent = parent }).CanCollide = false
+			prop("SchoolChair", CFrame.new(mx, Y, mz + 4) * CFrame.Angles(0, math.pi, 0))
+		end
+	end
+	prop("OfficeDesk", CFrame.new(122, Y, 118))
+	prop("Laptop", CFrame.new(122, Y + 2.9, 118))
+	prop("Bin", CFrame.new(100, Y, 118))
+
+	-- ---- Languages (190, 103) ----
+	for i = 0, 5 do
+		local bx = 172 + i * 7
+		part({ Name = "LangBooth", Size = Vector3.new(6, 5, 5), CFrame = CFrame.new(bx, Y + 2.5, 112), Color = Color3.fromRGB(210, 214, 220), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		part({ Name = "LangDesk", Size = Vector3.new(6, 0.4, 4), CFrame = CFrame.new(bx, Y + 2.8, 108), Color = Color3.fromRGB(178, 150, 112), Material = Enum.Material.WoodPlanks, Parent = parent })
+		prop("SchoolChair", CFrame.new(bx, Y, 104) * CFrame.Angles(0, math.pi, 0))
+	end
+	for i, tint in {
+		Color3.fromRGB(214, 72, 64), Color3.fromRGB(72, 128, 214), Color3.fromRGB(238, 190, 60),
+		Color3.fromRGB(84, 178, 108), Color3.fromRGB(226, 226, 230), Color3.fromRGB(150, 100, 200),
+	} do
+		part({ Name = "LangFlag", Size = Vector3.new(6, 4, 0.3), CFrame = CFrame.new(172 + (i - 1) * 7, Y + 13, 121.4), Color = tint, Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+	end
+	prop("OfficeDesk", CFrame.new(190, Y, 90))
+	prop("Bin", CFrame.new(168, Y, 90))
+
+	-- ---- Study Hall (-190, -94) ----
+	for row = 0, 2 do
+		local tz = -110 + row * 14
+		prop("Table", CFrame.new(-198, Y, tz))
+		prop("Table", CFrame.new(-182, Y, tz))
+		for _, cx in { -198, -182 } do
+			prop("Chair", CFrame.new(cx, Y, tz - 4))
+			prop("Chair", CFrame.new(cx, Y, tz + 4) * CFrame.Angles(0, math.pi, 0))
+		end
+	end
+	prop("SteelShelves", CFrame.new(-212, Y, -100) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Bookshelf", CFrame.new(-168, Y, -100) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("Clock", CFrame.new(-190, Y + 11, -119.4))
+	prop("Bin", CFrame.new(-212, Y, -74))
+
+	-- ---- Drama (-122, -94) ----
+	part({ Name = "DramaStage", Size = Vector3.new(34, 3, 16), CFrame = CFrame.new(-122, Y + 1.5, -110), Color = Color3.fromRGB(88, 62, 44), Material = Enum.Material.WoodPlanks, Parent = parent })
+	for _, side in { -1, 1 } do
+		part({ Name = "DramaCurtain", Size = Vector3.new(7, 18, 1.2), CFrame = CFrame.new(-122 + side * 15, Y + 12, -102), Color = Color3.fromRGB(140, 26, 42), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "DramaPelmet", Size = Vector3.new(36, 4, 1.2), CFrame = CFrame.new(-122, Y + 19, -102), Color = Color3.fromRGB(140, 26, 42), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+	for _, lx in { -10, 0, 10 } do
+		local can = part({ Name = "Spotlight", Size = Vector3.new(2, 2, 3), CFrame = CFrame.new(-122 + lx, Y + 18, -94) * CFrame.Angles(math.rad(35), 0, 0), Color = Color3.fromRGB(34, 36, 42), Material = Enum.Material.Metal, Parent = parent })
+		can.CanCollide = false
+		local beam = Instance.new("SpotLight")
+		beam.Angle = 50
+		beam.Range = 40
+		beam.Brightness = 2
+		beam.Color = Color3.fromRGB(255, 236, 200)
+		beam.Face = Enum.NormalId.Front
+		beam.Parent = can
+	end
+	for i, tint in { Color3.fromRGB(240, 226, 190), Color3.fromRGB(60, 62, 70) } do
+		part({ Name = "DramaMask", Shape = Enum.PartType.Ball, Size = Vector3.new(5, 6, 2), CFrame = CFrame.new(-134 + (i - 1) * 24, Y + 13, -119.4), Color = tint, Parent = parent }).CanCollide = false
+	end
+	for i = 0, 5 do
+		prop("MonoblocChair", CFrame.new(-134 + i * 5, Y, -80) * CFrame.Angles(0, math.rad(4 * i), 0))
+	end
+
+	-- ---- Nurse (122, -94) ----
+	for i = 0, 2 do
+		local bz = -112 + i * 12
+		part({ Name = "WardBed", Size = Vector3.new(6, 2.4, 12), CFrame = CFrame.new(104, Y + 1.2, bz), Color = Color3.fromRGB(232, 236, 240), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		part({ Name = "WardMattress", Size = Vector3.new(5.4, 1, 11), CFrame = CFrame.new(104, Y + 2.7, bz), Color = Color3.fromRGB(206, 226, 232), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+		part({ Name = "WardPillow", Size = Vector3.new(4.4, 0.9, 2.6), CFrame = CFrame.new(104, Y + 3.5, bz - 4), Color = Color3.fromRGB(248, 248, 246), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+		part({ Name = "WardScreen", Size = Vector3.new(0.4, 9, 11), CFrame = CFrame.new(109, Y + 4.5, bz), Color = Color3.fromRGB(180, 214, 210), Material = Enum.Material.Fabric, Parent = parent })
+	end
+	local cross = part({ Name = "NurseCross", Size = Vector3.new(8, 2.4, 0.4), CFrame = CFrame.new(122, Y + 13, -119.4), Color = Color3.fromRGB(226, 68, 68), Material = Enum.Material.Neon, Parent = parent })
+	cross.CanCollide = false
+	part({ Name = "NurseCross", Size = Vector3.new(2.4, 8, 0.4), CFrame = CFrame.new(122, Y + 13, -119.4), Color = Color3.fromRGB(226, 68, 68), Material = Enum.Material.Neon, Parent = parent }).CanCollide = false
+	prop("OfficeDesk", CFrame.new(136, Y, -110))
+	prop("SchoolChair", CFrame.new(136, Y, -104) * CFrame.Angles(0, math.pi, 0))
+	prop("SteelShelves2", CFrame.new(144, Y, -96) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("Bin", CFrame.new(144, Y, -74))
+	prop("PottedPlant", CFrame.new(104, Y, -74))
+
+	-- ---- Staff Room (190, -94) ----
+	prop("Sofa", CFrame.new(176, Y, -110) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Sofa2", CFrame.new(190, Y, -116))
+	prop("CoffeeTable", CFrame.new(183, Y, -110))
+	prop("ArmChair", CFrame.new(190, Y, -104) * CFrame.Angles(0, math.pi, 0))
+	prop("Table", CFrame.new(202, Y, -88))
+	prop("Chair", CFrame.new(202, Y, -84) * CFrame.Angles(0, math.pi, 0))
+	prop("VintageMicrowave", CFrame.new(210, Y + 3.4, -100) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("VintageElectricKettle", CFrame.new(210, Y + 3.4, -94) * CFrame.Angles(0, math.rad(-90), 0))
+	part({ Name = "StaffCounter", Size = Vector3.new(5, 3.2, 22), CFrame = CFrame.new(211, Y + 1.6, -97), Color = Color3.fromRGB(150, 116, 82), Material = Enum.Material.WoodPlanks, Parent = parent })
+	-- pigeonholes, which is the one thing a staff room always has
+	for row = 0, 3 do
+		for col = 0, 5 do
+			part({
+				Name = "Pigeonhole",
+				Size = Vector3.new(0.6, 2.4, 3.4),
+				CFrame = CFrame.new(165.2, Y + 4 + row * 2.6, -108 + col * 3.6),
+				Color = row % 2 == col % 2 and Color3.fromRGB(206, 200, 188) or Color3.fromRGB(178, 170, 158),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			}).CanCollide = false
+		end
+	end
+	prop("Bin", CFrame.new(168, Y, -74))
+	prop("Clock", CFrame.new(190, Y + 11, -119.4))
+end
+
+-- ================= FINDING YOUR WAY =================
+-- A school you cannot navigate is a maze with lockers. Three things fix that,
+-- and they are the three things real buildings use: a board at the door that
+-- lists everything, a sign hanging over every room you might be looking for,
+-- and a line on the floor you can follow without reading anything at all.
+local ROUTES = {
+	{ id = "math", label = "ROOM 101 · MATHS", icon = "➗", color = Color3.fromRGB(120, 176, 255),
+	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(-74, 0, 65), Vector3.new(-74, 0, -60) } },
+	{ id = "music", label = "MUSIC ROOM", icon = "🎵", color = Color3.fromRGB(212, 160, 240),
+	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(74, 0, 65), Vector3.new(74, 0, -60) } },
+	{ id = "biology", label = "GREENHOUSE · BIOLOGY", icon = "🧬", color = Color3.fromRGB(150, 220, 130),
+	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(-116, 0, 65), Vector3.new(-116, 0, -8) } },
+	{ id = "chemistry", label = "EAST LAB · CHEMISTRY", icon = "⚗️", color = Color3.fromRGB(150, 240, 190),
+	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(116, 0, 65), Vector3.new(116, 0, -8) } },
+	{ id = "gym", label = "GYM", icon = "🏀", color = Color3.fromRGB(255, 176, 88),
+	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(0, 0, -60) } },
+}
+
+-- Doors worth signposting from the hall, and what to call them.
+local DOOR_SIGNS = {
+	{ label = "ROOM 101 · MATHS", icon = "➗", at = Vector3.new(-74, 0, -62), face = 1, color = Color3.fromRGB(120, 176, 255) },
+	{ label = "MUSIC ROOM", icon = "🎵", at = Vector3.new(74, 0, -62), face = 1, color = Color3.fromRGB(212, 160, 240) },
+	{ label = "GYM", icon = "🏀", at = Vector3.new(0, 0, -62), face = 1, color = Color3.fromRGB(255, 176, 88) },
+	{ label = "GREENHOUSE", icon = "🧬", at = Vector3.new(-116, 0, -9), face = 1, color = Color3.fromRGB(150, 220, 130) },
+	{ label = "EAST LAB", icon = "⚗️", at = Vector3.new(116, 0, -9), face = 1, color = Color3.fromRGB(150, 240, 190) },
+	{ label = "CAFETERIA", icon = "🍔", at = Vector3.new(-204, 0, 62), face = 1, color = Color3.fromRGB(235, 214, 156) },
+	{ label = "OFFICE · THE STORE", icon = "🛒", at = Vector3.new(-204, 0, -50), face = -1, color = Color3.fromRGB(214, 226, 235) },
+	{ label = "TROPHY HALL", icon = "🏆", at = Vector3.new(204, 0, -50), face = -1, color = Color3.fromRGB(240, 226, 190) },
+	{ label = "DETENTION", icon = "⛓️", at = Vector3.new(204, 0, 62), face = 1, color = Color3.fromRGB(226, 96, 88) },
+}
+
+local function buildWayfinding(parent: Instance)
+	-- ---- the coloured lines on the floor ----
+	for index, route in ROUTES do
+		-- every route leaves the lobby down the same hall, so they are fanned
+		-- apart by a stud and a bit each. Without this they are one stripe,
+		-- and a stripe that leads everywhere leads nowhere.
+		local spread = (index - 3) * 1.2
+		for i = 1, #route.path - 1 do
+			local from, to = route.path[i], route.path[i + 1]
+			local delta = to - from
+			local length = delta.Magnitude
+			if length < 1 then
+				continue
+			end
+			-- shift across the run, whichever way it runs
+			local sideways = if math.abs(delta.X) > math.abs(delta.Z)
+				then Vector3.new(0, 0, spread)
+				else Vector3.new(spread, 0, 0)
+			local mid = from + delta * 0.5 + sideways + Vector3.new(0, 0.2, 0)
+			local horizontal = Vector3.new(delta.X, 0, delta.Z).Unit
+			local line = part({
+				Name = "Route_" .. route.id,
+				-- overlength by a stud so the corners meet instead of leaving
+				-- a gap the eye has to jump
+				Size = Vector3.new(0.9, 0.16, length + 1),
+				CFrame = CFrame.lookAt(mid, mid + horizontal),
+				Color = route.color,
+				Material = Enum.Material.Neon,
+				Parent = parent,
+			})
+			line.CanCollide = false
+			line.CanQuery = false
+		end
+	end
+
+	-- ---- a sign hanging in the hall over every door ----
+	for _, door in DOOR_SIGNS do
+		local sign = part({
+			Name = "DoorSign",
+			Size = Vector3.new(18, 4, 0.6),
+			CFrame = CFrame.new(door.at + Vector3.new(0, 12.4, door.face * 2.5)),
+			Color = Palette.Blackboard,
+			Parent = parent,
+		})
+		sign.CanCollide = false
+		signText(sign, door.icon .. " " .. door.label, door.color, Enum.NormalId.Front)
+		signText(sign, door.icon .. " " .. door.label, door.color, Enum.NormalId.Back)
+		local lamp = Instance.new("SurfaceLight")
+		lamp.Face = if door.face > 0 then Enum.NormalId.Front else Enum.NormalId.Back
+		lamp.Range = 20
+		lamp.Brightness = 1.3
+		lamp.Color = door.color
+		lamp.Parent = sign
+	end
+
+	-- ---- the directory, where you come in ----
+	local boardBack = part({ Name = "DirectoryBoard", Size = Vector3.new(20, 22, 1), CFrame = CFrame.new(-24, 12, 120.5), Color = Color3.fromRGB(58, 40, 30), Material = Enum.Material.WoodPlanks, Parent = parent })
+	boardBack.CanCollide = false
+	local face = part({ Name = "DirectoryFace", Size = Vector3.new(18, 20, 0.4), CFrame = CFrame.new(-24, 12, 119.9), Color = Palette.Blackboard, Parent = parent })
+	face.CanCollide = false
+	signText(face, "DIRECTORY\n\nGROUND\n101 MATHS · WEST\nMUSIC · EAST\nGREENHOUSE · WEST YARD\nEAST LAB · EAST YARD\nGYM · STRAIGHT ON\n\nUPSTAIRS\nART · HISTORY\nCOMPUTERS · LANGUAGES\nSTUDY · DRAMA\nNURSE · STAFF", Palette.Chalk, Enum.NormalId.Front)
+
+	-- ---- overhead direction signs at the two junctions ----
+	for _, spec in {
+		{ at = Vector3.new(-74, 0, 66), text = "◀ 101 MATHS   GREENHOUSE ▶" },
+		{ at = Vector3.new(74, 0, 66), text = "◀ EAST LAB   MUSIC ▶" },
+		{ at = Vector3.new(0, 0, 66), text = "GYM ▼    UPSTAIRS ▲" },
+	} do
+		local hanger = part({ Name = "JunctionSign", Size = Vector3.new(26, 3.6, 0.5), CFrame = CFrame.new(spec.at + Vector3.new(0, 13.2, 0)), Color = Color3.fromRGB(30, 34, 44), Parent = parent })
+		hanger.CanCollide = false
+		signText(hanger, spec.text, Palette.BusYellow, Enum.NormalId.Front)
+		signText(hanger, spec.text, Palette.BusYellow, Enum.NormalId.Back)
+		part({ Name = "JunctionRod", Size = Vector3.new(0.3, 2.6, 0.3), CFrame = CFrame.new(spec.at + Vector3.new(-10, 16.2, 0)), Color = Color3.fromRGB(140, 144, 152), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "JunctionRod", Size = Vector3.new(0.3, 2.6, 0.3), CFrame = CFrame.new(spec.at + Vector3.new(10, 16.2, 0)), Color = Color3.fromRGB(140, 144, 152), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+end
+
 function MapService.Build(): Map
 -- Every part the school builds defaults to queryable, touchable and
 -- shadow-casting. On a campus this size that is thousands of parts taxing
@@ -3441,12 +4200,13 @@ end
 	buildHoops(folder, Vector3.new(0, 0, -105))
 	-- gym stage at the north end
 	part({ Name = "GymStage", Size = Vector3.new(60, 3, 16), CFrame = CFrame.new(0, 1.5, -136), Color = Color3.fromRGB(120, 70, 50), Material = Enum.Material.WoodPlanks, Parent = folder })
-	-- Classroom 101. The grid used to run to z = -86, which put its back row
-	-- on the far side of the interior wall at z = -94 -- desks in the corridor.
-	-- It now sits wholly between the board wall and that partition.
-	for row = 0, 1 do
-		for col = 0, 2 do
-			local dx, dz = -96 + col * 12, -111 + row * 10
+	-- Classroom 101 is the box x -88..-60, z -124..-64. The grid has been wrong
+	-- twice: it ran to z = -86 (through the partition at z = -94) and then to
+	-- x = -96 (through the west wall at x = -88, into the homeroom next door).
+	-- Two columns of three, facing the professor, wholly inside the room.
+	for row = 0, 2 do
+		for col = 0, 1 do
+			local dx, dz = -80 + col * 12, -100 + row * 10
 			-- a top on legs with a chair behind it, rather than a solid block:
 			-- furniture you can see under is most of what makes a room read
 			local unit = Instance.new("Folder")
@@ -3653,6 +4413,10 @@ end
 		print(("[MapService] cleared %d plants growing through the new venues"):format(cleared))
 	end
 
+	buildUpperFloor(folder)
+	furnishSubjectRooms(folder)
+	furnishUpperRooms(folder)
+	buildWayfinding(folder)
 	furnishProps()
 
 	optimize(folder)
@@ -3674,6 +4438,7 @@ end
 		cliqueBoards = cliqueBoards,
 		dormBeds = dormBeds,
 		detentionSpot = detentionCenter,
+		infirmary = Vector3.new(122, 17, -94),
 		folder = folder,
 	}
 end
