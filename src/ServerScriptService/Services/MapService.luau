@@ -2097,6 +2097,66 @@ local function buildFrontGrounds(parent: Instance)
 	part({ Name = "SignBoardTrim", Size = Vector3.new(29.4, 10.4, 0.6), CFrame = CFrame.new(70, 11, Z + 64.5), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 end
 
+
+-- The main corridor, built from the locker-hallway reference: banks of
+-- lockers with a few doors swung open and contents inside, water coolers,
+-- trophy cases, recessed ceiling panels and a tiled floor band.
+local function detailCorridor(parent: Instance)
+	local LOCKER = Color3.fromRGB(46, 84, 168)
+	local LOCKER_DARK = Color3.fromRGB(30, 58, 122)
+	local rng = Random.new(91)
+	for _, spec in {
+		{ z = 79.6, face = -1 }, -- south wall of the corridor
+		{ z = 60.4, face = 1 }, -- north wall
+	} do
+		for _, bankX in { -196, -168, -140, -112, 112, 140, 168, 196 } do
+			for i = 0, 5 do
+				local lx = bankX - 12 + i * 4.2
+				local open = rng:NextNumber() < 0.22
+				-- carcass
+				part({ Name = "LockerBody", Size = Vector3.new(4, 9, 3), CFrame = CFrame.new(lx, 4.6, spec.z + spec.face * 1.4), Color = LOCKER_DARK, Material = Enum.Material.Metal, Parent = parent })
+				if open then
+					-- shelf + contents visible in the opening
+					part({ Name = "LockerShelf", Size = Vector3.new(3.4, 0.3, 2.4), CFrame = CFrame.new(lx, 6.6, spec.z + spec.face * 1.4), Color = Color3.fromRGB(196, 196, 200), Material = Enum.Material.Metal, Parent = parent })
+					part({ Name = "LockerBooks", Size = Vector3.new(2.4, 2.2, 1.6), CFrame = CFrame.new(lx, 2.2, spec.z + spec.face * 1.5), Color = rng:NextNumber() < 0.5 and Color3.fromRGB(178, 62, 58) or Color3.fromRGB(58, 118, 92), Material = Enum.Material.SmoothPlastic, Parent = parent })
+					part({ Name = "LockerBottle", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2.4, 1, 1), CFrame = CFrame.new(lx + 0.9, 7.9, spec.z + spec.face * 1.4) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.SmoothPlastic, Parent = parent })
+					-- door swung out into the corridor
+					part({ Name = "LockerDoorOpen", Size = Vector3.new(3.9, 8.6, 0.35), CFrame = CFrame.new(lx - 1.9, 4.6, spec.z + spec.face * 4.2) * CFrame.Angles(0, math.rad(78) * spec.face, 0), Color = LOCKER, Material = Enum.Material.Metal, Parent = parent })
+				else
+					local door = part({ Name = "LockerDoor", Size = Vector3.new(3.9, 8.6, 0.4), CFrame = CFrame.new(lx, 4.6, spec.z + spec.face * 2.9), Color = LOCKER, Material = Enum.Material.Metal, Parent = parent })
+					local _ = door
+					-- vent slots + handle
+					for v = 0, 2 do
+						part({ Name = "LockerVent", Size = Vector3.new(2.6, 0.28, 0.5), CFrame = CFrame.new(lx, 7.6 + v * 0.6, spec.z + spec.face * 3.1), Color = LOCKER_DARK, Material = Enum.Material.Metal, Parent = parent })
+					end
+					part({ Name = "LockerHandle", Size = Vector3.new(0.4, 1.4, 0.5), CFrame = CFrame.new(lx + 1.4, 4.4, spec.z + spec.face * 3.1), Color = Color3.fromRGB(214, 214, 220), Material = Enum.Material.Metal, Parent = parent })
+				end
+			end
+			-- bank top rail
+			part({ Name = "LockerTop", Size = Vector3.new(26, 0.6, 3.4), CFrame = CFrame.new(bankX, 9.3, spec.z + spec.face * 1.6), Color = LOCKER_DARK, Material = Enum.Material.Metal, Parent = parent })
+		end
+		-- water coolers between banks
+		for _, wx in { -126, 126 } do
+			part({ Name = "CoolerBody", Size = Vector3.new(3, 5, 2.6), CFrame = CFrame.new(wx, 2.5, spec.z + spec.face * 1.4), Color = Color3.fromRGB(226, 228, 232), Material = Enum.Material.SmoothPlastic, Parent = parent })
+			part({ Name = "CoolerBottle", Size = Vector3.new(2.4, 3.4, 2.4), CFrame = CFrame.new(wx, 6.7, spec.z + spec.face * 1.4), Color = Color3.fromRGB(150, 206, 226), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+		end
+	end
+	-- trophy cases flanking the lobby end
+	for _, tx in { -74, 74 } do
+		part({ Name = "TrophyCase", Size = Vector3.new(16, 10, 2.4), CFrame = CFrame.new(tx, 5.4, 79.4), Color = Color3.fromRGB(92, 60, 40), Material = Enum.Material.WoodPlanks, Parent = parent })
+		part({ Name = "TrophyGlass", Size = Vector3.new(14.4, 7.6, 0.4), CFrame = CFrame.new(tx, 6, 78), Color = Color3.fromRGB(196, 226, 238), Material = Enum.Material.Glass, Transparency = 0.5, Parent = parent })
+		for tI = 0, 3 do
+			part({ Name = "Trophy", Size = Vector3.new(1.2, 2.4, 1.2), CFrame = CFrame.new(tx - 5 + tI * 3.4, 4.6, 78.8), Color = Color3.fromRGB(212, 176, 78), Material = Enum.Material.Metal, Parent = parent })
+		end
+	end
+	-- recessed ceiling panels down the corridor
+	for i = 0, 26 do
+		part({ Name = "CeilingPanel", Size = Vector3.new(10, 0.3, 6), CFrame = CFrame.new(-208 + i * 16, 15.6, 70), Color = Color3.fromRGB(255, 250, 236), Material = Enum.Material.Neon, Parent = parent })
+	end
+	-- tiled centre band on the floor
+	tag(part({ Name = "CorridorTileBand", Size = Vector3.new(440, 0.12, 6), CFrame = CFrame.new(0, 0.08, 70), Color = Color3.fromRGB(212, 208, 198), Material = Enum.Material.CeramicTiles, Parent = parent }), "TexFloorTile")
+end
+
 function MapService.Build(): Map
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
@@ -2130,7 +2190,7 @@ function MapService.Build(): Map
 	-- main corridor floor + stripe (the conveyor line)
 	tag(part({
 		Name = "HallwayFloor",
-		Size = Vector3.new(448, 1, 12),
+		Size = Vector3.new(448, 1, 22),
 		CFrame = CFrame.new(0, -0.5, 70),
 		Color = Color3.fromRGB(196, 194, 188),
 		Parent = folder,
@@ -2148,11 +2208,11 @@ function MapService.Build(): Map
 	local plots: { Plot } = {}
 	-- south row (doors north onto the main corridor)
 	for i, x in { -190, -122 } do
-		local c = Vector3.new(x, 0, 100)
+		local c = Vector3.new(x, 0, 103)
 		table.insert(plots, buildPlot(i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
 	end
 	for i, x in { 122, 190 } do
-		local c = Vector3.new(x, 0, 100)
+		local c = Vector3.new(x, 0, 103)
 		table.insert(plots, buildPlot(2 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
 	end
 	-- north row (doors south onto the wing corridor)
@@ -2220,12 +2280,12 @@ function MapService.Build(): Map
 		end
 		-- z=76: plot bays OPEN onto the corridor (their laser gates are the
 		-- front wall); only stubs at bay edges + the janitor room front
-		W(Vector3.new(-224, 0, 76), Vector3.new(-218, 0, 76), {})
-		W(Vector3.new(-162, 0, 76), Vector3.new(-150, 0, 76), {})
-		W(Vector3.new(-94, 0, 76), Vector3.new(-88, 0, 76), {})
-		W(Vector3.new(-88, 0, 76), Vector3.new(-60, 0, 76), { { at = 14, width = 8 } })
+		W(Vector3.new(-224, 0, 81), Vector3.new(-218, 0, 81), {})
+		W(Vector3.new(-162, 0, 81), Vector3.new(-150, 0, 81), {})
+		W(Vector3.new(-94, 0, 81), Vector3.new(-88, 0, 81), {})
+		W(Vector3.new(-88, 0, 81), Vector3.new(-60, 0, 81), { { at = 14, width = 8 } })
 		-- z=52: courtyard south colonnade (two arches to the corridor)
-		W(Vector3.new(-172, 0, 52), Vector3.new(-60, 0, 52), { { at = 32, width = 16 }, { at = 80, width = 16 } })
+		W(Vector3.new(-172, 0, 59), Vector3.new(-60, 0, 59), { { at = 32, width = 16 }, { at = 80, width = 16 } })
 		-- z=-52: cafeteria front (door) + courtyard north wall (arch)
 		W(Vector3.new(-224, 0, -52), Vector3.new(-184, 0, -52), { { at = 20, width = 12 } })
 		W(Vector3.new(-172, 0, -52), Vector3.new(-60, 0, -52), { { at = 56, width = 16 } })
@@ -2240,8 +2300,8 @@ function MapService.Build(): Map
 		-- x=-172: inner corridor onto courtyard (two arches)
 		W(Vector3.new(-172, 0, -52), Vector3.new(-172, 0, 52), { { at = 28, width = 14 }, { at = 76, width = 14 } })
 		-- room separators, south row then north row
-		W(Vector3.new(-156, 0, 76), Vector3.new(-156, 0, 124), {})
-		W(Vector3.new(-88, 0, 76), Vector3.new(-88, 0, 124), {})
+		W(Vector3.new(-156, 0, 81), Vector3.new(-156, 0, 124), {})
+		W(Vector3.new(-88, 0, 81), Vector3.new(-88, 0, 124), {})
 		W(Vector3.new(-156, 0, -124), Vector3.new(-156, 0, -64), {})
 		W(Vector3.new(-88, 0, -124), Vector3.new(-88, 0, -64), {})
 		-- cafeteria/principal divider (outer column now starts at z=-52)
@@ -2251,9 +2311,9 @@ function MapService.Build(): Map
 	wingWalls(1)
 
 	-- spine walls
-	buildInteriorWall(folder, Vector3.new(-60, 0, 76), Vector3.new(-60, 0, 124), {})
-	buildInteriorWall(folder, Vector3.new(-26, 0, 76), Vector3.new(26, 0, 76), { { at = 26, width = 22 } }) -- lobby west
-	buildInteriorWall(folder, Vector3.new(60, 0, 76), Vector3.new(60, 0, 124), {}) -- lobby east
+	buildInteriorWall(folder, Vector3.new(-60, 0, 81), Vector3.new(-60, 0, 124), {})
+	buildInteriorWall(folder, Vector3.new(-26, 0, 81), Vector3.new(26, 0, 81), { { at = 26, width = 22 } }) -- lobby west
+	buildInteriorWall(folder, Vector3.new(60, 0, 81), Vector3.new(60, 0, 124), {}) -- lobby east
 	buildInteriorWall(folder, Vector3.new(-60, 0, -64), Vector3.new(-60, 0, 64), { { at = 70, width = 12 } }) -- atrium west (arch to courtyard)
 	buildInteriorWall(folder, Vector3.new(60, 0, -64), Vector3.new(60, 0, 64), { { at = 70, width = 12 } }) -- atrium east
 	buildInteriorWall(folder, Vector3.new(-50, 0, -64), Vector3.new(50, 0, -64), { { at = 50, width = 20 } }) -- gym south (grand doors)
@@ -2271,8 +2331,6 @@ function MapService.Build(): Map
 
 	-- ---------------- lockers on real wall sections ----------------
 	for _, spec in {
-		{ cf = CFrame.new(-74, 4.2, 74.4), rot = 0 }, -- janitor front, west
-		{ cf = CFrame.new(74, 4.2, 74.4), rot = 0 }, -- janitor front, east
 		{ cf = CFrame.new(-58.6, 4.2, 20), rot = 90 }, -- atrium west wall
 		{ cf = CFrame.new(58.6, 4.2, 20), rot = 90 }, -- atrium east wall
 		{ cf = CFrame.new(-58.6, 4.2, -30), rot = 90 },
@@ -2289,9 +2347,9 @@ function MapService.Build(): Map
 	end
 	-- columns along the open corridor edges (colonnade + lobby + atrium)
 	for _, colSpec in {
-		{ z = 64, xs = { -160, -132, -104, -76 } },
-		{ z = 64, xs = { 76, 104, 132, 160 } },
-		{ z = 76, xs = { -40, 0, 40 } },
+		{ z = 59, xs = { -160, -132, -104, -76 } },
+		{ z = 59, xs = { 76, 104, 132, 160 } },
+		{ z = 81, xs = { -40, 0, 40 } },
 	} do
 		for _, cx in colSpec.xs do
 			part({
@@ -2332,15 +2390,15 @@ function MapService.Build(): Map
 			Parent = folder,
 		})
 	end
-	roofSlab(0, 100, 448, 48) -- south rooms + lobby (pitched roof sits above)
-	roofSlab(0, 70, 448, 12) -- corridor
+	roofSlab(0, 102, 448, 44) -- south rooms + lobby (pitched roof sits above)
+	roofSlab(0, 70, 448, 22) -- corridor
 	roofSlab(-116, 58, 112, 12) -- west colonnade
 	roofSlab(116, 58, 112, 12) -- east colonnade
 	roofSlab(-116, -58, 112, 12) -- west north leg
 	roofSlab(116, -58, 112, 12) -- east north leg
 	roofSlab(0, 0, 120, 128) -- atrium (with skylight ring)
-	roofSlab(-142, 100, 168, 50) -- west south rooms
-	roofSlab(142, 100, 168, 50) -- east south rooms
+	roofSlab(-142, 102, 168, 46) -- west south rooms
+	roofSlab(142, 102, 168, 46) -- east south rooms
 	roofSlab(-142, -94, 168, 62) -- west north rooms
 	roofSlab(142, -94, 168, 62) -- east north rooms
 	roofSlab(-198, 0, 54, 130) -- west outer column
@@ -2429,6 +2487,7 @@ function MapService.Build(): Map
 
 	buildGrandFacade(folder)
 	buildFrontGrounds(folder)
+	detailCorridor(folder)
 
 	-- ---------------- outside: entrance, dorms, grounds ----------------
 	buildPath(folder, Vector3.new(0, 0, 168), Vector3.new(0, 0, 200), 14)
