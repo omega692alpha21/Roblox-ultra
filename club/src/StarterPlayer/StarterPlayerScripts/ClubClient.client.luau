@@ -368,13 +368,36 @@ end).Parent = directory
 -- --------------------------------------------------------------- nav ---
 local nav = Instance.new("Frame")
 nav.AnchorPoint = Vector2.new(1, 0.5)
-nav.Position = UDim2.new(1, -10, 0.5, 0)
+nav.Position = UDim2.new(1, -10, 0.5, -30)
 nav.Size = UDim2.fromOffset(120, 160)
 nav.BackgroundTransparency = 1
+nav.Visible = false
 nav.Parent = gui
 local navLayout = Instance.new("UIListLayout")
 navLayout.Padding = UDim.new(0, 8)
 navLayout.Parent = nav
+
+local menuToggle = button({
+	AnchorPoint = Vector2.new(1, 0.5),
+	Position = UDim2.new(1, -10, 0.5, 80),
+	Size = UDim2.fromOffset(52, 52),
+	Text = "☰",
+	TextScaled = false,
+	TextSize = 24,
+}, function()
+	nav.Visible = not nav.Visible
+	if not nav.Visible then
+		ladder.Visible = false
+		panel.Visible = false
+		directory.Visible = false
+	end
+end)
+do
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(1, 0)
+	round.Parent = menuToggle
+end
+menuToggle.Parent = gui
 
 local function navButton(text: string, onClick: () -> ())
 	local b = button({ Size = UDim2.new(1, 0, 0, 40), Text = text, TextScaled = false, TextSize = 13 }, onClick)
@@ -408,7 +431,7 @@ end)
 local RunService = game:GetService("RunService")
 RunService.RenderStepped:Connect(function()
 	local t = os.clock()
-	local spin = CFrame.new(0, 0.6 + math.sin(t * 1.4) * 0.25, 0) * CFrame.Angles(0, t * 0.8, 0)
+	local spin = CFrame.new(0, 3.2 + math.sin(t * 1.4) * 0.25, 0) * CFrame.Angles(0, t * 0.8, 0)
 	for _, other in Players:GetPlayers() do
 		local character = other.Character
 		local gem = character and character:FindFirstChild("GemForm")
@@ -416,6 +439,13 @@ RunService.RenderStepped:Connect(function()
 		local weld = primary and primary:FindFirstChild("GemWeld")
 		if weld and weld:IsA("Weld") then
 			weld.C0 = spin
+		end
+		-- your own tier tag duplicates the chip — hide it locally only
+		if other == player and primary then
+			local tag = primary:FindFirstChild("TierTag")
+			if tag and tag:IsA("BillboardGui") and tag.Enabled then
+				tag.Enabled = false
+			end
 		end
 	end
 end)

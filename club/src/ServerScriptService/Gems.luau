@@ -122,14 +122,14 @@ local function dress(player: Player, character: Model)
 		return
 	end
 	gem.PrimaryPart = primary
-	gem:PivotTo(root.CFrame * CFrame.new(0, 0.6, 0))
+	gem:PivotTo(root.CFrame * CFrame.new(0, 3.2, 0))
 	-- welded to the rig: replicates for free with the character. The spin and
 	-- hover bob are client-side (ClubClient animates GemWeld.C0 locally).
 	local weld = Instance.new("Weld")
 	weld.Name = "GemWeld"
 	weld.Part0 = root
 	weld.Part1 = primary
-	weld.C0 = CFrame.new(0, 0.6, 0)
+	weld.C0 = CFrame.new(0, 3.2, 0)
 	weld.Parent = primary
 	for _, p in gem:GetDescendants() do
 		if p:IsA("BasePart") and p ~= primary then
@@ -159,7 +159,7 @@ local function dress(player: Player, character: Model)
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "TierTag"
 	billboard.Size = UDim2.fromScale(6, 1.4)
-	billboard.StudsOffset = Vector3.new(0, 3.4, 0)
+	billboard.StudsOffset = Vector3.new(0, 2.2, 0)
 	billboard.AlwaysOnTop = false
 	billboard.MaxDistance = 90
 	billboard.Parent = primary
