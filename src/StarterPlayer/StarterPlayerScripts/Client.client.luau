@@ -34,6 +34,7 @@ local ORDER = {
 	"SprintController",
 	"TutorialController",
 	"CharacterSelectController",
+	"GraphicsHintController",
 	"DialogueController",
 }
 
