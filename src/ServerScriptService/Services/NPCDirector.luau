@@ -65,7 +65,40 @@ local function applyUniform(model: Model)
 	end
 end
 
+-- Fixed seated students that dress the reference scenes (classroom, courtyard).
+local SEATED: { { pos: Vector3, look: Vector3 } } = {
+	-- classroom chairs face the whiteboard
+	{ pos = Vector3.new(-24, 2.4, -154.6), look = Vector3.new(-24, 2.4, -180) },
+	{ pos = Vector3.new(-10, 2.4, -154.6), look = Vector3.new(-10, 2.4, -180) },
+	{ pos = Vector3.new(4, 2.4, -140.6), look = Vector3.new(4, 2.4, -180) },
+	{ pos = Vector3.new(18, 2.4, -154.6), look = Vector3.new(18, 2.4, -180) },
+	-- courtyard platform edge, watching the courts
+	{ pos = Vector3.new(-50, 3.6, 120), look = Vector3.new(0, 3, 150) },
+	{ pos = Vector3.new(-50, 3.6, 128), look = Vector3.new(0, 3, 158) },
+	{ pos = Vector3.new(-50, 3.6, 136), look = Vector3.new(10, 3, 160) },
+}
+
+local function spawnSeated()
+	for i, seat in SEATED do
+		local defId = AMBIENT_IDS[rng:NextInteger(1, #AMBIENT_IDS)]
+		local model = StudentGen.Create(defId, "_seat" .. i)
+		if model then
+			local head = model:FindFirstChild("Head")
+			local nameTag = head and head:FindFirstChild("NameTag")
+			if nameTag then
+				nameTag:Destroy()
+			end
+			model.Name = "SeatedNPC" .. i
+			applyUniform(model)
+			model.Parent = workspace
+			StudentGen.SitPose(model, CFrame.lookAt(seat.pos, seat.look))
+			StudentGen.PlayAnim(model, "idle")
+		end
+	end
+end
+
 function NPCDirector.Init(count: number?)
+	spawnSeated()
 	for i = 1, count or 20 do
 		local defId = AMBIENT_IDS[rng:NextInteger(1, #AMBIENT_IDS)]
 		local model = StudentGen.Create(defId, "_npc" .. i)

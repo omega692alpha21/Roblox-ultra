@@ -60,6 +60,24 @@ function TextureService.Init()
 			applied += 1
 		end
 	end
+	for _, part in CollectionService:GetTagged("TexBlueStone") do
+		if part:IsA("BasePart") then
+			apply(part, TextureIds.BlueStone, ALL_FACES, 9, 9)
+			applied += 1
+		end
+	end
+	for _, part in CollectionService:GetTagged("TexGround") do
+		if part:IsA("BasePart") then
+			apply(part, TextureIds.Ground, { Enum.NormalId.Top }, 14, 14)
+			applied += 1
+		end
+	end
+	for _, part in CollectionService:GetTagged("TexCeiling") do
+		if part:IsA("BasePart") then
+			apply(part, TextureIds.Ceiling, { Enum.NormalId.Bottom }, 8, 8)
+			applied += 1
+		end
+	end
 	for _, part in CollectionService:GetTagged("TexCarpet") do
 		if part:IsA("BasePart") then
 			apply(part, TextureIds.Carpet, { Enum.NormalId.Top }, 16, 16)

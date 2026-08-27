@@ -427,6 +427,26 @@ function StudentGen.PlayAnim(model: Model, kind: string)
 end
 
 -- Position an (anchored) student model so its feet sit on the given CFrame.
+-- Bend the hips/knees so the avatar reads as sitting, then plant it at the seat.
+function StudentGen.SitPose(model: Model, seatCf: CFrame)
+	local function bend(partName: string, motorName: string, angle: number)
+		local limb = model:FindFirstChild(partName)
+		local motor = limb and limb:FindFirstChild(motorName)
+		if motor and motor:IsA("Motor6D") then
+			motor.C0 = motor.C0 * CFrame.Angles(angle, 0, 0)
+		end
+	end
+	bend("LeftUpperLeg", "LeftHip", math.rad(85))
+	bend("RightUpperLeg", "RightHip", math.rad(85))
+	bend("LeftLowerLeg", "LeftKnee", math.rad(-80))
+	bend("RightLowerLeg", "RightKnee", math.rad(-80))
+	local root = (model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")) :: BasePart?
+	if root then
+		model.PrimaryPart = root
+		model:PivotTo(seatCf * CFrame.new(0, 1.5, 0))
+	end
+end
+
 function StudentGen.Stand(model: Model, cf: CFrame)
 	local root = (model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")) :: BasePart?
 	if not root then

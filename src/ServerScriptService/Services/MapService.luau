@@ -1377,6 +1377,23 @@ end
 -- The courtyard from the reference render: wrapped on three sides by a
 -- two-story colonnade building — open balcony walkway upstairs, flat roof
 -- with parapet, flags, and window-textured back walls.
+-- Enclosed glazed corridor between two points: floor, walls with a window
+-- band, and a flat roof. Turns the scattered rooms into one connected school.
+local function buildCorridor(parent: Instance, from: Vector3, to: Vector3, width: number)
+	local dir = to - from
+	local length = dir.Magnitude
+	local unit = dir.Unit
+	local mid = from + unit * (length / 2)
+	local cf = CFrame.lookAt(mid, to)
+	part({ Name = "CorridorFloor", Size = Vector3.new(width, 0.6, length + 2), CFrame = cf * CFrame.new(0, 0.05, 0), Color = Color3.fromRGB(196, 194, 188), Parent = parent })
+	for _, side in { -1, 1 } do
+		part({ Name = "CorridorWallLow", Size = Vector3.new(1.4, 4.5, length), CFrame = cf * CFrame.new(side * (width / 2), 2.25, 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
+		part({ Name = "CorridorGlass", Size = Vector3.new(1.0, 3.6, length), CFrame = cf * CFrame.new(side * (width / 2), 6.3, 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+		part({ Name = "CorridorBand", Size = Vector3.new(1.4, 1.6, length), CFrame = cf * CFrame.new(side * (width / 2), 8.9, 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+	end
+	part({ Name = "CorridorRoof", Size = Vector3.new(width + 2.4, 1, length + 2), CFrame = cf * CFrame.new(0, 10.2, 0), Color = Color3.fromRGB(84, 98, 110), Material = Enum.Material.Slate, Parent = parent })
+end
+
 local function buildCourtyardWings(parent: Instance)
 	local STONE = Color3.fromRGB(196, 200, 206)
 	local wings = {
@@ -1399,10 +1416,10 @@ local function buildCourtyardWings(parent: Instance)
 			if segLen2 > 1 then
 				local segMid = wing.from + unit * ((seg[1] + seg[2]) / 2)
 				local segCf = CFrame.lookAt(segMid, segMid + wing.inner)
-				tag(part({ Name = "WingBackLow", Size = Vector3.new(segLen2, 10, 1.6), CFrame = segCf * CFrame.new(0, 5, -8) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(120, 148, 170), Material = Enum.Material.Concrete, Parent = parent }), "TexWindow")
+				tag(part({ Name = "WingBackLow", Size = Vector3.new(segLen2, 10, 1.6), CFrame = segCf * CFrame.new(0, 5, -8) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(105, 118, 138), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
 			end
 		end
-		tag(part({ Name = "WingBackHigh", Size = Vector3.new(length, 9, 1.6), CFrame = cf * CFrame.new(0, 15, -8) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(120, 148, 170), Material = Enum.Material.Concrete, Parent = parent }), "TexWindow")
+		tag(part({ Name = "WingBackHigh", Size = Vector3.new(length, 9, 1.6), CFrame = cf * CFrame.new(0, 15, -8) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(105, 118, 138), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
 		-- second-floor balcony slab + railing
 		part({ Name = "WingBalcony", Size = Vector3.new(length, 1, 9), CFrame = cf * CFrame.new(0, 10.2, -3.5) * CFrame.Angles(0, math.rad(90), 0), Color = STONE, Material = Enum.Material.Concrete, Parent = parent })
 		part({ Name = "WingRailTop", Size = Vector3.new(length, 0.5, 0.5), CFrame = cf * CFrame.new(0, 13.4, 0.6) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(235, 235, 235), Parent = parent })
@@ -1481,12 +1498,16 @@ local function furnishClassroom(parent: Instance)
 			part({ Name = "ChairBack", Size = Vector3.new(2.6, 2.6, 0.4), CFrame = CFrame.new(dx, 3.7, dz + 4.5), Color = Color3.fromRGB(58, 104, 196), Parent = parent })
 		end
 	end
-	-- drop-ceiling light panels
+	-- drop-ceiling: full grid texture + glowing panels
+	tag(part({ Name = "ClassCeiling", Size = Vector3.new(78, 0.6, 58), CFrame = CFrame.new(c.X, 14.2, c.Z), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
 	for _, x in { -20, 8 } do
 		for _, z in { -14, 2 } do
 			part({ Name = "CeilingPanel", Size = Vector3.new(10, 0.3, 4), CFrame = CFrame.new(c.X + x, 13.6, c.Z + z), Color = Color3.fromRGB(250, 250, 240), Material = Enum.Material.Neon, Parent = parent })
 		end
 	end
+	-- salmon feature walls like the reference classroom
+	part({ Name = "ClassWallSalmon", Size = Vector3.new(0.8, 13, 56), CFrame = CFrame.new(c.X + 39.2, 7, c.Z), Color = Color3.fromRGB(205, 122, 92), Parent = parent })
+	part({ Name = "ClassWallSalmon2", Size = Vector3.new(24, 13, 0.8), CFrame = CFrame.new(c.X + 27, 7, c.Z - 29.2), Color = Color3.fromRGB(205, 122, 92), Parent = parent })
 end
 
 local function furnishCafeteria(parent: Instance)
@@ -1589,7 +1610,7 @@ function MapService.Build(): Map
 	buildZone(folder, "PrincipalsOffice", Vector3.new(-215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)", Enum.Material.Marble)
 	buildZone(folder, "Gym", Vector3.new(215, 0, 60), Vector2.new(70, 70), Color3.fromRGB(210, 160, 110), "GYM — FIGHT ZONE", Enum.Material.WoodPlanks)
 	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
-	tag(buildZone(folder, "Courtyard", Vector3.new(0, 0, 150), Vector2.new(120, 70), Color3.fromRGB(172, 174, 178), "COURTYARD — CLIQUES", Enum.Material.Concrete), "TexFloorTile")
+	tag(buildZone(folder, "Courtyard", Vector3.new(0, 0, 150), Vector2.new(120, 70), Color3.fromRGB(134, 138, 159), "COURTYARD — CLIQUES", Enum.Material.Concrete), "TexGround")
 	tag(buildZone(folder, "Classroom101", Vector3.new(0, 0, -150), Vector2.new(80, 60), Color3.fromRGB(148, 118, 96), "CLASSROOM 101\nPOP QUIZ", Enum.Material.Carpet), "TexCarpet")
 
 	-- trophy hall boards
@@ -1702,6 +1723,18 @@ function MapService.Build(): Map
 		end
 	end
 	detailCourtyard(folder)
+	-- every outbuilding gets a real front wall with a doorway...
+	buildWallRun(folder, Vector3.new(-180, 0, 25), Vector3.new(-180, 0, 95), { { at = 35, width = 14 } }) -- cafeteria front
+	buildWallRun(folder, Vector3.new(-180, 0, -95), Vector3.new(-180, 0, -25), { { at = 35, width = 14 } }) -- principal front
+	buildWallRun(folder, Vector3.new(180, 0, 25), Vector3.new(180, 0, 95), { { at = 35, width = 14 } }) -- gym front
+	buildWallRun(folder, Vector3.new(180, 0, -95), Vector3.new(180, 0, -25), { { at = 35, width = 14 } }) -- trophy front
+	buildWallRun(folder, Vector3.new(-40, 0, -120), Vector3.new(40, 0, -120), { { at = 40, width = 16 } }) -- classroom front
+	-- ...and an enclosed corridor tying it into the main building
+	buildCorridor(folder, Vector3.new(-167, 0, 0), Vector3.new(-181, 0, 60), 10)
+	buildCorridor(folder, Vector3.new(-167, 0, 0), Vector3.new(-181, 0, -60), 10)
+	buildCorridor(folder, Vector3.new(167, 0, 0), Vector3.new(181, 0, 60), 10)
+	buildCorridor(folder, Vector3.new(167, 0, 0), Vector3.new(181, 0, -60), 10)
+	buildCorridor(folder, Vector3.new(0, 0, -85), Vector3.new(0, 0, -121), 12)
 	buildCourtyardWings(folder)
 	furnishClassroom(folder)
 	furnishCafeteria(folder)
