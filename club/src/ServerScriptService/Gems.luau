@@ -75,6 +75,53 @@ local function strip(character: Model)
 	end
 end
 
+-- an empty hooded cloak wraps each stone: no body inside, just the drape,
+-- the hood, and the gem floating where a face would never be
+local CLOAK = Color3.fromRGB(26, 25, 30)
+local CLOAK_GUEST = Color3.fromRGB(54, 53, 58)
+
+local function buildCloak(root: BasePart, tier: Config.Tier): Model
+	local cloak = Instance.new("Model")
+	cloak.Name = "CloakForm"
+	local color = if tier.name == "GUEST" then CLOAK_GUEST else CLOAK
+	local function piece(name: string, size: Vector3, offset: CFrame, pieceColor: Color3?, material: Enum.Material?): Part
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = size
+		p.CFrame = root.CFrame * offset
+		p.Color = pieceColor or color
+		p.Material = material or Enum.Material.Fabric
+		p.Anchored = false
+		p.CanCollide = false
+		p.Massless = true
+		p.CastShadow = false
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = root
+		w.Part1 = p
+		w.Parent = p
+		p.Parent = cloak
+		return p
+	end
+	-- hood arching over the stone (gem hovers at ~3.2 above the root)
+	piece("Cloak_HoodBack", Vector3.new(2.0, 2.3, 0.4), CFrame.new(0, 3.5, 0.8))
+	piece("Cloak_HoodTop", Vector3.new(2.0, 0.45, 1.8), CFrame.new(0, 4.5, 0.15) * CFrame.Angles(math.rad(-14), 0, 0))
+	piece("Cloak_HoodL", Vector3.new(0.38, 2.1, 1.6), CFrame.new(-1.0, 3.4, 0.25))
+	piece("Cloak_HoodR", Vector3.new(0.38, 2.1, 1.6), CFrame.new(1.0, 3.4, 0.25))
+	-- the dark inside of the hood, behind the stone
+	piece("Cloak_HoodVoid", Vector3.new(1.6, 1.8, 0.16), CFrame.new(0, 3.35, 0.58), Color3.fromRGB(8, 8, 10), Enum.Material.SmoothPlastic)
+	-- shoulder mantle and falling drape
+	piece("Cloak_Mantle", Vector3.new(3.1, 1.0, 2.0), CFrame.new(0, 2.35, 0.1))
+	piece("Cloak_Mantle2", Vector3.new(2.7, 0.9, 1.8), CFrame.new(0, 1.6, 0.1))
+	piece("Cloak_Drape", Vector3.new(2.4, 3.0, 1.6), CFrame.new(0, 0.1, 0.1))
+	piece("Cloak_Flare", Vector3.new(2.9, 1.2, 1.95), CFrame.new(0, -1.5, 0.1))
+	piece("Cloak_Cape", Vector3.new(2.7, 3.9, 0.3), CFrame.new(0, 0.55, 1.0))
+	-- the only mark of rank on the cloth: a hem in the tier's color
+	if tier.name ~= "GUEST" then
+		piece("Cloak_Hem", Vector3.new(2.95, 0.14, 1.9), CFrame.new(0, 1.14, 0.1), tier.glow, Enum.Material.SmoothPlastic)
+	end
+	return cloak
+end
+
 local function tierOf(player: Player): Config.Tier
 	local name = player:GetAttribute("Tier")
 	return Config.TierByName(typeof(name) == "string" and name :: string or "GUEST") or Config.Tiers[1]
@@ -93,6 +140,10 @@ local function dress(player: Player, character: Model)
 	local old = character:FindFirstChild("GemForm")
 	if old then
 		old:Destroy()
+	end
+	local oldCloak = character:FindFirstChild("CloakForm")
+	if oldCloak then
+		oldCloak:Destroy()
 	end
 
 	local tier = tierOf(player)
@@ -140,6 +191,7 @@ local function dress(player: Player, character: Model)
 		end
 	end
 	gem.Parent = character
+	buildCloak(root, tier).Parent = character
 
 	-- the glow and the glint
 	local light = Instance.new("PointLight")
