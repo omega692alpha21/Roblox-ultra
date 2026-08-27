@@ -1397,6 +1397,66 @@ end
 -- with parapet, flags, and window-textured back walls.
 -- Enclosed glazed corridor between two points: floor, walls with a window
 -- band, and a flat roof. Turns the scattered rooms into one connected school.
+-- An open swung door panel + frame at a doorway (doors, not floating gaps).
+local function addOpenDoor(parent: Instance, hingeCf: CFrame, width: number, double: boolean?)
+	local leaves = double and 2 or 1
+	for i = 1, leaves do
+		local side = i == 1 and -1 or 1
+		local leafWidth = double and width / 2 - 0.3 or width - 0.6
+		local panel = part({
+			Name = "DoorPanel",
+			Size = Vector3.new(leafWidth, 10.5, 0.35),
+			CFrame = hingeCf
+				* CFrame.new(side * (width / 2), 5.25, 0)
+				* CFrame.Angles(0, math.rad(side * -105), 0)
+				* CFrame.new(-side * leafWidth / 2, 0, 0),
+			Color = Color3.fromRGB(96, 66, 44),
+			Material = Enum.Material.Wood,
+			Parent = parent,
+		})
+		part({
+			Name = "DoorWindow",
+			Size = Vector3.new(math.min(leafWidth * 0.4, 2), 2.4, 0.1),
+			CFrame = panel.CFrame * CFrame.new(0, 2.2, -0.24),
+			Color = Color3.fromRGB(180, 210, 230),
+			Material = Enum.Material.Glass,
+			Transparency = 0.3,
+			Parent = parent,
+		})
+	end
+end
+
+-- Interior floor plan: every homeroom becomes an enclosed room off the
+-- hallway — front wall with a doorway, partitions between neighbors.
+local function buildHomeroomWalls(parent: Instance)
+	for _, zSign in { -1, 1 } do
+		local z = zSign * 27
+		-- hallway-facing wall with a doorway per homeroom
+		buildWallRun(
+			parent,
+			Vector3.new(-156, 0, z),
+			Vector3.new(156, 0, z),
+			{ { at = 39, width = 16 }, { at = 117, width = 16 }, { at = 195, width = 16 }, { at = 273, width = 16 } }
+		)
+		-- doors standing open in each doorway
+		for _, x in { -117, -39, 39, 117 } do
+			local inward = Vector3.new(x, 0, zSign * 30)
+			addOpenDoor(parent, CFrame.lookAt(Vector3.new(x, 0, z), inward), 16, true)
+		end
+		-- partitions between neighboring homerooms
+		for _, x in { -78, 0, 78, -152, 152 } do
+			part({
+				Name = "HomeroomPartition",
+				Size = Vector3.new(2, 13, 50),
+				CFrame = CFrame.new(x, 6.5, zSign * 52),
+				Color = Color3.fromRGB(214, 206, 186),
+				Material = Enum.Material.Concrete,
+				Parent = parent,
+			})
+		end
+	end
+end
+
 local function buildCorridor(parent: Instance, from: Vector3, to: Vector3, width: number)
 	local dir = to - from
 	local length = dir.Magnitude
@@ -1750,6 +1810,15 @@ function MapService.Build(): Map
 		end
 	end
 	detailCourtyard(folder)
+	buildHomeroomWalls(folder)
+	-- swung-open doors on every room entrance
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-180, 0, 60), Vector3.new(-176, 0, 60)), 14, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-180, 0, -60), Vector3.new(-176, 0, -60)), 14, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(180, 0, 60), Vector3.new(176, 0, 60)), 14, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(180, 0, -60), Vector3.new(176, 0, -60)), 14, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(0, 0, -120), Vector3.new(0, 0, -116)), 16, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-195, 0, 170), Vector3.new(-195, 0, 174)), 14, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(195, 0, 170), Vector3.new(195, 0, 174)), 14, true)
 	-- every outbuilding gets a real front wall with a doorway...
 	buildWallRun(folder, Vector3.new(-180, 0, 25), Vector3.new(-180, 0, 95), { { at = 35, width = 14 } }) -- cafeteria front
 	buildWallRun(folder, Vector3.new(-180, 0, -95), Vector3.new(-180, 0, -25), { { at = 35, width = 14 } }) -- principal front

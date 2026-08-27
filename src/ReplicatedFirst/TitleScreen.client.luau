@@ -11,6 +11,7 @@ local TweenService = game:GetService("TweenService")
 
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
@@ -254,7 +255,7 @@ playButton.Position = UDim2.fromScale(0.5, 0.68)
 playButton.Size = UDim2.fromOffset(260, 68)
 playButton.BackgroundColor3 = GREEN
 playButton.Font = Enum.Font.FredokaOne
-playButton.Text = "PLAY"
+playButton.Text = "CONTINUE  \u{25B6}"
 playButton.TextScaled = true
 playButton.TextColor3 = Color3.new(1, 1, 1)
 playButton.AutoButtonColor = true
@@ -269,6 +270,27 @@ playStroke.Thickness = 4
 playStroke.Parent = playButton
 local playScale = Instance.new("UIScale")
 playScale.Parent = playButton
+
+-- NEW STUDENT: pick your starter before entering
+local newButton = Instance.new("TextButton")
+newButton.AnchorPoint = Vector2.new(0.5, 0.5)
+newButton.Position = UDim2.fromScale(0.5, 0.79)
+newButton.Size = UDim2.fromOffset(260, 54)
+newButton.BackgroundColor3 = Color3.fromRGB(38, 50, 96)
+newButton.Font = Enum.Font.FredokaOne
+newButton.Text = "\u{2605}  NEW STUDENT"
+newButton.TextScaled = true
+newButton.TextColor3 = Color3.new(1, 1, 1)
+newButton.AutoButtonColor = true
+newButton.Visible = false
+newButton.Parent = backdrop
+local newCorner = Instance.new("UICorner")
+newCorner.CornerRadius = UDim.new(0, 14)
+newCorner.Parent = newButton
+local newStroke = Instance.new("UIStroke")
+newStroke.Color = Color3.fromRGB(255, 196, 60)
+newStroke.Thickness = 3
+newStroke.Parent = newButton
 
 -- ===== animation =====
 local reduceMotion = false
@@ -348,6 +370,7 @@ task.spawn(function()
 
 	barHolder.Visible = false
 	playButton.Visible = true
+	newButton.Visible = true
 	playScale.Scale = 0.8
 	TweenService:Create(playScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 	-- idle pulse so it reads as tappable
@@ -467,8 +490,14 @@ local function runCinematic()
 	end
 end
 
-playButton.Activated:Connect(function()
+local proceeded = false
+local function proceed()
+	if proceeded then
+		return
+	end
+	proceeded = true
 	playButton.Active = false
+	newButton.Active = false
 	local fade = TweenInfo.new(0.5)
 	TweenService:Create(backdrop, fade, { BackgroundTransparency = 1 }):Play()
 	for _, descendant in backdrop:GetDescendants() do
@@ -485,4 +514,80 @@ playButton.Activated:Connect(function()
 		gui:Destroy()
 	end)
 	runCinematic()
+end
+
+playButton.Activated:Connect(proceed)
+
+-- starter picker (shown by NEW STUDENT): two cards, pick dresses you in-game
+newButton.Activated:Connect(function()
+	if proceeded then
+		return
+	end
+	playButton.Visible = false
+	newButton.Visible = false
+	local picker = Instance.new("Frame")
+	picker.AnchorPoint = Vector2.new(0.5, 0.5)
+	picker.Position = UDim2.fromScale(0.5, 0.72)
+	picker.Size = UDim2.fromOffset(470, 210)
+	picker.BackgroundTransparency = 1
+	picker.Parent = backdrop
+	local cards = {
+		{ id = "boy", title = "THE TROUBLEMAKER", emoji = "\u{1F620}", line = "Crest sweater. Bandage.\nBackpack. Attitude.", accent = Color3.fromRGB(64, 96, 200) },
+		{ id = "girl", title = "THE REBEL", emoji = "\u{1FAE7}", line = "Plaid skirt. Bubblegum.\nZero patience.", accent = Color3.fromRGB(168, 90, 220) },
+	}
+	for i, card in cards do
+		local cardButton = Instance.new("TextButton")
+		cardButton.Position = UDim2.fromOffset((i - 1) * 245, 0)
+		cardButton.Size = UDim2.fromOffset(225, 200)
+		cardButton.BackgroundColor3 = Color3.fromRGB(24, 34, 26)
+		cardButton.Text = ""
+		cardButton.AutoButtonColor = true
+		cardButton.Parent = picker
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 16)
+		corner.Parent = cardButton
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = card.accent
+		stroke.Thickness = 4
+		stroke.Parent = cardButton
+		local emoji = Instance.new("TextLabel")
+		emoji.Position = UDim2.fromOffset(0, 10)
+		emoji.Size = UDim2.new(1, 0, 0, 62)
+		emoji.BackgroundTransparency = 1
+		emoji.Font = Enum.Font.FredokaOne
+		emoji.TextScaled = true
+		emoji.Text = card.emoji
+		emoji.Parent = cardButton
+		local title = Instance.new("TextLabel")
+		title.Position = UDim2.fromOffset(8, 80)
+		title.Size = UDim2.new(1, -16, 0, 30)
+		title.BackgroundTransparency = 1
+		title.Font = Enum.Font.FredokaOne
+		title.TextScaled = true
+		title.TextColor3 = YELLOW
+		title.Text = card.title
+		title.Parent = cardButton
+		local line = Instance.new("TextLabel")
+		line.Position = UDim2.fromOffset(10, 118)
+		line.Size = UDim2.new(1, -20, 0, 56)
+		line.BackgroundTransparency = 1
+		line.Font = Enum.Font.FredokaOne
+		line.TextSize = 16
+		line.TextWrapped = true
+		line.TextColor3 = CHALK
+		line.Text = card.line
+		line.Parent = cardButton
+		cardButton.Activated:Connect(function()
+			task.spawn(function()
+				local ok = pcall(function()
+					local Remotes = require(ReplicatedStorage:WaitForChild("Remotes"))
+					;(Remotes :: any).Get("ChooseCharacter"):FireServer(card.id)
+				end)
+				if not ok then
+					warn("[TitleScreen] could not send starter choice")
+				end
+			end)
+			proceed()
+		end)
+	end
 end)
