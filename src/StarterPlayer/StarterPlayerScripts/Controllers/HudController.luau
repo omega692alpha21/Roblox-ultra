@@ -28,11 +28,13 @@ local player = Players.LocalPlayer
 -- The left rail: what the player checks about themselves — report card,
 -- quests, profile, crew — plus a way into everything else. Tools live on the
 -- right, under the thumb that throws them.
+-- Four tiles is what the left band fits between Roblox's top bar and its
+-- movement thumbstick. Report card, quests, profile — and everything else
+-- behind MORE.
 local RAIL = {
 	{ icon = "📕", panel = "Classes", color = Palette.LockerBlue },
 	{ icon = "📋", panel = "Quests", color = Palette.BusYellow },
 	{ icon = "⭐", panel = "Rep", color = Palette.AuraPurple },
-	{ icon = "👥", panel = "Crew", color = Palette.CashGreen },
 }
 
 local MORE = {

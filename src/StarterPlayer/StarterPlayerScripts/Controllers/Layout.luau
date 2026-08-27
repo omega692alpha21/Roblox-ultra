@@ -12,16 +12,25 @@
 -- parent whose size is already settled, and every time I nested one inside
 -- another something collapsed to nothing or doubled.
 --
--- The zones below are laid out so they cannot touch. Anything new goes in a
--- zone, or gets a new one carved out here.
+-- Roblox reserves four corners of a phone screen before we place anything:
 --
---   top-left      minimap                       y 0.03 – 0.23
---   left edge     menu rail (5 tiles)           y 0.27 – 0.81
---   top-centre    status pills                  y 0.03 – 0.09
---   top-centre    goal chip                     y 0.10 – 0.16
---   right edge    tool rail (3 tiles)           y 0.20 – 0.57
---   bottom-right  run / punch / throw           y 0.83 – 0.96, left of jump
+--   top-left      its menu / chat / mic pill      x .04-.30  y .02-.13
+--   top-right     the player thumbnail            x .92-1.0  y .02-.16
+--   bottom-left   the movement thumbstick         x  0 -.24  y .70-1.0
+--   bottom-right  jump, and the emote button      x .80-1.0  y .66-1.0
+--
+-- That leaves two vertical bands down the edges and a strip along the top and
+-- bottom centre. Our zones live in those and nowhere else:
+--
+--   left band     minimap                         y .14-.30
+--   left band     menu rail, 4 tiles              y .32-.68
+--   top centre    status pills                    y .02-.08
+--   top centre    goal chip                       y .09-.15
+--   right band    tool rail, 3 tiles              y .19-.46
+--   bottom centre run / punch / throw             y .80-.95, x .58-.80
 --   centre        the reticle, and nothing else
+--
+-- Anything new goes in one of those, or gets a new one carved out here.
 
 local Players = game:GetService("Players")
 
@@ -88,25 +97,28 @@ end
 Layout.EdgeX = 0.014 -- side margin, as a fraction of WIDTH
 Layout.Margin = 0 -- filled in below, in pixels
 
-Layout.MinimapTop = 0.03
-Layout.MinimapSize = 0.20
+-- clear of Roblox's top bar, which owns the top-left corner
+Layout.MinimapTop = 0.14
+Layout.MinimapSize = 0.16
 
-Layout.PillTop = 0.03
-Layout.PillHeight = 0.058
+Layout.PillTop = 0.02
+Layout.PillHeight = 0.055
 
-Layout.GoalTop = 0.10
-Layout.GoalHeight = 0.055
+Layout.GoalTop = 0.09
+Layout.GoalHeight = 0.052
 
-Layout.RailTile = 0.095
-Layout.RailGap = 0.014
-Layout.MenuRailTop = 0.27
-Layout.ToolRailTop = 0.20
+Layout.RailTile = 0.08
+Layout.RailGap = 0.012
+-- below the minimap, and stopping short of the movement thumbstick
+Layout.MenuRailTop = 0.32
+-- below the player thumbnail, above the jump control
+Layout.ToolRailTop = 0.19
 
-Layout.ButtonSize = 0.125
-Layout.ToyButtonSize = 0.145
-Layout.ActionBottom = 0.04
--- how much of the right edge Roblox's own jump control needs
-Layout.JumpClearance = 0.34
+Layout.ButtonSize = 0.13
+Layout.ToyButtonSize = 0.15
+Layout.ActionBottom = 0.05
+-- how much of the right edge Roblox's jump and emote controls need, in WIDTH
+Layout.JumpClearance = 0.23
 
 Layout.Order = {
 	Sprint = 10,
@@ -160,7 +172,7 @@ function Layout.ActionBar(gui: ScreenGui): Frame
 	local row = Instance.new("Frame")
 	row.Name = "ActionBar"
 	row.AnchorPoint = Vector2.new(1, 1)
-	row.Position = UDim2.new(1, -Layout.h(Layout.JumpClearance), 1, -Layout.h(Layout.ActionBottom))
+	row.Position = UDim2.new(1, -Layout.w(Layout.JumpClearance), 1, -Layout.h(Layout.ActionBottom))
 	row.Size = UDim2.fromOffset(height * 3 + gap * 2, height)
 	row.BackgroundTransparency = 1
 	row.ZIndex = 30
