@@ -89,6 +89,8 @@ local function buildRobeFallback(root: BasePart, tier: Config.Tier): Model
 	piece("Robe_HoodR", Vector3.new(0.38, 2.1, 1.6), CFrame.new(1.0, 3.4, 0.25), tier.robe)
 	piece("Robe_Void", Vector3.new(1.6, 1.8, 0.16), CFrame.new(0, 3.35, 0.58), Color3.fromRGB(6, 6, 8), Enum.Material.SmoothPlastic)
 	piece("Robe_Mantle", Vector3.new(3.1, 1.0, 2.0), CFrame.new(0, 2.35, 0.1), tier.robe)
+	piece("Robe_Mantle2", Vector3.new(2.7, 0.9, 1.8), CFrame.new(0, 1.6, 0.1), tier.robe)
+	piece("Robe_Cape", Vector3.new(2.7, 3.9, 0.3), CFrame.new(0, 0.55, 1.0), tier.robe)
 	piece("Robe_Drape", Vector3.new(2.4, 3.0, 1.6), CFrame.new(0, 0.1, 0.1), tier.robe)
 	piece("Robe_Flare", Vector3.new(2.9, 1.2, 1.95), CFrame.new(0, -1.5, 0.1), tier.robe)
 	piece("Robe_Hem", Vector3.new(2.95, 0.14, 1.9), CFrame.new(0, -2.05, 0.1), tier.trim, Enum.Material.SmoothPlastic)
@@ -96,6 +98,14 @@ local function buildRobeFallback(root: BasePart, tier: Config.Tier): Model
 end
 
 local function buildRobe(root: BasePart, tier: Config.Tier): Model
+	-- the layered part-built robe won: better hood, better silhouette
+	local partRobe = buildRobeFallback(root, tier)
+	pcall(function()
+		partRobe:ScaleTo(tier.scale)
+	end)
+	if partRobe then
+		return partRobe
+	end
 	if not robeTemplate then
 		return buildRobeFallback(root, tier)
 	end

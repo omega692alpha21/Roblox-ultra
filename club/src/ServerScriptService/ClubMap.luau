@@ -1013,6 +1013,7 @@ function ClubMap.Build(): Map
 	spawn.CFrame = CFrame.new(16, 0.6, 176)
 	spawn.Anchored = true
 	spawn.Neutral = true
+	spawn.Duration = 0
 	spawn.Transparency = 1
 	spawn.CanCollide = false
 	spawn.Parent = folder

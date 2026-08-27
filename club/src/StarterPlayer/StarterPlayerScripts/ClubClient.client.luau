@@ -84,7 +84,7 @@ local function framed(size: UDim2, position: UDim2, anchor: Vector2): Frame
 end
 
 -- ------------------------------------------------------------------- chip ---
-local chip = framed(UDim2.fromOffset(300, 48), UDim2.new(0.5, 0, 0, 10), Vector2.new(0.5, 0))
+local chip = framed(UDim2.fromOffset(210, 40), UDim2.new(0, 10, 0, 64), Vector2.new(0, 0))
 local chipLabel = label({ Size = UDim2.new(1, 0, 0.6, 0), Text = "ROBES", TextColor3 = GOLD, Parent = chip })
 local chipSub = label({ Position = UDim2.fromScale(0, 0.6), Size = UDim2.new(1, 0, 0.4, 0), Text = "", TextColor3 = CREAM, TextTransparency = 0.2, Parent = chip })
 
