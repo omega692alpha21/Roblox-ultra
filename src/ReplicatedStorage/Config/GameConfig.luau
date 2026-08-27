@@ -46,7 +46,7 @@ return {
 
 	-- School RPG layer
 	ClassBellIntervalSeconds = 300, -- time between class bells
-	ClassOpenSeconds = 60, -- window to get into class
+	ClassOpenSeconds = 75, -- window to get to the room and sit in
 	QuizQuestionCount = 3,
 	QuizCashReward = 500, -- scaled by rebirth multiplier
 	QuizRepReward = 15,

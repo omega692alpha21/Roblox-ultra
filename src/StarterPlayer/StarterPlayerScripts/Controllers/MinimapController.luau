@@ -44,7 +44,10 @@ local MARKERS: { Marker } = {
 	{ x = -204, z = 35, icon = "🏛️", color = Color3.fromRGB(190, 214, 255) },
 	{ x = 204, z = -29, icon = "🏆", color = Color3.fromRGB(255, 232, 140) },
 	{ x = 204, z = 35, icon = "🔒", color = Color3.fromRGB(255, 120, 110) },
-	{ x = -74, z = -94, icon = "📚", color = Color3.fromRGB(180, 220, 255) },
+	{ x = -74, z = -94, icon = "➗", color = Color3.fromRGB(120, 176, 255) },
+	{ x = 74, z = -94, icon = "🎵", color = Color3.fromRGB(212, 160, 240) },
+	{ x = -116, z = -28, icon = "🧬", color = Color3.fromRGB(150, 220, 130) },
+	{ x = 116, z = -28, icon = "⚗️", color = Color3.fromRGB(150, 240, 190) },
 	{ x = -116, z = 0, icon = "👥", color = Color3.fromRGB(180, 255, 200) },
 }
 

@@ -13,6 +13,8 @@ local EVENTS = {
 	"StealAlert", -- (thiefName: string, studentName: string)
 	"QuizStart", -- (questions: {{q, answers}}, deadline: number)
 	"QuizResult", -- (correctCount: number, reward: number, aura: number)
+	"ClassStart", -- (session: {subject, name, icon, professor, mode, rounds, seconds})
+	"ClassResult", -- (correct: number, total: number, cash: number, aura: number, letter: string)
 	"RewardState", -- (state table for the Rewards panel)
 	"QuestState", -- (quests table)
 	"SpinResult", -- (prizeIndex: number, label: string)
@@ -30,6 +32,8 @@ local EVENTS = {
 	"ClaimSocial", -- (kind: "group")
 	"JoinClique", -- (cliqueId: string)
 	"QuizAnswer", -- (questionIndex: number, answerIndex: number)
+	"ClassAnswer", -- (roundIndex: number, answer: number | {number})
+	"AttendClass", -- (subjectId: string) ask the professor to let you sit in
 	"Punch",
 	"Sprint", -- (on: boolean)
 	"ClientDiagnostic", -- (failures: {string}) UI self-check report

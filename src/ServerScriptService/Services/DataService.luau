@@ -36,6 +36,7 @@ export type Profile = {
 	social: { [string]: boolean },
 	missions: { [string]: number }, -- mission giver id -> completed count
 	rep: { [string]: number }, -- reputation tracks: popular/smart/athletic/creative/troublemaker
+	grades: { [string]: number }, -- report card: subject id -> best score ratio 0..1
 	outfit: string?, -- starter character: "boy" | "girl"
 }
 
@@ -59,6 +60,7 @@ local function template(): Profile
 		social = {},
 		missions = {},
 		rep = {},
+		grades = {},
 	}
 end
 

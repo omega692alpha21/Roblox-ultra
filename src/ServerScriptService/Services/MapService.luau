@@ -233,6 +233,97 @@ local function buildPlot(index: number, cf: CFrame, parent: Instance): Plot
 	}
 end
 
+-- A courtyard lab annex: a glass-walled pavilion with an open south side, so
+-- the science subjects get real rooms without cutting new space out of a
+-- floor plan that is already full.
+local function buildPavilion(
+	parent: Instance,
+	name: string,
+	center: Vector3,
+	size: Vector2,
+	label: string,
+	accent: Color3,
+	glass: Color3
+)
+	local half = Vector2.new(size.X / 2, size.Y / 2)
+	part({
+		Name = name .. "Floor",
+		Size = Vector3.new(size.X, 1, size.Y),
+		CFrame = CFrame.new(center) * CFrame.new(0, -0.4, 0),
+		Color = Color3.fromRGB(226, 226, 222),
+		Material = Enum.Material.CeramicTiles,
+		Parent = parent,
+	})
+	-- three glass walls; the fourth side is the way in
+	local walls = {
+		{ pos = Vector3.new(0, 7, -half.Y), size = Vector3.new(size.X, 14, 1) },
+		{ pos = Vector3.new(-half.X, 7, 0), size = Vector3.new(1, 14, size.Y) },
+		{ pos = Vector3.new(half.X, 7, 0), size = Vector3.new(1, 14, size.Y) },
+	}
+	for i, wall in walls do
+		local pane = part({
+			Name = name .. "Glass" .. i,
+			Size = wall.size,
+			CFrame = CFrame.new(center) * CFrame.new(wall.pos),
+			Color = glass,
+			Material = Enum.Material.Glass,
+			Transparency = 0.62,
+			Parent = parent,
+		})
+		pane.Reflectance = 0.08
+	end
+	-- frame posts at the corners and either side of the opening
+	for _, corner in { Vector3.new(-half.X, 0, -half.Y), Vector3.new(half.X, 0, -half.Y), Vector3.new(-half.X, 0, half.Y), Vector3.new(half.X, 0, half.Y) } do
+		part({
+			Name = name .. "Post",
+			Size = Vector3.new(1.6, 15, 1.6),
+			CFrame = CFrame.new(center) * CFrame.new(corner + Vector3.new(0, 7.5, 0)),
+			Color = accent,
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+	end
+	-- lintel over the open side, so it reads as a doorway and not a missing wall
+	part({
+		Name = name .. "Lintel",
+		Size = Vector3.new(size.X, 2, 1.6),
+		CFrame = CFrame.new(center) * CFrame.new(0, 14, half.Y),
+		Color = accent,
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	})
+	local roof = part({
+		Name = name .. "Roof",
+		Size = Vector3.new(size.X + 2, 0.8, size.Y + 2),
+		CFrame = CFrame.new(center) * CFrame.new(0, 15.2, 0),
+		Color = glass,
+		Material = Enum.Material.Glass,
+		Transparency = 0.5,
+		Parent = parent,
+	})
+	roof.Reflectance = 0.12
+	-- benches down both sides: this is a lab, not an empty box
+	for _, bx in { -half.X + 5, half.X - 5 } do
+		part({
+			Name = name .. "Bench",
+			Size = Vector3.new(5, 3.2, size.Y - 10),
+			CFrame = CFrame.new(center) * CFrame.new(bx, 1.6, 0),
+			Color = Color3.fromRGB(64, 78, 74),
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		})
+	end
+	local sign = part({
+		Name = name .. "Sign",
+		Size = Vector3.new(size.X - 6, 4, 0.6),
+		CFrame = CFrame.new(center) * CFrame.new(0, 17.6, half.Y),
+		Color = Palette.Blackboard,
+		Parent = parent,
+	})
+	signText(sign, label, accent, Enum.NormalId.Front)
+	signText(sign, label, accent, Enum.NormalId.Back)
+end
+
 local function buildZone(parent: Instance, name: string, center: Vector3, size: Vector2, color: Color3, label: string, material: Enum.Material?): BasePart
 	local floor = part({
 		Name = name .. "Floor",
@@ -2276,8 +2367,27 @@ end
 	buildZone(folder, "PrincipalsOffice", Vector3.new(-204, 0, 35), Vector2.new(40, 58), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)", Enum.Material.Marble)
 	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(204, 0, -23), Vector2.new(40, 58), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
 	buildZone(folder, "Detention", Vector3.new(204, 0, 35), Vector2.new(40, 58), Color3.fromRGB(126, 126, 132), "DETENTION", Enum.Material.Concrete)
-	tag(buildZone(folder, "Classroom101", Vector3.new(-74, 0, -94), Vector2.new(28, 60), Color3.fromRGB(148, 118, 96), "CLASSROOM 101\nPOP QUIZ", Enum.Material.Carpet), "TexCarpet")
+	tag(buildZone(folder, "Classroom101", Vector3.new(-74, 0, -94), Vector2.new(28, 60), Color3.fromRGB(148, 118, 96), "ROOM 101\nMATHEMATICS", Enum.Material.Carpet), "TexCarpet")
 	buildZone(folder, "MusicRoom", Vector3.new(74, 0, -94), Vector2.new(28, 60), Color3.fromRGB(196, 168, 210), "MUSIC ROOM", Enum.Material.Carpet)
+	-- the two science annexes, dropped into the courtyards
+	buildPavilion(
+		folder,
+		"Greenhouse",
+		Vector3.new(-116, 0, -28),
+		Vector2.new(36, 34),
+		"THE GREENHOUSE\nBIOLOGY",
+		Color3.fromRGB(150, 220, 130),
+		Color3.fromRGB(206, 238, 210)
+	)
+	buildPavilion(
+		folder,
+		"EastLab",
+		Vector3.new(116, 0, -28),
+		Vector2.new(36, 34),
+		"EAST LAB\nCHEMISTRY",
+		Color3.fromRGB(150, 240, 190),
+		Color3.fromRGB(202, 232, 240)
+	)
 	buildZone(folder, "Gym", Vector3.new(0, 0, -105), Vector2.new(100, 82), Color3.fromRGB(210, 160, 110), "GYM — FIGHT ZONE", Enum.Material.WoodPlanks)
 	buildCheckerFloor(folder, Vector3.new(0, 0, 0), Vector2.new(120, 128)) -- atrium
 	-- courtyards: open-air grass

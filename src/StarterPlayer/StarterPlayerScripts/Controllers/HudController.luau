@@ -26,6 +26,7 @@ local MENU_ITEMS = {
 	{ label = "REP", panel = "Rep", icon = "⭐", color = Palette.BusYellow },
 	{ label = "CREW", panel = "Crew", icon = "👥", color = Palette.AuraPurple },
 	{ label = "STORE", panel = "Store", icon = "🛒", color = Palette.CashGreen },
+	{ label = "CLASSES", panel = "Classes", icon = "📕", color = Palette.LockerBlue },
 	{ label = "GRADES", panel = "Rebirth", icon = "🎓", color = Palette.LockerBlue },
 	{ label = "REWARDS", panel = "Rewards", icon = "🎁", color = Palette.BusYellow },
 	{ label = "QUESTS", panel = "Quests", icon = "📋", color = Palette.AuraPurple },

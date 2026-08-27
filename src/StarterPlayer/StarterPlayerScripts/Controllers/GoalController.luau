@@ -21,6 +21,7 @@ local player = Players.LocalPlayer
 -- what kind of goal it is decides the accent, so "go do it now" reads
 -- differently from "keep going"
 local ACCENTS: { [string]: Color3 } = {
+	class = Palette.DetentionRed,
 	collect = Palette.CashGreen,
 	claim = Palette.BusYellow,
 	graduate = Palette.LockerBlue,

@@ -10,6 +10,7 @@ local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Students = require(ReplicatedStorage.Config.Students)
 local Rebirths = require(ReplicatedStorage.Config.Rebirths)
 local Rewards = require(ReplicatedStorage.Config.Rewards)
+local Subjects = require(ReplicatedStorage.Config.Subjects)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local Remotes = require(ReplicatedStorage.Remotes)
 local DataService = require(script.Parent.DataService)
@@ -81,6 +82,15 @@ function EconomyService.Multiplier(player: Player): number
 		mult *= 2
 	end
 	mult *= 1 + (friendBonus[player] or 0)
+	-- the report card: every subject passed at B or better pays forever, so
+	-- going to class is an investment and not a detour
+	local passed = 0
+	for _, ratio in profile.grades do
+		if ratio >= Subjects.BonusMinRatio then
+			passed += 1
+		end
+	end
+	mult *= 1 + passed * Subjects.IncomeBonusPerSubject
 	return mult
 end
 

@@ -22,17 +22,17 @@ type Period = {
 	kind: string?,
 }
 
+-- Three lessons a cycle, so the whole five-subject timetable comes around in
+-- about twenty minutes rather than an hour.
+local function bell()
+	ClassService.StartBell()
+end
+
 local PERIODS: { Period } = {
-	{ name = "Free Period", duration = 210 },
-	{
-		name = "Class Time",
-		duration = 75,
-		-- ClassService announces the bell itself
-		onStart = function()
-			ClassService.StartBell()
-		end,
-	},
-	{ name = "Free Period", duration = 180 },
+	{ name = "Free Period", duration = 150 },
+	{ name = "Class Time", duration = 90, onStart = bell }, -- ClassService names the subject
+	{ name = "Free Period", duration = 120 },
+	{ name = "Class Time", duration = 90, onStart = bell },
 	{
 		name = "Lunch Rush",
 		duration = 120,
@@ -40,7 +40,8 @@ local PERIODS: { Period } = {
 		announce = "LUNCH RUSH! All crews earn 1.5x lunch money — cafeteria is popping!",
 		kind = "announce",
 	},
-	{ name = "Free Period", duration = 150 },
+	{ name = "Free Period", duration = 120 },
+	{ name = "Class Time", duration = 90, onStart = bell },
 	{
 		name = "Lights Out",
 		duration = GameConfig.CurfewNightSeconds,

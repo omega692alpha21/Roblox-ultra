@@ -9,7 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Diagnostics = {}
 
-local EXPECTED_PANELS = { "Rep", "Crew", "Store", "Rebirth", "Rewards", "Quests", "Cliques", "Top" }
+local EXPECTED_PANELS = { "Rep", "Crew", "Store", "Rebirth", "Rewards", "Quests", "Cliques", "Top", "Classes", "Menu" }
 
 type Result = { name: string, ok: boolean, err: string? }
 

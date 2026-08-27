@@ -19,6 +19,8 @@ local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 local PlotService = require(script.Parent.PlotService)
+local Subjects = require(ReplicatedStorage.Config.Subjects)
+local ClassService = require(script.Parent.ClassService)
 local QuestService = require(script.Parent.QuestService)
 local RewardService = require(script.Parent.RewardService)
 
@@ -50,6 +52,27 @@ local function pileGoal(player: Player, profile: DataService.Profile): Goal?
 		text = ("COLLECT YOUR PILE — $%s%s"):format(NumberFormat.Abbreviate(pile), streakNote),
 		progress = 1,
 		kind = "collect",
+	}
+end
+
+-- A class only runs for a minute and pays a permanent income bonus the first
+-- time you pass it, so while one is open it is the best thing on the board.
+local function classGoal(player: Player, profile: DataService.Profile): Goal?
+	local subjectId, until_ = ClassService.OpenSubject()
+	if not subjectId then
+		return nil
+	end
+	local subject = Subjects.Get(subjectId)
+	if not subject then
+		return nil
+	end
+	local seconds = math.max(0, math.ceil(until_ - os.clock()))
+	local best = profile.grades[subjectId] or 0
+	local note = if best >= Subjects.BonusMinRatio then "retake for a better grade" else "+2% income if you pass"
+	return {
+		text = ("%s %s in %s — %ds · %s"):format(subject.icon, subject.name:upper(), subject.room, seconds, note),
+		progress = 1,
+		kind = "class",
 	}
 end
 
@@ -131,7 +154,8 @@ local function computeGoal(player: Player): Goal?
 	end
 	-- highest value first: free money you already earned, then free money you
 	-- already unlocked, then the thing that grows income
-	return pileGoal(player, profile)
+	return classGoal(player, profile)
+		or pileGoal(player, profile)
 		or chestGoal(player)
 		or questGoal(player)
 		or crewGoal(player, profile)
