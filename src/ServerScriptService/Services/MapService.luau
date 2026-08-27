@@ -2,6 +2,7 @@
 -- Generates all of Crumbworth High from parts at server start. No Studio assets needed.
 -- Returns handles to everything other services attach behavior to.
 
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
@@ -46,6 +47,12 @@ local function part(props: { [string]: any }): Part
 	for k, v in props do
 		(p :: any)[k] = v
 	end
+	return p
+end
+
+-- Tag a part for the client-side EditableImage texture painter.
+local function tag(p: BasePart, tagName: string): BasePart
+	CollectionService:AddTag(p, tagName)
 	return p
 end
 
@@ -1089,26 +1096,26 @@ local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: 
 		end
 		local mid = from + unit * ((a + b) / 2)
 		local cf = CFrame.lookAt(mid, mid + perp)
-		part({ Name = "ShellBrickLow", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 3, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
-		part({ Name = "ShellWindow", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+		tag(part({ Name = "ShellBrickLow", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 3, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+		tag(part({ Name = "ShellWindow", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }), "TexWindow")
 		local mullions = math.floor(segLen / 9)
 		for m2 = 1, mullions - 1 do
 			part({ Name = "ShellMullion", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m2 * 9, 8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 		end
-		part({ Name = "ShellBrickHigh", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
+		tag(part({ Name = "ShellBrickHigh", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
 		-- white frames around the first-story windows (reference-art trim)
 		part({ Name = "ShellSill", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 5.8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 		part({ Name = "ShellLintel", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 10.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 		if tall then
 			-- second story: floor band, framed window band, brick, high parapet
 			part({ Name = "ShellFloorBand", Size = Vector3.new(segLen, 1.4, 2.6), CFrame = cf * CFrame.new(0, 16.6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
-			part({ Name = "ShellWindow2", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 19.5, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+			tag(part({ Name = "ShellWindow2", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 19.5, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }), "TexWindow")
 			local mullions2 = math.floor(segLen / 9)
 			for m3 = 1, mullions2 - 1 do
 				part({ Name = "ShellMullion2", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m3 * 9, 19.5, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 			end
 			part({ Name = "ShellLintel2", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 21.8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
-			part({ Name = "ShellBrickTop", Size = Vector3.new(segLen, 3.6, 2), CFrame = cf * CFrame.new(0, 24, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
+			tag(part({ Name = "ShellBrickTop", Size = Vector3.new(segLen, 3.6, 2), CFrame = cf * CFrame.new(0, 24, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
 			part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 26.4, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 		else
 			part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 16.6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
@@ -1124,7 +1131,7 @@ local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: 
 		part({ Name = "DoorLintel", Size = Vector3.new(gap.width + 4, 2, 2.8), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 		if tall then
 			-- fill the second story above the doorway so the wall reads solid
-			part({ Name = "GapUpperBrick", Size = Vector3.new(gap.width + 4, 12.4, 2), CFrame = cf * CFrame.new(0, 20.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
+			tag(part({ Name = "GapUpperBrick", Size = Vector3.new(gap.width + 4, 12.4, 2), CFrame = cf * CFrame.new(0, 20.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
 			part({ Name = "GapParapet", Size = Vector3.new(gap.width + 4, 1.2, 2.8), CFrame = cf * CFrame.new(0, 26.4, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 		end
 	end
@@ -1143,14 +1150,14 @@ local function buildMainShell(parent: Instance)
 	local pitch = math.rad(12)
 	for _, zc in { -55, 55 } do
 		for _, side in { -1, 1 } do
-			part({
+			tag(part({
 				Name = "WingRoofSlope",
 				Size = Vector3.new(336, 1.2, 30.6),
 				CFrame = CFrame.new(0, 29.8, zc + side * 14.5) * CFrame.Angles(side * pitch, 0, 0),
 				Color = Color3.fromRGB(62, 78, 70),
 				Material = Enum.Material.Slate,
 				Parent = parent,
-			})
+			}), "TexRoof")
 		end
 		part({ Name = "WingRidge", Size = Vector3.new(336, 0.9, 2.4), CFrame = CFrame.new(0, 33.2, zc), Color = Color3.fromRGB(52, 64, 58), Material = Enum.Material.Slate, Parent = parent })
 		part({ Name = "WingCeiling", Size = Vector3.new(336, 0.8, 58), CFrame = CFrame.new(0, 26.6, zc), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.SmoothPlastic, Parent = parent })
@@ -1171,7 +1178,7 @@ local function buildMainShell(parent: Instance)
 	part({ Name = "EntranceStepLow", Size = Vector3.new(34, 1, 8), CFrame = CFrame.new(0, 0.5, 90), Color = Color3.fromRGB(200, 196, 186), Material = Enum.Material.Concrete, Parent = parent })
 	part({ Name = "EntranceStepHigh", Size = Vector3.new(30, 1, 5), CFrame = CFrame.new(0, 1.0, 87), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent })
 	for _, side in { -1, 1 } do
-		part({ Name = "EntranceColumn", Size = Vector3.new(2.4, 15, 2.4), CFrame = CFrame.new(side * 17, 7.5, 87), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntranceColumn", Shape = Enum.PartType.Cylinder, Size = Vector3.new(15, 2.6, 2.6), CFrame = CFrame.new(side * 17, 7.5, 87) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 	end
 	local facade = part({ Name = "FacadeSign", Size = Vector3.new(52, 5.4, 1.4), CFrame = CFrame.new(0, 24.4, 84.4), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
 	signText(facade, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Front)
@@ -1179,7 +1186,7 @@ local function buildMainShell(parent: Instance)
 
 	-- brick clock tower rising over the entrance (the campus landmark)
 	local towerBrick = Color3.fromRGB(126, 78, 62)
-	part({ Name = "ClockTower", Size = Vector3.new(14, 34, 14), CFrame = CFrame.new(0, 33, 78), Color = towerBrick, Material = Enum.Material.Brick, Parent = parent })
+	tag(part({ Name = "ClockTower", Size = Vector3.new(14, 34, 14), CFrame = CFrame.new(0, 33, 78), Color = towerBrick, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
 	part({ Name = "TowerClockBlock", Size = Vector3.new(15.5, 12, 15.5), CFrame = CFrame.new(0, 44, 78), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 	part({ Name = "TowerTrim", Size = Vector3.new(16.2, 1.6, 16.2), CFrame = CFrame.new(0, 50.6, 78), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 	part({ Name = "TowerCap", Size = Vector3.new(12, 4, 12), CFrame = CFrame.new(0, 53.4, 78), Color = Color3.fromRGB(60, 72, 86), Material = Enum.Material.Slate, Parent = parent })
@@ -1247,7 +1254,7 @@ local BRICK = Color3.fromRGB(126, 78, 62)
 local HEDGE = Color3.fromRGB(52, 96, 48)
 
 local function buildCornerTower(parent: Instance, x: number, z: number)
-	part({ Name = "CornerTower", Size = Vector3.new(12, 36, 12), CFrame = CFrame.new(x, 18, z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
+	tag(part({ Name = "CornerTower", Size = Vector3.new(12, 36, 12), CFrame = CFrame.new(x, 18, z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
 	part({ Name = "TowerBand", Size = Vector3.new(13, 1.2, 13), CFrame = CFrame.new(x, 34.4, z), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	-- crenellated top
 	for _, offset in { Vector3.new(-4.5, 0, -4.5), Vector3.new(4.5, 0, -4.5), Vector3.new(-4.5, 0, 4.5), Vector3.new(4.5, 0, 4.5), Vector3.new(0, 0, -4.5), Vector3.new(0, 0, 4.5), Vector3.new(-4.5, 0, 0), Vector3.new(4.5, 0, 0) } do
@@ -1261,7 +1268,7 @@ local function buildPortico(parent: Instance, x: number)
 	-- white columned entry with a stepped pediment, on the south face
 	local z = 86.5
 	for i = 0, 3 do
-		part({ Name = "PorticoColumn", Size = Vector3.new(1.8, 13, 1.8), CFrame = CFrame.new(x - 7.5 + i * 5, 6.5, z), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "PorticoColumn", Shape = Enum.PartType.Cylinder, Size = Vector3.new(13, 2.0, 2.0), CFrame = CFrame.new(x - 7.5 + i * 5, 6.5, z) * CFrame.Angles(0, 0, math.rad(90)), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	end
 	part({ Name = "PorticoBeam", Size = Vector3.new(20, 2, 5), CFrame = CFrame.new(x, 14, z - 0.6), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	part({ Name = "PorticoPed1", Size = Vector3.new(16, 1.6, 4.4), CFrame = CFrame.new(x, 15.8, z - 0.6), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
@@ -1362,7 +1369,7 @@ local function detailCourtyard(parent: Instance)
 	part({ Name = "BalconyRail", Size = Vector3.new(96, 2.4, 0.5), CFrame = CFrame.new(0, 18.9, 93), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	for i = 0, 8 do
 		if i ~= 4 then -- keep the entrance walk clear
-			part({ Name = "BalconyPost", Size = Vector3.new(1.2, 16, 1.2), CFrame = CFrame.new(-44 + i * 11, 8.5, 92), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "BalconyPost", Shape = Enum.PartType.Cylinder, Size = Vector3.new(16, 1.4, 1.4), CFrame = CFrame.new(-44 + i * 11, 8.5, 92) * CFrame.Angles(0, 0, math.rad(90)), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
 		end
 	end
 end
