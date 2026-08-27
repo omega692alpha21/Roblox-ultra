@@ -3,8 +3,8 @@
   "properties": {
     "BaseMaterial": "Grass",
     "StudsPerTile": 26,
-    "ColorMap": "rbxassetid://76792612742592",
-    "NormalMap": "rbxassetid://83329181864597",
-    "RoughnessMap": "rbxassetid://136255874983889"
+    "ColorMap": "rbxassetid://74288493229469",
+    "NormalMap": "rbxassetid://113913201657243",
+    "RoughnessMap": "rbxassetid://70396934997339"
   }
 }

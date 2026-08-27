@@ -3,8 +3,8 @@
   "properties": {
     "BaseMaterial": "Cobblestone",
     "StudsPerTile": 10,
-    "ColorMap": "rbxassetid://129625555224292",
-    "NormalMap": "rbxassetid://81296439646912",
-    "RoughnessMap": "rbxassetid://138535703045834"
+    "ColorMap": "rbxassetid://89332027513408",
+    "NormalMap": "rbxassetid://86823205047553",
+    "RoughnessMap": "rbxassetid://87217224178204"
   }
 }

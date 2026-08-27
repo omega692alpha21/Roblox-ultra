@@ -3,8 +3,8 @@
   "properties": {
     "BaseMaterial": "Fabric",
     "StudsPerTile": 12,
-    "ColorMap": "rbxassetid://114302929582775",
-    "NormalMap": "rbxassetid://117514535615581",
-    "RoughnessMap": "rbxassetid://89534415296976"
+    "ColorMap": "rbxassetid://103221684831716",
+    "NormalMap": "rbxassetid://106702382460516",
+    "RoughnessMap": "rbxassetid://76515655442247"
   }
 }

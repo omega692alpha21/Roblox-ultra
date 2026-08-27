@@ -3,8 +3,8 @@
   "properties": {
     "BaseMaterial": "Metal",
     "StudsPerTile": 8,
-    "ColorMap": "rbxassetid://88071740077430",
-    "NormalMap": "rbxassetid://113973027069471",
-    "RoughnessMap": "rbxassetid://100588037192756"
+    "ColorMap": "rbxassetid://117005259025974",
+    "NormalMap": "rbxassetid://114554125801733",
+    "RoughnessMap": "rbxassetid://103026570480177"
   }
 }
