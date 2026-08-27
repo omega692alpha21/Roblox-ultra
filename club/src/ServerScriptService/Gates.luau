@@ -12,6 +12,21 @@ local Membership = require(script.Parent.Membership)
 
 local Gates = {}
 
+-- with StreamingEnabled, pre-stream the destination so nobody falls through
+-- an unloaded floor on teleport
+local function warpTo(player: Player, target: Vector3)
+	local character = player.Character
+	if not character then
+		return
+	end
+	pcall(function()
+		player:RequestStreamAroundAsync(target, 2)
+	end)
+	if player.Character == character then
+		character:PivotTo(CFrame.new(target))
+	end
+end
+
 local function fmt(n: number): string
 	local s = tostring(n)
 	local out = ""
@@ -53,14 +68,9 @@ function Gates.Init(map: any)
 						opening = false
 					end)
 				end
-				local character = player.Character
-				if character then
-					task.delay(1.5, function()
-						if player.Character == character then
-							character:PivotTo(CFrame.new(map.hallPoint))
-						end
-					end)
-				end
+				task.delay(1.5, function()
+					warpTo(player, map.hallPoint)
+				end)
 			else
 				local price = tonumber(ReplicatedStorage:GetAttribute("SeatPrice")) or 0
 				Remotes.Get("Notify"):FireClient(player, "Members only.", "bad")
@@ -88,11 +98,8 @@ function Gates.Init(map: any)
 
 		prompt.Triggered:Connect(function(player)
 			if Membership.TierIndexOf(player) >= needed then
-				local character = player.Character
-				if character then
-					character:PivotTo(CFrame.new(gate.landing))
-					Remotes.Get("Notify"):FireClient(player, ("Welcome to the %s chamber."):format(gate.tier), "good")
-				end
+				warpTo(player, gate.landing)
+				Remotes.Get("Notify"):FireClient(player, ("Welcome to the %s chamber."):format(gate.tier), "good")
 			else
 				Remotes.Get("Notify"):FireClient(player, ("This chamber is for %s."):format(gate.tier), "bad")
 				if tier and tier.price > 0 then
@@ -113,10 +120,7 @@ function Gates.Init(map: any)
 		prompt.RequiresLineOfSight = false
 		prompt.Parent = pad
 		prompt.Triggered:Connect(function(player)
-			local character = player.Character
-			if character then
-				character:PivotTo(CFrame.new(map.hallPoint))
-			end
+			warpTo(player, map.hallPoint)
 		end)
 	end
 end

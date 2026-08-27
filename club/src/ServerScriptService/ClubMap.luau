@@ -98,8 +98,8 @@ local function glowOrb(parent: Instance, pos: Vector3, scale: number, color: Col
 	})
 	local light = Instance.new("PointLight")
 	light.Color = color
-	light.Brightness = 2.2 * scale
-	light.Range = 22 * scale
+	light.Brightness = 1.6 * scale
+	light.Range = 16 * scale
 	light.Shadows = false
 	light.Parent = core
 	return core
@@ -194,8 +194,9 @@ local function loadMesh(assetId: number): Model?
 			if style.neon then
 				local light = Instance.new("PointLight")
 				light.Color = GOLD_BRIGHT
-				light.Brightness = 2
-				light.Range = 30
+				light.Brightness = 1.2
+				light.Range = 16
+				light.Shadows = false
 				light.Parent = p
 			end
 		end
@@ -230,8 +231,9 @@ local function crystalCluster(folder: Folder, template: Model?, pos: Vector3, se
 		if placed then
 			for _, p in placed:GetDescendants() do
 				if p:IsA("BasePart") then
-					p.Transparency = 0.25
-					p.Reflectance = 0.15
+					p.Transparency = 0.15
+					p.Reflectance = 0.12
+					p.Material = Enum.Material.Ice
 					p.Color = if i % 2 == 0 then Color3.fromRGB(150, 190, 230) else Color3.fromRGB(190, 170, 235)
 				end
 			end
@@ -241,8 +243,8 @@ local function crystalCluster(folder: Folder, template: Model?, pos: Vector3, se
 				Size = Vector3.new(1.4, 3.4, 1.4) * scale * 0.6,
 				CFrame = CFrame.new(pos + offset) * tilt,
 				Color = Color3.fromRGB(150, 190, 230),
-				Material = Enum.Material.Glass,
-				Transparency = 0.25,
+				Material = Enum.Material.Ice,
+				Transparency = 0.15,
 				CanCollide = false,
 				Parent = folder,
 			})
@@ -268,7 +270,7 @@ local function fountain(folder: Folder, pos: Vector3, radius: number)
 		Size = Vector3.new(0.6, radius * 1.7, radius * 1.7),
 		CFrame = CFrame.new(pos + Vector3.new(0, 1.5, 0)) * CFrame.Angles(0, 0, math.rad(90)),
 		Color = WATER,
-		Material = Enum.Material.Glass,
+		Material = Enum.Material.SmoothPlastic,
 		Transparency = 0.35,
 		Reflectance = 0.3,
 		CanCollide = false,
@@ -290,7 +292,7 @@ local function fountain(folder: Folder, pos: Vector3, radius: number)
 		Size = Vector3.new(4.4, 0.9, 0.9),
 		CFrame = CFrame.new(pos + Vector3.new(0, 4.6, 0)) * CFrame.Angles(0, 0, math.rad(90)),
 		Color = Color3.fromRGB(180, 220, 240),
-		Material = Enum.Material.Glass,
+		Material = Enum.Material.SmoothPlastic,
 		Transparency = 0.3,
 		CanCollide = false,
 		Parent = folder,
@@ -337,7 +339,7 @@ local function buildEstate(folder: Folder, meshes: { [string]: Model? })
 		Size = Vector3.new(10, 0.7, length - 20),
 		CFrame = CFrame.new(0, 0.5, mid),
 		Color = WATER,
-		Material = Enum.Material.Glass,
+		Material = Enum.Material.SmoothPlastic,
 		Transparency = 0.28,
 		Reflectance = 0.42,
 		CanCollide = true,
@@ -905,9 +907,9 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 	end
 
 	for _, spot in { Vector3.new(-32, 0, 0), Vector3.new(32, 0, 0), Vector3.new(0, 0, -32), Vector3.new(0, 0, 32) } do
-		fillLight(folder, Vector3.new(cx + spot.X, HALL_H - 11, cz + spot.Z), GOLD_BRIGHT, 2.0, 70)
+		fillLight(folder, Vector3.new(cx + spot.X, HALL_H - 11, cz + spot.Z), GOLD_BRIGHT, 1.8, 55)
 	end
-	fillLight(folder, Vector3.new(cx, 20, cz), Color3.fromRGB(215, 225, 255), 1.1, 90)
+	fillLight(folder, Vector3.new(cx, 20, cz), Color3.fromRGB(215, 225, 255), 1.0, 70)
 
 	return registryWall :: BasePart, goldGate :: BasePart
 end

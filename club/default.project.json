@@ -4,11 +4,15 @@
     "$className": "DataModel",
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "Club": { "$path": "src/ReplicatedStorage" }
+      "Club": {
+        "$path": "src/ReplicatedStorage"
+      }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "Club": { "$path": "src/ServerScriptService" }
+      "Club": {
+        "$path": "src/ServerScriptService"
+      }
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
@@ -19,7 +23,17 @@
     },
     "Lighting": {
       "$className": "Lighting",
-      "$properties": { "Technology": "Future" }
+      "$properties": {
+        "Technology": "ShadowMap"
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 128,
+        "StreamingTargetRadius": 320
+      }
     }
   }
 }

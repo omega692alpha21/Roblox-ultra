@@ -402,4 +402,22 @@ navButton("DIRECTORY", function()
 	panel.Visible = false
 end)
 
+-- ------------------------------------------------- gem spin (local only) ---
+-- Every gem's hover bob and spin runs here, on the client, so the server
+-- never streams animation frames. Purely visual; costs nothing on the wire.
+local RunService = game:GetService("RunService")
+RunService.RenderStepped:Connect(function()
+	local t = os.clock()
+	local spin = CFrame.new(0, 0.6 + math.sin(t * 1.4) * 0.25, 0) * CFrame.Angles(0, t * 0.8, 0)
+	for _, other in Players:GetPlayers() do
+		local character = other.Character
+		local gem = character and character:FindFirstChild("GemForm")
+		local primary = gem and (gem :: Model).PrimaryPart
+		local weld = primary and primary:FindFirstChild("GemWeld")
+		if weld and weld:IsA("Weld") then
+			weld.C0 = spin
+		end
+	end
+end)
+
 print("[MC] client ready")

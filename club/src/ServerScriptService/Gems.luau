@@ -109,7 +109,9 @@ local function dress(player: Player, character: Model)
 	for _, p in gem:GetDescendants() do
 		if p:IsA("BasePart") then
 			primary = primary or p
-			p.Anchored = true
+			p.Anchored = false
+			p.CanCollide = false
+			p.Massless = true
 			p.Color = tier.gem
 			p.Material = Enum.Material.Glass
 			p.Transparency = if tier.name == "BLACK" then 0.02 else 0.12
@@ -121,6 +123,22 @@ local function dress(player: Player, character: Model)
 	end
 	gem.PrimaryPart = primary
 	gem:PivotTo(root.CFrame * CFrame.new(0, 0.6, 0))
+	-- welded to the rig: replicates for free with the character. The spin and
+	-- hover bob are client-side (ClubClient animates GemWeld.C0 locally).
+	local weld = Instance.new("Weld")
+	weld.Name = "GemWeld"
+	weld.Part0 = root
+	weld.Part1 = primary
+	weld.C0 = CFrame.new(0, 0.6, 0)
+	weld.Parent = primary
+	for _, p in gem:GetDescendants() do
+		if p:IsA("BasePart") and p ~= primary then
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = primary
+			w.Part1 = p
+			w.Parent = p
+		end
+	end
 	gem.Parent = character
 
 	-- the glow and the glint
@@ -134,15 +152,6 @@ local function dress(player: Player, character: Model)
 	sparkles.SparkleColor = tier.glow
 	sparkles.Enabled = tier.name ~= "GUEST"
 	sparkles.Parent = primary
-
-	-- anchored stone follows the invisible rig: slow spin + hover bob
-	task.spawn(function()
-		while gem.Parent and root.Parent do
-			local t = os.clock()
-			gem:PivotTo(root.CFrame * CFrame.new(0, 0.6 + math.sin(t * 1.4) * 0.25, 0) * CFrame.Angles(0, t * 0.8, 0))
-			task.wait()
-		end
-	end)
 
 	-- tier title floating over the stone — the only identity anyone sees
 	local billboard = Instance.new("BillboardGui")
