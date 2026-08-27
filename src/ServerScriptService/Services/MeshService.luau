@@ -8,18 +8,27 @@ local InsertService = game:GetService("InsertService")
 local MeshService = {}
 
 local ASSETS = {
-	Tree = 123176989211719,
-	Tree2 = 111930697390035,
-	Conifer = 93706083038898,
-	Rock1 = 95711606920237,
-	Rock2 = 87573270384038,
-	Tuft = 75016121552871,
-	Hedge = 88569427739236,
+	-- painterly flora: hand-painted textures are baked INSIDE these .glb
+	-- files, so Roblox's importer applies them at upload time (TextureID
+	-- cannot be assigned at runtime). Do not recolour these.
+	Tree = 96371665611572,
+	Tree2 = 116687956743234,
+	Conifer = 86623707243626,
+	Rock1 = 119854923753216,
+	Rock2 = 139159390912504,
+	Tuft = 86994237989339,
+	Hedge = 100949482507815,
 	Palm = 120929000216583,
 	Arch = 76176860283975,
 	LockerBank = 111684152621060,
 	Bench = 80409319935408,
 	Lamppost = 71751173797781,
+}
+
+local TEXTURED: { [number]: boolean } = {
+	[ASSETS.Tree] = true, [ASSETS.Tree2] = true, [ASSETS.Conifer] = true,
+	[ASSETS.Rock1] = true, [ASSETS.Rock2] = true, [ASSETS.Tuft] = true,
+	[ASSETS.Hedge] = true,
 }
 
 local rng = Random.new(17)
@@ -30,30 +39,6 @@ local rng = Random.new(17)
 -- node-name -> {color, material} style map applied after load.
 type Style = { color: Color3, material: Enum.Material? }
 local STYLES: { [number]: { [string]: Style } } = {
-	[ASSETS.Tree] = {
-		part0 = { color = Color3.fromRGB(96, 68, 44), material = Enum.Material.Wood },
-		part1 = { color = Color3.fromRGB(86, 152, 66), material = Enum.Material.Grass },
-	},
-	[ASSETS.Tree2] = {
-		part0 = { color = Color3.fromRGB(104, 74, 48), material = Enum.Material.Wood },
-		part1 = { color = Color3.fromRGB(72, 138, 58), material = Enum.Material.Grass },
-	},
-	[ASSETS.Conifer] = {
-		part0 = { color = Color3.fromRGB(88, 62, 40), material = Enum.Material.Wood },
-		part1 = { color = Color3.fromRGB(46, 104, 62), material = Enum.Material.Grass },
-	},
-	[ASSETS.Rock1] = {
-		part0 = { color = Color3.fromRGB(178, 178, 182), material = Enum.Material.Rock },
-	},
-	[ASSETS.Rock2] = {
-		part0 = { color = Color3.fromRGB(166, 168, 174), material = Enum.Material.Rock },
-	},
-	[ASSETS.Tuft] = {
-		part0 = { color = Color3.fromRGB(96, 162, 68), material = Enum.Material.Grass },
-	},
-	[ASSETS.Hedge] = {
-		part0 = { color = Color3.fromRGB(56, 107, 51), material = Enum.Material.Grass },
-	},
 	[ASSETS.Palm] = {
 		part0 = { color = Color3.fromRGB(122, 92, 61), material = Enum.Material.Wood },
 		part1 = { color = Color3.fromRGB(61, 128, 56), material = Enum.Material.Grass },
@@ -95,6 +80,9 @@ local function loadTemplate(assetId: number): Model?
 		if child:IsA("BasePart") or child:IsA("Model") then
 			child.Parent = template
 		end
+	end
+	if TEXTURED[assetId] then
+		template:SetAttribute("Painted", true)
 	end
 	local styles = STYLES[assetId]
 	local unstyled: { BasePart } = {}
@@ -149,6 +137,10 @@ end
 -- Nudge each clone's greens so no two trees are identical — the thing that
 -- makes stylised foliage read as painted rather than stamped.
 local function tintClone(model: Model, seed: number)
+	-- baked-texture meshes carry their own painted shading; leave them alone
+	if model:GetAttribute("Painted") then
+		return
+	end
 	local r = Random.new(seed)
 	local warm = r:NextNumber(-0.06, 0.08)
 	local light = r:NextNumber(-0.07, 0.09)
