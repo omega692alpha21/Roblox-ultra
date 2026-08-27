@@ -36,6 +36,8 @@ local EVENTS = {
 	"ChooseCharacter", -- (outfit: "boy" | "girl")
 	"JailState", -- server -> client (secondsLeft: number, canSkip: boolean)
 	"RequestJailSkip", -- client -> server: use the pass, or get the purchase prompt
+	"UseToy", -- client -> server (toyId: string, direction: Vector3)
+	"BuyToy", -- client -> server (toyId: string)
 }
 
 local FUNCTIONS = {
