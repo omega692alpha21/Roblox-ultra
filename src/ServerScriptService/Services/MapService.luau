@@ -1617,6 +1617,16 @@ local function detailGym(parent: Instance)
 	end
 	-- high window band
 	part({ Name = "GymWindowBand", Size = Vector3.new(50, 3.2, 0.5), CFrame = CFrame.new(c.X, 10, c.Z + 33.6), Color = Color3.fromRGB(200, 224, 240), Material = Enum.Material.Glass, Transparency = 0.4, Parent = parent })
+	-- cool-white sport lighting overhead
+	for _, off in { -20, 0, 20 } do
+		local strip = part({ Name = "GymLightStrip", Size = Vector3.new(40, 0.4, 1.2), CFrame = CFrame.new(c.X, 13.2, c.Z + off), Color = Color3.fromRGB(235, 245, 255), Material = Enum.Material.Neon, Parent = parent })
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(225, 240, 255)
+		light.Brightness = 1.3
+		light.Range = 34
+		light.Parent = strip
+	end
+
 	-- basketball hoop on the gym wall
 	part({ Name = "GymBoard", Size = Vector3.new(6, 4, 0.4), CFrame = CFrame.new(c.X, 9.6, c.Z - 32.8), Color = Color3.fromRGB(240, 240, 240), Parent = parent })
 	part({ Name = "GymRim", Size = Vector3.new(1.6, 0.3, 1.6), CFrame = CFrame.new(c.X, 8.2, c.Z - 31.6), Color = Color3.fromRGB(226, 100, 60), Material = Enum.Material.Neon, Parent = parent })

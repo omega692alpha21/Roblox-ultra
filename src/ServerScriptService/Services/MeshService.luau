@@ -12,6 +12,9 @@ local ASSETS = {
 	Hedge = 88569427739236,
 	Palm = 120929000216583,
 	Arch = 76176860283975,
+	LockerBank = 111684152621060,
+	Bench = 80409319935408,
+	Lamppost = 71751173797781,
 }
 
 local rng = Random.new(17)
@@ -111,6 +114,92 @@ function MeshService.Init(map: { folder: Folder })
 		clone.Name = "MeshEntranceArch"
 		clone:PivotTo(CFrame.new(0, 13.2 + 8.5, 84))
 		clone.Parent = map.folder
+	end
+
+	-- locker banks: swap flat textured banks for 3D beveled-door meshes
+	local lockerTemplate = loadTemplate(ASSETS.LockerBank)
+	if lockerTemplate then
+		local banks: { BasePart } = {}
+		for _, child in map.folder:GetDescendants() do
+			if child:IsA("BasePart") and child.Name == "LockerBank" then
+				table.insert(banks, child)
+			end
+		end
+		for _, bank in banks do
+			local clone = lockerTemplate:Clone()
+			clone.Name = "MeshLockerBank"
+			-- face the hallway center: banks sit at z = +/-13.2, doors face inward
+			local inward = bank.Position.Z > 0 and -1 or 1
+			clone:PivotTo(CFrame.new(bank.Position) * CFrame.Angles(0, inward > 0 and 0 or math.pi, 0))
+			clone.Parent = map.folder
+			bank:Destroy()
+		end
+		print(("[MeshService] replaced %d locker banks"):format(#banks))
+	end
+
+	-- benches: slatted mesh benches replace the box seats
+	local benchTemplate = loadTemplate(ASSETS.Bench)
+	if benchTemplate then
+		local seats: { BasePart } = {}
+		local legs: { BasePart } = {}
+		for _, child in map.folder:GetDescendants() do
+			if child:IsA("BasePart") then
+				if child.Name == "BenchSeat" then
+					table.insert(seats, child)
+				elseif child.Name == "BenchLeg" then
+					table.insert(legs, child)
+				end
+			end
+		end
+		for _, seat in seats do
+			local clone = benchTemplate:Clone()
+			clone.Name = "MeshBench"
+			local backToWall = seat.Position.Z > 0 and 0 or math.pi
+			clone:PivotTo(CFrame.new(seat.Position.X, 0, seat.Position.Z) * CFrame.new(0, 1.5, 0) * CFrame.Angles(0, backToWall, 0))
+			clone.Parent = map.folder
+			seat:Destroy()
+		end
+		for _, leg in legs do
+			leg:Destroy()
+		end
+	end
+
+	-- lampposts: curved-arm mesh lamps with warm light, replacing post+cube
+	local lampTemplate = loadTemplate(ASSETS.Lamppost)
+	if lampTemplate then
+		local posts: { BasePart } = {}
+		local heads: { BasePart } = {}
+		for _, child in map.folder:GetDescendants() do
+			if child:IsA("BasePart") then
+				if child.Name == "LampPost" then
+					table.insert(posts, child)
+				elseif child.Name == "LampHead" then
+					table.insert(heads, child)
+				end
+			end
+		end
+		for _, post in posts do
+			local clone = lampTemplate:Clone()
+			clone.Name = "MeshLamppost"
+			local base = post.Position - Vector3.new(0, post.Size.Y / 2, 0)
+			clone:PivotTo(CFrame.new(base) * CFrame.new(0, 4.7, 0) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0))
+			clone.Parent = map.folder
+			-- re-add the light on the mesh head
+			for _, meshPart in clone:GetDescendants() do
+				if meshPart:IsA("BasePart") and meshPart.Color.R > 0.9 then
+					local light = Instance.new("PointLight")
+					light.Color = Color3.fromRGB(255, 234, 190)
+					light.Brightness = 1.2
+					light.Range = 24
+					light.Parent = meshPart
+					meshPart.Material = Enum.Material.Neon
+				end
+			end
+			post:Destroy()
+		end
+		for _, head in heads do
+			head:Destroy()
+		end
 	end
 
 	local hedgeTemplate = loadTemplate(ASSETS.Hedge)
