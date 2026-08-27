@@ -124,6 +124,21 @@ local function onProfileLoaded(player: Player, profile: DataService.Profile)
 	pushState(player)
 end
 
+-- The first playtime chest that is ready and unclaimed, for the goal tracker.
+function RewardService.ReadyChest(player: Player): { minutes: number, prize: Rewards.Prize }?
+	local claimed = playtimeClaimed[player]
+	if not claimed then
+		return nil
+	end
+	local elapsed = os.clock() - (joinTime[player] or os.clock())
+	for index, tier in Rewards.Playtime do
+		if not claimed[index] and elapsed >= tier.minutes * 60 then
+			return tier
+		end
+	end
+	return nil
+end
+
 function RewardService.Init()
 	Players.PlayerAdded:Connect(function(player)
 		joinTime[player] = os.clock()

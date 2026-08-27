@@ -112,6 +112,7 @@ local BOOT: { { name: string, init: (typeof(map)) -> () } } = {
 	{ name = "MonetizationService", init = function() (require(Services.MonetizationService) :: any).Init() end },
 	{ name = "RewardService", init = function() (require(Services.RewardService) :: any).Init() end },
 	{ name = "QuestService", init = function() (require(Services.QuestService) :: any).Init() end },
+	{ name = "GoalService", init = function() (require(Services.GoalService) :: any).Init() end },
 	{ name = "LeaderboardService", init = function(m) (require(Services.LeaderboardService) :: any).Init(m) end },
 	{ name = "EffectsService", init = function() (require(Services.EffectsService) :: any).Init() end },
 	{ name = "NPCDirector", init = function() (require(Services.NPCDirector) :: any).Init() end },

@@ -68,7 +68,7 @@ function HudController.Init(gui: ScreenGui)
 	local card = UIBuilder.Frame({
 		Name = "StatusCard",
 		Position = UDim2.fromOffset(Layout.StatusX, Layout.Margin),
-		Size = UDim2.fromOffset(Layout.px(196), Layout.px(78)),
+		Size = UDim2.fromOffset(Layout.px(214), Layout.px(78)),
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.35,
 		Parent = gui,

@@ -47,6 +47,7 @@ end
 local ORDER = {
 	"NotifyController",
 	"HudController",
+	"GoalController",
 	"CrewController",
 	"RepController",
 	"StoreController",

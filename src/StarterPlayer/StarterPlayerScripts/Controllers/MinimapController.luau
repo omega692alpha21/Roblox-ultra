@@ -131,6 +131,30 @@ function MinimapController.Init(gui: ScreenGui)
 		end
 	end)
 
+	-- home: the player's own collect pad, so "go collect" points somewhere
+	local home = Instance.new("TextLabel")
+	home.Name = "Home"
+	home.AnchorPoint = Vector2.new(0.5, 0.5)
+	home.Size = UDim2.fromOffset(Layout.px(16), Layout.px(16))
+	home.BackgroundTransparency = 1
+	home.Text = "🏠"
+	home.TextScaled = true
+	home.Visible = false
+	home.ZIndex = 25
+	home.Parent = world
+
+	local function refreshHome()
+		local pad = player:GetAttribute("HomePad")
+		if typeof(pad) == "Vector3" then
+			home.Visible = true
+			home.Position = UDim2.fromOffset(pad.X * SCALE, pad.Z * SCALE)
+		else
+			home.Visible = false
+		end
+	end
+	player:GetAttributeChangedSignal("HomePad"):Connect(refreshHome)
+	refreshHome()
+
 	-- the player arrow sits dead centre and never moves
 	local arrow = Instance.new("TextLabel")
 	arrow.AnchorPoint = Vector2.new(0.5, 0.5)

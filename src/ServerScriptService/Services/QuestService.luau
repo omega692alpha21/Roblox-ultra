@@ -90,6 +90,12 @@ local function bump(player: Player, stat: string, amount: number)
 	end
 end
 
+-- Today's quests, for anything that needs to read progress without owning it.
+function QuestService.List(player: Player): { Quest }?
+	local entry = quests[player]
+	return entry and entry.list or nil
+end
+
 function QuestService.Init()
 	Players.PlayerAdded:Connect(function(player)
 		task.defer(ensureQuests, player)

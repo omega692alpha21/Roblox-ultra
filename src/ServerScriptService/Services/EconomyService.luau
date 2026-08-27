@@ -11,6 +11,7 @@ local Students = require(ReplicatedStorage.Config.Students)
 local Rebirths = require(ReplicatedStorage.Config.Rebirths)
 local Rewards = require(ReplicatedStorage.Config.Rewards)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
+local Remotes = require(ReplicatedStorage.Remotes)
 local DataService = require(script.Parent.DataService)
 local PlotService = require(script.Parent.PlotService)
 local EffectsService = require(script.Parent.EffectsService)
@@ -64,6 +65,12 @@ end
 EconomyService.RefreshStats = refreshStats
 
 -- Full income multiplier for a player: grade x passes x clique x friends.
+-- The uncollected pile. The goal tracker needs it to know when collecting is
+-- the most valuable thing you could be doing.
+function EconomyService.Pile(player: Player): number
+	return uncollected[player] or 0
+end
+
 function EconomyService.Multiplier(player: Player): number
 	local profile = DataService.Get(player)
 	if not profile then
@@ -132,18 +139,49 @@ function EconomyService.TrySpend(player: Player, amount: number): boolean
 	return true
 end
 
+-- Collecting on a rhythm is the core loop, so the loop pays for itself:
+-- each collect inside the streak window compounds a bonus, and drifting off
+-- resets it. It turns "walk to the pad eventually" into "get back here".
+local COLLECT_STREAK_WINDOW = 100
+local COLLECT_STREAK_STEP = 0.1
+local COLLECT_STREAK_MAX = 5
+
+local lastCollect: { [Player]: number } = {}
+local collectStreak: { [Player]: number } = {}
+
 local function bank(player: Player)
 	local pile = uncollected[player] or 0
 	if pile < 1 then
 		return
 	end
 	uncollected[player] = 0
-	EconomyService.AddCash(player, math.floor(pile), true)
+
+	local now = os.clock()
+	local streak = collectStreak[player] or 0
+	if now - (lastCollect[player] or -math.huge) <= COLLECT_STREAK_WINDOW then
+		streak = math.min(streak + 1, COLLECT_STREAK_MAX)
+	else
+		streak = 0
+	end
+	lastCollect[player] = now
+	collectStreak[player] = streak
+	player:SetAttribute("CollectStreak", streak)
+
+	local bonus = streak * COLLECT_STREAK_STEP
+	local total = math.floor(pile * (1 + bonus))
+	EconomyService.AddCash(player, total, true)
 	Signals.Collected:Fire(player)
 	local plot = PlotService.GetPlot(player)
 	if plot then
 		plot.pileLabel.Text = "$0"
-		EffectsService.CashPopup(plot.collectPad.Position, math.floor(pile))
+		EffectsService.CashPopup(plot.collectPad.Position, total)
+	end
+	if streak > 0 then
+		Remotes.Get("Notify"):FireClient(
+			player,
+			("COLLECT STREAK x%d — +%d%% bonus!"):format(streak + 1, math.floor(bonus * 100)),
+			"good"
+		)
 	end
 end
 
@@ -182,6 +220,8 @@ function EconomyService.Init()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		uncollected[player] = nil
+		lastCollect[player] = nil
+		collectStreak[player] = nil
 		friendBonus[player] = nil
 		collectDebounce[player] = nil
 	end)
