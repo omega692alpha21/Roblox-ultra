@@ -4,14 +4,18 @@
 -- wear rough undyed gray. Names are hidden; only rank shows.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage.Club.ClubConfig)
 
 local Robes = {}
 
-local MEMBER_ROBE = Color3.fromRGB(22, 20, 26)
-local MEMBER_TRIM = Color3.fromRGB(212, 175, 85)
-local GUEST_ROBE = Color3.fromRGB(74, 71, 68)
-local GUEST_TRIM = Color3.fromRGB(105, 100, 94)
-local VOID = Color3.fromRGB(8, 8, 11)
+-- one look for everyone: a full black shroud. The only thing that separates
+-- anybody is the trim, and the trim is rank — which is earned, never bought.
+local ROBE = Color3.fromRGB(13, 12, 15)
+local UNINITIATED_TRIM = Color3.fromRGB(46, 45, 48)
+local PATRON_TRIM = Color3.fromRGB(226, 190, 108)
+local VOID = Color3.fromRGB(2, 2, 3)
 
 local function mk(props: { [string]: any }): Part
 	local p = Instance.new("Part")
@@ -44,10 +48,11 @@ local function strip(character: Model)
 	end
 end
 
-local function dress(character: Model, isMember: boolean)
+local function dress(character: Model, rankName: string?, patron: boolean)
 	local head = character:FindFirstChild("Head") :: BasePart?
-	local torso = character:FindFirstChild("UpperTorso") :: BasePart?
-	local lower = character:FindFirstChild("LowerTorso") :: BasePart?
+	-- rig-agnostic: R15 has UpperTorso/LowerTorso, R6 just Torso
+	local torso = (character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")) :: BasePart?
+	local lower = (character:FindFirstChild("LowerTorso") or character:FindFirstChild("Torso")) :: BasePart?
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not head or not torso or not humanoid then
 		return
@@ -56,17 +61,29 @@ local function dress(character: Model, isMember: boolean)
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 
-	local robe = isMember and MEMBER_ROBE or GUEST_ROBE
-	local trim = isMember and MEMBER_TRIM or GUEST_TRIM
+	local robe = ROBE
+	local trim = UNINITIATED_TRIM
+	if rankName then
+		trim = Config.RankFor(0).trim
+		for _, r in Config.Ranks do
+			if r.name == rankName then
+				trim = r.trim
+			end
+		end
+	end
+	if patron then
+		trim = PATRON_TRIM
+	end
 
+	-- no skin anywhere: head becomes the hood's void, every limb vanishes
+	-- under the shroud (the cloak parts below are the whole silhouette)
 	for _, part in character:GetChildren() do
 		if part:IsA("BasePart") then
 			if part.Name == "Head" then
 				part.Color = VOID
 				part.Material = Enum.Material.SmoothPlastic
-			elseif part.Name:find("Hand") then
-				part.Color = VOID
-				part.Material = Enum.Material.SmoothPlastic
+			elseif part.Name:find("Arm") or part.Name:find("Hand") or part.Name:find("Leg") or part.Name:find("Foot") then
+				part.Transparency = 1
 			elseif part.Name ~= "HumanoidRootPart" then
 				part.Color = robe
 				part.Material = Enum.Material.Fabric
@@ -74,23 +91,31 @@ local function dress(character: Model, isMember: boolean)
 		end
 	end
 
-	-- hood: cowl slabs wrapping the head, brow overhanging the face
-	weldTo(head, mk({ Name = "Robe_HoodTop", Size = Vector3.new(1.5, 0.42, 1.5), Color = robe, CFrame = head.CFrame * CFrame.new(0, 0.62, 0.06) }))
-	weldTo(head, mk({ Name = "Robe_HoodBack", Size = Vector3.new(1.5, 1.5, 0.34), Color = robe, CFrame = head.CFrame * CFrame.new(0, 0.05, 0.72) }))
-	weldTo(head, mk({ Name = "Robe_HoodL", Size = Vector3.new(0.32, 1.5, 1.5), Color = robe, CFrame = head.CFrame * CFrame.new(-0.72, 0.05, 0.06) }))
-	weldTo(head, mk({ Name = "Robe_HoodR", Size = Vector3.new(0.32, 1.5, 1.5), Color = robe, CFrame = head.CFrame * CFrame.new(0.72, 0.05, 0.06) }))
-	weldTo(head, mk({ Name = "Robe_HoodBrow", Size = Vector3.new(1.5, 0.5, 0.5), Color = robe, CFrame = head.CFrame * CFrame.new(0, 0.5, -0.6) * CFrame.Angles(math.rad(-24), 0, 0) }))
-	-- pointed peak
-	weldTo(head, mk({ Name = "Robe_HoodPeak", Size = Vector3.new(0.9, 0.6, 0.9), Color = robe, CFrame = head.CFrame * CFrame.new(0, 0.95, 0.18) * CFrame.Angles(0, math.rad(45), 0) }))
+	-- deep hood: heavy walls all around, brow hanging low over a pure-black
+	-- opening — from the front there is only darkness where a face would be
+	weldTo(head, mk({ Name = "Robe_HoodTop", Size = Vector3.new(1.75, 0.5, 1.85), Color = robe, CFrame = head.CFrame * CFrame.new(0, 0.66, 0.12) }))
+	weldTo(head, mk({ Name = "Robe_HoodBack", Size = Vector3.new(1.75, 1.8, 0.45), Color = robe, CFrame = head.CFrame * CFrame.new(0, -0.05, 0.82) }))
+	weldTo(head, mk({ Name = "Robe_HoodL", Size = Vector3.new(0.42, 1.8, 1.85), Color = robe, CFrame = head.CFrame * CFrame.new(-0.82, -0.05, 0.12) }))
+	weldTo(head, mk({ Name = "Robe_HoodR", Size = Vector3.new(0.42, 1.8, 1.85), Color = robe, CFrame = head.CFrame * CFrame.new(0.82, -0.05, 0.12) }))
+	weldTo(head, mk({ Name = "Robe_HoodBrow", Size = Vector3.new(1.75, 0.55, 0.7), Color = robe, CFrame = head.CFrame * CFrame.new(0, 0.52, -0.62) * CFrame.Angles(math.rad(-32), 0, 0) }))
+	weldTo(head, mk({ Name = "Robe_HoodChin", Size = Vector3.new(1.75, 0.5, 0.4), Color = robe, CFrame = head.CFrame * CFrame.new(0, -0.78, -0.55) }))
+	-- the empty face: a flat black panel recessed inside the hood opening
+	weldTo(head, mk({ Name = "Robe_FaceVoid", Size = Vector3.new(1.3, 1.3, 0.1), Color = VOID, Material = Enum.Material.SmoothPlastic, CFrame = head.CFrame * CFrame.new(0, -0.05, -0.32) }))
+	-- soft peak folding back over the crown
+	weldTo(head, mk({ Name = "Robe_HoodPeak", Size = Vector3.new(1.1, 0.55, 1.1), Color = robe, CFrame = head.CFrame * CFrame.new(0, 1.0, 0.3) * CFrame.Angles(math.rad(12), math.rad(45), 0) }))
 
-	-- shoulder cowl + chest trim + rope belt + back cape + skirt
-	weldTo(torso, mk({ Name = "Robe_Cowl", Size = Vector3.new(2.9, 0.85, 1.7), Color = robe, CFrame = torso.CFrame * CFrame.new(0, 0.65, 0) }))
-	weldTo(torso, mk({ Name = "Robe_TrimV", Size = Vector3.new(0.3, 1.7, 0.12), Color = trim, Material = Enum.Material.SmoothPlastic, CFrame = torso.CFrame * CFrame.new(-0.45, -0.1, -0.6) }))
-	weldTo(torso, mk({ Name = "Robe_TrimV2", Size = Vector3.new(0.3, 1.7, 0.12), Color = trim, Material = Enum.Material.SmoothPlastic, CFrame = torso.CFrame * CFrame.new(0.45, -0.1, -0.6) }))
-	weldTo(torso, mk({ Name = "Robe_Cape", Size = Vector3.new(2.3, 3.2, 0.22), Color = robe, CFrame = torso.CFrame * CFrame.new(0, -0.7, 0.75) }))
+	-- layered shoulder mantle, broad and sloping like the reference
+	weldTo(torso, mk({ Name = "Robe_Mantle1", Size = Vector3.new(3.6, 0.9, 2.3), Color = robe, CFrame = torso.CFrame * CFrame.new(0, 0.62, 0.05) }))
+	weldTo(torso, mk({ Name = "Robe_Mantle2", Size = Vector3.new(3.2, 1.0, 2.05), Color = robe, CFrame = torso.CFrame * CFrame.new(0, -0.05, 0.05) }))
+	weldTo(torso, mk({ Name = "Robe_MantleL", Size = Vector3.new(0.8, 1.5, 2.0), Color = robe, CFrame = torso.CFrame * CFrame.new(-1.55, 0.15, 0.05) * CFrame.Angles(0, 0, math.rad(14)) }))
+	weldTo(torso, mk({ Name = "Robe_MantleR", Size = Vector3.new(0.8, 1.5, 2.0), Color = robe, CFrame = torso.CFrame * CFrame.new(1.55, 0.15, 0.05) * CFrame.Angles(0, 0, math.rad(-14)) }))
+	-- thin trim seam at the mantle hem — the only mark of rank
+	weldTo(torso, mk({ Name = "Robe_TrimHem", Size = Vector3.new(3.25, 0.09, 2.1), Color = trim, Material = Enum.Material.SmoothPlastic, CFrame = torso.CFrame * CFrame.new(0, -0.58, 0.05) }))
+	weldTo(torso, mk({ Name = "Robe_Cape", Size = Vector3.new(2.9, 3.6, 0.25), Color = robe, CFrame = torso.CFrame * CFrame.new(0, -1.0, 0.95) }))
 	if lower then
-		weldTo(lower, mk({ Name = "Robe_Belt", Size = Vector3.new(2.15, 0.28, 1.35), Color = trim, Material = Enum.Material.SmoothPlastic, CFrame = lower.CFrame * CFrame.new(0, 0.32, 0) }))
-		weldTo(lower, mk({ Name = "Robe_Skirt", Size = Vector3.new(2.35, 2.3, 1.55), Color = robe, CFrame = lower.CFrame * CFrame.new(0, -1.15, 0) }))
+		-- floor-length body of the shroud, flaring as it falls
+		weldTo(lower, mk({ Name = "Robe_Drape1", Size = Vector3.new(2.7, 1.6, 1.8), Color = robe, CFrame = lower.CFrame * CFrame.new(0, -0.55, 0) }))
+		weldTo(lower, mk({ Name = "Robe_Drape2", Size = Vector3.new(3.05, 1.5, 2.05), Color = robe, CFrame = lower.CFrame * CFrame.new(0, -1.95, 0) }))
 	end
 
 	-- rank sigil floating faintly above the hood
@@ -112,7 +137,7 @@ local function dress(character: Model, isMember: boolean)
 	rank.TextScaled = true
 	rank.TextColor3 = trim
 	rank.TextTransparency = 0.25
-	rank.Text = isMember and "◆ MEMBER" or "OUTSIDER"
+	rank.Text = if rankName then ("◆ " .. rankName) else ""
 	rank.Parent = billboard
 end
 
@@ -120,17 +145,44 @@ function Robes.Init()
 	local function hook(player: Player)
 		local function redress()
 			if player.Character then
-				dress(player.Character, player:GetAttribute("ClubMember") == true)
+				local initiated = player:GetAttribute("Initiated") == true
+				dress(
+					player.Character,
+					if initiated then tostring(player:GetAttribute("Rank") or "INITIATE") else nil,
+					player:GetAttribute("Patron") == true
+				)
 			end
 		end
-		player.CharacterAdded:Connect(function()
-			task.wait(0.6)
+		local function onCharacter(character: Model)
+			-- the avatar's real appearance (skin, clothes, hats) streams in
+			-- AFTER CharacterAdded and would overwrite the shroud — so dress
+			-- once now, again when appearance finishes, and once more late.
+			task.wait(0.4)
 			redress()
+			character.ChildAdded:Connect(function(child)
+				if child:IsA("Accessory") or child:IsA("Shirt") or child:IsA("Pants") then
+					task.wait()
+					child:Destroy()
+				end
+			end)
+			task.delay(2.5, redress)
+			task.delay(6, redress)
+		end
+		player.CharacterAppearanceLoaded:Connect(function(character)
+			task.wait(0.1)
+			local initiated = player:GetAttribute("Initiated") == true
+			dress(
+				character,
+				if initiated then tostring(player:GetAttribute("Rank") or "INITIATE") else nil,
+				player:GetAttribute("Patron") == true
+			)
 		end)
-		player:GetAttributeChangedSignal("ClubMember"):Connect(redress)
+		player.CharacterAdded:Connect(onCharacter)
+		player:GetAttributeChangedSignal("Rank"):Connect(redress)
+		player:GetAttributeChangedSignal("Initiated"):Connect(redress)
+		player:GetAttributeChangedSignal("Patron"):Connect(redress)
 		if player.Character then
-			task.wait(0.6)
-			redress()
+			task.spawn(onCharacter, player.Character)
 		end
 	end
 	Players.PlayerAdded:Connect(hook)

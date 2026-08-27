@@ -1,5 +1,6 @@
 --!strict
--- MILLIONS CLUB — server bootstrap.
+-- CULT — server bootstrap. Every system boots isolated: one failure warns
+-- loudly and leaves the rest of the world standing.
 
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,9 +15,9 @@ Lighting.GlobalShadows = true
 Lighting.ShadowSoftness = 0.08
 Lighting.EnvironmentDiffuseScale = 0.35
 Lighting.EnvironmentSpecularScale = 0.6
-Lighting.Ambient = Color3.fromRGB(24, 24, 32)
-Lighting.OutdoorAmbient = Color3.fromRGB(28, 32, 50)
-Lighting.ExposureCompensation = 0.3
+Lighting.Ambient = Color3.fromRGB(20, 20, 27)
+Lighting.OutdoorAmbient = Color3.fromRGB(26, 30, 46)
+Lighting.ExposureCompensation = 0.35
 
 local sky = Instance.new("Sky")
 sky.SkyboxFt = "rbxassetid://118975540614116" -- the moon face
@@ -38,42 +39,77 @@ atmosphere.Haze = 2.4
 atmosphere.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
-bloom.Intensity = 1.1
-bloom.Size = 40
-bloom.Threshold = 1.4
+bloom.Intensity = 1.2
+bloom.Size = 44
+bloom.Threshold = 1.35
 bloom.Parent = Lighting
 
 local grade = Instance.new("ColorCorrectionEffect")
-grade.Contrast = 0.1
-grade.Saturation = 0.14
-grade.TintColor = Color3.fromRGB(232, 238, 255)
+grade.Contrast = 0.12
+grade.Saturation = 0.1
+grade.TintColor = Color3.fromRGB(236, 232, 246)
 grade.Parent = Lighting
 
 local ClubMap = require(script.Parent.ClubMap)
-local Robes = require(script.Parent.Robes)
+local Rep = require(script.Parent.Rep)
+local Initiation = require(script.Parent.Initiation)
+local Convocation = require(script.Parent.Convocation)
+local Missions = require(script.Parent.Missions)
+local Gates = require(script.Parent.Gates)
 local Membership = require(script.Parent.Membership)
 local Profiles = require(script.Parent.Profiles)
+local Robes = require(script.Parent.Robes)
 
 local okBuild, mapOrErr = xpcall(ClubMap.Build, debug.traceback)
 if not okBuild then
-	warn("[MillionsClub] MAP BUILD FAILED:\n" .. tostring(mapOrErr))
+	warn("[CULT] MAP BUILD FAILED:\n" .. tostring(mapOrErr))
+	local sign = Instance.new("Part")
+	sign.Anchored = true
+	sign.Size = Vector3.new(40, 12, 1)
+	sign.Position = Vector3.new(0, 8, 100)
+	sign.Color = Color3.fromRGB(120, 20, 20)
+	sign.Parent = workspace
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Front
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 20
+	gui.Parent = sign
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.Code
+	label.TextWrapped = true
+	label.TextScaled = true
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Text = ("BUILD %d FAILED\n%s"):format(game.PlaceVersion, tostring(mapOrErr):sub(1, 400))
+	label.Parent = gui
 	return
 end
 local map = mapOrErr :: any
 
-local ok1, err1 = pcall(function()
-	Membership.Init(map)
-end)
-if not ok1 then
-	warn("[MillionsClub] Membership.Init failed: " .. tostring(err1))
-end
-local ok2, err2 = pcall(Profiles.Init :: any)
-if not ok2 then
-	warn("[MillionsClub] Profiles.Init failed: " .. tostring(err2))
-end
-local ok3, err3 = pcall(Robes.Init :: any)
-if not ok3 then
-	warn("[MillionsClub] Robes.Init failed: " .. tostring(err3))
+local BOOT: { { name: string, init: () -> () } } = {
+	{ name = "Rep", init = function() Rep.Init() end },
+	{ name = "Initiation", init = function() Initiation.Init(map) end },
+	{ name = "Membership", init = function() Membership.Init(map) end },
+	{ name = "Gates", init = function() Gates.Init(map) end },
+	{ name = "Convocation", init = function() Convocation.Init(map) end },
+	{ name = "Missions", init = function() Missions.Init(map) end },
+	{ name = "Profiles", init = function() (Profiles :: any).Init() end },
+	{ name = "Robes", init = function() Robes.Init() end },
+}
+for _, entry in BOOT do
+	local ok, err = pcall(entry.init :: any)
+	if not ok then
+		warn(("[CULT] %s.Init failed: %s"):format(entry.name, tostring(err)))
+	end
 end
 
-print("[MillionsClub] ready — 100 seats, ever")
+-- the seat claim and the altar's answers cross module boundaries
+Initiation.OnInitiated(function(player)
+	Membership.OnInitiated(player)
+end)
+Initiation.SetAltarHandler(function(player, answer): (boolean, string)
+	return Missions.AnswerAltar(player, answer)
+end)
+
+print(("[CULT] build %d ready"):format(game.PlaceVersion))

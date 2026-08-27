@@ -1,80 +1,74 @@
-# Lunch Money Legends
+# CULT
 
-> Build your crew. Steal theirs. Rule the school.
+> Find us. Solve it. Enter. Rise.
 
-A Roblox steal-and-defend collection game wrapped in a school-life RPG, set at
-**Crumbworth High**. Students walk the main hallway — recruit them into your
-homeroom crew, and every crew member prints **lunch money** per second. Steal
-students from unlocked enemy homerooms, lock your own base, farm **Aura**
-(status), pass pop quizzes, join a clique, and graduate (rebirth) for permanent
-multipliers.
+A social mystery MMO on Roblox. There is a house at the end of a dark path with
+no sign on it and a door that does not open. Nothing in the game tells you what
+it is or how to get in — the way in is written across the grounds in four
+places, and the code is rolled fresh on every server, so the *method* can spread
+and the answer never can.
 
-Everything — the map, the student NPCs, the UI — is generated from code in this
-repo. No Studio assets required.
+Solve it and you are an INITIATE. After that, the only thing that matters is
+**REP**, and REP buys rank, and rank opens doors that lower ranks can see but
+cannot pass. A player who spends nothing can become one of the most respected
+people in the game. Nothing that matters is for sale.
+
+Live: universe `10762834508`, place `81310619434390`.
+
+## The loop
+
+DISCOVER → SOLVE → ENTER → EARN REP → UNLOCK → DISCOVER DEEPER → RISE
+
+| Rank | REP | What opens |
+|---|---|---|
+| INITIATE | 0 | The entrance hall and the Grand Hall |
+| MEMBER | 100 | Convocations, the directory, the board |
+| INSIDER | 300 | The private corridor |
+| OPERATOR | 750 | The undercroft |
+| ARCHITECT | 1,500 | The rooftop — and tools to author puzzles |
+| INNER CIRCLE | 3,000 | The unmarked door |
+
+REP comes from initiation, hidden sigils, attending Convocations, completing
+missions, and guiding someone else through their initiation. The first hundred
+people to solve their way in, ever, become **THE FOUNDING HUNDRED** — an atomic
+`UpdateAsync` roster that closes for good at 100.
 
 ## Project layout
 
 ```
-default.project.json      Rojo tree
-src/ReplicatedStorage/    Config (all balance + product IDs), shared utils, remotes
-src/ServerScriptService/  Server bootstrap + all game services
-src/StarterPlayer/        Client bootstrap + UI controllers
+club/default.project.json          Rojo tree (the live game builds from here)
+club/src/ReplicatedStorage/        ClubConfig (ranks, REP values, asset ids), remotes
+club/src/ServerScriptService/      ClubMap, Initiation, Rep, Gates, Convocation,
+                                   Missions, Membership, Profiles, Robes, bootstrap
+club/src/StarterPlayer/            Keypad, rank chip, initiation cinematic, the board
 ```
 
-Key config files (tune the game without touching logic):
+Everything is generated from code — the estate, the hall, the robes. Custom
+textures and meshes are authored in Python, uploaded through the Open Cloud
+Assets API, and loaded at runtime (`InsertService` + node-name recolor, because
+Roblox's GLB import drops glTF material colors).
 
-| File | What's in it |
-|---|---|
-| `Config/GameConfig.luau` | every knob: spawn rates, lock timing, offline caps, event flags |
-| `Config/Students.luau` | the 36-student roster: rarities, odds, costs, income |
-| `Config/Products.luau` | **game pass / dev product IDs — paste yours here** |
-| `Config/Rebirths.luau` | grade costs, multipliers, aura rank ladder |
-| `Config/Rewards.luau` | playtime chests, streaks, wheel, quests |
-| `Config/Cliques.luau` | the four cliques and their perks |
-| `Config/Quizzes.luau` | pop-quiz question pool |
+## Robes
 
-## Getting it into Roblox Studio
+Every character is stripped and dressed server-side in a hooded black shroud:
+no face, no skin, no name above the head. The only thing that distinguishes
+anyone is the trim color, and the trim is rank.
 
-1. Install [Rokit](https://github.com/rojo-rbx/rokit), then in the repo root:
-   ```
-   rokit install
-   rojo serve
-   ```
-2. In Roblox Studio, install the [Rojo plugin](https://rojo.space/docs/v7/getting-started/installation/),
-   open a new Baseplate place (delete the baseplate), and click **Connect** in the plugin.
-   - Or build a place file directly: `rojo build default.project.json -o LunchMoneyLegends.rbxl` and open it.
-3. Press Play. The whole school generates at runtime; you should spawn at the bus stop.
+## Monetization
 
-Multiplayer stealing/locking is best tested via **Test → Clients and Servers → 2 players** in Studio.
+**PATRON** (pass `1962348330`, 499 R$) is gold thread on a robe and a mark on
+the plaque by the fire. It grants no rank, no door, and no REP, by design.
 
-## Launch checklist (things only you can do)
+## Build & publish
 
-1. **Publish**: File → Publish to Roblox.
-2. **Enable DataStores in Studio testing**: Game Settings → Security →
-   *Enable Studio Access to API Services* (saves + leaderboards won't work in Studio without it).
-3. **Create monetization on the Creator Dashboard** (your experience → Monetization):
-   - Game passes: `2x Lunch Money` (R$199), `Auto-Collect` (R$149), `+2 Crew Slots` (R$249),
-     `Extended Lock` (R$179), `Speed Sneakers` (R$99)
-   - Developer products: `Small Stack` (R$49), `Backpack of Cash` (R$149), `Locker of Cash`
-     (R$399), `Vault of Cash` (R$999), `5 Wheel Spins` (R$75), `Legendary Crate` (R$299)
-   - Paste every numeric ID into `src/ReplicatedStorage/Config/Products.luau`
-     (anything left at `0` shows as "SOON" in-game and is safely disabled).
-4. **Create a Roblox group**, set its ID in `Products.luau` (`GroupId`) so the
-   join-group reward works — and so revenue can pay out to the group.
-5. **Art**: game icon + 3 thumbnails (suggested hooks: "STEAL FROM YOUR FRIENDS",
-   the rarity wall, the clique lineup).
-6. **Age guidelines questionnaire**: the game has mild cartoon violence (knockback
-   punches, no damage) and social stealing — answer accordingly.
-7. Set the experience to **Public**. For events, flip `EventLuckMultiplier` /
-   `EventCashMultiplier` in `GameConfig.luau` and publish an update.
+```
+rojo build club/default.project.json -o CULT.rbxl
+```
 
-## Design notes
+Publishing goes through the Open Cloud place-versions API, followed by
+`restartServers` so live servers pick up the version immediately.
 
-- **Server-authoritative**: clients only send intent (prompts, button presses).
-  Prices, odds, income, steal transitions, and quiz answers all live server-side.
-- **Data safety**: session-locked DataStore saves with retries; purchases are
-  idempotent and force-saved before being acknowledged; a failed load disables
-  play instead of risking a wipe.
-- **Students are real avatars**: R15 rigs generated via `HumanoidDescription`
-  with deterministic per-character looks and part-built props — swap in Creator
-  Store meshes later if you want fancier characters.
+---
+
+*A previous game in this repo (DETENTION / Lunch Money Legends, under `src/`) is
+retired and no longer published; the source is kept for parts salvage only.*

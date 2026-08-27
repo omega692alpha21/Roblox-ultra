@@ -16,7 +16,7 @@ local BG = Color3.fromRGB(18, 16, 20)
 local CREAM = Color3.fromRGB(240, 234, 222)
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "MillionsClubUI"
+gui.Name = "CultUI"
 gui.ResetOnSpawn = false
 gui.Parent = playerGui
 
@@ -64,14 +64,20 @@ local chipStroke = Instance.new("UIStroke")
 chipStroke.Color = GOLD
 chipStroke.Thickness = 2
 chipStroke.Parent = chip
-local chipLabel = label({ Size = UDim2.fromScale(1, 1), Text = "MILLIONS CLUB", TextColor3 = GOLD, Parent = chip })
+local chipLabel = label({ Size = UDim2.fromScale(1, 1), Text = "", TextColor3 = GOLD, Parent = chip })
 
 task.spawn(function()
 	while true do
-		local count = ReplicatedStorage:GetAttribute("MemberCount")
-		local isMember = player:GetAttribute("ClubMember") == true
-		local seats = typeof(count) == "number" and count or 0
-		chipLabel.Text = isMember and "💎 MEMBER" or ("MILLIONS CLUB · %d/%d"):format(seats, Config.MaxMembers)
+		-- an outsider is told nothing at all
+		if player:GetAttribute("Initiated") == true then
+			chipLabel.Text = ("%s \u{00B7} %d REP"):format(
+				tostring(player:GetAttribute("Rank") or "INITIATE"),
+				tonumber(player:GetAttribute("Rep")) or 0
+			)
+			chip.Visible = true
+		else
+			chip.Visible = false
+		end
 		task.wait(2)
 	end
 end)
@@ -235,10 +241,302 @@ dirButton.Parent = nav
 
 task.spawn(function()
 	while true do
-		nav.Visible = player:GetAttribute("ClubMember") == true
+		nav.Visible = player:GetAttribute("Initiated") == true
 		task.wait(2)
 	end
 end)
 
-local _ = TweenService
-print("[MillionsClub] client ready")
+-- ------------------------------------------------------------- the keypad ---
+-- Four digits, no hint, no label. The same pad takes answers at the altar.
+local keypadContext: string? = nil
+
+local keypad = Instance.new("Frame")
+keypad.AnchorPoint = Vector2.new(0.5, 0.5)
+keypad.Position = UDim2.fromScale(0.5, 0.5)
+keypad.Size = UDim2.fromOffset(260, 380)
+keypad.BackgroundColor3 = Color3.fromRGB(12, 11, 14)
+keypad.Visible = false
+keypad.Parent = gui
+local kCorner = Instance.new("UICorner")
+kCorner.CornerRadius = UDim.new(0, 12)
+kCorner.Parent = keypad
+local kStroke = Instance.new("UIStroke")
+kStroke.Color = GOLD
+kStroke.Thickness = 2
+kStroke.Parent = keypad
+
+local entry = label({
+	Position = UDim2.fromOffset(16, 14),
+	Size = UDim2.new(1, -32, 0, 52),
+	Text = "",
+	TextColor3 = GOLD,
+	TextScaled = false,
+	TextSize = 40,
+	Parent = keypad,
+})
+local entryStroke = Instance.new("UIStroke")
+entryStroke.Color = Color3.fromRGB(52, 48, 40)
+entryStroke.Thickness = 1
+entryStroke.Parent = entry
+
+local typed = ""
+local function setTyped(value: string)
+	typed = value
+	entry.Text = value == "" and "· · · ·" or value
+end
+
+local pad = Instance.new("Frame")
+pad.Position = UDim2.fromOffset(16, 74)
+pad.Size = UDim2.new(1, -32, 0, 232)
+pad.BackgroundTransparency = 1
+pad.Parent = keypad
+local padGrid = Instance.new("UIGridLayout")
+padGrid.CellSize = UDim2.fromOffset(70, 52)
+padGrid.CellPadding = UDim2.fromOffset(9, 9)
+padGrid.Parent = pad
+
+local function closeKeypad()
+	keypad.Visible = false
+	setTyped("")
+end
+
+local function submit()
+	if typed == "" then
+		return
+	end
+	local ok, result = pcall(function()
+		return Remotes.GetFunction("SubmitCode"):InvokeServer(typed, keypadContext)
+	end)
+	setTyped("")
+	if ok and typeof(result) == "table" then
+		local r = result :: any
+		if r.ok then
+			closeKeypad()
+		elseif typeof(r.message) == "string" and r.message ~= "" then
+			entry.Text = r.message
+			task.delay(1.6, function()
+				if typed == "" then
+					setTyped("")
+				end
+			end)
+		end
+	end
+end
+
+for _, digit in { "1", "2", "3", "4", "5", "6", "7", "8", "9", "←", "0", "✓" } do
+	local b = button({
+		Text = digit,
+		TextScaled = false,
+		TextSize = 22,
+		BackgroundColor3 = Color3.fromRGB(28, 26, 31),
+		TextColor3 = CREAM,
+	}, function()
+		if digit == "←" then
+			setTyped(typed:sub(1, -2))
+		elseif digit == "✓" then
+			submit()
+		elseif #typed < 4 then
+			setTyped(typed .. digit)
+			if #typed == 4 then
+				task.delay(0.25, submit)
+			end
+		end
+	end)
+	b.Parent = pad
+end
+
+local closeButton = button({
+	Position = UDim2.fromOffset(16, 320),
+	Size = UDim2.new(1, -32, 0, 40),
+	Text = "STEP BACK",
+	TextScaled = false,
+	TextSize = 14,
+	BackgroundColor3 = Color3.fromRGB(28, 26, 31),
+	TextColor3 = CREAM,
+}, closeKeypad)
+closeButton.Parent = keypad
+
+Remotes.Get("OpenKeypad").OnClientEvent:Connect(function(context)
+	keypadContext = typeof(context) == "string" and context or nil
+	setTyped("")
+	keypad.Visible = true
+end)
+
+-- ------------------------------------------------------ the way in, taken ---
+Remotes.Get("Initiated").OnClientEvent:Connect(function(seat)
+	local veil = Instance.new("Frame")
+	veil.Size = UDim2.fromScale(1, 1)
+	veil.BackgroundColor3 = Color3.new(0, 0, 0)
+	veil.BackgroundTransparency = 1
+	veil.ZIndex = 50
+	veil.Parent = gui
+	local line = label({
+		Size = UDim2.fromScale(1, 0.3),
+		Position = UDim2.fromScale(0, 0.35),
+		Text = "INITIATION COMPLETE",
+		TextColor3 = GOLD,
+		TextScaled = false,
+		TextSize = 40,
+		TextTransparency = 1,
+		ZIndex = 51,
+		Parent = veil,
+	})
+	local sub = label({
+		Size = UDim2.fromScale(1, 0.1),
+		Position = UDim2.fromScale(0, 0.55),
+		Text = if typeof(seat) == "number" then ("SEAT %d OF THE FOUNDING HUNDRED"):format(seat) else "WELCOME TO CULT",
+		TextColor3 = CREAM,
+		TextScaled = false,
+		TextSize = 18,
+		TextTransparency = 1,
+		ZIndex = 51,
+		Parent = veil,
+	})
+	local fade = TweenInfo.new(1.2, Enum.EasingStyle.Quad)
+	TweenService:Create(veil, fade, { BackgroundTransparency = 0 }):Play()
+	task.wait(1.2)
+	TweenService:Create(line, fade, { TextTransparency = 0 }):Play()
+	task.wait(1)
+	TweenService:Create(sub, fade, { TextTransparency = 0 }):Play()
+	task.wait(2.4)
+	TweenService:Create(veil, TweenInfo.new(1.6), { BackgroundTransparency = 1 }):Play()
+	for _, obj in { line, sub } do
+		TweenService:Create(obj, TweenInfo.new(1.6), { TextTransparency = 1 }):Play()
+	end
+	task.delay(1.8, function()
+		veil:Destroy()
+	end)
+end)
+
+-- ---------------------------------------------------------------- the board ---
+local missions = Instance.new("Frame")
+missions.AnchorPoint = Vector2.new(0, 0.5)
+missions.Position = UDim2.new(0, 150, 0.5, 0)
+missions.Size = UDim2.fromOffset(420, 300)
+missions.BackgroundColor3 = BG
+missions.Visible = false
+missions.Parent = gui
+local mCorner = Instance.new("UICorner")
+mCorner.CornerRadius = UDim.new(0, 12)
+mCorner.Parent = missions
+local mStroke = Instance.new("UIStroke")
+mStroke.Color = GOLD
+mStroke.Thickness = 2
+mStroke.Parent = missions
+local mList = Instance.new("ScrollingFrame")
+mList.Position = UDim2.fromOffset(12, 46)
+mList.Size = UDim2.new(1, -24, 1, -58)
+mList.BackgroundTransparency = 1
+mList.ScrollBarThickness = 3
+mList.CanvasSize = UDim2.new()
+mList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+mList.Parent = missions
+local mLayout = Instance.new("UIListLayout")
+mLayout.Padding = UDim.new(0, 8)
+mLayout.Parent = mList
+label({
+	Position = UDim2.fromOffset(14, 12),
+	Size = UDim2.new(1, -28, 0, 26),
+	Text = "THE BOARD",
+	TextColor3 = GOLD,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	TextScaled = false,
+	TextSize = 18,
+	Parent = missions,
+})
+
+local function refreshMissions()
+	for _, child in mList:GetChildren() do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+	local ok, rows = pcall(function()
+		return Remotes.GetFunction("GetMissions"):InvokeServer()
+	end)
+	if not ok or typeof(rows) ~= "table" then
+		return
+	end
+	for _, row in rows :: any do
+		local card = Instance.new("Frame")
+		card.Size = UDim2.new(1, -6, 0, 64)
+		card.BackgroundColor3 = Color3.fromRGB(28, 26, 31)
+		card.Parent = mList
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 8)
+		corner.Parent = card
+		label({
+			Position = UDim2.fromOffset(10, 6),
+			Size = UDim2.new(1, -20, 0, 18),
+			Text = ("MISSION %03d"):format(row.no),
+			TextColor3 = if row.done then Color3.fromRGB(120, 150, 110) else GOLD,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextScaled = false,
+			TextSize = 13,
+			Parent = card,
+		})
+		label({
+			Position = UDim2.fromOffset(10, 26),
+			Size = UDim2.new(1, -20, 0, 32),
+			Text = if row.done then ("✓  " .. tostring(row.text)) else tostring(row.text),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextWrapped = true,
+			TextScaled = false,
+			TextSize = 15,
+			Parent = card,
+		})
+	end
+end
+
+local boardButton = button({ Size = UDim2.fromOffset(120, 40), Text = "THE BOARD", TextScaled = false, TextSize = 14 }, function()
+	panel.Visible = false
+	directory.Visible = false
+	missions.Visible = not missions.Visible
+	if missions.Visible then
+		task.spawn(refreshMissions)
+	end
+end)
+boardButton.Parent = nav
+
+Remotes.Get("RepChanged").OnClientEvent:Connect(function(_rep, _rank, reason)
+	if typeof(reason) == "string" and reason ~= "" and missions.Visible then
+		task.spawn(refreshMissions)
+	end
+end)
+
+-- fragments arrive once and are never written down anywhere but here
+Remotes.Get("Fragment").OnClientEvent:Connect(function(text)
+	if typeof(text) ~= "string" then
+		return
+	end
+	local card = Instance.new("Frame")
+	card.AnchorPoint = Vector2.new(0.5, 0.5)
+	card.Position = UDim2.fromScale(0.5, 0.5)
+	card.Size = UDim2.fromOffset(460, 120)
+	card.BackgroundColor3 = Color3.fromRGB(10, 9, 12)
+	card.ZIndex = 40
+	card.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = card
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = GOLD
+	stroke.Thickness = 2
+	stroke.Parent = card
+	label({
+		Size = UDim2.new(1, -30, 1, -20),
+		Position = UDim2.fromOffset(15, 10),
+		Text = text,
+		TextColor3 = CREAM,
+		TextWrapped = true,
+		TextScaled = false,
+		TextSize = 18,
+		ZIndex = 41,
+		Parent = card,
+	})
+	task.delay(9, function()
+		card:Destroy()
+	end)
+end)
+
+print("[CULT] client ready")

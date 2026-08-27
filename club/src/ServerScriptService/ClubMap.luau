@@ -1,15 +1,27 @@
 --!strict
--- The clubhouse: a public reception showroom anyone can walk, and the private
--- club behind the grand doors. Built to feel expensive, not enormous.
+-- CULT — the world. An unmarked estate at night, a door that does not open,
+-- and behind it a long hall that ends in a rotunda dressed to the last inch.
+-- Nothing here explains itself. That is the point.
+
+local InsertService = game:GetService("InsertService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage.Club.ClubConfig)
 
 local ClubMap = {}
 
-local MARBLE = Color3.fromRGB(232, 228, 220)
-local MARBLE_DARK = Color3.fromRGB(52, 50, 54)
-local WALNUT = Color3.fromRGB(62, 44, 34)
+local STONE = Color3.fromRGB(46, 45, 50)
+local STONE_DARK = Color3.fromRGB(28, 27, 32)
 local GOLD = Color3.fromRGB(212, 175, 85)
-local VELVET = Color3.fromRGB(122, 28, 38)
-local CREAM = Color3.fromRGB(240, 234, 222)
+local WALNUT = Color3.fromRGB(46, 32, 21)
+local VELVET = Color3.fromRGB(74, 20, 24)
+local VOID = Color3.fromRGB(10, 9, 12)
+
+-- hall sits at the far end of a 90-stud hallway running down -Z
+local HALL_CENTER = Vector3.new(0, 0, -84)
+local HALL_R = 32
+local HALL_H = 24
+local DOOR_Z = 48
 
 local function part(props: { [string]: any }): Part
 	local p = Instance.new("Part")
@@ -21,6 +33,25 @@ local function part(props: { [string]: any }): Part
 		(p :: any)[k] = v
 	end
 	return p
+end
+
+local function tex(target: BasePart, face: Enum.NormalId, id: string, u: number, v: number, tint: Color3?)
+	local t = Instance.new("Texture")
+	t.Face = face
+	t.Texture = id
+	t.StudsPerTileU = u
+	t.StudsPerTileV = v
+	if tint then
+		t.Color3 = tint
+	end
+	t.Parent = target
+end
+
+local function decal(target: BasePart, face: Enum.NormalId, id: string)
+	local d = Instance.new("Decal")
+	d.Face = face
+	d.Texture = id
+	d.Parent = target
 end
 
 local function signText(parent: BasePart, text: string, color: Color3, face: Enum.NormalId?, size: number?): TextLabel
@@ -43,40 +74,18 @@ local function signText(parent: BasePart, text: string, color: Color3, face: Enu
 	return label
 end
 
-local function chandelier(parent: Instance, pos: Vector3)
-	local core = part({ Name = "ChandelierCore", Shape = Enum.PartType.Ball, Size = Vector3.new(1.4, 1.4, 1.4), CFrame = CFrame.new(pos), Color = GOLD, Material = Enum.Material.Metal, Parent = parent })
-	for i = 0, 5 do
-		local a = i / 6 * math.pi * 2
-		local bulb = part({
-			Name = "ChandelierBulb",
-			Shape = Enum.PartType.Ball,
-			Size = Vector3.new(0.7, 0.7, 0.7),
-			CFrame = CFrame.new(pos + Vector3.new(math.cos(a) * 1.8, -0.5, math.sin(a) * 1.8)),
-			Color = Color3.fromRGB(255, 236, 190),
-			Material = Enum.Material.Neon,
-			Parent = parent,
-		})
-		local _ = bulb
-	end
-	local light = Instance.new("PointLight")
-	light.Color = Color3.fromRGB(255, 226, 170)
-	light.Brightness = 1.6
-	light.Range = 26
-	light.Parent = core
-	part({ Name = "ChandelierRod", Size = Vector3.new(0.18, 3, 0.18), CFrame = CFrame.new(pos + Vector3.new(0, 2, 0)), Color = GOLD, Material = Enum.Material.Metal, Parent = parent })
-end
-
-local function loungeSeat(parent: Instance, cf: CFrame, color: Color3)
-	part({ Name = "SeatBase", Size = Vector3.new(3.2, 1.1, 3), CFrame = cf * CFrame.new(0, 0.55, 0), Color = color, Material = Enum.Material.Fabric, Parent = parent })
-	part({ Name = "SeatBack", Size = Vector3.new(3.2, 2, 0.8), CFrame = cf * CFrame.new(0, 1.9, 1.15), Color = color, Material = Enum.Material.Fabric, Parent = parent })
-	for _, side in { -1, 1 } do
-		part({ Name = "SeatArm", Size = Vector3.new(0.6, 1.7, 3), CFrame = cf * CFrame.new(side * 1.85, 0.85, 0), Color = color, Material = Enum.Material.Fabric, Parent = parent })
-	end
-end
-
--- Torches, candles, pillars, sigil banners, braziers — the ritual layer.
-local function flame(parent: Instance, pos: Vector3, scale: number)
-	local core = part({ Name = "Flame", Shape = Enum.PartType.Ball, Size = Vector3.new(0.7, 1.1, 0.7) * scale, CFrame = CFrame.new(pos), Color = Color3.fromRGB(255, 150, 50), Material = Enum.Material.Neon, Parent = parent })
+-- a flame you can turn on and off (the path torches are a puzzle, not decor)
+local function flame(parent: Instance, pos: Vector3, scale: number): BasePart
+	local core = part({
+		Name = "Flame",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.new(0.7, 1.1, 0.7) * scale,
+		CFrame = CFrame.new(pos),
+		Color = Color3.fromRGB(255, 150, 50),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		Parent = parent,
+	})
 	local light = Instance.new("PointLight")
 	light.Color = Color3.fromRGB(255, 160, 70)
 	light.Brightness = 1.6 * scale
@@ -86,93 +95,82 @@ local function flame(parent: Instance, pos: Vector3, scale: number)
 	fire.Size = 3 * scale
 	fire.Heat = 6
 	fire.Parent = core
+	return core
 end
 
-local function torch(parent: Instance, pos: Vector3, facing: Vector3)
+local function wallTorch(parent: Instance, pos: Vector3, facing: Vector3): BasePart
 	local cf = CFrame.lookAt(pos, pos + facing)
-	part({ Name = "TorchBracket", Size = Vector3.new(0.3, 0.3, 1.1), CFrame = cf * CFrame.new(0, 0, -0.4) * CFrame.Angles(math.rad(28), 0, 0), Color = Color3.fromRGB(30, 30, 34), Material = Enum.Material.Metal, Parent = parent })
-	flame(parent, pos + facing.Unit * 0.4 + Vector3.new(0, 0.55, 0), 0.8)
+	part({
+		Name = "TorchBracket",
+		Size = Vector3.new(0.3, 0.3, 1.1),
+		CFrame = cf * CFrame.new(0, 0, -0.4) * CFrame.Angles(math.rad(28), 0, 0),
+		Color = Color3.fromRGB(26, 25, 29),
+		Material = Enum.Material.Metal,
+		CanCollide = false,
+		Parent = parent,
+	})
+	return flame(parent, pos + facing.Unit * 0.4 + Vector3.new(0, 0.55, 0), 0.8)
 end
 
-local function banner(parent: Instance, cf: CFrame)
-	local cloth = part({ Name = "SigilBanner", Size = Vector3.new(3.2, 10, 0.18), CFrame = cf, Color = Color3.fromRGB(14, 13, 17), Material = Enum.Material.Fabric, Parent = parent })
-	part({ Name = "BannerRod", Size = Vector3.new(4, 0.3, 0.3), CFrame = cf * CFrame.new(0, 5.1, 0), Color = GOLD, Material = Enum.Material.Metal, Parent = parent })
-	part({ Name = "BannerTail", Size = Vector3.new(3.2, 1.2, 0.16), CFrame = cf * CFrame.new(0, -5.5, 0) * CFrame.Angles(math.rad(6), 0, 0), Color = Color3.fromRGB(14, 13, 17), Material = Enum.Material.Fabric, Parent = parent })
-	signText(cloth, "₼", GOLD, Enum.NormalId.Front)
-	signText(cloth, "₼", GOLD, Enum.NormalId.Back)
-end
-
-local function candleCluster(parent: Instance, pos: Vector3)
-	local rngC = Random.new(math.floor(pos.X * 7 + pos.Z * 3))
-	for i = 1, rngC:NextInteger(3, 5) do
-		local ox, oz = rngC:NextNumber(-0.9, 0.9), rngC:NextNumber(-0.9, 0.9)
-		local h = rngC:NextNumber(0.5, 1.4)
-		part({ Name = "Candle", Shape = Enum.PartType.Cylinder, Size = Vector3.new(h, 0.34, 0.34), CFrame = CFrame.new(pos + Vector3.new(ox, h / 2, oz)) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(232, 224, 205), Material = Enum.Material.SmoothPlastic, Parent = parent })
-		flame(parent, pos + Vector3.new(ox, h + 0.25, oz), 0.28)
-	end
-end
-
-local function buildCultDressing(folder: Instance)
-	-- stone pillars flanking the reception
-	for _, x in { -24, 24 } do
-		for _, z in { 30, 50 } do
-			part({ Name = "Pillar", Shape = Enum.PartType.Cylinder, Size = Vector3.new(15.5, 3, 3), CFrame = CFrame.new(x, 7.75, z) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(52, 50, 58), Material = Enum.Material.Slate, Parent = folder })
-			part({ Name = "PillarCap", Size = Vector3.new(3.8, 0.8, 3.8), CFrame = CFrame.new(x, 15.6, z), Color = GOLD, Material = Enum.Material.Metal, Parent = folder })
+local function candleCluster(parent: Instance, pos: Vector3, lit: boolean): { BasePart }
+	local rng = Random.new(math.floor(pos.X * 7 + pos.Z * 3))
+	local candles: { BasePart } = {}
+	for _ = 1, rng:NextInteger(3, 5) do
+		local ox, oz = rng:NextNumber(-0.9, 0.9), rng:NextNumber(-0.9, 0.9)
+		local h = rng:NextNumber(0.5, 1.4)
+		local candle = part({
+			Name = "Candle",
+			Shape = Enum.PartType.Cylinder,
+			Size = Vector3.new(h, 0.34, 0.34),
+			CFrame = CFrame.new(pos + Vector3.new(ox, h / 2, oz)) * CFrame.Angles(0, 0, math.rad(90)),
+			Color = Color3.fromRGB(232, 224, 205),
+			CanCollide = false,
+			Parent = parent,
+		})
+		table.insert(candles, candle)
+		if lit then
+			flame(parent, pos + Vector3.new(ox, h + 0.25, oz), 0.28)
 		end
 	end
-	-- wall torches through the reception and club
-	for _, spot in {
-		{ pos = Vector3.new(-29, 7, 32), dir = Vector3.new(1, 0, 0) },
-		{ pos = Vector3.new(-29, 7, 48), dir = Vector3.new(1, 0, 0) },
-		{ pos = Vector3.new(29, 7, 32), dir = Vector3.new(-1, 0, 0) },
-		{ pos = Vector3.new(29, 7, 48), dir = Vector3.new(-1, 0, 0) },
-		{ pos = Vector3.new(-29, 7, -2), dir = Vector3.new(1, 0, 0) },
-		{ pos = Vector3.new(-29, 7, -24), dir = Vector3.new(1, 0, 0) },
-		{ pos = Vector3.new(29, 7, -2), dir = Vector3.new(-1, 0, 0) },
-		{ pos = Vector3.new(29, 7, -18), dir = Vector3.new(-1, 0, 0) },
-	} do
-		torch(folder, spot.pos, spot.dir)
-	end
-	-- sigil banners
-	banner(folder, CFrame.new(-14, 9, 59.2))
-	banner(folder, CFrame.new(14, 9, 59.2))
-	banner(folder, CFrame.new(-24, 9, 20.8) * CFrame.Angles(0, math.rad(180), 0))
-	banner(folder, CFrame.new(24, 9, 20.8) * CFrame.Angles(0, math.rad(180), 0))
-	banner(folder, CFrame.new(0, 9, -39.2))
-	-- braziers at the grand doors
-	for _, side in { -1, 1 } do
-		local bx = side * 9
-		part({ Name = "BrazierBowl", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.2, 2.6, 2.6), CFrame = CFrame.new(bx, 2.6, 23) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(30, 30, 34), Material = Enum.Material.Metal, Parent = folder })
-		part({ Name = "BrazierLeg", Size = Vector3.new(0.4, 2.2, 0.4), CFrame = CFrame.new(bx, 1.1, 23), Color = Color3.fromRGB(30, 30, 34), Material = Enum.Material.Metal, Parent = folder })
-		flame(folder, Vector3.new(bx, 3.6, 23), 1.3)
-	end
-	-- candle clusters
-	candleCluster(folder, Vector3.new(-16, 0.6, -36))
-	candleCluster(folder, Vector3.new(-8, 0.6, -36))
-	candleCluster(folder, Vector3.new(-28, 0.6, 4))
-	candleCluster(folder, Vector3.new(23, 0.6, -30))
-	candleCluster(folder, Vector3.new(-6, 0.6, 56))
-	candleCluster(folder, Vector3.new(6, 0.6, 56))
-
-	-- moonlit grounds: dark grass ring + stone path to the doors
-	part({ Name = "Grounds", Size = Vector3.new(220, 0.4, 220), CFrame = CFrame.new(0, -0.28, 0), Color = Color3.fromRGB(30, 44, 34), Material = Enum.Material.Grass, Parent = folder })
-	part({ Name = "ApproachPath", Size = Vector3.new(10, 0.5, 46), CFrame = CFrame.new(0, -0.05, 84), Color = Color3.fromRGB(48, 47, 52), Material = Enum.Material.Cobblestone, Parent = folder })
-	for i = 0, 3 do
-		for _, side in { -1, 1 } do
-			torch(folder, Vector3.new(side * 7, 4.2, 96 - i * 12), Vector3.new(-side, 0, 0))
-			part({ Name = "TorchPole", Size = Vector3.new(0.4, 4.4, 0.4), CFrame = CFrame.new(side * 7.3, 2.2, 96 - i * 12), Color = Color3.fromRGB(30, 30, 34), Material = Enum.Material.Metal, Parent = folder })
-		end
-	end
+	return candles
 end
 
--- Dark mesh trees around the grounds (reuses the account's uploaded tree asset).
-local function buildGroundsTrees(folder: Instance)
-	local InsertService = game:GetService("InsertService")
+-- ---------------------------------------------------------------- meshes ---
+-- GLB import drops glTF material colors, so styles are re-applied by node name
+-- with an ordered fallback (same approach that fixed the white meshes before).
+type Style = { color: Color3, material: Enum.Material? }
+
+local MESH_STYLES: { [number]: { Style } } = {
+	[Config.Meshes.Chandelier] = {
+		{ color = GOLD, material = Enum.Material.Metal },
+		{ color = Color3.fromRGB(228, 220, 196) },
+		{ color = Color3.fromRGB(255, 208, 110), material = Enum.Material.Neon },
+	},
+	[Config.Meshes.Wingback] = {
+		{ color = VELVET, material = Enum.Material.Fabric },
+		{ color = WALNUT, material = Enum.Material.Wood },
+	},
+	[Config.Meshes.Candelabra] = {
+		{ color = GOLD, material = Enum.Material.Metal },
+		{ color = Color3.fromRGB(228, 220, 196) },
+		{ color = Color3.fromRGB(255, 208, 110), material = Enum.Material.Neon },
+	},
+	[Config.Meshes.Column] = {
+		{ color = Color3.fromRGB(58, 56, 60), material = Enum.Material.Marble },
+	},
+	[Config.Meshes.Tree] = {
+		{ color = Color3.fromRGB(46, 36, 27), material = Enum.Material.Wood },
+		{ color = Color3.fromRGB(24, 36, 28), material = Enum.Material.Grass },
+	},
+}
+
+local function loadMesh(assetId: number): Model?
 	local ok, asset = pcall(function()
-		return InsertService:LoadAsset(128757271025486)
+		return InsertService:LoadAsset(assetId)
 	end)
 	if not ok or not asset then
-		return
+		warn("[CULT] mesh " .. assetId .. " failed to load")
+		return nil
 	end
 	local inner = asset:FindFirstChildOfClass("Model")
 	local template = Instance.new("Model")
@@ -182,223 +180,708 @@ local function buildGroundsTrees(folder: Instance)
 		end
 	end
 	local parts: { BasePart } = {}
-	for _, part_ in template:GetDescendants() do
-		if part_:IsA("BasePart") then
-			part_.Anchored = true
-			part_.CanCollide = false
-			table.insert(parts, part_)
+	for _, p in template:GetDescendants() do
+		if p:IsA("BasePart") then
+			p.Anchored = true
+			p.CanCollide = false
+			p.CastShadow = true
+			table.insert(parts, p)
 		end
 	end
 	table.sort(parts, function(a, b)
 		return a.Name < b.Name
 	end)
-	if parts[1] then
-		parts[1].Color = Color3.fromRGB(52, 40, 30) -- trunk
-		parts[1].Material = Enum.Material.Wood
-	end
-	for i = 2, #parts do
-		parts[i].Color = Color3.fromRGB(26, 40, 30) -- night canopy
-		parts[i].Material = Enum.Material.Grass
+	local styles = MESH_STYLES[assetId]
+	if styles then
+		for i, p in parts do
+			local style = styles[math.min(i, #styles)]
+			p.Color = style.color
+			if style.material then
+				p.Material = style.material
+			end
+			if style.material == Enum.Material.Neon then
+				local light = Instance.new("PointLight")
+				light.Color = Color3.fromRGB(255, 190, 110)
+				light.Brightness = 0.8
+				light.Range = 14
+				light.Parent = p
+			end
+		end
 	end
 	asset:Destroy()
-	local rngT = Random.new(23)
-	for i = 0, 13 do
-		local a = i / 14 * math.pi * 2
-		if math.abs(math.deg(a) - 90) > 24 then -- keep the approach clear
-			local d = rngT:NextNumber(72, 96)
-			local clone = template:Clone()
-			clone.Name = "GroundsTree"
-			clone:ScaleTo(rngT:NextNumber(0.9, 1.6))
-			local _, size = clone:GetBoundingBox()
-			clone:PivotTo(CFrame.new(math.sin(a) * d, size.Y / 2 - 0.3, math.cos(a) * d) * CFrame.Angles(0, rngT:NextNumber(0, math.pi * 2), 0))
-			clone.Parent = folder
+	if #template:GetChildren() == 0 then
+		return nil
+	end
+	return template
+end
+
+local function placeMesh(template: Model?, parent: Instance, name: string, cf: CFrame, scale: number): Model?
+	if not template then
+		return nil
+	end
+	local clone = template:Clone()
+	clone.Name = name
+	clone:ScaleTo(scale)
+	clone:PivotTo(cf)
+	clone.Parent = parent
+	return clone
+end
+
+-- ---------------------------------------------------------------- grounds ---
+export type PathTorch = { flame: BasePart, light: PointLight, fire: Fire }
+
+local function buildGrounds(folder: Folder): ({ PathTorch }, BasePart, BasePart, BasePart)
+	part({
+		Name = "Grounds",
+		Size = Vector3.new(340, 2, 340),
+		CFrame = CFrame.new(0, -1, 0),
+		Color = Color3.fromRGB(26, 38, 30),
+		Material = Enum.Material.Grass,
+		Parent = folder,
+	})
+	part({
+		Name = "ApproachPath",
+		Size = Vector3.new(12, 0.4, 76),
+		CFrame = CFrame.new(0, 0.05, DOOR_Z + 40),
+		Color = Color3.fromRGB(44, 43, 48),
+		Material = Enum.Material.Cobblestone,
+		Parent = folder,
+	})
+
+	-- "the flames that guard the path": nine poles, and the server decides
+	-- how many of them burn tonight
+	local torches: { PathTorch } = {}
+	for i = 0, 8 do
+		local z = DOOR_Z + 14 + i * 8
+		local x = (i % 2 == 0) and -8.5 or 8.5
+		part({
+			Name = "TorchPole",
+			Size = Vector3.new(0.5, 8, 0.5),
+			CFrame = CFrame.new(x, 4, z),
+			Color = Color3.fromRGB(26, 25, 29),
+			Material = Enum.Material.Metal,
+			Parent = folder,
+		})
+		part({
+			Name = "TorchBowl",
+			Shape = Enum.PartType.Cylinder,
+			Size = Vector3.new(0.6, 1.5, 1.5),
+			CFrame = CFrame.new(x, 8.2, z) * CFrame.Angles(0, 0, math.rad(90)),
+			Color = Color3.fromRGB(26, 25, 29),
+			Material = Enum.Material.Metal,
+			CanCollide = false,
+			Parent = folder,
+		})
+		local f = flame(folder, Vector3.new(x, 9, z), 0.9)
+		f.Name = "PathFlame"
+		torches[i + 1] = {
+			flame = f,
+			light = f:FindFirstChildOfClass("PointLight") :: PointLight,
+			fire = f:FindFirstChildOfClass("Fire") :: Fire,
+		}
+	end
+
+	-- the obelisk: asks the question whose answer is the torches
+	local obelisk = part({
+		Name = "Obelisk",
+		Size = Vector3.new(4, 22, 4),
+		CFrame = CFrame.new(-46, 11, DOOR_Z + 38),
+		Color = STONE_DARK,
+		Material = Enum.Material.Slate,
+		Parent = folder,
+	})
+	part({
+		Name = "ObeliskCap",
+		Size = Vector3.new(2.6, 3.2, 2.6),
+		CFrame = CFrame.new(-46, 23.4, DOOR_Z + 38),
+		Color = STONE_DARK,
+		Material = Enum.Material.Slate,
+		Parent = folder,
+	})
+	part({
+		Name = "ObeliskBase",
+		Size = Vector3.new(7, 1.4, 7),
+		CFrame = CFrame.new(-46, 0.7, DOOR_Z + 38),
+		Color = STONE,
+		Material = Enum.Material.Slate,
+		Parent = folder,
+	})
+	signText(obelisk, "I\n\nAS MANY AS THE\nFLAMES THAT\nGUARD THE PATH", Color3.fromRGB(150, 128, 82), Enum.NormalId.Right, 34)
+
+	-- the monument: a date that is not a date
+	local monument = part({
+		Name = "Monument",
+		Size = Vector3.new(10, 7, 3),
+		CFrame = CFrame.new(46, 3.5, DOOR_Z + 38),
+		Color = STONE_DARK,
+		Material = Enum.Material.Slate,
+		Parent = folder,
+	})
+	part({
+		Name = "MonumentBase",
+		Size = Vector3.new(13, 1.4, 5),
+		CFrame = CFrame.new(46, 0.7, DOOR_Z + 38),
+		Color = STONE,
+		Material = Enum.Material.Slate,
+		Parent = folder,
+	})
+
+	-- the buried sigil, under one particular tree
+	local sigil = part({
+		Name = "BuriedSigil",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(0.3, 9, 9),
+		CFrame = CFrame.new(-64, 0.16, 24) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(52, 44, 30),
+		Material = Enum.Material.Slate,
+		CanCollide = false,
+		Parent = folder,
+	})
+	signText(sigil, "₼", Color3.fromRGB(120, 96, 44), Enum.NormalId.Right)
+
+	return torches, obelisk, monument, sigil
+end
+
+local function buildTrees(folder: Folder, template: Model?)
+	if not template then
+		return
+	end
+	local rng = Random.new(23)
+	-- the marked tree stands over the sigil
+	placeMesh(template, folder, "MarkedTree", CFrame.new(-64, 8.6, 24), 1.5)
+	for i = 0, 17 do
+		local a = i / 18 * math.pi * 2
+		local d = rng:NextNumber(88, 132)
+		local x, z = math.sin(a) * d, math.cos(a) * d + DOOR_Z
+		if math.abs(x) > 22 or z < DOOR_Z - 10 then -- keep the approach clear
+			placeMesh(
+				template,
+				folder,
+				"GroundsTree",
+				CFrame.new(x, rng:NextNumber(6.5, 10), z) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0),
+				rng:NextNumber(0.9, 1.7)
+			)
 		end
 	end
 end
 
+-- ----------------------------------------------------------------- facade ---
+local function buildFacade(folder: Folder): (BasePart, BasePart, BasePart, { BasePart })
+	local function facadeWall(name: string, size: Vector3, cf: CFrame)
+		local w = part({ Name = name, Size = size, CFrame = cf, Color = STONE, Material = Enum.Material.Slate, Parent = folder })
+		return w
+	end
+	-- front wall with a door-shaped hole
+	facadeWall("FacadeL", Vector3.new(38, 30, 4), CFrame.new(-24, 15, DOOR_Z))
+	facadeWall("FacadeR", Vector3.new(38, 30, 4), CFrame.new(24, 15, DOOR_Z))
+	facadeWall("FacadeLintel", Vector3.new(12, 16, 4), CFrame.new(0, 22, DOOR_Z))
+	-- returns and roofline so it reads as a building, not a flat
+	facadeWall("FacadeSideL", Vector3.new(4, 30, 40), CFrame.new(-41, 15, DOOR_Z - 22))
+	facadeWall("FacadeSideR", Vector3.new(4, 30, 40), CFrame.new(41, 15, DOOR_Z - 22))
+	facadeWall("FacadeRoof", Vector3.new(86, 3, 46), CFrame.new(0, 31.5, DOOR_Z - 21))
+	facadeWall("FacadeCornice", Vector3.new(90, 2, 6), CFrame.new(0, 30, DOOR_Z))
+	for _, x in { -30, -14, 14, 30 } do
+		part({
+			Name = "FacadePilaster",
+			Size = Vector3.new(3, 28, 1.6),
+			CFrame = CFrame.new(x, 14, DOOR_Z - 2.6),
+			Color = STONE_DARK,
+			Material = Enum.Material.Slate,
+			Parent = folder,
+		})
+	end
+
+	-- the door: two slabs that will part when the code is right
+	local doorL = part({
+		Name = "DoorL",
+		Size = Vector3.new(6, 14, 1.2),
+		CFrame = CFrame.new(-3, 7, DOOR_Z),
+		Color = Color3.fromRGB(34, 24, 16),
+		Material = Enum.Material.Wood,
+		Parent = folder,
+	})
+	local doorR = part({
+		Name = "DoorR",
+		Size = Vector3.new(6, 14, 1.2),
+		CFrame = CFrame.new(3, 7, DOOR_Z),
+		Color = Color3.fromRGB(34, 24, 16),
+		Material = Enum.Material.Wood,
+		Parent = folder,
+	})
+	for _, d in { doorL, doorR } do
+		tex(d, Enum.NormalId.Front, Config.Textures.Wainscot, 6, 14)
+		tex(d, Enum.NormalId.Back, Config.Textures.Wainscot, 6, 14)
+	end
+	part({
+		Name = "DoorRing",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.new(1.1, 1.1, 1.1),
+		CFrame = CFrame.new(-1.2, 7, DOOR_Z - 0.8),
+		Color = GOLD,
+		Material = Enum.Material.Metal,
+		CanCollide = false,
+		Parent = folder,
+	})
+
+	-- three portraits weather the facade. one of them is hung wrong.
+	local portraits: { BasePart } = {}
+	local ids = { Config.Textures.Portrait1, Config.Textures.Portrait2, Config.Textures.Portrait3 }
+	for i, x in { -30, -19, 30 } do
+		local flipped = (i == 2)
+		local p = part({
+			Name = flipped and "PortraitWrong" or ("Portrait" .. i),
+			Size = Vector3.new(5, 6.25, 0.5),
+			CFrame = CFrame.new(x, 15, DOOR_Z - 2.4) * CFrame.Angles(0, 0, flipped and math.pi or 0),
+			Color = VOID,
+			Material = Enum.Material.Wood,
+			CanCollide = false,
+			Parent = folder,
+		})
+		decal(p, Enum.NormalId.Front, ids[i])
+		table.insert(portraits, p)
+	end
+
+	return doorL, doorR, folder:FindFirstChild("FacadeLintel") :: BasePart, portraits
+end
+
+local function buildKeypad(folder: Folder): BasePart
+	part({
+		Name = "KeypadPlinth",
+		Size = Vector3.new(3, 4.4, 3),
+		CFrame = CFrame.new(9, 2.2, DOOR_Z - 3.4),
+		Color = STONE_DARK,
+		Material = Enum.Material.Slate,
+		Parent = folder,
+	})
+	local pad = part({
+		Name = "Keypad",
+		Size = Vector3.new(2.6, 3.4, 0.5),
+		CFrame = CFrame.new(9, 5.6, DOOR_Z - 3.4) * CFrame.Angles(math.rad(-22), 0, 0),
+		Color = Color3.fromRGB(20, 19, 23),
+		Material = Enum.Material.Metal,
+		Parent = folder,
+	})
+	part({
+		Name = "KeypadFrame",
+		Size = Vector3.new(3.1, 3.9, 0.4),
+		CFrame = pad.CFrame * CFrame.new(0, 0, 0.16),
+		Color = GOLD,
+		Material = Enum.Material.Metal,
+		CanCollide = false,
+		Parent = folder,
+	})
+	return pad
+end
+
+-- --------------------------------------------------------------- hallway ---
+local function buildHallway(folder: Folder)
+	local zStart, zEnd = DOOR_Z, HALL_CENTER.Z + HALL_R + 4
+	local length = zStart - zEnd
+	local mid = (zStart + zEnd) / 2
+
+	local floor = part({
+		Name = "HallFloor",
+		Size = Vector3.new(10, 1, length),
+		CFrame = CFrame.new(0, -0.5, mid),
+		Color = WALNUT,
+		Material = Enum.Material.Wood,
+		Parent = folder,
+	})
+	tex(floor, Enum.NormalId.Top, Config.Textures.Parquet, 10, 10)
+
+	local ceiling = part({
+		Name = "HallCeiling",
+		Size = Vector3.new(10, 1, length),
+		CFrame = CFrame.new(0, 10.5, mid),
+		Color = Color3.fromRGB(26, 20, 15),
+		Material = Enum.Material.Wood,
+		Parent = folder,
+	})
+	tex(ceiling, Enum.NormalId.Bottom, Config.Textures.Coffer, 10, 10)
+
+	for _, side in { -1, 1 } do
+		local wall = part({
+			Name = "HallWall",
+			Size = Vector3.new(1, 11, length),
+			CFrame = CFrame.new(side * 5.5, 5, mid),
+			Color = WALNUT,
+			Material = Enum.Material.Wood,
+			Parent = folder,
+		})
+		local face = side < 0 and Enum.NormalId.Right or Enum.NormalId.Left
+		tex(wall, face, Config.Textures.Wainscot, 11, 11)
+	end
+
+	-- torches every eight studs, and portraits watching between them
+	local ids = { Config.Textures.Portrait1, Config.Textures.Portrait2, Config.Textures.Portrait3 }
+	local n = math.floor(length / 8)
+	for i = 0, n do
+		local z = zStart - 6 - i * 8
+		if z <= zEnd + 4 then
+			break
+		end
+		local side = (i % 2 == 0) and -1 or 1
+		wallTorch(folder, Vector3.new(side * 4.7, 7, z), Vector3.new(-side, 0, 0))
+		if i % 2 == 1 then
+			local p = part({
+				Name = "HallPortrait",
+				Size = Vector3.new(0.4, 5, 4),
+				CFrame = CFrame.new(-side * 4.72, 5.6, z),
+				Color = VOID,
+				Material = Enum.Material.Wood,
+				CanCollide = false,
+				Parent = folder,
+			})
+			decal(p, side < 0 and Enum.NormalId.Left or Enum.NormalId.Right, ids[(i % 3) + 1])
+		end
+	end
+end
+
+-- ------------------------------------------------------------ grand hall ---
+export type Gate = { door: BasePart, rank: string, label: string }
+
+local function buildGrandHall(
+	folder: Folder,
+	meshes: { [string]: Model? }
+): ({ Seat }, BasePart, { Gate }, BasePart)
+	local cx, cz = HALL_CENTER.X, HALL_CENTER.Z
+	local segW = 2 * HALL_R * math.tan(math.pi / 8) + 2
+
+	local floor = part({
+		Name = "GrandFloor",
+		Size = Vector3.new(HALL_R * 2 + 8, 1, HALL_R * 2 + 8),
+		CFrame = CFrame.new(cx, -0.5, cz),
+		Color = WALNUT,
+		Material = Enum.Material.Wood,
+		Parent = folder,
+	})
+	tex(floor, Enum.NormalId.Top, Config.Textures.Parquet, 12, 12)
+
+	local ceiling = part({
+		Name = "GrandCeiling",
+		Size = Vector3.new(HALL_R * 2 + 8, 1, HALL_R * 2 + 8),
+		CFrame = CFrame.new(cx, HALL_H + 0.5, cz),
+		Color = Color3.fromRGB(24, 18, 13),
+		Material = Enum.Material.Wood,
+		Parent = folder,
+	})
+	tex(ceiling, Enum.NormalId.Bottom, Config.Textures.Coffer, 16, 16)
+
+	-- the rug, centred under the circle
+	local rug = part({
+		Name = "GrandRug",
+		Size = Vector3.new(40, 0.12, 25),
+		CFrame = CFrame.new(cx, 0.06, cz),
+		Color = Color3.fromRGB(120, 40, 40),
+		Material = Enum.Material.Fabric,
+		CanCollide = false,
+		Parent = folder,
+	})
+	decal(rug, Enum.NormalId.Top, Config.Textures.Rug)
+
+	-- octagonal wall: wainscot below, damask above, gilt rail between
+	local gates: { Gate } = {}
+	local GATE_PLAN: { [number]: { rank: string, label: string } } = {
+		[2] = { rank = "INSIDER", label = "THE PRIVATE CORRIDOR" },
+		[4] = { rank = "OPERATOR", label = "THE UNDERCROFT" },
+		[6] = { rank = "ARCHITECT", label = "THE ROOFTOP" },
+		[8] = { rank = "INNER CIRCLE", label = "" },
+	}
+	local missionBoard: BasePart? = nil
+
+	for i = 1, 8 do
+		local a = (i - 1) / 8 * math.pi * 2 + math.pi / 8
+		local nx, nz = math.sin(a), math.cos(a)
+		local pos = Vector3.new(cx + nx * HALL_R, 0, cz + nz * HALL_R)
+		local cf = CFrame.lookAt(pos, pos - Vector3.new(nx, 0, nz))
+
+		local isEntry = (i == 5) -- the segment facing the hallway
+		if not isEntry then
+			local lower = part({
+				Name = "HallWainscot",
+				Size = Vector3.new(segW, 9, 1.2),
+				CFrame = cf * CFrame.new(0, 4.5, 0),
+				Color = WALNUT,
+				Material = Enum.Material.Wood,
+				Parent = folder,
+			})
+			tex(lower, Enum.NormalId.Back, Config.Textures.Wainscot, 12, 9)
+			local upper = part({
+				Name = "HallDamask",
+				Size = Vector3.new(segW, HALL_H - 9, 1.2),
+				CFrame = cf * CFrame.new(0, 9 + (HALL_H - 9) / 2, 0),
+				Color = Color3.fromRGB(48, 30, 34),
+				Material = Enum.Material.Fabric,
+				Parent = folder,
+			})
+			tex(upper, Enum.NormalId.Back, Config.Textures.Damask, 12, 12)
+			part({
+				Name = "GiltRail",
+				Size = Vector3.new(segW, 0.4, 1.6),
+				CFrame = cf * CFrame.new(0, 9.2, 0),
+				Color = GOLD,
+				Material = Enum.Material.Metal,
+				CanCollide = false,
+				Parent = folder,
+			})
+		else
+			-- entry arch back to the hallway
+			for _, side in { -1, 1 } do
+				part({
+					Name = "EntryJamb",
+					Size = Vector3.new((segW - 10) / 2, HALL_H, 1.2),
+					CFrame = cf * CFrame.new(side * (segW / 2 - (segW - 10) / 4), HALL_H / 2, 0),
+					Color = WALNUT,
+					Material = Enum.Material.Wood,
+					Parent = folder,
+				})
+			end
+			part({
+				Name = "EntryLintel",
+				Size = Vector3.new(10, HALL_H - 12, 1.2),
+				CFrame = cf * CFrame.new(0, 12 + (HALL_H - 12) / 2, 0),
+				Color = WALNUT,
+				Material = Enum.Material.Wood,
+				Parent = folder,
+			})
+		end
+
+		-- fluted column at every vertex
+		local va = (i - 1) / 8 * math.pi * 2
+		placeMesh(
+			meshes.column,
+			folder,
+			"HallColumn",
+			CFrame.new(cx + math.sin(va) * (HALL_R - 2.5), 0, cz + math.cos(va) * (HALL_R - 2.5)),
+			HALL_H / 11.7
+		)
+		-- candelabra between the columns
+		if not isEntry then
+			placeMesh(meshes.candelabra, folder, "HallCandelabra", cf * CFrame.new(-9, 0, 3), 1.1)
+			placeMesh(meshes.candelabra, folder, "HallCandelabra", cf * CFrame.new(9, 0, 3), 1.1)
+		end
+
+		local plan = GATE_PLAN[i]
+		if plan then
+			local door = part({
+				Name = "Gate_" .. plan.rank,
+				Size = Vector3.new(8, 12, 0.8),
+				CFrame = cf * CFrame.new(0, 6, -1),
+				Color = Color3.fromRGB(28, 20, 14),
+				Material = Enum.Material.Wood,
+				Parent = folder,
+			})
+			tex(door, Enum.NormalId.Back, Config.Textures.Wainscot, 8, 12)
+			if plan.label ~= "" then
+				local plaque = part({
+					Name = "GatePlaque",
+					Size = Vector3.new(6, 1.1, 0.3),
+					CFrame = cf * CFrame.new(0, 13, -1.2),
+					Color = Color3.fromRGB(20, 19, 23),
+					Material = Enum.Material.Metal,
+					CanCollide = false,
+					Parent = folder,
+				})
+				signText(plaque, plan.label, GOLD, Enum.NormalId.Back, 26)
+			end
+			table.insert(gates, { door = door :: BasePart, rank = plan.rank, label = plan.label })
+		elseif i == 1 then
+			-- fireplace opposite the entry
+			part({
+				Name = "Fireplace",
+				Size = Vector3.new(12, 9, 2),
+				CFrame = cf * CFrame.new(0, 4.5, -1.2),
+				Color = STONE_DARK,
+				Material = Enum.Material.Slate,
+				Parent = folder,
+			})
+			part({
+				Name = "FireplaceMouth",
+				Size = Vector3.new(7, 5.5, 1.4),
+				CFrame = cf * CFrame.new(0, 2.75, -1.9),
+				Color = VOID,
+				Material = Enum.Material.Slate,
+				CanCollide = false,
+				Parent = folder,
+			})
+			part({
+				Name = "Mantel",
+				Size = Vector3.new(14, 0.8, 3),
+				CFrame = cf * CFrame.new(0, 9.3, -1.2),
+				Color = WALNUT,
+				Material = Enum.Material.Wood,
+				CanCollide = false,
+				Parent = folder,
+			})
+			flame(folder, (cf * CFrame.new(0, 1.8, -1.9)).Position, 1.5)
+			candleCluster(folder, (cf * CFrame.new(-5, 9.8, -1.2)).Position, true)
+			candleCluster(folder, (cf * CFrame.new(5, 9.8, -1.2)).Position, true)
+		elseif i == 3 then
+			-- the board where the missions are posted
+			local board = part({
+				Name = "MissionBoard",
+				Size = Vector3.new(14, 9, 0.6),
+				CFrame = cf * CFrame.new(0, 7, -1),
+				Color = Color3.fromRGB(22, 16, 12),
+				Material = Enum.Material.Wood,
+				Parent = folder,
+			})
+			part({
+				Name = "BoardFrame",
+				Size = Vector3.new(15, 10, 0.4),
+				CFrame = cf * CFrame.new(0, 7, -0.7),
+				Color = GOLD,
+				Material = Enum.Material.Metal,
+				CanCollide = false,
+				Parent = folder,
+			})
+			missionBoard = board
+		else
+			-- ancestor portraits between the gates
+			local ids = { Config.Textures.Portrait1, Config.Textures.Portrait2, Config.Textures.Portrait3 }
+			for _, ox in { -8, 8 } do
+				local p = part({
+					Name = "HallPortrait",
+					Size = Vector3.new(5.6, 7, 0.5),
+					CFrame = cf * CFrame.new(ox, 13, -1.3),
+					Color = VOID,
+					Material = Enum.Material.Wood,
+					CanCollide = false,
+					Parent = folder,
+				})
+				decal(p, Enum.NormalId.Back, ids[((ox > 0) and 1 or 3)])
+			end
+		end
+	end
+
+	-- chandeliers
+	placeMesh(meshes.chandelier, folder, "GrandChandelier", CFrame.new(cx - 13, HALL_H - 9, cz), 2.6)
+	placeMesh(meshes.chandelier, folder, "GrandChandelier", CFrame.new(cx + 13, HALL_H - 9, cz), 2.6)
+
+	-- the altar: a raised dais with a standing flame
+	part({
+		Name = "AltarDais",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(1.4, 13, 13),
+		CFrame = CFrame.new(cx, 0.7, cz) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = STONE_DARK,
+		Material = Enum.Material.Marble,
+		Parent = folder,
+	})
+	local altar = part({
+		Name = "Altar",
+		Size = Vector3.new(4.5, 4, 4.5),
+		CFrame = CFrame.new(cx, 3.4, cz),
+		Color = STONE_DARK,
+		Material = Enum.Material.Marble,
+		Parent = folder,
+	})
+	part({
+		Name = "AltarBowl",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(1.2, 3.4, 3.4),
+		CFrame = CFrame.new(cx, 5.7, cz) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = GOLD,
+		Material = Enum.Material.Metal,
+		CanCollide = false,
+		Parent = folder,
+	})
+	local altarFlame = flame(folder, Vector3.new(cx, 7, cz), 1.8)
+	altarFlame.Name = "AltarFlame"
+
+	-- the circle: twelve chairs facing in
+	local chairs: { Seat } = {}
+	for i = 1, 12 do
+		local a = (i - 1) / 12 * math.pi * 2
+		local pos = Vector3.new(cx + math.sin(a) * 15, 0, cz + math.cos(a) * 15)
+		local facing = CFrame.lookAt(pos, Vector3.new(cx, 0, cz))
+		placeMesh(meshes.wingback, folder, "CircleChair", facing * CFrame.Angles(0, math.pi, 0), 1.05)
+		local seat = Instance.new("Seat")
+		seat.Name = (i == 12) and "ReservedSeat" or ("CircleSeat" .. i)
+		seat.Size = Vector3.new(3, 0.4, 3)
+		seat.CFrame = facing * CFrame.new(0, 1.6, 0)
+		seat.Anchored = true
+		seat.Transparency = 1
+		seat.Parent = folder
+		chairs[i] = seat
+	end
+
+	-- three candles that never burn (a mission lives here)
+	for _, spot in { Vector3.new(cx - 24, 0.1, cz - 8), Vector3.new(cx + 24, 0.1, cz + 8), Vector3.new(cx, 0.1, cz + 26) } do
+		local unlit = candleCluster(folder, spot, false)
+		for _, c in unlit do
+			c.Name = "ColdCandle"
+		end
+	end
+
+	return chairs, altar, gates, missionBoard or altar
+end
+
+-- ------------------------------------------------------------------ build ---
 export type Map = {
 	folder: Folder,
-	doorGate: BasePart,
-	counterLabel: TextLabel,
-	receptionSpawn: Vector3,
-	clubInterior: Vector3,
+	pathTorches: { PathTorch },
+	obelisk: BasePart,
+	monument: BasePart,
+	sigil: BasePart,
+	keypad: BasePart,
+	doorL: BasePart,
+	doorR: BasePart,
+	wrongPortrait: BasePart,
+	chairs: { Seat },
+	altar: BasePart,
+	gates: { Gate },
+	missionBoard: BasePart,
+	hallCenter: Vector3,
+	entryPoint: Vector3,
 }
 
 function ClubMap.Build(): Map
 	local folder = Instance.new("Folder")
-	folder.Name = "MillionsClub"
+	folder.Name = "CULT"
 	folder.Parent = workspace
 
-	-- night-city ground plane
-	part({ Name = "Plaza", Size = Vector3.new(220, 1, 220), CFrame = CFrame.new(0, -0.5, 0), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Slate, Parent = folder })
-
-	-- ===== reception (public showroom), z 20..60 =====
-	part({ Name = "ReceptionFloor", Size = Vector3.new(60, 1, 40), CFrame = CFrame.new(0, 0.02, 40), Color = Color3.fromRGB(44, 42, 48), Material = Enum.Material.Slate, Parent = folder })
-	-- checker inlay
-	for i = 0, 4 do
-		for j = 0, 2 do
-			part({ Name = "FloorInlay", Size = Vector3.new(5.5, 0.06, 5.5), CFrame = CFrame.new(-22 + i * 11, 0.55, 29 + j * 11), Color = MARBLE_DARK, Material = Enum.Material.Marble, Parent = folder })
-		end
-	end
-	-- walls
-	for _, spec in {
-		{ size = Vector3.new(60, 16, 1.5), cf = CFrame.new(0, 8, 60) },
-		{ size = Vector3.new(1.5, 16, 40), cf = CFrame.new(-30, 8, 40) },
-		{ size = Vector3.new(1.5, 16, 40), cf = CFrame.new(30, 8, 40) },
-	} do
-		part({ Name = "ReceptionWall", Size = spec.size, CFrame = spec.cf, Color = Color3.fromRGB(40, 38, 46), Material = Enum.Material.Slate, Parent = folder })
-	end
-	-- gold wall trim
-	for _, y in { 1.2, 14.5 } do
-		part({ Name = "GoldTrim", Size = Vector3.new(60, 0.5, 0.4), CFrame = CFrame.new(0, y, 59.2), Color = GOLD, Material = Enum.Material.Metal, Parent = folder })
-	end
-	part({ Name = "ReceptionCeiling", Size = Vector3.new(60, 1, 40), CFrame = CFrame.new(0, 16.5, 40), Color = Color3.fromRGB(24, 22, 26), Parent = folder })
-	chandelier(folder, Vector3.new(0, 13.5, 40))
-	chandelier(folder, Vector3.new(-18, 13.5, 40))
-	chandelier(folder, Vector3.new(18, 13.5, 40))
-
-	-- entrance facade + name
-	local marquee = part({ Name = "Marquee", Size = Vector3.new(34, 6, 1.2), CFrame = CFrame.new(0, 19.5, 60), Color = Color3.fromRGB(16, 15, 18), Parent = folder })
-	signText(marquee, "MILLIONS CLUB", GOLD, Enum.NormalId.Back)
-	signText(marquee, "MILLIONS CLUB", GOLD, Enum.NormalId.Front)
-
-	-- membership counter board
-	local counterBoard = part({ Name = "CounterBoard", Size = Vector3.new(16, 9, 1), CFrame = CFrame.new(-20, 7, 59), Color = Color3.fromRGB(14, 13, 16), Parent = folder })
-	signText(counterBoard, "MEMBERSHIPS", CREAM, Enum.NormalId.Back)
-	local counterLabelHolder = part({ Name = "CounterNumber", Size = Vector3.new(16, 5, 1), CFrame = CFrame.new(-20, 3, 59), Color = Color3.fromRGB(14, 13, 16), Parent = folder })
-	local counterLabel = signText(counterLabelHolder, "0 / 100", GOLD, Enum.NormalId.Back)
-
-	-- rules board
-	local rules = part({ Name = "RulesBoard", Size = Vector3.new(16, 12, 1), CFrame = CFrame.new(20, 7, 59), Color = Color3.fromRGB(14, 13, 16), Parent = folder })
-	signText(rules, "ONE MEMBERSHIP.\n100 MEMBERS. EVER.\n\nNO TIERS.\nNO SECOND CHANCES.", CREAM, Enum.NormalId.Back, 34)
-
-	-- velvet ropes leading to the doors
-	for _, x in { -6, 6 } do
-		for i = 0, 3 do
-			local post = part({ Name = "RopePost", Shape = Enum.PartType.Cylinder, Size = Vector3.new(3.4, 0.5, 0.5), CFrame = CFrame.new(x, 1.7, 26 + i * 8) * CFrame.Angles(0, 0, math.rad(90)), Color = GOLD, Material = Enum.Material.Metal, Parent = folder })
-			local _ = post
-			if i < 3 then
-				part({ Name = "Rope", Size = Vector3.new(0.3, 0.3, 7.2), CFrame = CFrame.new(x, 2.9, 30 + i * 8), Color = VELVET, Material = Enum.Material.Fabric, Parent = folder })
-			end
-		end
-	end
-	-- red carpet
-	part({ Name = "RedCarpet", Size = Vector3.new(9, 0.12, 40), CFrame = CFrame.new(0, 0.58, 40), Color = VELVET, Material = Enum.Material.Fabric, Parent = folder })
-
-	-- ===== the grand doors + gate (members only beyond) =====
-	local doorFrame = part({ Name = "DoorFrame", Size = Vector3.new(14, 14, 2), CFrame = CFrame.new(0, 7, 20), Color = GOLD, Material = Enum.Material.Metal, Parent = folder })
-	local _ = doorFrame
-	for _, side in { -1, 1 } do
-		part({ Name = "GrandDoor", Size = Vector3.new(5.4, 12, 0.8), CFrame = CFrame.new(side * 3, 6, 20), Color = WALNUT, Material = Enum.Material.Wood, Parent = folder })
-		part({ Name = "DoorHandle", Size = Vector3.new(0.3, 1.6, 0.3), CFrame = CFrame.new(side * 0.8, 6, 19.4), Color = GOLD, Material = Enum.Material.Metal, Parent = folder })
-	end
-	local doorGate = part({ Name = "DoorGate", Size = Vector3.new(12, 12, 0.5), CFrame = CFrame.new(0, 6, 20), Transparency = 1, CanCollide = true, Parent = folder })
-	-- reception outer walls flanking the door so the club is sealed
-	for _, side in { -1, 1 } do
-		part({ Name = "FrontWall", Size = Vector3.new(23, 16, 1.5), CFrame = CFrame.new(side * 18.5, 8, 20), Color = Color3.fromRGB(40, 38, 46), Material = Enum.Material.Slate, Parent = folder })
-	end
-
-	-- ===== private club (z -40..20) =====
-	part({ Name = "ClubFloor", Size = Vector3.new(60, 1, 60), CFrame = CFrame.new(0, 0.02, -10), Color = MARBLE_DARK, Material = Enum.Material.Marble, Parent = folder })
-	part({ Name = "ClubRug", Size = Vector3.new(26, 0.1, 26), CFrame = CFrame.new(-12, 0.58, -12), Color = Color3.fromRGB(38, 30, 48), Material = Enum.Material.Fabric, Parent = folder })
-	for _, spec in {
-		{ size = Vector3.new(60, 16, 1.5), cf = CFrame.new(0, 8, -40) },
-		{ size = Vector3.new(1.5, 16, 60), cf = CFrame.new(-30, 8, -10) },
-		{ size = Vector3.new(1.5, 16, 60), cf = CFrame.new(30, 8, -10) },
-	} do
-		part({ Name = "ClubWall", Size = spec.size, CFrame = spec.cf, Color = Color3.fromRGB(30, 26, 30), Material = Enum.Material.WoodPlanks, Parent = folder })
-	end
-	part({ Name = "ClubCeiling", Size = Vector3.new(60, 1, 60), CFrame = CFrame.new(0, 16.5, -10), Color = Color3.fromRGB(18, 16, 20), Parent = folder })
-	chandelier(folder, Vector3.new(-12, 13.5, -12))
-	chandelier(folder, Vector3.new(12, 13.5, -25))
-
-	-- grand lounge: fireplace + seating circle
-	part({ Name = "Fireplace", Size = Vector3.new(8, 7, 1.6), CFrame = CFrame.new(-12, 3.5, -39), Color = MARBLE_DARK, Material = Enum.Material.Marble, Parent = folder })
-	local fire = part({ Name = "Fire", Size = Vector3.new(5, 2.6, 0.6), CFrame = CFrame.new(-12, 1.6, -38.6), Color = Color3.fromRGB(255, 140, 40), Material = Enum.Material.Neon, Parent = folder })
-	local fireLight = Instance.new("PointLight")
-	fireLight.Color = Color3.fromRGB(255, 150, 60)
-	fireLight.Brightness = 2
-	fireLight.Range = 22
-	fireLight.Parent = fire
-	loungeSeat(folder, CFrame.new(-12, 0, -28) * CFrame.Angles(0, math.rad(180), 0), Color3.fromRGB(60, 46, 66))
-	loungeSeat(folder, CFrame.new(-19, 0, -20) * CFrame.Angles(0, math.rad(-120), 0), Color3.fromRGB(60, 46, 66))
-	loungeSeat(folder, CFrame.new(-5, 0, -20) * CFrame.Angles(0, math.rad(120), 0), Color3.fromRGB(60, 46, 66))
-	part({ Name = "CoffeeTable", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.1, 4.4, 4.4), CFrame = CFrame.new(-12, 0.55, -21) * CFrame.Angles(0, 0, math.rad(90)), Color = GOLD, Material = Enum.Material.Metal, Parent = folder })
-
-	-- restaurant: bar + booths
-	part({ Name = "Bar", Size = Vector3.new(14, 3.6, 2.4), CFrame = CFrame.new(18, 1.8, -34), Color = WALNUT, Material = Enum.Material.Wood, Parent = folder })
-	part({ Name = "BarTop", Size = Vector3.new(14.6, 0.4, 3), CFrame = CFrame.new(18, 3.8, -34), Color = MARBLE, Material = Enum.Material.Marble, Parent = folder })
-	part({ Name = "BarBack", Size = Vector3.new(14, 8, 0.8), CFrame = CFrame.new(18, 6, -39), Color = Color3.fromRGB(20, 18, 22), Parent = folder })
-	local shelfGlow = part({ Name = "BarShelf", Size = Vector3.new(13, 0.3, 0.9), CFrame = CFrame.new(18, 6.5, -38.4), Color = Color3.fromRGB(120, 200, 255), Material = Enum.Material.Neon, Parent = folder })
-	local _2 = shelfGlow
-	for i = 0, 4 do
-		part({ Name = "BarStool", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, 1.6, 1.6), CFrame = CFrame.new(12.5 + i * 2.6, 1.7, -31.4) * CFrame.Angles(0, 0, math.rad(90)), Color = VELVET, Material = Enum.Material.Fabric, Parent = folder })
-	end
-	for i = 0, 2 do
-		local bz = -2 + i * 9
-		part({ Name = "BoothSeat", Size = Vector3.new(2.2, 2.6, 7), CFrame = CFrame.new(28, 1.3, bz), Color = VELVET, Material = Enum.Material.Fabric, Parent = folder })
-		part({ Name = "BoothTable", Size = Vector3.new(3.4, 0.4, 5), CFrame = CFrame.new(24.6, 2.6, bz), Color = WALNUT, Material = Enum.Material.Wood, Parent = folder })
-		part({ Name = "BoothLamp", Shape = Enum.PartType.Ball, Size = Vector3.new(0.6, 0.6, 0.6), CFrame = CFrame.new(24.6, 3.2, bz), Color = Color3.fromRGB(255, 226, 170), Material = Enum.Material.Neon, Parent = folder })
-	end
-
-	-- opportunity board + private rooms along west wall
-	local board = part({ Name = "OpportunityBoard", Size = Vector3.new(1, 8, 14), CFrame = CFrame.new(-29, 6, 4), Color = Color3.fromRGB(14, 13, 16), Parent = folder })
-	signText(board, "OPPORTUNITY BOARD\n\nprojects · collabs · openings", GOLD, Enum.NormalId.Right, 30)
-	for i = 0, 1 do
-		local rz = 6 - i * 14
-		part({ Name = "PrivateRoomWall", Size = Vector3.new(12, 10, 0.8), CFrame = CFrame.new(-24, 5, rz - 5), Color = Color3.fromRGB(30, 26, 30), Material = Enum.Material.WoodPlanks, Parent = folder })
-	end
-
-	-- rooftop stair suggestion: gold spiral placeholder (portal pad)
-	local roofPad = part({ Name = "RooftopPad", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, 6, 6), CFrame = CFrame.new(24, 0.75, 12) * CFrame.Angles(0, 0, math.rad(90)), Color = GOLD, Material = Enum.Material.Neon, Parent = folder })
-	local _3 = roofPad
-
-	-- ===== rooftop terrace (y 30, above the club) =====
-	part({ Name = "RoofTerrace", Size = Vector3.new(60, 1, 60), CFrame = CFrame.new(0, 30, -10), Color = Color3.fromRGB(34, 34, 40), Material = Enum.Material.Slate, Parent = folder })
-	for _, spec in {
-		{ size = Vector3.new(60, 3, 0.6), cf = CFrame.new(0, 31.5, -40) },
-		{ size = Vector3.new(60, 3, 0.6), cf = CFrame.new(0, 31.5, 20) },
-		{ size = Vector3.new(0.6, 3, 60), cf = CFrame.new(-30, 31.5, -10) },
-		{ size = Vector3.new(0.6, 3, 60), cf = CFrame.new(30, 31.5, -10) },
-	} do
-		part({ Name = "RoofRail", Size = spec.size, CFrame = spec.cf, Color = Color3.fromRGB(200, 210, 220), Material = Enum.Material.Glass, Transparency = 0.5, Parent = folder })
-	end
-	-- string lights
-	for i = 0, 5 do
-		part({ Name = "StringLight", Shape = Enum.PartType.Ball, Size = Vector3.new(0.5, 0.5, 0.5), CFrame = CFrame.new(-25 + i * 10, 35, -10), Color = Color3.fromRGB(255, 230, 180), Material = Enum.Material.Neon, Parent = folder })
-	end
-	loungeSeat(folder, CFrame.new(-10, 30.5, -20) * CFrame.Angles(0, math.rad(180), 0), Color3.fromRGB(46, 52, 66))
-	loungeSeat(folder, CFrame.new(10, 30.5, -20) * CFrame.Angles(0, math.rad(180), 0), Color3.fromRGB(46, 52, 66))
-	-- skyline silhouette boards around the plaza edge
-	local rngSky = Random.new(5)
-	for i = 0, 15 do
-		local a = i / 16 * math.pi * 2
-		local d = 100
-		local h = rngSky:NextNumber(20, 55)
-		local b = part({ Name = "Skyline", Size = Vector3.new(rngSky:NextNumber(10, 22), h, 2), CFrame = CFrame.lookAt(Vector3.new(math.cos(a) * d, h / 2 - 1, math.sin(a) * d), Vector3.new(0, h / 2, 0)), Color = Color3.fromRGB(16, 18, 26), Parent = folder })
-		for _ = 1, 6 do
-			part({ Name = "SkylineWindow", Size = Vector3.new(1.2, 1.6, 0.2), CFrame = b.CFrame * CFrame.new(rngSky:NextNumber(-6, 6), rngSky:NextNumber(-h * 0.4, h * 0.4), -1.2), Color = Color3.fromRGB(255, 224, 140), Material = Enum.Material.Neon, Parent = folder })
-		end
-	end
-
-	buildCultDressing(folder)
-	buildGroundsTrees(folder)
-
-	-- spawn in the plaza facing the entrance
 	local spawn = Instance.new("SpawnLocation")
-	spawn.Size = Vector3.new(8, 1, 8)
-	spawn.CFrame = CFrame.new(0, 0.5, 84)
+	spawn.Name = "Approach"
+	spawn.Size = Vector3.new(12, 1, 12)
+	spawn.CFrame = CFrame.new(0, 0.5, DOOR_Z + 74)
 	spawn.Anchored = true
 	spawn.Neutral = true
 	spawn.Transparency = 1
+	spawn.CanCollide = false
 	spawn.Parent = folder
 
+	local pathTorches, obelisk, monument, sigil = buildGrounds(folder)
+	local doorL, doorR, _lintel, portraits = buildFacade(folder)
+	local keypad = buildKeypad(folder)
+	buildHallway(folder)
+
+	local meshes = {
+		column = loadMesh(Config.Meshes.Column),
+		chandelier = loadMesh(Config.Meshes.Chandelier),
+		candelabra = loadMesh(Config.Meshes.Candelabra),
+		wingback = loadMesh(Config.Meshes.Wingback),
+	}
+	local chairs, altar, gates, missionBoard = buildGrandHall(folder, meshes)
+	buildTrees(folder, loadMesh(Config.Meshes.Tree))
+
+	local wrong = folder:FindFirstChild("PortraitWrong") :: BasePart
 	return {
 		folder = folder,
-		doorGate = doorGate,
-		counterLabel = counterLabel,
-		receptionSpawn = Vector3.new(0, 2, 40),
-		clubInterior = Vector3.new(0, 2, -4),
+		pathTorches = pathTorches,
+		obelisk = obelisk,
+		monument = monument,
+		sigil = sigil,
+		keypad = keypad,
+		doorL = doorL,
+		doorR = doorR,
+		wrongPortrait = wrong or portraits[2],
+		chairs = chairs,
+		altar = altar,
+		gates = gates,
+		missionBoard = missionBoard,
+		hallCenter = HALL_CENTER,
+		entryPoint = Vector3.new(0, 3, DOOR_Z - 6),
 	}
 end
 
