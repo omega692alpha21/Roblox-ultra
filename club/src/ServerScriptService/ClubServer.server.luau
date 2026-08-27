@@ -56,6 +56,7 @@ local Initiation = require(script.Parent.Initiation)
 local Convocation = require(script.Parent.Convocation)
 local Missions = require(script.Parent.Missions)
 local Gates = require(script.Parent.Gates)
+local Cults = require(script.Parent.Cults)
 local Membership = require(script.Parent.Membership)
 local Profiles = require(script.Parent.Profiles)
 local Robes = require(script.Parent.Robes)
@@ -92,6 +93,7 @@ local BOOT: { { name: string, init: () -> () } } = {
 	{ name = "Initiation", init = function() Initiation.Init(map) end },
 	{ name = "Membership", init = function() Membership.Init(map) end },
 	{ name = "Gates", init = function() Gates.Init(map) end },
+	{ name = "Cults", init = function() Cults.Init(map) end },
 	{ name = "Convocation", init = function() Convocation.Init(map) end },
 	{ name = "Missions", init = function() Missions.Init(map) end },
 	{ name = "Profiles", init = function() (Profiles :: any).Init() end },

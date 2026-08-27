@@ -12,6 +12,7 @@ local EVENTS = {
 	"RepChanged", -- server -> client (rep, rankName, reason)
 	"Convocation", -- server -> client (phase, secondsLeft)
 	"Fragment", -- server -> client (text)
+	"OpenFounding", -- server -> client: show the cult-founding panel
 }
 local FUNCTIONS = {
 	"GetDirectory", -- () -> { { userId, name, interests, lookingFor } }
@@ -19,6 +20,7 @@ local FUNCTIONS = {
 	"SubmitCode", -- (code: string) -> { ok: boolean, message: string }
 	"GetMissions", -- () -> { { id, text, done, rep } }
 	"GetFragments", -- () -> { string }
+	"FoundCult", -- (name, sigilIndex, colorIndex) -> { ok, message }
 }
 
 local Remotes = {}

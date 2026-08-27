@@ -70,9 +70,10 @@ task.spawn(function()
 	while true do
 		-- an outsider is told nothing at all
 		if player:GetAttribute("Initiated") == true then
-			chipLabel.Text = ("%s \u{00B7} %d REP"):format(
+			chipLabel.Text = ("%s \u{00B7} %d REP \u{00B7} %sh"):format(
 				tostring(player:GetAttribute("Rank") or "INITIATE"),
-				tonumber(player:GetAttribute("Rep")) or 0
+				tonumber(player:GetAttribute("Rep")) or 0,
+				tostring(player:GetAttribute("Hours") or 0)
 			)
 			chip.Visible = true
 		else
@@ -537,6 +538,119 @@ Remotes.Get("Fragment").OnClientEvent:Connect(function(text)
 	task.delay(9, function()
 		card:Destroy()
 	end)
+end)
+
+
+-- ------------------------------------------------- declaring your own house ---
+local founding = Instance.new("Frame")
+founding.AnchorPoint = Vector2.new(0.5, 0.5)
+founding.Position = UDim2.fromScale(0.5, 0.5)
+founding.Size = UDim2.fromOffset(340, 330)
+founding.BackgroundColor3 = Color3.fromRGB(12, 11, 14)
+founding.Visible = false
+founding.Parent = gui
+local fCorner = Instance.new("UICorner")
+fCorner.CornerRadius = UDim.new(0, 12)
+fCorner.Parent = founding
+local fStroke = Instance.new("UIStroke")
+fStroke.Color = GOLD
+fStroke.Thickness = 2
+fStroke.Parent = founding
+label({ Position = UDim2.fromOffset(16, 12), Size = UDim2.new(1, -32, 0, 24), Text = "DECLARE YOUR HOUSE", TextColor3 = GOLD, TextScaled = false, TextSize = 17, TextXAlignment = Enum.TextXAlignment.Left, Parent = founding })
+
+local nameBox = Instance.new("TextBox")
+nameBox.Position = UDim2.fromOffset(16, 44)
+nameBox.Size = UDim2.new(1, -32, 0, 38)
+nameBox.BackgroundColor3 = Color3.fromRGB(28, 26, 31)
+nameBox.Font = Enum.Font.Michroma
+nameBox.PlaceholderText = "its name"
+nameBox.Text = ""
+nameBox.TextColor3 = CREAM
+nameBox.TextSize = 17
+nameBox.ClearTextOnFocus = false
+nameBox.Parent = founding
+local nbCorner = Instance.new("UICorner")
+nbCorner.CornerRadius = UDim.new(0, 8)
+nbCorner.Parent = nameBox
+
+local chosenSigil = 1
+local chosenColor = 1
+label({ Position = UDim2.fromOffset(16, 92), Size = UDim2.new(1, -32, 0, 18), Text = "ITS MARK", TextColor3 = GOLD, TextScaled = false, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = founding })
+local sigilRow = Instance.new("Frame")
+sigilRow.Position = UDim2.fromOffset(16, 112)
+sigilRow.Size = UDim2.new(1, -32, 0, 40)
+sigilRow.BackgroundTransparency = 1
+sigilRow.Parent = founding
+local sigilLayout = Instance.new("UIListLayout")
+sigilLayout.FillDirection = Enum.FillDirection.Horizontal
+sigilLayout.Padding = UDim.new(0, 5)
+sigilLayout.Parent = sigilRow
+local sigilButtons: { TextButton } = {}
+for i, glyph in (Config :: any).CultSigils :: { string } do
+	local b: TextButton
+	b = button({ Size = UDim2.fromOffset(33, 36), Text = glyph, TextScaled = false, TextSize = 18, BackgroundColor3 = Color3.fromRGB(28, 26, 31), TextColor3 = CREAM }, function()
+		chosenSigil = i
+		for j, other in sigilButtons do
+			other.BackgroundColor3 = j == i and GOLD or Color3.fromRGB(28, 26, 31)
+			other.TextColor3 = j == i and BG or CREAM
+		end
+	end)
+	b.Parent = sigilRow
+	table.insert(sigilButtons, b)
+end
+
+label({ Position = UDim2.fromOffset(16, 160), Size = UDim2.new(1, -32, 0, 18), Text = "ITS COLOR", TextColor3 = GOLD, TextScaled = false, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = founding })
+local colorRow = Instance.new("Frame")
+colorRow.Position = UDim2.fromOffset(16, 180)
+colorRow.Size = UDim2.new(1, -32, 0, 40)
+colorRow.BackgroundTransparency = 1
+colorRow.Parent = founding
+local colorLayout = Instance.new("UIListLayout")
+colorLayout.FillDirection = Enum.FillDirection.Horizontal
+colorLayout.Padding = UDim.new(0, 6)
+colorLayout.Parent = colorRow
+local colorButtons: { TextButton } = {}
+for i, swatch in (Config :: any).CultColors :: { Color3 } do
+	local b: TextButton
+	b = button({ Size = UDim2.fromOffset(44, 36), Text = "", BackgroundColor3 = swatch }, function()
+		chosenColor = i
+		for j, other in colorButtons do
+			local stroke = other:FindFirstChildOfClass("UIStroke")
+			if stroke then
+				stroke.Thickness = j == i and 3 or 0
+			end
+		end
+	end)
+	local st = Instance.new("UIStroke")
+	st.Color = CREAM
+	st.Thickness = i == 1 and 3 or 0
+	st.Parent = b
+	b.Parent = colorRow
+	table.insert(colorButtons, b)
+end
+
+local declare = button({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -52), Size = UDim2.fromOffset(200, 42), Text = "CARVE IT", TextScaled = false, TextSize = 16 }, function()
+	local ok, result = pcall(function()
+		return Remotes.GetFunction("FoundCult"):InvokeServer(nameBox.Text, chosenSigil, chosenColor)
+	end)
+	if ok and typeof(result) == "table" then
+		local r = result :: any
+		if r.ok then
+			founding.Visible = false
+		elseif typeof(r.message) == "string" then
+			nameBox.Text = ""
+			nameBox.PlaceholderText = r.message
+		end
+	end
+end)
+declare.Parent = founding
+local dismiss = button({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -10), Size = UDim2.fromOffset(200, 34), Text = "NOT YET", TextScaled = false, TextSize = 13, BackgroundColor3 = Color3.fromRGB(28, 26, 31), TextColor3 = CREAM }, function()
+	founding.Visible = false
+end)
+dismiss.Parent = founding
+
+Remotes.Get("OpenFounding").OnClientEvent:Connect(function()
+	founding.Visible = true
 end)
 
 print("[CULT] client ready")

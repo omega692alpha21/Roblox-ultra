@@ -366,30 +366,67 @@ local function buildTrees(folder: Folder, template: Model?)
 end
 
 -- ----------------------------------------------------------------- facade ---
+-- The building is a stepped pyramid now — a monument you can see from anywhere
+-- on the grounds, its capstone burning gold against the night. Hollow tiers
+-- wrap the hallway and the grand hall; one gap in the lowest tiers holds the
+-- door, and the door still only answers to the code.
+local PYR_CENTER_Z = -36
+local PYR_TIERS = 13
+local PYR_TIER_H = 8
+local PYR_BASE_HALF = 90
+local PYR_TOP_HALF = 10
+
 local function buildFacade(folder: Folder): (BasePart, BasePart, BasePart, { BasePart })
-	local function facadeWall(name: string, size: Vector3, cf: CFrame)
-		local w = part({ Name = name, Size = size, CFrame = cf, Color = STONE, Material = Enum.Material.Slate, Parent = folder })
-		return w
+	local function slab(name: string, size: Vector3, cf: CFrame)
+		return part({ Name = name, Size = size, CFrame = cf, Color = STONE, Material = Enum.Material.Slate, Parent = folder })
 	end
-	-- front wall with a door-shaped hole
-	facadeWall("FacadeL", Vector3.new(38, 30, 4), CFrame.new(-24, 15, DOOR_Z))
-	facadeWall("FacadeR", Vector3.new(38, 30, 4), CFrame.new(24, 15, DOOR_Z))
-	facadeWall("FacadeLintel", Vector3.new(12, 16, 4), CFrame.new(0, 22, DOOR_Z))
-	-- returns and roofline so it reads as a building, not a flat
-	facadeWall("FacadeSideL", Vector3.new(4, 30, 40), CFrame.new(-41, 15, DOOR_Z - 22))
-	facadeWall("FacadeSideR", Vector3.new(4, 30, 40), CFrame.new(41, 15, DOOR_Z - 22))
-	facadeWall("FacadeRoof", Vector3.new(86, 3, 46), CFrame.new(0, 31.5, DOOR_Z - 21))
-	facadeWall("FacadeCornice", Vector3.new(90, 2, 6), CFrame.new(0, 30, DOOR_Z))
-	for _, x in { -30, -14, 14, 30 } do
-		part({
-			Name = "FacadePilaster",
-			Size = Vector3.new(3, 28, 1.6),
-			CFrame = CFrame.new(x, 14, DOOR_Z - 2.6),
-			Color = STONE_DARK,
-			Material = Enum.Material.Slate,
-			Parent = folder,
-		})
+	local thick = 8
+	for t = 0, PYR_TIERS - 1 do
+		local half = PYR_BASE_HALF - t * (PYR_BASE_HALF - PYR_TOP_HALF) / (PYR_TIERS - 1)
+		local y = t * PYR_TIER_H + PYR_TIER_H / 2
+		local zc = PYR_CENTER_Z
+		-- north face carries the entrance gap through the two lowest tiers
+		if t <= 1 then
+			local gap = 10
+			local segW = half - gap
+			slab("PyrN", Vector3.new(segW, PYR_TIER_H, thick), CFrame.new(-(gap + segW / 2), y, zc + half - thick / 2))
+			slab("PyrN", Vector3.new(segW, PYR_TIER_H, thick), CFrame.new(gap + segW / 2, y, zc + half - thick / 2))
+		else
+			slab("PyrN", Vector3.new(half * 2, PYR_TIER_H, thick), CFrame.new(0, y, zc + half - thick / 2))
+		end
+		slab("PyrS", Vector3.new(half * 2, PYR_TIER_H, thick), CFrame.new(0, y, zc - half + thick / 2))
+		slab("PyrE", Vector3.new(thick, PYR_TIER_H, half * 2 - thick * 2), CFrame.new(half - thick / 2, y, zc))
+		slab("PyrW", Vector3.new(thick, PYR_TIER_H, half * 2 - thick * 2), CFrame.new(-(half - thick / 2), y, zc))
 	end
+	-- lintel sealing the top of the entrance gap
+	local lintel = slab("PyrLintel", Vector3.new(20, 4, thick), CFrame.new(0, PYR_TIER_H * 2 + 2, PYR_CENTER_Z + PYR_BASE_HALF - thick / 2))
+	-- the capstone burns
+	local capY = PYR_TIERS * PYR_TIER_H
+	part({
+		Name = "Capstone",
+		Size = Vector3.new(PYR_TOP_HALF * 2, 6, PYR_TOP_HALF * 2),
+		CFrame = CFrame.new(0, capY + 3, PYR_CENTER_Z),
+		Color = GOLD,
+		Material = Enum.Material.Neon,
+		Parent = folder,
+	})
+	local capLight = Instance.new("PointLight")
+	capLight.Color = Color3.fromRGB(255, 200, 100)
+	capLight.Brightness = 3
+	capLight.Range = 60
+	capLight.Parent = folder:FindFirstChild("Capstone")
+	flame(folder, Vector3.new(0, capY + 8, PYR_CENTER_Z), 2.4)
+	-- the eye: a gold sigil over the entrance
+	local eye = part({
+		Name = "PyramidEye",
+		Size = Vector3.new(10, 10, 0.6),
+		CFrame = CFrame.new(0, 34, PYR_CENTER_Z + PYR_BASE_HALF - 12),
+		Color = STONE_DARK,
+		Material = Enum.Material.Slate,
+		CanCollide = false,
+		Parent = folder,
+	})
+	signText(eye, "▲", GOLD, Enum.NormalId.Front)
 
 	-- the door: two slabs that will part when the code is right
 	local doorL = part({
@@ -423,15 +460,16 @@ local function buildFacade(folder: Folder): (BasePart, BasePart, BasePart, { Bas
 		Parent = folder,
 	})
 
-	-- three portraits weather the facade. one of them is hung wrong.
+	-- three portraits weather the pyramid's north face. one is hung wrong.
 	local portraits: { BasePart } = {}
 	local ids = { Config.Textures.Portrait1, Config.Textures.Portrait2, Config.Textures.Portrait3 }
+	local faceZ = PYR_CENTER_Z + PYR_BASE_HALF + 0.4
 	for i, x in { -30, -19, 30 } do
 		local flipped = (i == 2)
 		local p = part({
 			Name = flipped and "PortraitWrong" or ("Portrait" .. i),
 			Size = Vector3.new(5, 6.25, 0.5),
-			CFrame = CFrame.new(x, 15, DOOR_Z - 2.4) * CFrame.Angles(0, 0, flipped and math.pi or 0),
+			CFrame = CFrame.new(x, 5, faceZ) * CFrame.Angles(0, 0, flipped and math.pi or 0),
 			Color = VOID,
 			Material = Enum.Material.Wood,
 			CanCollide = false,
@@ -441,14 +479,14 @@ local function buildFacade(folder: Folder): (BasePart, BasePart, BasePart, { Bas
 		table.insert(portraits, p)
 	end
 
-	return doorL, doorR, folder:FindFirstChild("FacadeLintel") :: BasePart, portraits
+	return doorL, doorR, lintel, portraits
 end
 
 local function buildKeypad(folder: Folder): BasePart
 	part({
 		Name = "KeypadPlinth",
 		Size = Vector3.new(3, 4.4, 3),
-		CFrame = CFrame.new(9, 2.2, DOOR_Z - 3.4),
+		CFrame = CFrame.new(13, 2.2, DOOR_Z + 11),
 		Color = STONE_DARK,
 		Material = Enum.Material.Slate,
 		Parent = folder,
@@ -456,7 +494,7 @@ local function buildKeypad(folder: Folder): BasePart
 	local pad = part({
 		Name = "Keypad",
 		Size = Vector3.new(2.6, 3.4, 0.5),
-		CFrame = CFrame.new(9, 5.6, DOOR_Z - 3.4) * CFrame.Angles(math.rad(-22), 0, 0),
+		CFrame = CFrame.new(13, 5.6, DOOR_Z + 11) * CFrame.Angles(math.rad(-22), 0, 0),
 		Color = Color3.fromRGB(20, 19, 23),
 		Material = Enum.Material.Metal,
 		Parent = folder,
@@ -543,7 +581,7 @@ export type Gate = { door: BasePart, rank: string, label: string }
 local function buildGrandHall(
 	folder: Folder,
 	meshes: { [string]: Model? }
-): ({ Seat }, BasePart, { Gate }, BasePart)
+): ({ Seat }, BasePart, { Gate }, BasePart, BasePart?)
 	local cx, cz = HALL_CENTER.X, HALL_CENTER.Z
 	local segW = 2 * HALL_R * math.tan(math.pi / 8) + 2
 
@@ -584,18 +622,19 @@ local function buildGrandHall(
 	local GATE_PLAN: { [number]: { rank: string, label: string } } = {
 		[2] = { rank = "INSIDER", label = "THE PRIVATE CORRIDOR" },
 		[4] = { rank = "OPERATOR", label = "THE UNDERCROFT" },
-		[6] = { rank = "ARCHITECT", label = "THE ROOFTOP" },
+		[6] = { rank = "ARCHITECT", label = "THE APEX" },
 		[8] = { rank = "INNER CIRCLE", label = "" },
 	}
 	local missionBoard: BasePart? = nil
+	local memberGate: BasePart? = nil
 
 	for i = 1, 8 do
-		local a = (i - 1) / 8 * math.pi * 2 + math.pi / 8
+		local a = (i - 1) / 8 * math.pi * 2
 		local nx, nz = math.sin(a), math.cos(a)
 		local pos = Vector3.new(cx + nx * HALL_R, 0, cz + nz * HALL_R)
 		local cf = CFrame.lookAt(pos, pos - Vector3.new(nx, 0, nz))
 
-		local isEntry = (i == 5) -- the segment facing the hallway
+		local isEntry = (i == 1) -- the segment facing the hallway
 		if not isEntry then
 			local lower = part({
 				Name = "HallWainscot",
@@ -644,10 +683,23 @@ local function buildGrandHall(
 				Material = Enum.Material.Wood,
 				Parent = folder,
 			})
+			-- the hall itself is for MEMBERS: initiates walk the hallway and
+			-- stop here, at a door that knows how many hours they have served
+			memberGate = part({
+				Name = "MemberGate",
+				Size = Vector3.new(10, 12, 1),
+				CFrame = cf * CFrame.new(0, 6, 0),
+				Color = Color3.fromRGB(24, 17, 12),
+				Material = Enum.Material.Wood,
+				Parent = folder,
+			})
+			tex(memberGate :: BasePart, Enum.NormalId.Front, Config.Textures.Wainscot, 10, 12)
+			tex(memberGate :: BasePart, Enum.NormalId.Back, Config.Textures.Wainscot, 10, 12)
+			signText(memberGate :: BasePart, "▲", GOLD, Enum.NormalId.Front, 60)
 		end
 
 		-- fluted column at every vertex
-		local va = (i - 1) / 8 * math.pi * 2
+		local va = (i - 1) / 8 * math.pi * 2 + math.pi / 8
 		placeMesh(
 			meshes.column,
 			folder,
@@ -685,7 +737,7 @@ local function buildGrandHall(
 				signText(plaque, plan.label, GOLD, Enum.NormalId.Back, 26)
 			end
 			table.insert(gates, { door = door :: BasePart, rank = plan.rank, label = plan.label })
-		elseif i == 1 then
+		elseif i == 5 then
 			-- fireplace opposite the entry
 			part({
 				Name = "Fireplace",
@@ -814,7 +866,7 @@ local function buildGrandHall(
 		end
 	end
 
-	return chairs, altar, gates, missionBoard or altar
+	return chairs, altar, gates, missionBoard or altar, memberGate
 end
 
 -- ------------------------------------------------------------------ build ---
@@ -832,8 +884,10 @@ export type Map = {
 	altar: BasePart,
 	gates: { Gate },
 	missionBoard: BasePart,
+	memberGate: BasePart?,
 	hallCenter: Vector3,
 	entryPoint: Vector3,
+	hallPoint: Vector3,
 }
 
 function ClubMap.Build(): Map
@@ -844,7 +898,7 @@ function ClubMap.Build(): Map
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Name = "Approach"
 	spawn.Size = Vector3.new(12, 1, 12)
-	spawn.CFrame = CFrame.new(0, 0.5, DOOR_Z + 74)
+	spawn.CFrame = CFrame.new(0, 0.5, DOOR_Z + 78)
 	spawn.Anchored = true
 	spawn.Neutral = true
 	spawn.Transparency = 1
@@ -862,7 +916,7 @@ function ClubMap.Build(): Map
 		candelabra = loadMesh(Config.Meshes.Candelabra),
 		wingback = loadMesh(Config.Meshes.Wingback),
 	}
-	local chairs, altar, gates, missionBoard = buildGrandHall(folder, meshes)
+	local chairs, altar, gates, missionBoard, memberGate = buildGrandHall(folder, meshes)
 	buildTrees(folder, loadMesh(Config.Meshes.Tree))
 
 	local wrong = folder:FindFirstChild("PortraitWrong") :: BasePart
@@ -880,8 +934,10 @@ function ClubMap.Build(): Map
 		altar = altar,
 		gates = gates,
 		missionBoard = missionBoard,
+		memberGate = memberGate,
 		hallCenter = HALL_CENTER,
 		entryPoint = Vector3.new(0, 3, DOOR_Z - 6),
+		hallPoint = Vector3.new(HALL_CENTER.X, 3, HALL_CENTER.Z + 22),
 	}
 end
 

@@ -10,12 +10,18 @@ local Config = require(ReplicatedStorage.Club.ClubConfig)
 
 local Robes = {}
 
--- one look for everyone: a full black shroud. The only thing that separates
--- anybody is the trim, and the trim is rank — which is earned, never bought.
+-- Three tiers of dress, none of them purchasable:
+--   outsiders keep their own avatar — they are not one of us yet
+--   INITIATES are stripped to a gray tank and shorts: you arrive with nothing
+--   MEMBERS and above wear the shroud, trim colored by rank
+-- And one robe that exists exactly once: the CULT LEADER's, in deep crimson.
 local ROBE = Color3.fromRGB(13, 12, 15)
-local UNINITIATED_TRIM = Color3.fromRGB(46, 45, 48)
+local LEADER_ROBE = Color3.fromRGB(52, 12, 16)
+local LEADER_TRIM = Color3.fromRGB(255, 240, 200)
 local PATRON_TRIM = Color3.fromRGB(226, 190, 108)
 local VOID = Color3.fromRGB(2, 2, 3)
+local TANK = Color3.fromRGB(200, 196, 188)
+local SHORTS = Color3.fromRGB(52, 54, 60)
 
 local function mk(props: { [string]: any }): Part
 	local p = Instance.new("Part")
@@ -36,19 +42,22 @@ local function weldTo(anchor: BasePart, p: BasePart)
 	p.Parent = anchor.Parent
 end
 
-local function strip(character: Model)
+local function strip(character: Model, keepFace: boolean)
 	for _, child in character:GetDescendants() do
 		if child:IsA("Accessory") or child:IsA("Shirt") or child:IsA("Pants") or child:IsA("ShirtGraphic") then
 			child:Destroy()
 		elseif child:IsA("Decal") and child.Parent and child.Parent.Name == "Head" then
-			child:Destroy() -- the face disappears into the hood
+			if not keepFace then
+				child:Destroy() -- the face disappears into the hood
+			end
 		elseif child:IsA("BasePart") and child.Name:sub(1, 5) == "Robe_" then
 			child:Destroy()
 		end
 	end
 end
 
-local function dress(character: Model, rankName: string?, patron: boolean)
+-- tier: "outsider" | "initiate" | "robe" | "leader"
+local function dress(character: Model, tier: string, rankName: string?, patron: boolean, trimOverride: Color3?)
 	local head = character:FindFirstChild("Head") :: BasePart?
 	-- rig-agnostic: R15 has UpperTorso/LowerTorso, R6 just Torso
 	local torso = (character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")) :: BasePart?
@@ -57,22 +66,75 @@ local function dress(character: Model, rankName: string?, patron: boolean)
 	if not head or not torso or not humanoid then
 		return
 	end
-	strip(character)
+	if tier == "outsider" then
+		-- not one of us: their own avatar, their own face, untouched
+		for _, child in character:GetDescendants() do
+			if child:IsA("BasePart") and child.Name:sub(1, 5) == "Robe_" then
+				child:Destroy()
+			end
+		end
+		local existing = head:FindFirstChild("Robe_Rank")
+		if existing then
+			existing:Destroy()
+		end
+		return
+	end
+
+	strip(character, tier == "initiate")
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 
-	local robe = ROBE
-	local trim = UNINITIATED_TRIM
-	if rankName then
-		trim = Config.RankFor(0).trim
+	local robe = if tier == "leader" then LEADER_ROBE else ROBE
+	local trim = Color3.fromRGB(96, 92, 88)
+	if tier == "leader" then
+		trim = LEADER_TRIM
+	elseif trimOverride then
+		trim = trimOverride
+	elseif rankName then
 		for _, r in Config.Ranks do
 			if r.name == rankName then
 				trim = r.trim
 			end
 		end
 	end
-	if patron then
+	if patron and tier == "robe" then
 		trim = PATRON_TRIM
+	end
+
+	if tier == "initiate" then
+		-- a gray tank and shorts. face shown, name hidden. you came with nothing.
+		for _, part in character:GetChildren() do
+			if part:IsA("BasePart") then
+				if part.Name:find("Torso") or part.Name == "Torso" then
+					part.Color = TANK
+					part.Material = Enum.Material.Fabric
+				elseif part.Name:find("UpperLeg") or part.Name:find("LowerTorso") then
+					part.Color = SHORTS
+					part.Material = Enum.Material.Fabric
+				end
+			end
+		end
+		local existing = head:FindFirstChild("Robe_Rank")
+		if existing then
+			existing:Destroy()
+		end
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "Robe_Rank"
+		billboard.Size = UDim2.fromScale(4, 1)
+		billboard.StudsOffset = Vector3.new(0, 2.2, 0)
+		billboard.AlwaysOnTop = false
+		billboard.MaxDistance = 40
+		billboard.Parent = head
+		local rank = Instance.new("TextLabel")
+		rank.Size = UDim2.fromScale(1, 1)
+		rank.BackgroundTransparency = 1
+		rank.Font = Enum.Font.Michroma
+		rank.TextScaled = true
+		rank.TextColor3 = trim
+		rank.TextTransparency = 0.25
+		rank.Text = "INITIATE"
+		rank.Parent = billboard
+		return
 	end
 
 	-- no skin anywhere: head becomes the hood's void, every limb vanishes
@@ -137,21 +199,41 @@ local function dress(character: Model, rankName: string?, patron: boolean)
 	rank.TextScaled = true
 	rank.TextColor3 = trim
 	rank.TextTransparency = 0.25
-	rank.Text = if rankName then ("◆ " .. rankName) else ""
+	rank.Text = if tier == "leader" then "☩ CULT LEADER" else (if rankName then ("◆ " .. rankName) else "")
 	rank.Parent = billboard
+
+	if tier == "leader" then
+		-- the 1/1: a crown of gold thread around the hood, and a taller peak
+		weldTo(head, mk({ Name = "Robe_LeaderBand", Size = Vector3.new(1.85, 0.14, 1.95), Color = LEADER_TRIM, Material = Enum.Material.Metal, CFrame = head.CFrame * CFrame.new(0, 0.45, 0.1) }))
+		weldTo(head, mk({ Name = "Robe_LeaderPeak", Size = Vector3.new(0.8, 0.9, 0.8), Color = robe, CFrame = head.CFrame * CFrame.new(0, 1.5, 0.32) * CFrame.Angles(math.rad(16), math.rad(45), 0) }))
+		weldTo(torso, mk({ Name = "Robe_LeaderChain", Size = Vector3.new(2.4, 0.16, 0.16), Color = LEADER_TRIM, Material = Enum.Material.Metal, CFrame = torso.CFrame * CFrame.new(0, 0.35, -1.06) * CFrame.Angles(0, 0, math.rad(4)) }))
+	end
 end
 
 function Robes.Init()
 	local function hook(player: Player)
 		local function redress()
-			if player.Character then
-				local initiated = player:GetAttribute("Initiated") == true
-				dress(
-					player.Character,
-					if initiated then tostring(player:GetAttribute("Rank") or "INITIATE") else nil,
-					player:GetAttribute("Patron") == true
-				)
+			local character = player.Character
+			if not character then
+				return
 			end
+			local initiated = player:GetAttribute("Initiated") == true
+			local rankName = tostring(player:GetAttribute("Rank") or "INITIATE")
+			local tier = "outsider"
+			if player:GetAttribute("CultLeader") == true then
+				tier = "leader"
+			elseif initiated and rankName ~= "INITIATE" then
+				tier = "robe"
+			elseif initiated then
+				tier = "initiate"
+			end
+			-- a founded cult colors its leader's trim
+			local cultColor: Color3? = nil
+			local colorIndex = tonumber(player:GetAttribute("CultColor"))
+			if colorIndex and Config.CultColors[colorIndex] then
+				cultColor = Config.CultColors[colorIndex]
+			end
+			dress(character, tier, rankName, player:GetAttribute("Patron") == true, cultColor)
 		end
 		local function onCharacter(character: Model)
 			-- the avatar's real appearance (skin, clothes, hats) streams in
@@ -160,6 +242,10 @@ function Robes.Init()
 			task.wait(0.4)
 			redress()
 			character.ChildAdded:Connect(function(child)
+				-- outsiders keep their own look; the dressed tiers stay stripped
+				if player:GetAttribute("Initiated") ~= true then
+					return
+				end
 				if child:IsA("Accessory") or child:IsA("Shirt") or child:IsA("Pants") then
 					task.wait()
 					child:Destroy()
@@ -168,19 +254,16 @@ function Robes.Init()
 			task.delay(2.5, redress)
 			task.delay(6, redress)
 		end
-		player.CharacterAppearanceLoaded:Connect(function(character)
+		player.CharacterAppearanceLoaded:Connect(function()
 			task.wait(0.1)
-			local initiated = player:GetAttribute("Initiated") == true
-			dress(
-				character,
-				if initiated then tostring(player:GetAttribute("Rank") or "INITIATE") else nil,
-				player:GetAttribute("Patron") == true
-			)
+			redress()
 		end)
 		player.CharacterAdded:Connect(onCharacter)
 		player:GetAttributeChangedSignal("Rank"):Connect(redress)
 		player:GetAttributeChangedSignal("Initiated"):Connect(redress)
 		player:GetAttributeChangedSignal("Patron"):Connect(redress)
+		player:GetAttributeChangedSignal("CultLeader"):Connect(redress)
+		player:GetAttributeChangedSignal("CultColor"):Connect(redress)
 		if player.Character then
 			task.spawn(onCharacter, player.Character)
 		end

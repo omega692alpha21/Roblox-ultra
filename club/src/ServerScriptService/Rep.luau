@@ -8,10 +8,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Club.ClubConfig)
 local Remotes = require(ReplicatedStorage.Club.ClubRemotes)
+local Playtime = require(script.Parent.Playtime)
 
 local Rep = {}
 
-type Record = { rep: number, initiated: boolean, sigils: { [string]: boolean }, missions: { [string]: number }, founding: number? }
+type Record = { rep: number, initiated: boolean, sigils: { [string]: boolean }, missions: { [string]: number }, founding: number?, liveSeconds: number?, offlineSeconds: number?, lastSeen: number? }
 
 local cache: { [number]: Record } = {}
 local dirty: { [number]: boolean } = {}
@@ -37,11 +38,20 @@ end
 
 local function push(player: Player, reason: string?)
 	local record = Rep.Get(player)
-	local rank = Config.RankFor(record.rep)
+	local hours = Playtime.EffectiveHours(record)
+	local rank = Config.RankFor(record.rep, hours)
 	player:SetAttribute("Rep", record.rep)
-	player:SetAttribute("Rank", rank.name)
-	player:SetAttribute("Initiated", record.initiated)
-	Remotes.Get("RepChanged"):FireClient(player, record.rep, rank.name, reason or "")
+	player:SetAttribute("Hours", math.floor(hours * 10) / 10)
+	-- the owner outranks the ladder itself
+	if player.UserId == Config.OwnerUserId then
+		player:SetAttribute("Rank", "CULT LEADER")
+		player:SetAttribute("Initiated", true)
+		player:SetAttribute("CultLeader", true)
+	else
+		player:SetAttribute("Rank", rank.name)
+		player:SetAttribute("Initiated", record.initiated)
+	end
+	Remotes.Get("RepChanged"):FireClient(player, record.rep, tostring(player:GetAttribute("Rank")), reason or "")
 end
 
 function Rep.Load(player: Player)
@@ -58,8 +68,16 @@ function Rep.Load(player: Player)
 			record.sigils = typeof(s.sigils) == "table" and s.sigils or {}
 			record.missions = typeof(s.missions) == "table" and s.missions or {}
 			record.founding = tonumber(s.founding)
+			record.liveSeconds = tonumber(s.liveSeconds)
+			record.offlineSeconds = tonumber(s.offlineSeconds)
+			record.lastSeen = tonumber(s.lastSeen)
 		end
 	end
+	if player.UserId == Config.OwnerUserId then
+		record.initiated = true
+	end
+	Playtime.OnLoad(player, record)
+	dirty[player.UserId] = true
 	cache[player.UserId] = record
 	push(player)
 end
@@ -73,6 +91,7 @@ function Rep.Save(player: Player)
 	if not ds then
 		return
 	end
+	Playtime.OnSave(player, record)
 	pcall(function()
 		ds:SetAsync(key(player.UserId), record)
 	end)
@@ -85,10 +104,11 @@ function Rep.Award(player: Player, amount: number, reason: string): number
 	if not record or amount <= 0 then
 		return record and record.rep or 0
 	end
-	local before = Config.RankFor(record.rep).name
+	local hours = Playtime.EffectiveHours(record)
+	local before = Config.RankFor(record.rep, hours).name
 	record.rep += amount
 	dirty[player.UserId] = true
-	local after = Config.RankFor(record.rep)
+	local after = Config.RankFor(record.rep, hours)
 	push(player, ("+%d REP · %s"):format(amount, reason))
 	if after.name ~= before then
 		Remotes.Get("Notify"):FireAllClients(
@@ -141,10 +161,27 @@ function Rep.ClaimOnce(player: Player, bucket: string, id: string, amount: numbe
 end
 
 function Rep.RankIndexOf(player: Player): number
+	if player.UserId == Config.OwnerUserId then
+		return #Config.Ranks + 1 -- above the ladder: every door opens
+	end
 	return Config.RankIndex(tostring(player:GetAttribute("Rank") or "INITIATE"))
 end
 
+function Rep.HoursOf(player: Player): number
+	return Playtime.EffectiveHours(Rep.Get(player))
+end
+
 function Rep.Init()
+	Playtime.Init({
+		get = function(player)
+			return cache[player.UserId]
+		end,
+		dirty = function(player)
+			dirty[player.UserId] = true
+			-- a minute of play can cross an hour threshold: re-evaluate rank
+			push(player)
+		end,
+	})
 	local function onAdded(player: Player)
 		Rep.Load(player)
 	end
