@@ -106,15 +106,26 @@ local KINDS: { [string]: Spec } = {
 	PaintedWoodenNightstand   = { id = 93442239894311, collide = true }, -- painted_wooden_nightstand
 	PaintedWoodenTable        = { id = 73281471038236, collide = true, shadow = true }, -- painted_wooden_table
 	ChineseSofa               = { id = 86656395758763, collide = true, shadow = true }, -- chinese_sofa
-	CheeseBox                 = { id = 139305509669180 }, -- CheeseBox_01
 	ChineseStool              = { id = 105576794308039, collide = true }, -- chinese_stool
 	RollershutterDoor         = { id = 71432382047330, collide = true, shadow = true }, -- rollershutter_door
 	RollershutterWindow       = { id = 96940771997953, collide = true, shadow = true }, -- rollershutter_window_01
 	RollershutterWindow2      = { id = 118898409844007, collide = true, shadow = true }, -- rollershutter_window_02
 	RollershutterWindow3      = { id = 79993644194357, collide = true, shadow = true }, -- rollershutter_window_03
-	RussianFoodCans           = { id = 115810519531435 }, -- russian_food_cans_01
+	Barrel                    = { id = 133899554557704, collide = true, shadow = true }, -- barrel_03
 	StandingPictureFrame      = { id = 111567700931369 }, -- standing_picture_frame_01
 	Croissant                 = { id = 90439090296327 }, -- croissant
+	SweetPotato               = { id = 101246293501657 }, -- sweet_potato
+	CarvedWoodenPlate         = { id = 113347176765966 }, -- carved_wooden_plate
+	PaintedWoodenCabinet      = { id = 106147574838260, collide = true, shadow = true }, -- painted_wooden_cabinet
+	WoodenTable2              = { id = 101465571839901, collide = true, shadow = true }, -- WoodenTable_03
+	Television2               = { id = 113224179502561 }, -- television_02
+	ChineseTeaTable           = { id = 79841599650972 }, -- chinese_tea_table
+	BrassVase                 = { id = 71590110754829 }, -- brass_vase_03
+	BaseballBat               = { id = 130491325848649, shadow = true }, -- baseball_bat
+	ChineseArmchair           = { id = 130355856586901, collide = true, shadow = true }, -- chinese_armchair
+	Barrel2                   = { id = 137466861438801, collide = true, shadow = true }, -- Barrel_01
+	Barrel3                   = { id = 100228655878895, collide = true, shadow = true }, -- Barrel_02
+	CarvedWoodenElephant      = { id = 71500731093006 }, -- carved_wooden_elephant
 }
 
 local templates: { [string]: Model } = {}

@@ -172,21 +172,24 @@ local function setupLighting()
 	rays.Spread = 0.55
 	rays.Parent = Lighting
 
-	-- painted cumulus skybox (the anime sky is half the look)
+	-- A captured sky, not a painted one: a Poly Haven CC0 HDRI reprojected into
+	-- six cube faces (tools/polyhaven_sky.py). Future lighting reads the skybox
+	-- for ambient and for the environment map, so this is not only what you see
+	-- overhead -- it is the colour sitting on every surface in the school.
 	local sky = Instance.new("Sky")
-	sky.SkyboxFt = "rbxassetid://121551770769255"
-	sky.SkyboxBk = "rbxassetid://115007466005880"
-	sky.SkyboxLf = "rbxassetid://140564987029974"
-	sky.SkyboxRt = "rbxassetid://74714793037291"
-	sky.SkyboxUp = "rbxassetid://112410446557476"
-	sky.SkyboxDn = "rbxassetid://85988275555967"
-	sky.SunAngularSize = 14
+	sky.SkyboxFt = "rbxassetid://120276557662327"
+	sky.SkyboxBk = "rbxassetid://93911848305148"
+	sky.SkyboxLf = "rbxassetid://77390308876893"
+	sky.SkyboxRt = "rbxassetid://115842450552163"
+	sky.SkyboxUp = "rbxassetid://85530750632071"
+	sky.SkyboxDn = "rbxassetid://98844884754635"
+	sky.SunAngularSize = 11
 	sky.Parent = Lighting
 
 	-- soft dynamic clouds drift in front of the painted ones
 	local clouds = Instance.new("Clouds")
-	clouds.Cover = 0.32
-	clouds.Density = 0.18
+	clouds.Cover = 0.18
+	clouds.Density = 0.12
 	clouds.Color = Color3.fromRGB(255, 252, 245)
 	clouds.Parent = workspace.Terrain
 end

@@ -16,6 +16,35 @@ import argparse, hashlib, json, os, struct, subprocess, sys
 API = "https://api.polyhaven.com"
 STUDS_PER_METRE = 3.7
 
+# Photoscanned consumer packaging carries its real printed label -- brand name,
+# instructions, barcode. Roblox moderated one of these ("RAY'S LEATHER CARE")
+# under Directing Users Off-Platform and put a temporary upload hold on the
+# account: the moderator reads legible real-world text on an asset as an
+# off-site reference. Nothing here is worth a second strike, so the whole class
+# stays out. Do not re-add these.
+BRANDED = {
+    "leather_cleaner_can",
+    "cleaner_tin_01",
+    "bleach_bottle",
+    "all_purpose_cleaner",
+    "multi_cleaner_bottle",
+    "multi_cleaner_5_litre",
+    "drain_cleaner",
+    "lubricant_spray",
+    "spray_paint_bottles",
+    "spray_paint_bottles_02",
+    "long_life_food",
+    "russian_food_cans_01",
+    "plastic_bottle_gallon",
+    "oil_tin",
+    "can_rusted",
+    "medical_box",
+    "CheeseBox_01",
+    "compost_bag_02",
+    "postcard_set_01",
+    "plastic_thermos",
+}
+
 # glTF componentType -> (struct code, bytes)
 COMPONENT = {5120: ("b", 1), 5121: ("B", 1), 5122: ("h", 2),
              5123: ("H", 2), 5125: ("I", 4), 5126: ("f", 4)}
@@ -41,6 +70,8 @@ def manifest(slug: str, cache: str) -> dict:
 
 def download(slug: str, cache: str, resolution: str = "1k") -> str:
     """Fetch the gltf bundle for one asset; return the .gltf path."""
+    if slug in BRANDED:
+        raise SystemExit(f"{slug} carries a real product label -- see BRANDED")
     files = manifest(slug, cache)["gltf"][resolution]["gltf"]
     root = os.path.join(cache, slug)
     gltf = os.path.join(root, os.path.basename(files["url"]))
