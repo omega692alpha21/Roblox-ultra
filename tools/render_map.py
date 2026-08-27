@@ -158,6 +158,12 @@ InstMT.__index = function(self, k)
     end
   end
   if k == "FindFirstChild" then return function(s, name) for _, c in ipairs(s._children) do if c.Name == name then return c end end return nil end end
+  if k == "Position" then
+    local props = rawget(self, "_props")
+    local cf = props and props.CFrame
+    if cf then return Vector3.new(cf.p[1], cf.p[2], cf.p[3]) end
+    return Vector3.new(0, 0, 0)
+  end
   if k == "FindFirstChildWhichIsA" then
     return function(s, cls)
       for _, c in ipairs(s._children) do if c.ClassName == cls then return c end end
@@ -264,7 +270,10 @@ result = subprocess.run([os.path.join(SP, "luau"), lua_path], capture_output=Tru
 if result.returncode != 0:
     print("LUAU ERROR:\n" + result.stderr[:4000] + "\n" + result.stdout[:2000])
     sys.exit(1)
-parts = json.loads(result.stdout)
+# MapService prints diagnostics before the dump, so take the JSON line rather
+# than the whole of stdout
+_json_line = next(l for l in reversed(result.stdout.splitlines()) if l.startswith("["))
+parts = json.loads(_json_line)
 with open(os.path.join(OUT, "_map_export.json"), "w") as fh:
     json.dump(parts, fh)
 print(f"wrote {len(parts)} parts to _map_export.json")
@@ -362,17 +371,29 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
     img.save(path)
     print("wrote", path)
 
+# eye height 6 for anything meant to be seen on foot: a shot from 50 studs up
+# flatters massing and hides everything a player actually walks past
 shots = [
-    ("entrance",  (0, 55, 300),   (0, 26, 110)),
-    ("facade34",  (-190, 70, 300), (0, 24, 60)),
-    ("lobby",     (0, 7, 116),    (0, 6, 60)),
-    ("corridor",  (-180, 6, 70),  (0, 6, 70)),
-    ("atrium",    (0, 7, 56),     (0, 8, -30)),
-    ("courtyard", (-116, 8, 40),  (-116, 4, -40)),
-    ("wingcorr",  (-178, 6, -20), (-178, 6, -60)),
-    ("plotroom",  (-190, 7, 78),  (-190, 5, 110)),
-    ("gym",       (0, 9, -70),    (0, 8, -130)),
-    ("overview",  (-330, 250, 360), (0, 0, 0)),
+    ("entrance",   (0, 55, 300),     (0, 26, 110)),
+    ("approach",   (0, 6, 190),      (0, 12, 120)),
+    ("facade34",   (-190, 70, 300),  (0, 24, 60)),
+    ("lobby",      (0, 7, 116),      (0, 6, 60)),
+    ("corridor",   (-180, 6, 70),    (0, 6, 70)),
+    ("atrium",     (0, 7, 56),       (0, 8, -30)),
+    ("courtyard",  (-116, 8, 40),    (-116, 4, -40)),
+    ("greenhouse", (-116, 6, 20),    (-116, 6, -40)),
+    ("eastlab",    (116, 6, 20),     (116, 6, -40)),
+    ("wingcorr",   (-178, 6, -20),   (-178, 6, -60)),
+    ("plotroom",   (-190, 7, 78),    (-190, 5, 110)),
+    ("gym",        (0, 9, -70),      (0, 8, -130)),
+    ("room101",    (-74, 6, -70),    (-74, 6, -120)),
+    ("library",    (0, 16, -152),    (0, 14, -232)),
+    ("libinside",  (0, 7, -196),     (0, 9, -262)),
+    ("tennis",     (340, 20, 90),    (340, 6, -20)),
+    ("pool",       (-340, 14, 60),   (-340, 2, -20)),
+    ("dorms",      (-176, 8, -160),  (-176, 8, -212)),
+    ("northquad",  (0, 40, -120),    (0, 10, -220)),
+    ("overview",   (-330, 250, 360), (0, 0, 0)),
 ]
 for name, cam, target in shots:
     render(cam, target, os.path.join(OUT, f"shot_{name}.png"))

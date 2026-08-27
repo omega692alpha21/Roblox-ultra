@@ -386,17 +386,25 @@ local function buildLibrary(parent: Instance, center: Vector3)
 	end
 
 	-- portico: six columns and a pediment over the entrance
+	-- Slimmer and further apart than they were: at 4 studs across on a 13 stud
+	-- pitch the colonnade read as a fence and hid the building behind it. Each
+	-- column now gets a base and a capital, without which a cylinder is a pipe.
 	for i = -2, 2 do
+		local cx = i * 18
 		part({
 			Name = "LibraryColumn",
 			Shape = Enum.PartType.Cylinder,
-			Size = Vector3.new(H, 4, 4),
-			CFrame = CFrame.new(center) * CFrame.new(i * 13, H / 2, halfD + 8) * CFrame.Angles(0, 0, math.rad(90)),
+			Size = Vector3.new(H - 3, 3.2, 3.2),
+			CFrame = CFrame.new(center) * CFrame.new(cx, (H - 3) / 2 + 1.6, halfD + 9) * CFrame.Angles(0, 0, math.rad(90)),
 			Color = Color3.fromRGB(232, 226, 212),
 			Material = Enum.Material.Marble,
 			Parent = parent,
 		})
+		part({ Name = "LibraryColumnBase", Size = Vector3.new(4.6, 1.6, 4.6), CFrame = CFrame.new(center) * CFrame.new(cx, 0.8, halfD + 9), Color = Color3.fromRGB(226, 220, 206), Material = Enum.Material.Marble, Parent = parent })
+		part({ Name = "LibraryColumnCap", Size = Vector3.new(4.8, 1.4, 4.8), CFrame = CFrame.new(center) * CFrame.new(cx, H - 0.7, halfD + 9), Color = Color3.fromRGB(236, 231, 218), Material = Enum.Material.Marble, Parent = parent })
 	end
+	-- entablature the columns actually carry
+	part({ Name = "LibraryArchitrave", Size = Vector3.new(W - 4, 2.6, 7), CFrame = CFrame.new(center) * CFrame.new(0, H + 1.3, halfD + 9), Color = Color3.fromRGB(236, 231, 218), Material = Enum.Material.Marble, Parent = parent })
 	part({
 		Name = "LibraryPediment",
 		Size = Vector3.new(W - 6, 5, 18),
@@ -433,7 +441,7 @@ local function buildLibrary(parent: Instance, center: Vector3)
 				Name = "LibraryShelf",
 				Size = Vector3.new(5, 12, 40),
 				CFrame = CFrame.new(center) * CFrame.new(x, 6, -8),
-				Color = Color3.fromRGB(104, 72, 48),
+				Color = Color3.fromRGB(146, 106, 72),
 				Material = Enum.Material.WoodPlanks,
 				Parent = parent,
 			})
@@ -443,10 +451,12 @@ local function buildLibrary(parent: Instance, center: Vector3)
 					Name = "LibraryBooks",
 					Size = Vector3.new(5.4, 1.8, 38),
 					CFrame = CFrame.new(center) * CFrame.new(x, shelfLevel * 2.7, -8),
+					-- spines, not mud: a wider spread so a wall of books reads
+					-- as many books rather than one brown mass
 					Color = Color3.fromRGB(
-						120 + (row + 1) * 30 + side * 20,
-						70 + shelfLevel * 22,
-						80 + side * 40
+						math.clamp(150 + (row + 1) * 34 + side * 26, 60, 250),
+						math.clamp(96 + shelfLevel * 30 - side * 18, 50, 245),
+						math.clamp(104 + side * 52 - shelfLevel * 12, 50, 240)
 					),
 					Material = Enum.Material.Fabric,
 					Parent = parent,
@@ -1146,11 +1156,23 @@ local function buildEntranceArch(parent: Instance)
 	signText(beam, "GO LEGENDS!", Palette.BusYellow, Enum.NormalId.Back)
 end
 
+-- On the lawn beside the walk, not on the axis. A 26 stud pole dead centre in
+-- front of the doors is the first thing a player sees and it stood between
+-- them and the entrance.
 local function buildFlagpole(parent: Instance)
+	local FX = -38
+	part({
+		Name = "FlagpoleBase",
+		Size = Vector3.new(5, 1.2, 5),
+		CFrame = CFrame.new(FX, 0.6, 150),
+		Color = Color3.fromRGB(206, 202, 192),
+		Material = Enum.Material.Concrete,
+		Parent = parent,
+	})
 	part({
 		Name = "Flagpole",
 		Size = Vector3.new(0.8, 26, 0.8),
-		CFrame = CFrame.new(0, 13, 150),
+		CFrame = CFrame.new(FX, 13, 150),
 		Color = Color3.fromRGB(190, 190, 195),
 		Material = Enum.Material.Metal,
 		Parent = parent,
@@ -1158,7 +1180,7 @@ local function buildFlagpole(parent: Instance)
 	local flag = part({
 		Name = "Flag",
 		Size = Vector3.new(9, 5, 0.3),
-		CFrame = CFrame.new(5.3, 22.5, 150),
+		CFrame = CFrame.new(FX + 5.3, 22.5, 150),
 		Color = Palette.CashGreen,
 		Parent = parent,
 	})
@@ -1242,7 +1264,9 @@ local function buildCheckerFloor(parent: Instance, center: Vector3, size: Vector
 						0.11,
 						center.Z - size.Y / 2 + tile / 2 + j * tile
 					),
-					Color = Color3.fromRGB(222, 100, 90),
+					-- a warm stone against the pale floor: the old pillarbox red
+					-- read as a diner, not a school atrium
+					Color = Color3.fromRGB(176, 142, 120),
 					Parent = parent,
 				})
 			end
@@ -2405,6 +2429,47 @@ local function buildGrandFacade(parent: Instance)
 		part({ Name = "EntryJambStone", Size = Vector3.new(3, 16, 6), CFrame = CFrame.new(side * 13.5, 8, Z + 1), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	end
 	part({ Name = "EntryLintelStone", Size = Vector3.new(30, 2.4, 6), CFrame = CFrame.new(0, 16.8, Z + 1), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	-- Articulation on the bay face. It was a 56 x 46 slab of blank concrete,
+	-- which is the first thing anyone sees when they arrive. Real civic
+	-- frontages break that mass up: pilasters carry the eye up, string courses
+	-- carry it across, and tall windows give the storey above the doors
+	-- something to be.
+	local bayFace = Z + 12.2
+	-- outboard of the portico columns at +/-11, not on top of them
+	for _, px in { -25, -38, 25, 38 } do
+		part({ Name = "EntryPilaster", Size = Vector3.new(4.4, 40, 1.6), CFrame = CFrame.new(px, 21, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		-- a capital block so the pilaster lands somewhere
+		part({ Name = "EntryPilasterCap", Size = Vector3.new(5.6, 1.8, 2.2), CFrame = CFrame.new(px, 41.6, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryPilasterBase", Size = Vector3.new(5.6, 2.2, 2.2), CFrame = CFrame.new(px, 2.1, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+	-- Brick to the first string course, stone above. The bay was one uniform
+	-- slab of trim concrete from the pavement to the pediment, which reads as
+	-- a blank wall however much moulding is stuck to it. Civic buildings put a
+	-- heavier material at the bottom and it is what gives the front a base.
+	for _, side in { -1, 1 } do
+		tag(part({ Name = "EntryBayBrick", Size = Vector3.new(15.4, 19, 1.4), CFrame = CFrame.new(side * 20.5, 9.5, bayFace - 0.1), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+	end
+	part({ Name = "EntryBayPlinth", Size = Vector3.new(58, 2.4, 2.6), CFrame = CFrame.new(0, 1.2, bayFace - 0.2), Color = Color3.fromRGB(198, 194, 184), Material = Enum.Material.Concrete, Parent = parent })
+
+	-- string courses at the floor lines
+	for _, band in { { y = 19.6, h = 1.6 }, { y = 43.4, h = 2.0 } } do
+		part({ Name = "EntryStringCourse", Size = Vector3.new(58, band.h, 2.4), CFrame = CFrame.new(0, band.y, bayFace - 0.2), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+	-- three tall windows in the storey over the doors
+	-- two windows flanking the name sign, which owns the centre of the bay
+	for _, wx in { -17.5, 17.5 } do
+		local pane = part({ Name = "EntryBayWindow", Size = Vector3.new(9, 17, 1), CFrame = CFrame.new(wx, 30.5, bayFace - 0.4), Color = Color3.fromRGB(150, 196, 222), Material = Enum.Material.Glass, Transparency = 0.2, Parent = parent })
+		tag(pane, "TexWindow")
+		part({ Name = "EntryWinSurround", Size = Vector3.new(11, 19, 1.4), CFrame = CFrame.new(wx, 30.5, bayFace - 0.9), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryWinKeystone", Size = Vector3.new(2.2, 3, 2), CFrame = CFrame.new(wx, 40.6, bayFace + 0.1), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+	-- cheek walls flanking the steps, so the approach is funnelled
+	for _, side in { -1, 1 } do
+		part({ Name = "EntryCheek", Size = Vector3.new(3, 5.5, 16), CFrame = CFrame.new(side * 21, 2.6, Z + 22), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryCheekCap", Size = Vector3.new(4, 1, 17), CFrame = CFrame.new(side * 21, 5.7, Z + 22), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryUrn", Shape = Enum.PartType.Ball, Size = Vector3.new(4.4, 4.4, 4.4), CFrame = CFrame.new(side * 21, 8, Z + 14.5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+
 	trimBand(0, 46.4, Z + 5, 60, 16, 2.2)
 	-- pediment over the bay
 	local ped = Instance.new("WedgePart")
@@ -3030,7 +3095,20 @@ end
 	-- classroom 101 desks
 	for row = 0, 2 do
 		for col = 0, 2 do
-			part({ Name = "ClassDesk", Size = Vector3.new(6, 2.6, 3), CFrame = CFrame.new(-82 + col * 8, 1.3, -110 + row * 12), Color = Color3.fromRGB(168, 128, 92), Material = Enum.Material.WoodPlanks, Parent = folder })
+			-- a top on legs with a chair behind it, rather than a solid block:
+			-- furniture you can see under is most of what makes a room read
+			local dx, dz = -82 + col * 8, -110 + row * 12
+			part({ Name = "ClassDeskTop", Size = Vector3.new(6, 0.4, 3), CFrame = CFrame.new(dx, 2.6, dz), Color = Color3.fromRGB(196, 158, 118), Material = Enum.Material.WoodPlanks, Parent = folder })
+			for _, lx in { -2.5, 2.5 } do
+				for _, lz in { -1.2, 1.2 } do
+					part({ Name = "ClassDeskLeg", Size = Vector3.new(0.35, 2.4, 0.35), CFrame = CFrame.new(dx + lx, 1.2, dz + lz), Color = Color3.fromRGB(104, 108, 116), Material = Enum.Material.Metal, Parent = folder })
+				end
+			end
+			part({ Name = "ClassChairSeat", Size = Vector3.new(2.6, 0.35, 2.4), CFrame = CFrame.new(dx, 1.7, dz + 3.4), Color = Color3.fromRGB(86, 116, 158), Material = Enum.Material.SmoothPlastic, Parent = folder })
+			part({ Name = "ClassChairBack", Size = Vector3.new(2.6, 2.2, 0.35), CFrame = CFrame.new(dx, 2.8, dz + 4.4), Color = Color3.fromRGB(86, 116, 158), Material = Enum.Material.SmoothPlastic, Parent = folder })
+			for _, lx in { -1, 1 } do
+				part({ Name = "ClassChairLeg", Size = Vector3.new(0.3, 1.5, 0.3), CFrame = CFrame.new(dx + lx, 0.75, dz + 3.4), Color = Color3.fromRGB(104, 108, 116), Material = Enum.Material.Metal, Parent = folder })
+			end
 		end
 	end
 	-- against the far wall, facing the desks. It used to sit at z = -67, which
@@ -3086,8 +3164,42 @@ end
 	local _vb = volleyBase
 	part({ Name = "VolleyNet", Size = Vector3.new(0.2, 2.4, 17), CFrame = CFrame.new(120, 6.4, 24), Color = Color3.fromRGB(235, 235, 235), Material = Enum.Material.Fabric, Transparency = 0.35, Parent = folder })
 
-	-- lobby dressing
+	-- ---- lobby dressing ----
+	-- It was a grey box with a doorway in it, and it is the second thing
+	-- anyone sees. A school entrance hall is a reception desk, a trophy run,
+	-- somewhere to sit and something to read.
 	part({ Name = "LobbyDesk", Size = Vector3.new(18, 3.4, 4), CFrame = CFrame.new(-30, 1.7, 92), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = folder })
+	part({ Name = "LobbyDeskTop", Size = Vector3.new(19.4, 0.4, 5), CFrame = CFrame.new(-30, 3.6, 92), Color = Color3.fromRGB(196, 158, 118), Material = Enum.Material.WoodPlanks, Parent = folder })
+	part({ Name = "LobbyDeskBack", Size = Vector3.new(18, 8, 0.8), CFrame = CFrame.new(-30, 4, 96), Color = Color3.fromRGB(150, 112, 82), Material = Enum.Material.WoodPlanks, Parent = folder })
+
+	-- trophy cases down the east wall
+	for i = 0, 2 do
+		local cz = 86 + i * 13
+		part({ Name = "LobbyCaseFrame", Size = Vector3.new(1.6, 11, 11), CFrame = CFrame.new(46, 5.5, cz), Color = Color3.fromRGB(96, 68, 48), Material = Enum.Material.WoodPlanks, Parent = folder })
+		part({ Name = "LobbyCaseGlass", Size = Vector3.new(0.5, 9, 9.4), CFrame = CFrame.new(45.1, 5.6, cz), Color = Color3.fromRGB(186, 214, 226), Material = Enum.Material.Glass, Transparency = 0.55, Parent = folder })
+		for j = 0, 1 do
+			part({ Name = "LobbyTrophy", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2.4, 1.5, 1.5), CFrame = CFrame.new(45.6, 3 + j * 4, cz - 2.6 + j * 5) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(226, 186, 92), Material = Enum.Material.Metal, Parent = folder })
+		end
+	end
+
+	-- benches facing the desk, with a runner between them
+	for _, bz in { 88, 102 } do
+		part({ Name = "LobbyBenchSeat", Size = Vector3.new(3.4, 0.5, 16), CFrame = CFrame.new(18, 2.4, bz), Color = Color3.fromRGB(158, 116, 82), Material = Enum.Material.WoodPlanks, Parent = folder })
+		for _, lz in { -6.5, 6.5 } do
+			part({ Name = "LobbyBenchLeg", Size = Vector3.new(2.8, 2.2, 0.6), CFrame = CFrame.new(18, 1.2, bz + lz), Color = Color3.fromRGB(104, 108, 116), Material = Enum.Material.Metal, Parent = folder })
+		end
+	end
+	tag(part({ Name = "LobbyRunner", Size = Vector3.new(20, 0.16, 40), CFrame = CFrame.new(0, 0.2, 100), Color = Color3.fromRGB(132, 68, 60), Material = Enum.Material.Fabric, Parent = folder }), "TexCarpet")
+
+	-- notice board by the doors, and planters flanking the way in
+	local notice = part({ Name = "LobbyNotice", Size = Vector3.new(0.5, 9, 16), CFrame = CFrame.new(-52, 7, 104), Color = Palette.Blackboard, Parent = folder })
+	signText(notice, "NOTICES\nBELL 8:40\nDETENTION 4PM", Palette.Chalk, Enum.NormalId.Right)
+	for _, side in { -1, 1 } do
+		part({ Name = "LobbyPlanter", Size = Vector3.new(6, 3.4, 6), CFrame = CFrame.new(side * 30, 1.7, 116), Color = Color3.fromRGB(150, 118, 96), Material = Enum.Material.Concrete, Parent = folder })
+		part({ Name = "LobbyPlanterSoil", Size = Vector3.new(5, 0.4, 5), CFrame = CFrame.new(side * 30, 3.5, 116), Color = Color3.fromRGB(78, 62, 48), Material = Enum.Material.Ground, Parent = folder })
+		part({ Name = "TreeTrunk", Size = Vector3.new(1.2, 7, 1.2), CFrame = CFrame.new(side * 30, 7.2, 116), Color = Color3.fromRGB(104, 74, 52), Material = Enum.Material.Wood, Parent = folder })
+		part({ Name = "TreeLeaves", Size = Vector3.new(7, 6, 7), CFrame = CFrame.new(side * 30, 12.4, 116), Color = Color3.fromRGB(96, 148, 84), Material = Enum.Material.Grass, Parent = folder })
+	end
 	-- On the wall beside the corridor opening, not across it. This was a 16
 	-- stud board hung in the middle of a 23 stud doorway, so walking in from
 	-- the lobby meant walking into a blackboard.
@@ -3150,6 +3262,36 @@ end
 	buildCampusPath(folder, Vector3.new(0, 0, -150), LIBRARY + Vector3.new(0, 0, 44), 16)
 	buildCampusPath(folder, Vector3.new(230, 0, -20), TENNIS + Vector3.new(-96, 0, 0), 14)
 	buildCampusPath(folder, Vector3.new(-230, 0, -20), POOL + Vector3.new(96, 0, 0), 14)
+
+	-- The treeline predates the pool and the tennis stadium, so it plants
+	-- trees inside both. Rather than teach every scatter about every venue,
+	-- clear the venues afterwards: one list to extend when a venue is added.
+	local KEEP_CLEAR = {
+		{ c = POOL, rx = 62, rz = 50, what = "the pool" },
+		{ c = TENNIS, rx = 110, rz = 70, what = "the tennis stadium" },
+		{ c = LIBRARY, rx = 52, rz = 42, what = "the library" },
+	}
+	local cleared = 0
+	for _, item in folder:GetDescendants() do
+		if not item:IsA("BasePart") then
+			continue
+		end
+		local n = item.Name
+		if not (n:find("Tree") or n:find("Conifer") or n:find("Palm") or n:find("Flower") or n:find("Hedge")) then
+			continue
+		end
+		for _, zone in KEEP_CLEAR do
+			local offset = item.Position - zone.c
+			if math.abs(offset.X) < zone.rx and math.abs(offset.Z) < zone.rz then
+				item:Destroy()
+				cleared += 1
+				break
+			end
+		end
+	end
+	if cleared > 0 then
+		print(("[MapService] cleared %d plants growing through the new venues"):format(cleared))
+	end
 
 	optimize(folder)
 	folder.Parent = workspace
