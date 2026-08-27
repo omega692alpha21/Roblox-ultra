@@ -41,7 +41,7 @@ function ToyController.Init(gui: ScreenGui)
 	-- ---- the action button ----
 	local action = Instance.new("TextButton")
 	action.Name = "ToyAction"
-	action.Size = UDim2.fromOffset(Layout.ToyButtonSize, Layout.ToyButtonSize)
+	action.Size = UDim2.new(0, 0, Layout.ToyButtonScale, 0)
 	action.LayoutOrder = Layout.Order.Toy
 	action.BackgroundColor3 = Color3.fromRGB(226, 74, 62)
 	action.Font = Enum.Font.FredokaOne
@@ -52,6 +52,8 @@ function ToyController.Init(gui: ScreenGui)
 	action.ZIndex = 30
 	action.Visible = false
 	action.Parent = Layout.ActionBar(gui)
+	Layout.Ratio(action, 1)
+	Layout.FitText(action, 0.07)
 	local round = Instance.new("UICorner")
 	round.CornerRadius = UDim.new(1, 0)
 	round.Parent = action
@@ -63,8 +65,8 @@ function ToyController.Init(gui: ScreenGui)
 
 	local ammoTag = Instance.new("TextLabel")
 	ammoTag.AnchorPoint = Vector2.new(0.5, 1)
-	ammoTag.Position = UDim2.new(0.5, 0, 1, -Layout.px(4))
-	ammoTag.Size = UDim2.fromOffset(Layout.ToyButtonSize, Layout.px(16))
+	ammoTag.Position = UDim2.new(0.5, 0, 1, -2)
+	ammoTag.Size = UDim2.new(1, 0, 0.28, 0)
 	ammoTag.BackgroundTransparency = 1
 	ammoTag.Font = Enum.Font.FredokaOne
 	ammoTag.TextScaled = true
@@ -84,9 +86,9 @@ function ToyController.Init(gui: ScreenGui)
 		local aim = AimController.Point() or (camera.CFrame.Position + camera.CFrame.LookVector * 80)
 		Remotes.Get("UseToy"):FireServer(selected, aim)
 		-- a quick squash so the tap feels answered
-		action.Size = UDim2.fromOffset(Layout.ToyButtonSize - Layout.px(8), Layout.ToyButtonSize - Layout.px(8))
+		action.Size = UDim2.new(0, 0, Layout.ToyButtonScale * 0.9, 0)
 		task.delay(0.08, function()
-			action.Size = UDim2.fromOffset(Layout.ToyButtonSize, Layout.ToyButtonSize)
+			action.Size = UDim2.new(0, 0, Layout.ToyButtonScale, 0)
 		end)
 	end
 	action.Activated:Connect(fire)
@@ -106,7 +108,7 @@ function ToyController.Init(gui: ScreenGui)
 	for _, toy in TOYS do
 		local chip = Instance.new("TextButton")
 		chip.Name = toy.id
-		chip.Size = UDim2.fromOffset(Layout.ChipSize, Layout.px(30))
+		chip.Size = UDim2.new(0, 0, 1, 0)
 		chip.BackgroundColor3 = Color3.fromRGB(30, 34, 44)
 		chip.BackgroundTransparency = 0.12
 		chip.Font = Enum.Font.FredokaOne
@@ -117,8 +119,10 @@ function ToyController.Init(gui: ScreenGui)
 		chip.ZIndex = 30
 		chip.Visible = false
 		chip.Parent = rail
+		Layout.Ratio(chip, 1.25)
+		Layout.FitText(chip, 0.045)
 		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, Layout.px(8))
+		c.CornerRadius = UDim.new(0, Layout.h(0.014))
 		c.Parent = chip
 		local st = Instance.new("UIStroke")
 		st.Color = Color3.fromRGB(245, 197, 49)

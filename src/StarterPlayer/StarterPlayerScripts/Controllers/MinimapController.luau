@@ -15,8 +15,13 @@ local MinimapController = {}
 
 local player = Players.LocalPlayer
 
-local SIZE = Layout.Minimap -- px on screen
-local SCALE = SIZE / 620 -- px per stud: the campus, fitted to the dial
+-- The dial is sized as a fraction of the screen and kept square by a ratio
+-- constraint, so nothing here depends on guessing a pixel count. The studs to
+-- pixels factor is read back off its real AbsoluteSize once it exists.
+-- Studs visible across the dial. Everything inside is positioned in scale
+-- units relative to the dial, so the map is correct at any size without a
+-- single pixel measurement.
+local SPAN = 520
 local MAP_ROT = true -- rotate the map under the arrow, GTA style
 
 type Shape = { x: number, z: number, w: number, d: number, color: Color3, z2: number? }
@@ -62,8 +67,9 @@ function MinimapController.Init(gui: ScreenGui)
 	-- map floating on top of every menu
 	local frame = Instance.new("Frame")
 	frame.Name = "Minimap"
-	frame.Position = UDim2.fromOffset(Layout.Margin, Layout.Margin)
-	frame.Size = UDim2.fromOffset(SIZE, SIZE)
+	frame.Position = UDim2.new(0, Layout.Margin, Layout.MarginScale, 0)
+	frame.Size = UDim2.new(0, 0, Layout.MinimapScale, 0)
+	Layout.Ratio(frame, 1)
 	frame.BackgroundColor3 = Color3.fromRGB(28, 34, 42)
 	frame.BackgroundTransparency = 0.08
 	frame.ClipsDescendants = true
@@ -72,7 +78,7 @@ function MinimapController.Init(gui: ScreenGui)
 	-- a rounded panel, not a circle: UICorner does not clip descendants, so a
 	-- circular frame just left the square map poking out past the ring
 	local round = Instance.new("UICorner")
-	round.CornerRadius = UDim.new(0, math.floor(SIZE * 0.14))
+	round.CornerRadius = UDim.new(0.14, 0)
 	round.Parent = frame
 	local ring = Instance.new("UIStroke")
 	ring.Color = Color3.fromRGB(245, 197, 49)
@@ -84,7 +90,7 @@ function MinimapController.Init(gui: ScreenGui)
 	world.Name = "World"
 	world.AnchorPoint = Vector2.new(0.5, 0.5)
 	world.Position = UDim2.fromScale(0.5, 0.5)
-	world.Size = UDim2.fromOffset(1, 1)
+	world.Size = UDim2.fromScale(1, 1)
 	world.BackgroundTransparency = 1
 	world.ZIndex = 21
 	world.Parent = frame
@@ -92,8 +98,8 @@ function MinimapController.Init(gui: ScreenGui)
 	for _, shape in SHAPES do
 		local piece = Instance.new("Frame")
 		piece.AnchorPoint = Vector2.new(0.5, 0.5)
-		piece.Position = UDim2.fromOffset(shape.x * SCALE, shape.z * SCALE)
-		piece.Size = UDim2.fromOffset(shape.w * SCALE, shape.d * SCALE)
+		piece.Position = UDim2.fromScale(0.5 + shape.x / SPAN, 0.5 + shape.z / SPAN)
+		piece.Size = UDim2.fromScale(shape.w / SPAN, shape.d / SPAN)
 		piece.BackgroundColor3 = shape.color
 		piece.BorderSizePixel = 0
 		piece.ZIndex = 21
@@ -103,8 +109,8 @@ function MinimapController.Init(gui: ScreenGui)
 	for _, marker in MARKERS do
 		local dot = Instance.new("TextLabel")
 		dot.AnchorPoint = Vector2.new(0.5, 0.5)
-		dot.Position = UDim2.fromOffset(marker.x * SCALE, marker.z * SCALE)
-		dot.Size = UDim2.fromOffset(math.floor(SIZE * 0.13), math.floor(SIZE * 0.13))
+		dot.Position = UDim2.fromScale(0.5 + marker.x / SPAN, 0.5 + marker.z / SPAN)
+		dot.Size = UDim2.fromScale(0.13, 0.13)
 		dot.BackgroundTransparency = 1
 		dot.Text = marker.icon
 		dot.TextScaled = true
@@ -121,7 +127,7 @@ function MinimapController.Init(gui: ScreenGui)
 		end
 		local dot = Instance.new("Frame")
 		dot.AnchorPoint = Vector2.new(0.5, 0.5)
-		dot.Size = UDim2.fromOffset(math.max(4, math.floor(SIZE * 0.06)), math.max(4, math.floor(SIZE * 0.06)))
+		dot.Size = UDim2.fromScale(0.07, 0.07)
 		dot.BackgroundColor3 = Color3.fromRGB(255, 108, 96)
 		dot.BorderSizePixel = 0
 		dot.ZIndex = 24
@@ -144,7 +150,7 @@ function MinimapController.Init(gui: ScreenGui)
 	local home = Instance.new("TextLabel")
 	home.Name = "Home"
 	home.AnchorPoint = Vector2.new(0.5, 0.5)
-	home.Size = UDim2.fromOffset(math.floor(SIZE * 0.14), math.floor(SIZE * 0.14))
+	home.Size = UDim2.fromScale(0.13, 0.13)
 	home.BackgroundTransparency = 1
 	home.Text = "🏠"
 	home.TextScaled = true
@@ -156,7 +162,7 @@ function MinimapController.Init(gui: ScreenGui)
 		local pad = player:GetAttribute("HomePad")
 		if typeof(pad) == "Vector3" then
 			home.Visible = true
-			home.Position = UDim2.fromOffset(pad.X * SCALE, pad.Z * SCALE)
+			home.Position = UDim2.fromScale(0.5 + pad.X / SPAN, 0.5 + pad.Z / SPAN)
 		else
 			home.Visible = false
 		end
@@ -168,7 +174,7 @@ function MinimapController.Init(gui: ScreenGui)
 	local arrow = Instance.new("TextLabel")
 	arrow.AnchorPoint = Vector2.new(0.5, 0.5)
 	arrow.Position = UDim2.fromScale(0.5, 0.5)
-	arrow.Size = UDim2.fromOffset(math.floor(SIZE * 0.17), math.floor(SIZE * 0.17))
+	arrow.Size = UDim2.fromScale(0.17, 0.17)
 	arrow.BackgroundTransparency = 1
 	arrow.Font = Enum.Font.FredokaOne
 	arrow.Text = "▲"
@@ -182,7 +188,7 @@ function MinimapController.Init(gui: ScreenGui)
 	local north = Instance.new("TextLabel")
 	north.AnchorPoint = Vector2.new(0.5, 0)
 	north.Position = UDim2.new(0.5, 0, 0, 2)
-	north.Size = UDim2.fromOffset(math.floor(SIZE * 0.11), math.floor(SIZE * 0.11))
+	north.Size = UDim2.fromScale(0.11, 0.11)
 	north.BackgroundTransparency = 1
 	north.Font = Enum.Font.FredokaOne
 	north.Text = "N"
@@ -209,8 +215,8 @@ function MinimapController.Init(gui: ScreenGui)
 
 		-- offset the world so the player's world position lands at the centre
 		local cosY, sinY = math.cos(yaw), math.sin(yaw)
-		local px, pz = -pos.X * SCALE, -pos.Z * SCALE
-		world.Position = UDim2.new(0.5, px * cosY - pz * sinY, 0.5, px * sinY + pz * cosY)
+		local px, pz = -pos.X / SPAN, -pos.Z / SPAN
+		world.Position = UDim2.fromScale(0.5 + (px * cosY - pz * sinY), 0.5 + (px * sinY + pz * cosY))
 
 		for _, other in Players:GetPlayers() do
 			if other ~= player then
@@ -218,7 +224,10 @@ function MinimapController.Init(gui: ScreenGui)
 				local dot = blipFor(other)
 				if otherRoot then
 					dot.Visible = true
-					dot.Position = UDim2.fromOffset(otherRoot.Position.X * SCALE, otherRoot.Position.Z * SCALE)
+					dot.Position = UDim2.fromScale(
+						0.5 + otherRoot.Position.X / SPAN,
+						0.5 + otherRoot.Position.Z / SPAN
+					)
 				else
 					dot.Visible = false
 				end

@@ -48,7 +48,7 @@ local MORE = {
 -- one small top pill: an icon and a value, auto-width so it is never padded out
 local function pill(parent: Instance, order: number, accent: Color3): (TextLabel, Frame)
 	local frame = UIBuilder.Frame({
-		Size = UDim2.fromOffset(0, Layout.h(0.055)),
+		Size = UDim2.new(0, 0, Layout.PillHeight, 0),
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.25,
@@ -58,17 +58,18 @@ local function pill(parent: Instance, order: number, accent: Color3): (TextLabel
 	UIBuilder.Round(frame, 999)
 	UIBuilder.Stroke(frame, accent, 2)
 	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, Layout.h(0.022))
-	padding.PaddingRight = UDim.new(0, Layout.h(0.022))
+	padding.PaddingLeft = UDim.new(0, Layout.h(0.018))
+	padding.PaddingRight = UDim.new(0, Layout.h(0.018))
+	padding.PaddingTop = UDim.new(0, Layout.h(0.008))
+	padding.PaddingBottom = UDim.new(0, Layout.h(0.008))
 	padding.Parent = frame
 	local label = UIBuilder.Label({
 		AutomaticSize = Enum.AutomaticSize.X,
-		Size = UDim2.fromOffset(0, Layout.h(0.055)),
+		Size = UDim2.new(0, 0, 1, 0),
 		Text = "",
-		TextScaled = false,
-		TextSize = Layout.TextSize(0.032),
 		Parent = frame,
 	})
+	Layout.FitText(label, 0.034)
 	return label, frame
 end
 
@@ -77,8 +78,8 @@ function HudController.Init(gui: ScreenGui)
 	local top = UIBuilder.Frame({
 		Name = "StatusPills",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, Layout.Margin),
-		Size = UDim2.fromOffset(0, Layout.h(0.055)),
+		Position = UDim2.new(0.5, 0, Layout.MarginScale, 0),
+		Size = UDim2.new(0, 0, Layout.PillHeight, 0),
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundTransparency = 1,
 		Parent = gui,
@@ -87,7 +88,7 @@ function HudController.Init(gui: ScreenGui)
 	topRow.FillDirection = Enum.FillDirection.Horizontal
 	topRow.VerticalAlignment = Enum.VerticalAlignment.Center
 	topRow.SortOrder = Enum.SortOrder.LayoutOrder
-	topRow.Padding = UDim.new(0, Layout.h(0.014))
+	topRow.Padding = UDim.new(0, Layout.h(0.012))
 	topRow.Parent = top
 
 	local cashLabel = pill(top, 1, Palette.CashGreen)
@@ -101,28 +102,28 @@ function HudController.Init(gui: ScreenGui)
 		Name = "MenuRail",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -Layout.Margin, 0.5, 0),
-		Size = UDim2.fromOffset(Layout.RailIcon, 0),
+		Size = UDim2.new(0, Layout.h(Layout.RailIcon), 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		Parent = gui,
 	})
 	local railList = Instance.new("UIListLayout")
-	railList.Padding = UDim.new(0, Layout.RailGap)
+	railList.Padding = UDim.new(0, Layout.h(Layout.RailGap))
 	railList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	railList.SortOrder = Enum.SortOrder.LayoutOrder
 	railList.Parent = rail
 
 	local function railTile(order: number, icon: string, color: Color3, onClick: () -> ())
 		local button = UIBuilder.Button({
-			Size = UDim2.fromOffset(Layout.RailIcon, Layout.RailIcon),
+			Size = UDim2.new(0, 0, Layout.RailIcon, 0),
 			Text = icon,
-			TextScaled = false,
-			TextSize = Layout.TextSize(0.058),
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.2,
 			LayoutOrder = order,
 		}, onClick)
-		UIBuilder.Round(button, Layout.h(0.026))
+		Layout.Ratio(button, 1)
+		Layout.FitText(button, 0.055)
+		UIBuilder.Round(button, Layout.h(0.022))
 		UIBuilder.Stroke(button, color, 2)
 		button.Parent = rail
 		return button
@@ -140,8 +141,8 @@ function HudController.Init(gui: ScreenGui)
 	-- ---------------- the MORE hub ----------------
 	local _, menuContent = UIBuilder.Panel(gui, "Menu", "MENU")
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.new(1 / 3, -Layout.h(0.012), 0, Layout.h(0.14))
-	grid.CellPadding = UDim2.fromOffset(Layout.h(0.012), Layout.h(0.012))
+	grid.CellSize = UDim2.new(1 / 3, -Layout.h(0.014), 0.3, -Layout.h(0.014))
+	grid.CellPadding = UDim2.fromOffset(Layout.h(0.014), Layout.h(0.014))
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = menuContent
 	for i, item in MORE do
@@ -167,8 +168,6 @@ function HudController.Init(gui: ScreenGui)
 			Size = UDim2.new(1, 0, 0.32, 0),
 			Text = item.label,
 			TextColor3 = item.color,
-			TextScaled = false,
-			TextSize = Layout.TextSize(0.026),
 			Parent = tile,
 		})
 	end
@@ -178,8 +177,6 @@ function HudController.Init(gui: ScreenGui)
 		Size = UDim2.new(0.6, 0, 0, Layout.h(0.028)),
 		Text = "",
 		TextColor3 = Color3.fromRGB(140, 150, 140),
-		TextScaled = false,
-		TextSize = Layout.TextSize(0.022),
 		TextXAlignment = Enum.TextXAlignment.Right,
 		Parent = menuContent,
 	})

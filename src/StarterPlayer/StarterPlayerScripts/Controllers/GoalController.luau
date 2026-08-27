@@ -35,8 +35,8 @@ function GoalController.Init(gui: ScreenGui)
 	local card = UIBuilder.Frame({
 		Name = "GoalBar",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, Layout.Margin + Layout.h(0.075)),
-		Size = UDim2.fromOffset(Layout.w(0.26), Layout.h(0.05)),
+		Position = UDim2.new(0.5, 0, Layout.MarginScale + Layout.PillHeight + 0.014, 0),
+		Size = UDim2.new(0.32, 0, 0.05, 0),
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.4,
 		Visible = false,
@@ -52,12 +52,11 @@ function GoalController.Init(gui: ScreenGui)
 		Position = UDim2.fromScale(0.04, 0.06),
 		Size = UDim2.new(0.92, 0, 0.58, 0),
 		Text = "",
-		TextScaled = false,
-		TextSize = Layout.TextSize(0.026),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = card,
 	})
+	Layout.FitText(label, 0.028)
 
 	local barBg = UIBuilder.Frame({
 		Position = UDim2.fromScale(0.04, 0.7),
