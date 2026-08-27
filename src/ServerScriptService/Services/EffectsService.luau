@@ -104,6 +104,8 @@ local function setupLighting()
 	Lighting.EnvironmentDiffuseScale = 1
 	Lighting.EnvironmentSpecularScale = 1
 	Lighting.GlobalShadows = true
+	Lighting.ShadowSoftness = 0.12
+	Lighting.ExposureCompensation = 0.1
 	Lighting.Ambient = Color3.fromRGB(120, 118, 110)
 	Lighting.OutdoorAmbient = Color3.fromRGB(130, 135, 125)
 
