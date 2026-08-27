@@ -49,8 +49,24 @@ local function pickTarget(current: Vector3): Vector3
 	return POIS[rng:NextInteger(1, #POIS)]
 end
 
+-- Repaint an avatar into the school uniform (white shirt, navy slacks).
+local UNIFORM_SHIRT = Color3.fromRGB(242, 242, 238)
+local UNIFORM_PANTS = Color3.fromRGB(38, 46, 66)
+local function applyUniform(model: Model)
+	for _, child in model:GetDescendants() do
+		if child:IsA("BasePart") then
+			local name = child.Name
+			if name:find("Torso") or name:find("Arm") or name:find("Hand") then
+				child.Color = UNIFORM_SHIRT
+			elseif name:find("Leg") or name:find("Foot") then
+				child.Color = UNIFORM_PANTS
+			end
+		end
+	end
+end
+
 function NPCDirector.Init(count: number?)
-	for i = 1, count or 9 do
+	for i = 1, count or 20 do
 		local defId = AMBIENT_IDS[rng:NextInteger(1, #AMBIENT_IDS)]
 		local model = StudentGen.Create(defId, "_npc" .. i)
 		if not model then
@@ -63,6 +79,9 @@ function NPCDirector.Init(count: number?)
 			tag:Destroy()
 		end
 		model.Name = "AmbientNPC" .. i
+		if i % 4 ~= 0 then
+			applyUniform(model) -- most of the school wears uniform; a few rebels don't
+		end
 		local start = POIS[rng:NextInteger(1, #POIS)] + Vector3.new(rng:NextNumber(-8, 8), 0, rng:NextNumber(-8, 8))
 		model.Parent = workspace
 		StudentGen.Stand(model, CFrame.new(start))

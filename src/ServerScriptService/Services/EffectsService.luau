@@ -99,8 +99,8 @@ end
 
 -- Warm afternoon lighting + post effects, all from code.
 local function setupLighting()
-	Lighting.ClockTime = 14.2
-	Lighting.Brightness = 2.6
+	Lighting.ClockTime = 12.8
+	Lighting.Brightness = 3.1
 	Lighting.EnvironmentDiffuseScale = 1
 	Lighting.EnvironmentSpecularScale = 1
 	Lighting.GlobalShadows = true
@@ -108,7 +108,7 @@ local function setupLighting()
 	Lighting.OutdoorAmbient = Color3.fromRGB(130, 135, 125)
 
 	local atmosphere = Instance.new("Atmosphere")
-	atmosphere.Density = 0.32
+	atmosphere.Density = 0.26
 	atmosphere.Offset = 0.4
 	atmosphere.Color = Color3.fromRGB(199, 199, 189)
 	atmosphere.Decay = Color3.fromRGB(92, 105, 120)
@@ -123,7 +123,7 @@ local function setupLighting()
 	bloom.Parent = Lighting
 
 	local color = Instance.new("ColorCorrectionEffect")
-	color.Saturation = 0.18
+	color.Saturation = 0.24
 	color.Contrast = 0.06
 	color.TintColor = Color3.fromRGB(255, 250, 240)
 	color.Parent = Lighting

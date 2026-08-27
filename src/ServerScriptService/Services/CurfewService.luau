@@ -130,7 +130,7 @@ function CurfewService.StartNight()
 	task.delay(GameConfig.CurfewNightSeconds, function()
 		night = false
 		streaks = {}
-		tweenClock(14.2, Color3.fromRGB(130, 135, 125))
+		tweenClock(12.8, Color3.fromRGB(130, 135, 125))
 		Remotes.Get("Notify"):FireAllClients("Morning bell! Curfew's over — back to business.", "info")
 	end)
 end
