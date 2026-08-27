@@ -15,7 +15,26 @@ gui.IgnoreGuiInset = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = playerGui
 
-local Controllers = script.Parent.Controllers
+local Controllers = script.Parent:FindFirstChild("Controllers")
+if not Controllers then
+	-- without this folder every controller require fails and the whole HUD
+	-- silently disappears, which is exactly what happened
+	local warnGui = Instance.new("ScreenGui")
+	warnGui.Name = "ClientFatal"
+	warnGui.DisplayOrder = 998
+	warnGui.ResetOnSpawn = false
+	warnGui.Parent = playerGui
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0, 620, 0, 40)
+	label.Position = UDim2.fromOffset(10, 150)
+	label.BackgroundColor3 = Color3.fromRGB(150, 24, 24)
+	label.Font = Enum.Font.Code
+	label.TextScaled = true
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Text = "FATAL: Controllers folder missing"
+	label.Parent = warnGui
+	return
+end
 
 local ORDER = {
 	"NotifyController",
