@@ -9,11 +9,13 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
+local Layout = require(script.Parent.Layout)
+
 local MinimapController = {}
 
 local player = Players.LocalPlayer
 
-local SIZE = 152 -- px on screen
+local SIZE = Layout.Minimap -- px on screen
 local SCALE = 0.30 -- px per stud
 local MAP_ROT = true -- rotate the map under the arrow, GTA style
 
@@ -46,16 +48,12 @@ local MARKERS: { Marker } = {
 	{ x = -116, z = 0, icon = "👥", color = Color3.fromRGB(180, 255, 200) },
 }
 
-function MinimapController.Init(_shared: ScreenGui)
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "MinimapUI"
-	gui.ResetOnSpawn = false
-	gui.IgnoreGuiInset = false
-	gui.DisplayOrder = 55
-	gui.Parent = (game:GetService("Players").LocalPlayer :: any):WaitForChild("PlayerGui")
+function MinimapController.Init(gui: ScreenGui)
+	-- lives in the shared HUD gui so an open panel covers it instead of the
+	-- map floating on top of every menu
 	local frame = Instance.new("Frame")
 	frame.Name = "Minimap"
-	frame.Position = UDim2.fromOffset(14, 14)
+	frame.Position = UDim2.fromOffset(Layout.Margin, Layout.Margin)
 	frame.Size = UDim2.fromOffset(SIZE, SIZE)
 	frame.BackgroundColor3 = Color3.fromRGB(28, 34, 42)
 	frame.BackgroundTransparency = 0.08

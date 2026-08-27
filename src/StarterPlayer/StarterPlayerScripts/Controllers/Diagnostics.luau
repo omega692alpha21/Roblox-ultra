@@ -34,29 +34,7 @@ function Diagnostics.Report(playerGui: Instance, results: { Result })
 		end
 	end
 
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "LMLDiagnostics"
-	gui.ResetOnSpawn = false
-	gui.DisplayOrder = 900
-	gui.Parent = playerGui
-
 	local healthy = #failures == 0
-
-	local badge = Instance.new("TextButton")
-	badge.Name = "Badge"
-	badge.AnchorPoint = Vector2.new(0, 1)
-	badge.Position = UDim2.new(0, 10, 1, -10)
-	badge.Size = UDim2.fromOffset(healthy and 64 or 120, 26)
-	badge.BackgroundColor3 = healthy and Color3.fromRGB(46, 140, 70) or Color3.fromRGB(190, 46, 46)
-	badge.Font = Enum.Font.SourceSansBold
-	badge.TextSize = 14
-	badge.TextColor3 = Color3.new(1, 1, 1)
-	badge.Text = healthy and "UI OK" or (#failures .. " UI FAILED — tap")
-	badge.BorderSizePixel = 0
-	badge.Parent = gui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
-	corner.Parent = badge
 
 	-- report failures to the server so they land in a DataStore the dev can read
 	if not healthy then
@@ -69,30 +47,33 @@ function Diagnostics.Report(playerGui: Instance, results: { Result })
 		end)
 	end
 
-	-- live status line: build number, save state, error count — one glance/screenshot
-	local Players = game:GetService("Players")
-	local localPlayer = Players.LocalPlayer
-	task.spawn(function()
-		while badge.Parent do
-			local dataLoaded = localPlayer:GetAttribute("DataLoaded")
-			local outfit = localPlayer:GetAttribute("Outfit")
-			badge.Size = UDim2.fromOffset(190, 26)
-			badge.Text = ("b%d · %s · %s%s"):format(
-				game.PlaceVersion,
-				dataLoaded == true and "save✓" or "save…",
-				outfit ~= nil and "char✓" or "char–",
-				#failures > 0 and (" · %d ERR"):format(#failures) or ""
-			)
-			badge.BackgroundColor3 = (#failures > 0 or dataLoaded ~= true)
-				and Color3.fromRGB(190, 46, 46)
-				or Color3.fromRGB(46, 140, 70)
-			task.wait(3)
-		end
-	end)
-
+	-- A healthy client shows nothing. The build number and save state moved
+	-- into the MENU panel; a permanent green badge was just noise on a phone.
 	if healthy then
 		return
 	end
+
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "LMLDiagnostics"
+	gui.ResetOnSpawn = false
+	gui.DisplayOrder = 900
+	gui.Parent = playerGui
+
+	local badge = Instance.new("TextButton")
+	badge.Name = "Badge"
+	badge.AnchorPoint = Vector2.new(0, 1)
+	badge.Position = UDim2.new(0, 136, 1, -14)
+	badge.Size = UDim2.fromOffset(146, 26)
+	badge.BackgroundColor3 = Color3.fromRGB(190, 46, 46)
+	badge.Font = Enum.Font.SourceSansBold
+	badge.TextSize = 14
+	badge.TextColor3 = Color3.new(1, 1, 1)
+	badge.Text = #failures .. " UI FAILED — tap"
+	badge.BorderSizePixel = 0
+	badge.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = badge
 
 	local detail = Instance.new("TextBox") -- TextBox: phone testers can long-press to copy
 	detail.Name = "Detail"

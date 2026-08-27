@@ -10,7 +10,7 @@ local UIBuilder = require(script.Parent.UIBuilder)
 local GraphicsHintController = {}
 
 function GraphicsHintController.Init(gui: ScreenGui)
-	task.delay(14, function()
+	task.delay(34, function()
 		local ok, low = pcall(function()
 			local settings = UserSettings():GetService("UserGameSettings")
 			local quality = settings.SavedQualityLevel
@@ -22,8 +22,8 @@ function GraphicsHintController.Init(gui: ScreenGui)
 		end
 		local card = UIBuilder.Frame({
 			Name = "GraphicsHint",
-			AnchorPoint = Vector2.new(0.5, 0),
-			Position = UDim2.new(0.5, 0, 0, 76),
+			AnchorPoint = Vector2.new(0.5, 1),
+			Position = UDim2.new(0.5, 0, 1, -84),
 			Size = UDim2.fromOffset(430, 64),
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.06,

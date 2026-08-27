@@ -9,6 +9,7 @@ local UserInputService = game:GetService("UserInputService")
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Remotes = require(ReplicatedStorage.Remotes)
+local Layout = require(script.Parent.Layout)
 local UIBuilder = require(script.Parent.UIBuilder)
 
 local PunchController = {}
@@ -33,31 +34,21 @@ function PunchController.Init(gui: ScreenGui)
 	end, false, Enum.KeyCode.F, Enum.KeyCode.ButtonX)
 
 	if UserInputService.TouchEnabled then
+		-- shares the one bottom-right action bar; no more hand-placed offsets
+		-- colliding with RUN and THROW
 		local button = UIBuilder.Button({
 			Name = "PunchButton",
-			AnchorPoint = Vector2.new(1, 1),
-			Position = UDim2.new(1, -24, 1, -110),
-			Size = UDim2.fromOffset(92, 92),
+			Size = UDim2.fromOffset(76, 76),
 			Text = "PUNCH",
+			TextScaled = false,
+			TextSize = 20,
 			BackgroundColor3 = Palette.DetentionRed,
 			BackgroundTransparency = 0.15,
+			LayoutOrder = Layout.Order.Punch,
 		}, punch)
 		UIBuilder.Round(button, 999)
 		UIBuilder.Stroke(button, Palette.White, 3)
-		button.Parent = gui
-	else
-		UIBuilder.Label({
-			Name = "PunchHint",
-			AnchorPoint = Vector2.new(1, 1),
-			Position = UDim2.new(1, -16, 1, -12),
-			Size = UDim2.fromOffset(220, 24),
-			Text = "F — punch (catch thieves!)",
-			TextColor3 = Palette.Chalk,
-			TextScaled = false,
-			TextSize = 15,
-			TextXAlignment = Enum.TextXAlignment.Right,
-			Parent = gui,
-		})
+		button.Parent = Layout.ActionBar(gui)
 	end
 end
 

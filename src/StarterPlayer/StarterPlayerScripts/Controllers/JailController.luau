@@ -17,7 +17,7 @@ function JailController.Init(gui: ScreenGui)
 	local panel = Instance.new("Frame")
 	panel.Name = "JailPanel"
 	panel.AnchorPoint = Vector2.new(0.5, 0)
-	panel.Position = UDim2.new(0.5, 0, 0, 14)
+	panel.Position = UDim2.new(0.5, 0, 0, 150) -- below the minimap/status row
 	panel.Size = UDim2.fromOffset(320, 118)
 	panel.BackgroundColor3 = Color3.fromRGB(24, 20, 20)
 	panel.BackgroundTransparency = 0.06

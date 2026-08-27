@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage.Remotes)
+local Layout = require(script.Parent.Layout)
 
 local ToyController = {}
 
@@ -22,15 +23,7 @@ local TOYS: { Toy } = {
 
 local selected = "slingshot"
 
-function ToyController.Init(_shared: ScreenGui)
-	-- own ScreenGui, high DisplayOrder: the toy controls must never be hidden
-	-- behind another panel or lost if a shared gui is rebuilt
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "ToyUI"
-	gui.ResetOnSpawn = false
-	gui.IgnoreGuiInset = false
-	gui.DisplayOrder = 60
-	gui.Parent = (game:GetService("Players").LocalPlayer :: any):WaitForChild("PlayerGui")
+function ToyController.Init(gui: ScreenGui)
 	local function ammoOf(id: string): number
 		if id == "slingshot" then
 			return math.huge
@@ -47,9 +40,8 @@ function ToyController.Init(_shared: ScreenGui)
 	-- ---- the action button ----
 	local action = Instance.new("TextButton")
 	action.Name = "ToyAction"
-	action.AnchorPoint = Vector2.new(1, 1)
-	action.Position = UDim2.new(1, -28, 1, -150)
-	action.Size = UDim2.fromOffset(86, 86)
+	action.Size = UDim2.fromOffset(84, 84)
+	action.LayoutOrder = Layout.Order.Toy
 	action.BackgroundColor3 = Color3.fromRGB(226, 74, 62)
 	action.Font = Enum.Font.FredokaOne
 	action.Text = "🪨"
@@ -58,7 +50,7 @@ function ToyController.Init(_shared: ScreenGui)
 	action.AutoButtonColor = true
 	action.ZIndex = 30
 	action.Visible = false
-	action.Parent = gui
+	action.Parent = Layout.ActionBar(gui)
 	local round = Instance.new("UICorner")
 	round.CornerRadius = UDim.new(1, 0)
 	round.Parent = action
@@ -69,9 +61,9 @@ function ToyController.Init(_shared: ScreenGui)
 	ring.Parent = action
 
 	local ammoTag = Instance.new("TextLabel")
-	ammoTag.AnchorPoint = Vector2.new(0.5, 0)
-	ammoTag.Position = UDim2.new(0.5, 0, 1, 2)
-	ammoTag.Size = UDim2.fromOffset(86, 20)
+	ammoTag.AnchorPoint = Vector2.new(0.5, 1)
+	ammoTag.Position = UDim2.new(0.5, 0, 1, -4)
+	ammoTag.Size = UDim2.fromOffset(84, 18)
 	ammoTag.BackgroundTransparency = 1
 	ammoTag.Font = Enum.Font.FredokaOne
 	ammoTag.TextScaled = true
@@ -88,9 +80,9 @@ function ToyController.Init(_shared: ScreenGui)
 		end
 		Remotes.Get("UseToy"):FireServer(selected, camera.CFrame.LookVector)
 		-- a quick squash so the tap feels answered
-		action.Size = UDim2.fromOffset(78, 78)
+		action.Size = UDim2.fromOffset(76, 76)
 		task.delay(0.08, function()
-			action.Size = UDim2.fromOffset(86, 86)
+			action.Size = UDim2.fromOffset(84, 84)
 		end)
 	end
 	action.Activated:Connect(fire)
@@ -102,24 +94,15 @@ function ToyController.Init(_shared: ScreenGui)
 	end, false, Enum.KeyCode.F, Enum.KeyCode.ButtonR2)
 
 	-- ---- the toy chips ----
-	local rail = Instance.new("Frame")
-	rail.Name = "ToyRail"
-	rail.AnchorPoint = Vector2.new(1, 1)
-	rail.Position = UDim2.new(1, -28, 1, -244)
-	rail.Size = UDim2.fromOffset(86, 3 * 42)
-	rail.BackgroundTransparency = 1
-	rail.ZIndex = 30
-	rail.Parent = gui
-	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 6)
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	layout.Parent = rail
+	-- the chips ride the shared strip directly above the action bar, so
+	-- selecting a toy and throwing it are one thumb-sized cluster
+	local rail = Layout.ChipRow(gui)
 
 	local chips: { [string]: TextButton } = {}
 	for _, toy in TOYS do
 		local chip = Instance.new("TextButton")
 		chip.Name = toy.id
-		chip.Size = UDim2.fromOffset(86, 36)
+		chip.Size = UDim2.fromOffset(52, 36)
 		chip.BackgroundColor3 = Color3.fromRGB(30, 34, 44)
 		chip.BackgroundTransparency = 0.12
 		chip.Font = Enum.Font.FredokaOne

@@ -21,7 +21,7 @@ gui.Parent = playerGui
 
 local list = Instance.new("Frame")
 list.AnchorPoint = Vector2.new(0, 0)
-list.Position = UDim2.fromOffset(8, 180)
+list.Position = UDim2.fromOffset(8, 152)
 list.Size = UDim2.new(0, 700, 0, 300)
 list.BackgroundTransparency = 1
 list.Parent = gui
@@ -59,27 +59,11 @@ ScriptContext.Error:Connect(function(message: string, trace: string)
 	end
 end)
 
--- a small always-on stamp: if this is missing, ReplicatedFirst itself is not
--- running and the problem is upstream of every controller
-local stamp = Instance.new("TextLabel")
-stamp.AnchorPoint = Vector2.new(1, 0)
-stamp.Position = UDim2.new(1, -8, 0, 8)
-stamp.Size = UDim2.fromOffset(150, 20)
-stamp.BackgroundColor3 = Color3.fromRGB(20, 26, 34)
-stamp.BackgroundTransparency = 0.35
-stamp.Font = Enum.Font.Code
-stamp.TextSize = 13
-stamp.TextColor3 = Color3.fromRGB(120, 255, 170)
-stamp.Text = "client ok · b" .. tostring(game.PlaceVersion)
-stamp.Parent = gui
-
+-- Silent unless something is actually broken. The old always-on "client ok"
+-- stamp did its job when the client was dying invisibly; now it is one more
+-- thing cluttering the corner.
 task.delay(6, function()
-	local hud = playerGui:FindFirstChild("LunchMoneyLegends")
-	local toys = playerGui:FindFirstChild("ToyUI")
-	if not hud then
+	if not playerGui:FindFirstChild("LunchMoneyLegends") then
 		show("HUD MISSING: Client.client.luau never built its ScreenGui")
-	end
-	if not toys then
-		show("TOY UI MISSING: ToyController never ran")
 	end
 end)

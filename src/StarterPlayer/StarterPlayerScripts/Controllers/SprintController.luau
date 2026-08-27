@@ -9,6 +9,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Remotes = require(ReplicatedStorage.Remotes)
+local Layout = require(script.Parent.Layout)
 local UIBuilder = require(script.Parent.UIBuilder)
 
 local SprintController = {}
@@ -50,18 +51,19 @@ function SprintController.Init(gui: ScreenGui)
 	if UserInputService.TouchEnabled then
 		local button = UIBuilder.Button({
 			Name = "SprintButton",
-			AnchorPoint = Vector2.new(1, 1),
-			Position = UDim2.new(1, -24, 1, -214),
-			Size = UDim2.fromOffset(76, 76),
+			Size = UDim2.fromOffset(68, 68),
 			Text = "RUN",
+			TextScaled = false,
+			TextSize = 20,
 			BackgroundColor3 = Palette.LockerBlue,
 			BackgroundTransparency = 0.15,
+			LayoutOrder = Layout.Order.Sprint,
 		}, function()
 			setSprint(not sprinting)
 		end)
 		UIBuilder.Round(button, 999)
 		UIBuilder.Stroke(button, Palette.White, 3)
-		button.Parent = gui
+		button.Parent = Layout.ActionBar(gui)
 	end
 end
 

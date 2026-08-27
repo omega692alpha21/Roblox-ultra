@@ -28,6 +28,50 @@ end
 
 local panels: { [string]: Frame } = {}
 
+-- Every panel lives in one dedicated ScreenGui above the HUD, with a dimmed
+-- backdrop behind it. That is what makes an open panel read as *the* menu
+-- instead of one more thing layered into the same pile as the minimap and the
+-- action buttons.
+local panelLayer: ScreenGui? = nil
+local backdrop: TextButton? = nil
+
+local function layer(): ScreenGui
+	local existing = panelLayer
+	if existing then
+		return existing
+	end
+	local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+	local found = playerGui:FindFirstChild("LMLPanels")
+	local gui: ScreenGui
+	if found and found:IsA("ScreenGui") then
+		gui = found
+	else
+		gui = Instance.new("ScreenGui")
+		gui.Name = "LMLPanels"
+		gui.ResetOnSpawn = false
+		gui.DisplayOrder = 20
+		gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		gui.Parent = playerGui
+	end
+	local dim = Instance.new("TextButton")
+	dim.Name = "Backdrop"
+	dim.Size = UDim2.fromScale(1, 1)
+	dim.BackgroundColor3 = Color3.new(0, 0, 0)
+	dim.BackgroundTransparency = 0.45
+	dim.BorderSizePixel = 0
+	dim.Text = ""
+	dim.AutoButtonColor = false
+	dim.ZIndex = 0
+	dim.Visible = false
+	dim.Parent = gui
+	dim.Activated:Connect(function()
+		UIBuilder.CloseAll()
+	end)
+	panelLayer = gui
+	backdrop = dim
+	return gui
+end
+
 function UIBuilder.Round(instance: Instance, radius: number?)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, radius or 10)
@@ -103,7 +147,7 @@ function UIBuilder.Button(props: { [string]: any }, onClick: () -> ()): TextButt
 end
 
 -- A centered window with title bar + close button, hidden by default.
-function UIBuilder.Panel(parent: Instance, name: string, title: string): (Frame, Frame)
+function UIBuilder.Panel(_parent: Instance, name: string, title: string): (Frame, Frame)
 	local panel = UIBuilder.Frame({
 		Name = name .. "Panel",
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -111,7 +155,8 @@ function UIBuilder.Panel(parent: Instance, name: string, title: string): (Frame,
 		Size = UDim2.fromOffset(520, 420),
 		BackgroundColor3 = Palette.PanelBg,
 		Visible = false,
-		Parent = parent,
+		ZIndex = 2,
+		Parent = layer(),
 	})
 	UIBuilder.Round(panel, 16)
 	UIBuilder.Stroke(panel, Palette.CashGreen, 3)
@@ -160,6 +205,10 @@ function UIBuilder.CloseAll()
 	for _, panel in panels do
 		panel.Visible = false
 	end
+	local dim = backdrop
+	if dim then
+		dim.Visible = false
+	end
 end
 
 function UIBuilder.Toggle(name: string)
@@ -171,6 +220,10 @@ function UIBuilder.Toggle(name: string)
 	UIBuilder.CloseAll()
 	if not wasVisible then
 		target.Visible = true
+		local dim = backdrop
+		if dim then
+			dim.Visible = true
+		end
 		-- pop-in
 		local scale = target:FindFirstChildOfClass("UIScale")
 		if not scale then

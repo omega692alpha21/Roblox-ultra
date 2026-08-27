@@ -4,9 +4,16 @@
 -- down the rest of the UI. Failures surface on the Diagnostics badge.
 
 local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+-- Toys are driven entirely by our own chip row and action button, so Roblox's
+-- backpack strip along the bottom is a second, redundant toy menu.
+pcall(function()
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+end)
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "LunchMoneyLegends"

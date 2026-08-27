@@ -16,11 +16,22 @@ local STEPS = {
 
 function TutorialController.Init(gui: ScreenGui)
 	task.delay(2, function()
+		-- centred with its own dim, so the welcome card reads as the one thing
+		-- on screen instead of a fourth panel fighting the action bar
+		local dim = UIBuilder.Frame({
+			Name = "TutorialDim",
+			Size = UDim2.fromScale(1, 1),
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0.5,
+			ZIndex = 40,
+			Parent = gui,
+		})
 		local card = UIBuilder.Frame({
 			Name = "Tutorial",
-			AnchorPoint = Vector2.new(0.5, 1),
-			Position = UDim2.new(0.5, 0, 1, -18),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
 			Size = UDim2.fromOffset(540, 190),
+			ZIndex = 41,
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.05,
 			Parent = gui,
@@ -69,14 +80,14 @@ function TutorialController.Init(gui: ScreenGui)
 			BackgroundColor3 = Palette.CashGreen,
 		}, function()
 			card:Destroy()
+			dim:Destroy()
 		end)
 		UIBuilder.Round(gotIt, 10)
 		gotIt.Parent = card
 		-- auto-dismiss so it never nags
 		task.delay(25, function()
-			if card.Parent then
-				card:Destroy()
-			end
+			card:Destroy()
+			dim:Destroy()
 		end)
 	end)
 end
