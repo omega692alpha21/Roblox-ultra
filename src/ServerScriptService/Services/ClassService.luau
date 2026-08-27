@@ -29,12 +29,12 @@ local Signals = require(script.Parent.Parent.Signals)
 local ClassService = {}
 
 local ROUNDS_PER_CLASS = 8
-local LESSON_SECONDS = 50
 -- how close to the professor you have to be to sit in
 local ATTEND_RADIUS = 26
 
 type Session = {
 	subjectId: string,
+	level: number,
 	rounds: { ClassGames.Round },
 	answered: { [number]: boolean },
 	correct: number,
@@ -68,6 +68,8 @@ local function reward(player: Player, session: Session)
 		end
 		-- score scales the payout, so a C is worth going to and an A is worth
 		-- trying for
+		-- the setting the player chose pays what it costs them
+		mult *= Subjects.Level(session.level).pay
 		cash = math.floor(GameConfig.QuizCashReward * mult * (0.5 + ratio))
 		EconomyService.AddCash(player, cash, true)
 		player:SetAttribute("LuckMult", GameConfig.QuizLuckBuffMultiplier)
@@ -81,8 +83,9 @@ local function reward(player: Player, session: Session)
 	end
 
 	-- the report card keeps your best, so a bad day never costs you ground
-	local profile = DataService.Get(player)
-	if profile then
+	local card = DataService.Get(player)
+	if card then
+		local profile = card
 		local best = profile.grades[session.subjectId] or 0
 		if ratio > best then
 			profile.grades[session.subjectId] = ratio
@@ -107,7 +110,7 @@ local function reward(player: Player, session: Session)
 		JailService.GrantHallPass(player, 1, ("for acing %s"):format(subject.name))
 	end
 
-	Remotes.Get("ClassResult"):FireClient(player, session.correct, total, cash, aura, letter)
+	Remotes.Get("ClassResult"):FireClient(player, session.correct, total, cash, aura, letter, session.level)
 	if passed then
 		Remotes.Get("Notify"):FireClient(
 			player,
@@ -145,13 +148,16 @@ local function beginLesson(player: Player, subject: Subjects.Subject)
 	if not DataService.IsLoaded(player) then
 		return
 	end
-	local rounds = ClassGames.Build(subject.id, ROUNDS_PER_CLASS)
+	local profile = DataService.Get(player)
+	local level = Subjects.Level(profile and profile.classLevel or nil)
+	local rounds = ClassGames.Build(subject.id, ROUNDS_PER_CLASS, level.id)
 	local session: Session = {
 		subjectId = subject.id,
+		level = level.id,
 		rounds = rounds,
 		answered = {},
 		correct = 0,
-		deadline = os.clock() + LESSON_SECONDS,
+		deadline = os.clock() + level.seconds,
 		finished = false,
 	}
 	sessions[player] = session
@@ -161,10 +167,12 @@ local function beginLesson(player: Player, subject: Subjects.Subject)
 		icon = subject.icon,
 		professor = subject.professor,
 		mode = subject.mode,
+		level = level.id,
+		levelName = level.name,
 		rounds = ClassGames.Public(rounds),
-		seconds = LESSON_SECONDS,
+		seconds = level.seconds,
 	})
-	task.delay(LESSON_SECONDS + 1.5, function()
+	task.delay(level.seconds + 1.5, function()
 		local live = sessions[player]
 		if live == session then
 			finish(player, session)
@@ -310,6 +318,31 @@ function ClassService.Init()
 		for _, subject in Subjects.List do
 			player:SetAttribute("Grade_" .. subject.id, profile.grades[subject.id])
 		end
+		player:SetAttribute("ClassLevel", Subjects.Level(profile.classLevel).id)
+	end)
+
+	Remotes.Get("SetClassLevel").OnServerEvent:Connect(function(player, level)
+		if typeof(level) ~= "number" then
+			return
+		end
+		local profile = DataService.Get(player)
+		if not profile then
+			return
+		end
+		-- changing it mid-lesson would let you drop to Remedial for the hard
+		-- questions and still be paid at Honors
+		if sessions[player] then
+			Remotes.Get("Notify"):FireClient(player, "Finish this lesson first.", "info")
+			return
+		end
+		local chosen = Subjects.Level(math.floor(level))
+		profile.classLevel = chosen.id
+		player:SetAttribute("ClassLevel", chosen.id)
+		Remotes.Get("Notify"):FireClient(
+			player,
+			("Classes set to %s — %s"):format(chosen.name, chosen.note),
+			"good"
+		)
 	end)
 
 	Remotes.Get("AttendClass").OnServerEvent:Connect(function(player, subjectId)

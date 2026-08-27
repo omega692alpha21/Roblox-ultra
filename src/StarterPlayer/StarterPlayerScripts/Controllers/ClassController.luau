@@ -244,7 +244,12 @@ function ClassController.Init(gui: ScreenGui)
 		roundIndex = 0
 		entered = {}
 		panel.Visible = true
-		heading.Text = ("%s %s · %s"):format(payload.icon, payload.name, payload.professor)
+		heading.Text = ("%s %s · %s · %s"):format(
+			payload.icon,
+			payload.name,
+			payload.levelName or "Standard",
+			payload.professor
+		)
 		local deadline = os.clock() + (payload.seconds or 45)
 		task.spawn(function()
 			while session == payload and os.clock() < deadline do

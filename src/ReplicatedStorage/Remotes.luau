@@ -14,7 +14,7 @@ local EVENTS = {
 	"QuizStart", -- (questions: {{q, answers}}, deadline: number)
 	"QuizResult", -- (correctCount: number, reward: number, aura: number)
 	"ClassStart", -- (session: {subject, name, icon, professor, mode, rounds, seconds})
-	"ClassResult", -- (correct: number, total: number, cash: number, aura: number, letter: string)
+	"ClassResult", -- (correct, total, cash, aura, letter: string, level: number)
 	"RewardState", -- (state table for the Rewards panel)
 	"QuestState", -- (quests table)
 	"SpinResult", -- (prizeIndex: number, label: string)
@@ -34,6 +34,7 @@ local EVENTS = {
 	"QuizAnswer", -- (questionIndex: number, answerIndex: number)
 	"ClassAnswer", -- (roundIndex: number, answer: number | {number})
 	"AttendClass", -- (subjectId: string) ask the professor to let you sit in
+	"SetClassLevel", -- (level: number) 1 remedial / 2 standard / 3 honors
 	"Punch",
 	"Sprint", -- (on: boolean)
 	"ClientDiagnostic", -- (failures: {string}) UI self-check report

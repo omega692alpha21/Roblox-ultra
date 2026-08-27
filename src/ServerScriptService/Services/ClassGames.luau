@@ -3,6 +3,11 @@
 --
 -- Each generator returns rounds in a single shape the client can lay out four
 -- different ways, so adding a subject is a table entry rather than a new UI.
+--
+-- Every generator takes the difficulty the player chose for themselves, 1 to
+-- 3. Where a subject is about knowledge the questions get harder; where it is
+-- about hands or memory the lesson clock does the work, and that lives in
+-- ClassService.
 
 local ClassGames = {}
 
@@ -28,12 +33,14 @@ end
 -- ------------------------------------------------------------- mathematics ---
 -- Arithmetic that gets harder as the lesson goes on. The wrong answers are
 -- near-misses, so it is a real calculation and not a glance.
-local function mathRounds(count: number): { Round }
+local function mathRounds(count: number, level: number): { Round }
 	local rounds: { Round } = {}
 	for i = 1, count do
-		local difficulty = math.min(i, 8)
+		-- the lesson escalates within itself; the setting decides where it starts
+		local difficulty = math.clamp(i + (level - 2) * 3, 1, 12)
 		local a, b, answer, prompt
-		local op = rng:NextInteger(1, difficulty >= 5 and 4 or 3)
+		-- division only appears once the questions are meant to be work
+		local op = rng:NextInteger(1, (difficulty >= 5 and level >= 2) and 4 or 3)
 		if op == 1 then
 			a, b = rng:NextInteger(6, 12 + difficulty * 6), rng:NextInteger(6, 12 + difficulty * 6)
 			answer = a + b
@@ -48,15 +55,17 @@ local function mathRounds(count: number): { Round }
 			answer = a * b
 			prompt = ("%d × %d"):format(a, b)
 		else
-			b = rng:NextInteger(3, 9)
-			answer = rng:NextInteger(3, 12)
+			b = rng:NextInteger(3, 5 + level * 2)
+			answer = rng:NextInteger(3, 8 + level * 3)
 			a = b * answer
 			prompt = ("%d ÷ %d"):format(a, b)
 		end
 
 		local wrongs: { number } = {}
 		while #wrongs < 3 do
-			local drift = rng:NextInteger(1, math.max(4, math.floor(answer * 0.25)))
+			-- closer decoys on Honors, so a glance is not enough
+			local spread = if level >= 3 then 0.12 else if level <= 1 then 0.4 else 0.25
+			local drift = rng:NextInteger(1, math.max(if level >= 3 then 2 else 4, math.floor(answer * spread)))
 			local candidate = answer + (rng:NextInteger(0, 1) == 0 and -drift or drift)
 			if candidate > 0 and candidate ~= answer and not table.find(wrongs, candidate) then
 				table.insert(wrongs, candidate)
@@ -97,7 +106,7 @@ local MIXES = {
 	{ a = 1, b = 4, name = "Coral Iodide", color = Color3.fromRGB(180, 152, 104) },
 }
 
-local function chemistryRounds(count: number): { Round }
+local function chemistryRounds(count: number, _level: number): { Round }
 	local rounds: { Round } = {}
 	for _ = 1, count do
 		local mix = MIXES[rng:NextInteger(1, #MIXES)]
@@ -138,13 +147,18 @@ local SPECIMENS = {
 	{ q = "Which one is NOT alive?", right = { "🪨", "💧", "🔥", "❄️" }, wrong = { "🌱", "🐜", "🦠", "🐟", "🌳" } },
 }
 
-local function biologyRounds(count: number): { Round }
+local function biologyRounds(count: number, level: number): { Round }
 	local rounds: { Round } = {}
 	for _ = 1, count do
 		local spec = SPECIMENS[rng:NextInteger(1, #SPECIMENS)]
 		local answer = spec.right[rng:NextInteger(1, #spec.right)]
 		local decoys = shuffled(spec.wrong)
 		local pool = { answer, decoys[1], decoys[2], decoys[3] }
+		if level <= 1 then
+			-- remedial shows two options, doubled up, so it is a real choice
+			-- without being a hunt
+			pool = { answer, decoys[1], answer, decoys[1] }
+		end
 		local options: { string } = {}
 		local correct = 1
 		for slot, source in shuffled({ 1, 2, 3, 4 }) do
@@ -168,9 +182,13 @@ local PADS = {
 	{ name = "Fa", color = Color3.fromRGB(120, 158, 236) },
 }
 
-local function musicRounds(count: number): { Round }
+local function musicRounds(count: number, level: number): { Round }
 	local rounds: { Round } = {}
 	local sequence: { number } = {}
+	-- a harder setting hands you a longer opening phrase, not a longer lesson
+	for _ = 1, level - 1 do
+		table.insert(sequence, rng:NextInteger(1, #PADS))
+	end
 	for i = 1, count do
 		table.insert(sequence, rng:NextInteger(1, #PADS))
 		local options: { string } = {}
@@ -193,7 +211,7 @@ end
 -- --------------------------------------------------------------------- gym ---
 -- Reflex drill: one of four targets lights up and you have to hit that one
 -- before the clock runs down. No knowledge, pure hands.
-local function gymRounds(count: number): { Round }
+local function gymRounds(count: number, _level: number): { Round }
 	local rounds: { Round } = {}
 	local TARGETS = { "🎯", "🏀", "🥏", "⚽" }
 	for i = 1, count do
@@ -211,7 +229,7 @@ local function gymRounds(count: number): { Round }
 	return rounds
 end
 
-local GENERATORS: { [string]: (number) -> { Round } } = {
+local GENERATORS: { [string]: (number, number) -> { Round } } = {
 	math = mathRounds,
 	chemistry = chemistryRounds,
 	biology = biologyRounds,
@@ -219,12 +237,13 @@ local GENERATORS: { [string]: (number) -> { Round } } = {
 	gym = gymRounds,
 }
 
-function ClassGames.Build(subjectId: string, count: number): { Round }
+function ClassGames.Build(subjectId: string, count: number, level: number): { Round }
+	local difficulty = math.clamp(math.floor(level), 1, 3)
 	local generator = GENERATORS[subjectId]
 	if not generator then
-		return mathRounds(count)
+		return mathRounds(count, difficulty)
 	end
-	return generator(count)
+	return generator(count, difficulty)
 end
 
 -- What the client is allowed to see: everything except which button is right.

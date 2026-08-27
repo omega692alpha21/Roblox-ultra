@@ -121,6 +121,56 @@ function Subjects.Letter(ratio: number): string
 	return "F"
 end
 
+-- How hard you want your lessons. The player picks this themselves — it is a
+-- setting, not something inferred about them — and a harder setting pays more
+-- so choosing it is a real decision rather than a difficulty tax.
+export type Level = {
+	id: number,
+	name: string,
+	note: string,
+	pay: number,
+	seconds: number,
+	color: Color3,
+}
+
+Subjects.Levels = {
+	{
+		id = 1,
+		name = "Remedial",
+		note = "Gentler questions, more time on the clock",
+		pay = 0.7,
+		seconds = 68,
+		color = Color3.fromRGB(150, 220, 130),
+	},
+	{
+		id = 2,
+		name = "Standard",
+		note = "The lesson as taught",
+		pay = 1,
+		seconds = 56,
+		color = Color3.fromRGB(245, 197, 49),
+	},
+	{
+		id = 3,
+		name = "Honors",
+		note = "Harder, faster, pays 1.7x",
+		pay = 1.7,
+		seconds = 44,
+		color = Color3.fromRGB(226, 96, 88),
+	},
+} :: { Level }
+
+Subjects.DefaultLevel = 2
+
+function Subjects.Level(id: number?): Level
+	for _, level in Subjects.Levels do
+		if level.id == id then
+			return level
+		end
+	end
+	return Subjects.Levels[Subjects.DefaultLevel]
+end
+
 -- Every subject passed at B or better pays a small permanent income bonus.
 -- Five subjects, so a full report card is +10% forever.
 Subjects.IncomeBonusPerSubject = 0.02
