@@ -1,7 +1,11 @@
 --!strict
--- The toy controls: a row of toy chips and one big ACTION button, because
--- Roblox does not give Tools a dependable fire button on phones. Tapping a
--- chip selects a toy; the action button throws it where the camera looks.
+-- The toy controls: a rail of tool tiles down the right edge and one big THROW
+-- button under the thumb, because Roblox does not give Tools a dependable fire
+-- button on phones. Tapping a tile selects a tool; the throw button sends it
+-- wherever the reticle is pointing.
+--
+-- Tools live on the right, opposite the menus, so the hand that picks a tool
+-- is the hand that throws it.
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
@@ -41,8 +45,7 @@ function ToyController.Init(gui: ScreenGui)
 	-- ---- the action button ----
 	local action = Instance.new("TextButton")
 	action.Name = "ToyAction"
-	-- the bar is already sized against the screen; this is a fraction of the bar
-	action.Size = UDim2.new(0, 0, 1, 0)
+	action.Size = Layout.Square(Layout.ToyButtonScale)
 	action.LayoutOrder = Layout.Order.Toy
 	action.BackgroundColor3 = Color3.fromRGB(226, 74, 62)
 	action.Font = Enum.Font.FredokaOne
@@ -53,7 +56,6 @@ function ToyController.Init(gui: ScreenGui)
 	action.ZIndex = 30
 	action.Visible = false
 	action.Parent = Layout.ActionBar(gui)
-	Layout.Ratio(action, 1)
 	Layout.FitText(action, 0.07)
 	local round = Instance.new("UICorner")
 	round.CornerRadius = UDim.new(1, 0)
@@ -89,8 +91,7 @@ function ToyController.Init(gui: ScreenGui)
 		-- a quick squash so the tap feels answered
 		action.Size = UDim2.new(0, 0, Layout.ToyButtonScale * 0.9, 0)
 		task.delay(0.08, function()
-			-- the bar is already sized against the screen; this is a fraction of the bar
-	action.Size = UDim2.new(0, 0, 1, 0)
+			action.Size = Layout.Square(Layout.ToyButtonScale)
 		end)
 	end
 	action.Activated:Connect(fire)
@@ -101,36 +102,48 @@ function ToyController.Init(gui: ScreenGui)
 		return Enum.ContextActionResult.Pass
 	end, false, Enum.KeyCode.F, Enum.KeyCode.ButtonR2)
 
-	-- ---- the toy chips ----
-	-- the chips ride the shared strip directly above the action bar, so
-	-- selecting a toy and throwing it are one thumb-sized cluster
-	local rail = Layout.ChipRow(gui)
+	-- ---- the tool rail, right edge ----
+	local rail = Layout.Rail(gui, "ToolRail", "right", #TOYS, Layout.RailIcon)
 
 	local chips: { [string]: TextButton } = {}
-	for _, toy in TOYS do
+	for index, toy in TOYS do
 		local chip = Instance.new("TextButton")
 		chip.Name = toy.id
-		chip.Size = UDim2.new(0, 0, 1, 0)
+		chip.Size = Layout.Square(Layout.RailIcon)
+		chip.LayoutOrder = index
 		chip.BackgroundColor3 = Color3.fromRGB(30, 34, 44)
-		chip.BackgroundTransparency = 0.12
+		chip.BackgroundTransparency = 0.15
 		chip.Font = Enum.Font.FredokaOne
-		chip.TextScaled = true
 		chip.TextColor3 = Color3.fromRGB(240, 236, 226)
 		chip.Text = toy.icon
 		chip.AutoButtonColor = true
-		chip.ZIndex = 30
+		chip.ZIndex = 29
 		chip.Visible = false
 		chip.Parent = rail
-		Layout.Ratio(chip, 1.25)
-		Layout.FitText(chip, 0.045)
+		Layout.FitText(chip, 0.055)
 		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, Layout.h(0.014))
+		c.CornerRadius = UDim.new(0, Layout.h(0.022))
 		c.Parent = chip
 		local st = Instance.new("UIStroke")
 		st.Color = Color3.fromRGB(245, 197, 49)
 		st.Thickness = 2
 		st.Transparency = 1
 		st.Parent = chip
+		-- the count rides the corner of its own tile
+		local count = Instance.new("TextLabel")
+		count.Name = "Count"
+		count.AnchorPoint = Vector2.new(1, 1)
+		count.Position = UDim2.fromScale(0.96, 0.98)
+		count.Size = UDim2.fromScale(0.5, 0.32)
+		count.BackgroundTransparency = 1
+		count.Font = Enum.Font.FredokaOne
+		count.TextScaled = true
+		count.TextXAlignment = Enum.TextXAlignment.Right
+		count.TextColor3 = Color3.fromRGB(255, 244, 220)
+		count.TextStrokeTransparency = 0.4
+		count.Text = ""
+		count.ZIndex = 30
+		count.Parent = chip
 		chip.Activated:Connect(function()
 			selected = toy.id
 			action.Text = toy.icon
@@ -141,17 +154,20 @@ function ToyController.Init(gui: ScreenGui)
 	task.spawn(function()
 		while true do
 			local anyOwned = false
-			local ownedCount = 0
 			for _, toy in TOYS do
 				local chip = chips[toy.id]
 				local have = owns(toy.id)
 				chip.Visible = have
 				if have then
 					anyOwned = true
-					ownedCount += 1
 					local stroke = chip:FindFirstChildOfClass("UIStroke")
 					if stroke then
 						stroke.Transparency = selected == toy.id and 0 or 1
+					end
+					local count = chip:FindFirstChild("Count") :: TextLabel?
+					if count then
+						local left = ammoOf(toy.id)
+						count.Text = left == math.huge and "" or tostring(left)
 					end
 				end
 			end
@@ -167,8 +183,6 @@ function ToyController.Init(gui: ScreenGui)
 			action.Visible = anyOwned
 			-- the reticle is only meaningful while there is something to throw
 			AimController.SetEnabled(anyOwned)
-			-- one toy means nothing to switch between: hide the strip entirely
-			rail.Visible = ownedCount > 1
 			local left = ammoOf(selected)
 			ammoTag.Text = left == math.huge and "∞" or tostring(left)
 			task.wait(0.35)

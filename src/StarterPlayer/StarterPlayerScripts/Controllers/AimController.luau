@@ -99,8 +99,7 @@ function AimController.Init(gui: ScreenGui)
 	frame.Name = "Reticle"
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	frame.Position = UDim2.fromScale(0.5, RETICLE_Y)
-	frame.Size = UDim2.new(0, 0, 0.055, 0)
-	Layout.Ratio(frame, 1)
+	frame.Size = Layout.Square(0.055)
 	frame.BackgroundTransparency = 1
 	frame.ZIndex = 25
 	frame.Visible = false
@@ -188,7 +187,7 @@ function AimController.Init(gui: ScreenGui)
 			end
 		end
 		-- the reticle tightens when it has something to lock onto
-		frame.Size = UDim2.new(0, 0, best and 0.042 or 0.055, 0)
+		frame.Size = Layout.Square(best and 0.042 or 0.055)
 	end)
 end
 

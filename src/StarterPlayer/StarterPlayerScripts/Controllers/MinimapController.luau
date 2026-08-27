@@ -68,8 +68,7 @@ function MinimapController.Init(gui: ScreenGui)
 	local frame = Instance.new("Frame")
 	frame.Name = "Minimap"
 	frame.Position = UDim2.new(0, Layout.Margin, Layout.MarginScale, 0)
-	frame.Size = UDim2.new(0, 0, Layout.MinimapScale, 0)
-	Layout.Ratio(frame, 1)
+	frame.Size = Layout.Square(Layout.MinimapScale)
 	frame.BackgroundColor3 = Color3.fromRGB(28, 34, 42)
 	frame.BackgroundTransparency = 0.08
 	frame.ClipsDescendants = true

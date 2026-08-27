@@ -68,12 +68,17 @@ function Layout.FitText(label: GuiObject, maxFraction: number)
 	constraint.Parent = label
 end
 
--- Force a square (or any ratio); the element is then sized by height alone.
-function Layout.Ratio(object: GuiObject, ratio: number?)
-	local constraint = Instance.new("UIAspectRatioConstraint")
-	constraint.AspectRatio = ratio or 1
-	constraint.DominantAxis = Enum.DominantAxis.Height
-	constraint.Parent = object
+-- A square of the given fraction of screen height. Deliberately not a
+-- UIAspectRatioConstraint on a zero-width element: its default AspectType
+-- treats Size as a maximum, so a width of 0 collapses the whole thing to
+-- nothing. That is what made the minimap and the throw button vanish.
+function Layout.Square(fraction: number): UDim2
+	local side = Layout.h(fraction)
+	return UDim2.fromOffset(side, side)
+end
+
+function Layout.Box(widthFraction: number, heightFraction: number): UDim2
+	return UDim2.fromOffset(Layout.h(widthFraction), Layout.h(heightFraction))
 end
 
 -- ---- the grid, all as fractions of screen height ----
@@ -91,8 +96,8 @@ Layout.ButtonScale = 0.115
 Layout.ToyButtonScale = 0.135
 Layout.ChipScale = 0.075
 
--- the thumb cluster sits above Roblox's own jump control
-Layout.BarBottom = 0.30
+-- the thumb cluster runs along the bottom, left of Roblox's jump control
+Layout.BarBottom = 0.05
 
 Layout.Order = {
 	Sprint = 10,
@@ -112,7 +117,9 @@ local function makeRow(gui: Instance, name: string, heightScale: number, bottomS
 	local row = Instance.new("Frame")
 	row.Name = name
 	row.AnchorPoint = Vector2.new(1, 1)
-	row.Position = UDim2.new(1, -Layout.Margin, 1 - bottomScale, 0)
+	-- along the bottom, offset left of Roblox's jump control, so it clears the
+	-- tool rail running down the right edge
+	row.Position = UDim2.new(1, -Layout.h(0.30), 1, -Layout.h(bottomScale))
 	row.Size = UDim2.fromOffset(Layout.h(widthScale), Layout.h(heightScale))
 	row.BackgroundTransparency = 1
 	row.ZIndex = 30
@@ -127,19 +134,33 @@ local function makeRow(gui: Instance, name: string, heightScale: number, bottomS
 	return row
 end
 
+-- A vertical column of square tiles pinned to one edge, vertically centred.
+function Layout.Rail(gui: Instance, name: string, side: string, tiles: number, tileFraction: number): Frame
+	local existing = gui:FindFirstChild(name)
+	if existing and existing:IsA("Frame") then
+		return existing
+	end
+	local gap = Layout.h(0.016)
+	local tile = Layout.h(tileFraction)
+	local rail = Instance.new("Frame")
+	rail.Name = name
+	rail.AnchorPoint = Vector2.new(side == "left" and 0 or 1, 0.5)
+	rail.Position = UDim2.new(side == "left" and 0 or 1, side == "left" and Layout.Margin or -Layout.Margin, 0.5, 0)
+	rail.Size = UDim2.fromOffset(tile, tile * tiles + gap * math.max(0, tiles - 1))
+	rail.BackgroundTransparency = 1
+	rail.ZIndex = 28
+	rail.Parent = gui
+	local list = Instance.new("UIListLayout")
+	list.Padding = UDim.new(0, gap)
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.Parent = rail
+	return rail
+end
+
 function Layout.ActionBar(gui: ScreenGui): Frame
 	-- three buttons plus the gaps between them
 	return makeRow(gui, "ActionBar", Layout.ToyButtonScale, Layout.BarBottom, Layout.ToyButtonScale * 3 + 0.05)
-end
-
-function Layout.ChipRow(gui: ScreenGui): Frame
-	return makeRow(
-		gui,
-		"ChipRow",
-		Layout.ChipScale,
-		Layout.BarBottom + Layout.ToyButtonScale + 0.014,
-		Layout.ChipScale * 4 + 0.04
-	)
 end
 
 -- Legacy helper: still used by the panels, now against a real measurement.

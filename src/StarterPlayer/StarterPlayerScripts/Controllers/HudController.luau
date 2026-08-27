@@ -25,12 +25,14 @@ local HudController = {}
 
 local player = Players.LocalPlayer
 
--- the five that earn a permanent slot on the rail; the rest live behind MORE
+-- The left rail: what the player checks about themselves — report card,
+-- quests, profile, crew — plus a way into everything else. Tools live on the
+-- right, under the thumb that throws them.
 local RAIL = {
-	{ icon = "🛒", panel = "Store", color = Palette.CashGreen },
-	{ icon = "👥", panel = "Crew", color = Palette.AuraPurple },
-	{ icon = "📋", panel = "Quests", color = Palette.BusYellow },
 	{ icon = "📕", panel = "Classes", color = Palette.LockerBlue },
+	{ icon = "📋", panel = "Quests", color = Palette.BusYellow },
+	{ icon = "⭐", panel = "Rep", color = Palette.AuraPurple },
+	{ icon = "👥", panel = "Crew", color = Palette.CashGreen },
 }
 
 local MORE = {
@@ -97,27 +99,12 @@ function HudController.Init(gui: ScreenGui)
 	local lockLabel, lockPill = pill(top, 4, Palette.DetentionRed)
 	lockPill.Visible = false
 
-	-- ---------------- right edge: the menu rail ----------------
-	local rail = UIBuilder.Frame({
-		Name = "MenuRail",
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -Layout.Margin, 0.5, 0),
-		Size = UDim2.fromOffset(
-			Layout.h(Layout.RailIcon),
-			Layout.h(Layout.RailIcon * 5 + Layout.RailGap * 4)
-		),
-		BackgroundTransparency = 1,
-		Parent = gui,
-	})
-	local railList = Instance.new("UIListLayout")
-	railList.Padding = UDim.new(0, Layout.h(Layout.RailGap))
-	railList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	railList.SortOrder = Enum.SortOrder.LayoutOrder
-	railList.Parent = rail
+	-- ---------------- left edge: the menu rail ----------------
+	local rail = Layout.Rail(gui, "MenuRail", "left", #RAIL + 1, Layout.RailIcon)
 
 	local function railTile(order: number, icon: string, color: Color3, onClick: () -> ())
 		local button = UIBuilder.Button({
-			Size = UDim2.fromOffset(Layout.h(Layout.RailIcon), Layout.h(Layout.RailIcon)),
+			Size = Layout.Square(Layout.RailIcon),
 			Text = icon,
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.2,
