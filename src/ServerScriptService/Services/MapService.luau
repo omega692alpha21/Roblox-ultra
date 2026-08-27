@@ -1053,10 +1053,13 @@ local function buildTerrain()
 	local rng = Random.new(7)
 	for i = 1, 26 do
 		local angle = (i / 26) * math.pi * 2
-		local dist = rng:NextNumber(330, 420)
+		local dist = rng:NextNumber(430, 520)
 		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(-6, 8), math.sin(angle) * dist)
 		terrain:FillBall(pos, rng:NextNumber(28, 64), Enum.Material.Grass)
 	end
+	-- hard rule: nothing rises above ground level anywhere inside the walls
+	terrain:FillBlock(CFrame.new(0, 34, 0), Vector3.new(640, 64, 640), Enum.Material.Air)
+
 	-- no terrain (or its animated grass blades) under any interior floor
 	terrain.Decoration = false
 	for _, region in {
