@@ -1,3 +1,21 @@
+# DETENTION (live) · club prototypes (parked)
+
+> The school where lunch money runs everything.
+
+**DETENTION is the live game again** (universe `10762834508`, place
+`81310619434390`, restored at build 55): the steal-and-defend school RPG —
+recruit students in the Main Hallway, steal from unlocked homerooms, punch
+thieves, farm aura, graduate, survive curfew. Source under `src/`, built by
+the root `default.project.json`.
+
+The club-era prototypes (MILLIONS CLUB / CULT / ROBES) live under `club/`,
+parked but complete; their game passes are off sale. Their store-page pass
+ids and the asset registry are recorded in `club/src/ReplicatedStorage/ClubConfig.luau`.
+
+---
+
+## Previous README (club era) below
+
 # CULT
 
 > Find us. Solve it. Enter. Rise.
