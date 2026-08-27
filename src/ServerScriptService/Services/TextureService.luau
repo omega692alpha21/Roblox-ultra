@@ -1,31 +1,43 @@
 --!strict
--- Applies the uploaded texture assets to every part MapService tagged.
--- Server-side plain Texture instances: they replicate to every client on any
--- device with no client-side API requirements at all.
+-- Gives every surface in the school a real material.
 --
--- IMPORTANT: Texture.Texture needs an *Image* asset id. Uploading a PNG as
--- assetType "Decal" returns a Decal id, which silently renders as nothing —
--- that is why the whole school looked flat and untextured. Every id in
--- Config/TextureIds is an Image asset.
+-- This used to hang plain `Texture` instances on each face: a decal stretched
+-- over plastic. A decal is lit as if it were flat, so no matter how good the
+-- painting was, brick read as a photograph of brick glued to a box.
+--
+-- Now each surface gets a MaterialVariant instead — a colour map, a normal map
+-- derived from that painting's own relief, and a roughness map. Future
+-- lighting then lights the surface rather than the box: mortar lines catch the
+-- sun, plaster scatters it, glass does not, and the same wall changes through
+-- the school day.
+--
+-- The variants have to be authored as data (src/MaterialService/*.model.json,
+-- synced by Rojo) because MaterialVariant.ColorMap is Plugin security — no
+-- running script can ever set it. All the game does is name them.
+--
+-- Falls back to a Texture for the few surfaces that want a decal rather than a
+-- material: window glazing, where the panes are a picture and not a pattern.
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Materials = require(ReplicatedStorage.Config.Materials)
 local TextureIds = require(ReplicatedStorage.Config.TextureIds)
 
 local TextureService = {}
 
-local ALL_FACES = {
-	Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left,
-	Enum.NormalId.Right, Enum.NormalId.Top, Enum.NormalId.Bottom,
-}
-local SIDES = {
-	Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right,
-}
-local TOP = { Enum.NormalId.Top }
+type Surface = { variant: string, material: Enum.Material }
+
+local function dress(part: BasePart, surface: Surface)
+	part.Material = surface.material
+	part.MaterialVariant = surface.variant
+end
+
+-- Windows keep a decal: the panes and mullions are a picture, and tiling them
+-- as a material would repeat the frame across the glass.
 local FRONT_BACK = { Enum.NormalId.Front, Enum.NormalId.Back }
 
-local function apply(part: BasePart, assetId: number, faces: { Enum.NormalId }, tileU: number, tileV: number)
+local function decal(part: BasePart, assetId: number, faces: { Enum.NormalId }, u: number, v: number)
 	if assetId == 0 then
 		return
 	end
@@ -34,75 +46,84 @@ local function apply(part: BasePart, assetId: number, faces: { Enum.NormalId }, 
 		texture.Name = "SurfaceTex"
 		texture.Texture = "rbxassetid://" .. assetId
 		texture.Face = face
-		texture.StudsPerTileU = tileU
-		texture.StudsPerTileV = tileV
+		texture.StudsPerTileU = u
+		texture.StudsPerTileV = v
 		texture.Parent = part
 	end
 end
 
--- tag -> { asset, faces, tileU, tileV }
-type Rule = { id: number, faces: { Enum.NormalId }, u: number, v: number }
-
 function TextureService.Init()
-	local RULES: { [string]: Rule } = {
-		TexBrick = { id = TextureIds.Brick, faces = ALL_FACES, u = 14, v = 14 },
-		TexWindow = { id = TextureIds.Windows, faces = FRONT_BACK, u = 7.5, v = 6.6 },
-		TexLocker = { id = TextureIds.Lockers, faces = FRONT_BACK, u = 16.8, v = 9 },
-		TexRoof = { id = TextureIds.Shingles, faces = ALL_FACES, u = 16, v = 16 },
-		TexFloorTile = { id = TextureIds.FloorTile, faces = TOP, u = 16, v = 16 },
-		TexBlueStone = { id = TextureIds.BlueStone, faces = ALL_FACES, u = 18, v = 18 },
-		TexGround = { id = TextureIds.Ground, faces = TOP, u = 22, v = 22 },
-		TexCeiling = { id = TextureIds.Ceiling, faces = { Enum.NormalId.Bottom }, u = 12, v = 12 },
-		TexCarpet = { id = TextureIds.Carpet, faces = TOP, u = 14, v = 14 },
-		TexPlaster = { id = TextureIds.Plaster, faces = SIDES, u = 20, v = 20 },
-		TexWood = { id = TextureIds.Wood, faces = ALL_FACES, u = 10, v = 10 },
+	-- tags the map builders apply as they go
+	local BY_TAG: { [string]: Surface } = {
+		TexBrick = Materials.SchoolBrick,
+		TexLocker = Materials.SchoolLocker,
+		TexRoof = Materials.SchoolShingle,
+		TexFloorTile = Materials.SchoolTile,
+		TexBlueStone = Materials.SchoolStone,
+		TexGround = Materials.SchoolLawn,
+		TexCeiling = Materials.SchoolCeiling,
+		TexCarpet = Materials.SchoolCarpet,
+		TexPlaster = Materials.SchoolPlaster,
+		TexWood = Materials.SchoolWood,
+		TexPlaza = Materials.SchoolStone,
 	}
 
-	local applied = 0
-	for tagName, rule in RULES do
+	local dressed = 0
+	for tagName, surface in BY_TAG do
 		for _, part in CollectionService:GetTagged(tagName) do
 			if part:IsA("BasePart") then
-				if tagName == "TexWindow" then
-					part.Transparency = 0
-				end
-				apply(part, rule.id, rule.faces, rule.u, rule.v)
-				applied += 1
+				dress(part, surface)
+				dressed += 1
 			end
 		end
 	end
 
-	-- Blanket pass: anything the map builders never tagged still gets the
-	-- right material by name, so no surface in the school reads as flat
-	-- plastic. Cheap: one Texture per matching face.
-	local BY_NAME: { { match: string, rule: Rule } } = {
-		{ match = "Brick", rule = { id = TextureIds.Brick, faces = ALL_FACES, u = 14, v = 14 } },
-		{ match = "Wainscot", rule = { id = TextureIds.Wood, faces = SIDES, u = 10, v = 10 } },
-		{ match = "InnerWallUpper", rule = { id = TextureIds.Plaster, faces = SIDES, u = 20, v = 20 } },
-		{ match = "Facade", rule = { id = TextureIds.Plaster, faces = SIDES, u = 20, v = 20 } },
-		{ match = "Trim", rule = { id = TextureIds.Plaster, faces = SIDES, u = 20, v = 20 } },
-		{ match = "Column", rule = { id = TextureIds.Plaster, faces = SIDES, u = 20, v = 20 } },
-		{ match = "PitchRoof", rule = { id = TextureIds.Shingles, faces = ALL_FACES, u = 16, v = 16 } },
-		{ match = "DormerRoof", rule = { id = TextureIds.Shingles, faces = ALL_FACES, u = 12, v = 12 } },
-		{ match = "RoofSlab", rule = { id = TextureIds.Shingles, faces = TOP, u = 18, v = 18 } },
-		{ match = "Locker", rule = { id = TextureIds.Lockers, faces = FRONT_BACK, u = 4.2, v = 9 } },
-		{ match = "Lawn", rule = { id = TextureIds.Ground, faces = TOP, u = 24, v = 24 } },
-		{ match = "Hedge", rule = { id = TextureIds.Ground, faces = ALL_FACES, u = 8, v = 8 } },
-		{ match = "Plaza", rule = { id = TextureIds.BlueStone, faces = TOP, u = 18, v = 18 } },
-		{ match = "GrandStep", rule = { id = TextureIds.BlueStone, faces = ALL_FACES, u = 14, v = 14 } },
-		{ match = "Floor", rule = { id = TextureIds.FloorTile, faces = TOP, u = 16, v = 16 } },
-		{ match = "Desk", rule = { id = TextureIds.Wood, faces = ALL_FACES, u = 8, v = 8 } },
-		{ match = "Bench", rule = { id = TextureIds.Wood, faces = ALL_FACES, u = 8, v = 8 } },
-		{ match = "Door", rule = { id = TextureIds.Wood, faces = ALL_FACES, u = 9, v = 9 } },
-		{ match = "Table", rule = { id = TextureIds.Wood, faces = ALL_FACES, u = 8, v = 8 } },
+	for _, part in CollectionService:GetTagged("TexWindow") do
+		if part:IsA("BasePart") then
+			part.Transparency = 0
+			dress(part, Materials.SchoolGlass)
+			decal(part, TextureIds.Windows, FRONT_BACK, 7.5, 6.6)
+			dressed += 1
+		end
+	end
+
+	-- Blanket pass by name, so a surface the builders never tagged still reads
+	-- as something. Ordered: the first match wins, so put the specific names
+	-- above the generic ones.
+	local BY_NAME: { { match: string, surface: Surface } } = {
+		{ match = "Brick", surface = Materials.SchoolBrick },
+		{ match = "Wainscot", surface = Materials.SchoolWood },
+		{ match = "InnerWallUpper", surface = Materials.SchoolPlaster },
+		{ match = "Facade", surface = Materials.SchoolPlaster },
+		{ match = "Trim", surface = Materials.SchoolPlaster },
+		{ match = "Column", surface = Materials.SchoolPlaster },
+		{ match = "Pediment", surface = Materials.SchoolPlaster },
+		{ match = "PitchRoof", surface = Materials.SchoolShingle },
+		{ match = "DormerRoof", surface = Materials.SchoolShingle },
+		{ match = "RoofSlab", surface = Materials.SchoolShingle },
+		{ match = "Locker", surface = Materials.SchoolLocker },
+		{ match = "Lawn", surface = Materials.SchoolLawn },
+		{ match = "Hedge", surface = Materials.SchoolLawn },
+		{ match = "Plaza", surface = Materials.SchoolStone },
+		{ match = "GrandStep", surface = Materials.SchoolStone },
+		{ match = "CampusPath", surface = Materials.SchoolStone },
+		{ match = "Bench", surface = Materials.SchoolWood },
+		{ match = "Shelf", surface = Materials.SchoolWood },
+		{ match = "Floor", surface = Materials.SchoolTile },
+		{ match = "Deck", surface = Materials.SchoolTile },
+		{ match = "Desk", surface = Materials.SchoolWood },
+		{ match = "Door", surface = Materials.SchoolWood },
+		{ match = "Table", surface = Materials.SchoolWood },
 	}
+
 	local map = workspace:FindFirstChild("CrumbworthHigh")
 	if map then
 		for _, part in map:GetDescendants() do
-			if part:IsA("BasePart") and not part:FindFirstChild("SurfaceTex") then
+			if part:IsA("BasePart") and part.MaterialVariant == "" then
 				for _, entry in BY_NAME do
 					if part.Name:find(entry.match) then
-						apply(part, entry.rule.id, entry.rule.faces, entry.rule.u, entry.rule.v)
-						applied += 1
+						dress(part, entry.surface)
+						dressed += 1
 						break
 					end
 				end
@@ -110,7 +131,7 @@ function TextureService.Init()
 		end
 	end
 
-	print("[TextureService] textured " .. applied .. " parts")
+	print("[TextureService] dressed " .. dressed .. " surfaces with PBR materials")
 end
 
 return TextureService

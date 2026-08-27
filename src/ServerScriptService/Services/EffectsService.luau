@@ -122,47 +122,54 @@ end
 
 -- Warm afternoon lighting + post effects, all from code.
 local function setupLighting()
+	-- Tuned for the PBR materials rather than for flat plastic. With real
+	-- normal and roughness maps the surfaces carry their own shading, so the
+	-- scene wants less brightness and far less saturation than it did — the
+	-- painterly references read as desaturated with strong value contrast, not
+	-- as bright colour.
 	Lighting.ClockTime = 14.4
-	Lighting.Brightness = 2.7
+	Lighting.Brightness = 2.1
 	Lighting.EnvironmentDiffuseScale = 1
 	Lighting.EnvironmentSpecularScale = 1
 	Lighting.GlobalShadows = true
-	Lighting.ShadowSoftness = 0.22
-	Lighting.ExposureCompensation = 0.18
-	Lighting.Ambient = Color3.fromRGB(128, 122, 112)
-	Lighting.OutdoorAmbient = Color3.fromRGB(140, 142, 134)
+	Lighting.ShadowSoftness = 0.32
+	Lighting.ExposureCompensation = 0.08
+	Lighting.Ambient = Color3.fromRGB(118, 116, 112)
+	Lighting.OutdoorAmbient = Color3.fromRGB(132, 138, 138)
 
 	local atmosphere = Instance.new("Atmosphere")
-	atmosphere.Density = 0.32
-	atmosphere.Offset = 0.4
-	atmosphere.Color = Color3.fromRGB(199, 199, 189)
-	atmosphere.Decay = Color3.fromRGB(92, 105, 120)
-	atmosphere.Glare = 0.3
-	atmosphere.Haze = 1.8
+	atmosphere.Density = 0.36
+	atmosphere.Offset = 0.28
+	atmosphere.Color = Color3.fromRGB(202, 204, 196)
+	atmosphere.Decay = Color3.fromRGB(98, 112, 128)
+	atmosphere.Glare = 0.16
+	atmosphere.Haze = 1.2
 	atmosphere.Parent = Lighting
 
+	-- Effect order matters: colour first to set the mood, then bloom, then
+	-- depth of field, then sun rays last.
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.6
-	bloom.Size = 28
-	bloom.Threshold = 1.2
+	bloom.Intensity = 0.34
+	bloom.Size = 24
+	bloom.Threshold = 1.6
 	bloom.Parent = Lighting
 
 	local color = Instance.new("ColorCorrectionEffect")
-	color.Saturation = 0.34
-	color.Contrast = 0.11
+	color.Saturation = 0.09
+	color.Contrast = 0.17
 	color.TintColor = Color3.fromRGB(255, 250, 240)
 	color.Parent = Lighting
 
 	local dof = Instance.new("DepthOfFieldEffect")
-	dof.FarIntensity = 0.4
-	dof.FocusDistance = 55
-	dof.InFocusRadius = 90
+	dof.FarIntensity = 0.26
+	dof.FocusDistance = 62
+	dof.InFocusRadius = 120
 	dof.NearIntensity = 0
 	dof.Parent = Lighting
 
 	local rays = Instance.new("SunRaysEffect")
-	rays.Intensity = 0.16
-	rays.Spread = 0.6
+	rays.Intensity = 0.11
+	rays.Spread = 0.55
 	rays.Parent = Lighting
 
 	-- painted cumulus skybox (the anime sky is half the look)

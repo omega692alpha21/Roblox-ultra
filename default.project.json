@@ -36,6 +36,10 @@
     "ReplicatedFirst": {
       "$path": "src/ReplicatedFirst",
       "$ignoreUnknownInstances": true
+    },
+    "MaterialService": {
+      "$path": "src/MaterialService",
+      "$ignoreUnknownInstances": true
     }
   }
 }
