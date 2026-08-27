@@ -16,17 +16,23 @@ local StealService = require(script.Parent.StealService)
 
 local CurfewService = {}
 
-local detentionSpot = Vector3.new(-100, 0, -210)
+local detentionSpot = Vector3.new(204, 0, 35)
 local night = false
 local streaks: { [Player]: number } = {}
 local rng = Random.new()
 
 -- Safe = inside the main school shell or either dorm footprint.
 local function isIndoors(pos: Vector3): boolean
-	if math.abs(pos.X) < 168 and math.abs(pos.Z) < 84 then
-		return true
+	-- the school footprint from the floor plan (the courtyards are open to
+	-- the sky, so standing in one still counts as being outdoors at night)
+	if math.abs(pos.X) < 236 and pos.Z > -160 and pos.Z < 136 then
+		local inWestCourt = math.abs(pos.X + 116) < 56 and math.abs(pos.Z) < 52
+		local inEastCourt = math.abs(pos.X - 116) < 56 and math.abs(pos.Z) < 52
+		if not (inWestCourt or inEastCourt) then
+			return true
+		end
 	end
-	for _, dormX in { -195, 195 } do
+	for _, dormX in { -140, 140 } do
 		if math.abs(pos.X - dormX) < 35 and math.abs(pos.Z - 200) < 30 then
 			return true
 		end
