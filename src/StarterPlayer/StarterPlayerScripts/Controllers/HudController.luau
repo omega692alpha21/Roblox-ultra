@@ -50,7 +50,7 @@ local MORE = {
 -- one small top pill: an icon and a value, auto-width so it is never padded out
 local function pill(parent: Instance, order: number, accent: Color3): (TextLabel, Frame)
 	local frame = UIBuilder.Frame({
-		Size = UDim2.new(0, 0, Layout.PillHeight, 0),
+		Size = UDim2.fromOffset(0, Layout.h(Layout.PillHeight)),
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.25,
@@ -67,7 +67,7 @@ local function pill(parent: Instance, order: number, accent: Color3): (TextLabel
 	padding.Parent = frame
 	local label = UIBuilder.Label({
 		AutomaticSize = Enum.AutomaticSize.X,
-		Size = UDim2.new(0, 0, 1, 0),
+		Size = UDim2.fromOffset(0, Layout.h(Layout.PillHeight * 0.62)),
 		Text = "",
 		Parent = frame,
 	})
@@ -80,8 +80,8 @@ function HudController.Init(gui: ScreenGui)
 	local top = UIBuilder.Frame({
 		Name = "StatusPills",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, Layout.MarginScale, 0),
-		Size = UDim2.new(0, 0, Layout.PillHeight, 0),
+		Position = UDim2.new(0.5, 0, 0, Layout.h(Layout.PillTop)),
+		Size = UDim2.fromOffset(0, Layout.h(Layout.PillHeight)),
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundTransparency = 1,
 		Parent = gui,
@@ -100,18 +100,18 @@ function HudController.Init(gui: ScreenGui)
 	lockPill.Visible = false
 
 	-- ---------------- left edge: the menu rail ----------------
-	local rail = Layout.Rail(gui, "MenuRail", "left", #RAIL + 1, Layout.RailIcon)
+	local rail = Layout.Rail(gui, "MenuRail", "left", #RAIL + 1)
 
 	local function railTile(order: number, icon: string, color: Color3, onClick: () -> ())
 		local button = UIBuilder.Button({
-			Size = Layout.Square(Layout.RailIcon),
+			Size = Layout.Square(Layout.RailTile),
 			Text = icon,
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.2,
 			LayoutOrder = order,
 		}, onClick)
 		Layout.FitText(button, 0.055)
-		UIBuilder.Round(button, Layout.h(0.022))
+		UIBuilder.Round(button, Layout.h(0.02))
 		UIBuilder.Stroke(button, color, 2)
 		button.Parent = rail
 		return button

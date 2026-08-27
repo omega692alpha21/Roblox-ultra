@@ -45,7 +45,7 @@ function ToyController.Init(gui: ScreenGui)
 	-- ---- the action button ----
 	local action = Instance.new("TextButton")
 	action.Name = "ToyAction"
-	action.Size = Layout.Square(Layout.ToyButtonScale)
+	action.Size = Layout.Square(Layout.ToyButtonSize)
 	action.LayoutOrder = Layout.Order.Toy
 	action.BackgroundColor3 = Color3.fromRGB(226, 74, 62)
 	action.Font = Enum.Font.FredokaOne
@@ -66,19 +66,6 @@ function ToyController.Init(gui: ScreenGui)
 	ring.Transparency = 0.25
 	ring.Parent = action
 
-	local ammoTag = Instance.new("TextLabel")
-	ammoTag.AnchorPoint = Vector2.new(0.5, 1)
-	ammoTag.Position = UDim2.new(0.5, 0, 1, -2)
-	ammoTag.Size = UDim2.new(1, 0, 0.28, 0)
-	ammoTag.BackgroundTransparency = 1
-	ammoTag.Font = Enum.Font.FredokaOne
-	ammoTag.TextScaled = true
-	ammoTag.TextColor3 = Color3.fromRGB(255, 244, 220)
-	ammoTag.TextStrokeTransparency = 0.4
-	ammoTag.Text = ""
-	ammoTag.ZIndex = 30
-	ammoTag.Parent = action
-
 	local function fire()
 		local camera = workspace.CurrentCamera
 		if not camera or not owns(selected) then
@@ -89,9 +76,9 @@ function ToyController.Init(gui: ScreenGui)
 		local aim = AimController.Point() or (camera.CFrame.Position + camera.CFrame.LookVector * 80)
 		Remotes.Get("UseToy"):FireServer(selected, aim)
 		-- a quick squash so the tap feels answered
-		action.Size = UDim2.new(0, 0, Layout.ToyButtonScale * 0.9, 0)
+		action.Size = UDim2.new(0, 0, Layout.ToyButtonSize * 0.9, 0)
 		task.delay(0.08, function()
-			action.Size = Layout.Square(Layout.ToyButtonScale)
+			action.Size = Layout.Square(Layout.ToyButtonSize)
 		end)
 	end
 	action.Activated:Connect(fire)
@@ -103,13 +90,13 @@ function ToyController.Init(gui: ScreenGui)
 	end, false, Enum.KeyCode.F, Enum.KeyCode.ButtonR2)
 
 	-- ---- the tool rail, right edge ----
-	local rail = Layout.Rail(gui, "ToolRail", "right", #TOYS, Layout.RailIcon)
+	local rail = Layout.Rail(gui, "ToolRail", "right", #TOYS)
 
 	local chips: { [string]: TextButton } = {}
 	for index, toy in TOYS do
 		local chip = Instance.new("TextButton")
 		chip.Name = toy.id
-		chip.Size = Layout.Square(Layout.RailIcon)
+		chip.Size = Layout.Square(Layout.RailTile)
 		chip.LayoutOrder = index
 		chip.BackgroundColor3 = Color3.fromRGB(30, 34, 44)
 		chip.BackgroundTransparency = 0.15
@@ -122,7 +109,7 @@ function ToyController.Init(gui: ScreenGui)
 		chip.Parent = rail
 		Layout.FitText(chip, 0.055)
 		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, Layout.h(0.022))
+		c.CornerRadius = UDim.new(0, Layout.h(0.02))
 		c.Parent = chip
 		local st = Instance.new("UIStroke")
 		st.Color = Color3.fromRGB(245, 197, 49)
@@ -183,8 +170,6 @@ function ToyController.Init(gui: ScreenGui)
 			action.Visible = anyOwned
 			-- the reticle is only meaningful while there is something to throw
 			AimController.SetEnabled(anyOwned)
-			local left = ammoOf(selected)
-			ammoTag.Text = left == math.huge and "∞" or tostring(left)
 			task.wait(0.35)
 		end
 	end)

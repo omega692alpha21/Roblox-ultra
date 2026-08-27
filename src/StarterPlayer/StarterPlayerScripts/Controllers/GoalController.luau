@@ -35,8 +35,8 @@ function GoalController.Init(gui: ScreenGui)
 	local card = UIBuilder.Frame({
 		Name = "GoalBar",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, Layout.MarginScale + Layout.PillHeight + 0.014, 0),
-		Size = UDim2.new(0.32, 0, 0.05, 0),
+		Position = UDim2.new(0.5, 0, 0, Layout.h(Layout.GoalTop)),
+		Size = UDim2.fromOffset(Layout.w(0.32), Layout.h(Layout.GoalHeight)),
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.4,
 		Visible = false,

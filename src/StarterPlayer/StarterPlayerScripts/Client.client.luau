@@ -44,6 +44,22 @@ if not Controllers then
 	return
 end
 
+-- Layout measures itself off this exact ScreenGui, so it has to be told about
+-- it before any controller builds anything.
+do
+	local layoutModule = Controllers:WaitForChild("Layout", 10)
+	if layoutModule then
+		local ok, err = pcall(function()
+			local layout = require(layoutModule :: ModuleScript) :: any
+			layout.Attach(gui)
+			layout.Init()
+		end)
+		if not ok then
+			warn("[LML] Layout.Attach failed: " .. tostring(err))
+		end
+	end
+end
+
 local ORDER = {
 	"NotifyController",
 	"HudController",
