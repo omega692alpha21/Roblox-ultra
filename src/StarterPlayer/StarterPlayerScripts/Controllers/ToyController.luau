@@ -16,7 +16,7 @@ local player = Players.LocalPlayer
 
 type Toy = { id: string, label: string, icon: string }
 local TOYS: { Toy } = {
-	{ id = "slingshot", label = "Slingshot", icon = "🪨" },
+	{ id = "slingshot", label = "Slingshot", icon = "🎯" },
 	{ id = "snowball", label = "Snowballs", icon = "❄️" },
 	{ id = "firecracker", label = "Firecrackers", icon = "🧨" },
 }
@@ -40,11 +40,11 @@ function ToyController.Init(gui: ScreenGui)
 	-- ---- the action button ----
 	local action = Instance.new("TextButton")
 	action.Name = "ToyAction"
-	action.Size = UDim2.fromOffset(84, 84)
+	action.Size = UDim2.fromOffset(Layout.ToyButtonSize, Layout.ToyButtonSize)
 	action.LayoutOrder = Layout.Order.Toy
 	action.BackgroundColor3 = Color3.fromRGB(226, 74, 62)
 	action.Font = Enum.Font.FredokaOne
-	action.Text = "🪨"
+	action.Text = "🎯"
 	action.TextScaled = true
 	action.TextColor3 = Color3.fromRGB(255, 250, 240)
 	action.AutoButtonColor = true
@@ -62,8 +62,8 @@ function ToyController.Init(gui: ScreenGui)
 
 	local ammoTag = Instance.new("TextLabel")
 	ammoTag.AnchorPoint = Vector2.new(0.5, 1)
-	ammoTag.Position = UDim2.new(0.5, 0, 1, -4)
-	ammoTag.Size = UDim2.fromOffset(84, 18)
+	ammoTag.Position = UDim2.new(0.5, 0, 1, -Layout.px(4))
+	ammoTag.Size = UDim2.fromOffset(Layout.ToyButtonSize, Layout.px(16))
 	ammoTag.BackgroundTransparency = 1
 	ammoTag.Font = Enum.Font.FredokaOne
 	ammoTag.TextScaled = true
@@ -80,9 +80,9 @@ function ToyController.Init(gui: ScreenGui)
 		end
 		Remotes.Get("UseToy"):FireServer(selected, camera.CFrame.LookVector)
 		-- a quick squash so the tap feels answered
-		action.Size = UDim2.fromOffset(76, 76)
+		action.Size = UDim2.fromOffset(Layout.ToyButtonSize - Layout.px(8), Layout.ToyButtonSize - Layout.px(8))
 		task.delay(0.08, function()
-			action.Size = UDim2.fromOffset(84, 84)
+			action.Size = UDim2.fromOffset(Layout.ToyButtonSize, Layout.ToyButtonSize)
 		end)
 	end
 	action.Activated:Connect(fire)
@@ -102,7 +102,7 @@ function ToyController.Init(gui: ScreenGui)
 	for _, toy in TOYS do
 		local chip = Instance.new("TextButton")
 		chip.Name = toy.id
-		chip.Size = UDim2.fromOffset(52, 36)
+		chip.Size = UDim2.fromOffset(Layout.ChipSize, Layout.px(30))
 		chip.BackgroundColor3 = Color3.fromRGB(30, 34, 44)
 		chip.BackgroundTransparency = 0.12
 		chip.Font = Enum.Font.FredokaOne
@@ -114,7 +114,7 @@ function ToyController.Init(gui: ScreenGui)
 		chip.Visible = false
 		chip.Parent = rail
 		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, 10)
+		c.CornerRadius = UDim.new(0, Layout.px(8))
 		c.Parent = chip
 		local st = Instance.new("UIStroke")
 		st.Color = Color3.fromRGB(245, 197, 49)
@@ -131,12 +131,14 @@ function ToyController.Init(gui: ScreenGui)
 	task.spawn(function()
 		while true do
 			local anyOwned = false
+			local ownedCount = 0
 			for _, toy in TOYS do
 				local chip = chips[toy.id]
 				local have = owns(toy.id)
 				chip.Visible = have
 				if have then
 					anyOwned = true
+					ownedCount += 1
 					local stroke = chip:FindFirstChildOfClass("UIStroke")
 					if stroke then
 						stroke.Transparency = selected == toy.id and 0 or 1
@@ -153,6 +155,8 @@ function ToyController.Init(gui: ScreenGui)
 				end
 			end
 			action.Visible = anyOwned
+			-- one toy means nothing to switch between: hide the strip entirely
+			rail.Visible = ownedCount > 1
 			local left = ammoOf(selected)
 			ammoTag.Text = left == math.huge and "∞" or tostring(left)
 			task.wait(0.35)

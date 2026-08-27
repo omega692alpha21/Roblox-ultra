@@ -38,10 +38,8 @@ function PunchController.Init(gui: ScreenGui)
 		-- colliding with RUN and THROW
 		local button = UIBuilder.Button({
 			Name = "PunchButton",
-			Size = UDim2.fromOffset(76, 76),
-			Text = "PUNCH",
-			TextScaled = false,
-			TextSize = 20,
+			Size = UDim2.fromOffset(Layout.ButtonSize, Layout.ButtonSize),
+			Text = "👊",
 			BackgroundColor3 = Palette.DetentionRed,
 			BackgroundTransparency = 0.15,
 			LayoutOrder = Layout.Order.Punch,

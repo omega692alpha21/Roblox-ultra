@@ -33,29 +33,29 @@ local MENU_ITEMS = {
 	{ label = "TOP", panel = "Top", icon = "🏆", color = Palette.Chalk },
 }
 
--- one line of the status card: a coloured key on the left, a value on the right
-local function statLine(parent: Instance, order: number, color: Color3): (TextLabel, TextLabel)
+-- one line of the status strip: a value on the left, a smaller note on the right
+local function statLine(parent: Instance, order: number, color: Color3, size: number): (TextLabel, TextLabel)
 	local row = UIBuilder.Frame({
-		Size = UDim2.new(1, 0, 0, 30),
+		Size = UDim2.new(1, 0, 0, Layout.px(size + 4)),
 		BackgroundTransparency = 1,
 		LayoutOrder = order,
 		Parent = parent,
 	})
 	local key = UIBuilder.Label({
-		Size = UDim2.new(0.52, 0, 1, 0),
+		Size = UDim2.new(0.55, 0, 1, 0),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextScaled = false,
-		TextSize = 20,
+		TextSize = Layout.px(size),
 		Text = "",
 		Parent = row,
 	})
 	local value = UIBuilder.Label({
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.fromScale(1, 0),
-		Size = UDim2.new(0.48, 0, 1, 0),
+		Size = UDim2.new(0.45, 0, 1, 0),
 		TextXAlignment = Enum.TextXAlignment.Right,
 		TextScaled = false,
-		TextSize = 16,
+		TextSize = Layout.px(size - 3),
 		TextColor3 = color,
 		Text = "",
 		Parent = row,
@@ -64,61 +64,51 @@ local function statLine(parent: Instance, order: number, color: Color3): (TextLa
 end
 
 function HudController.Init(gui: ScreenGui)
-	-- ---- the one status card, sitting beside the minimap ----
+	-- ---- the status strip: thin, top-aligned, out of the player's face ----
 	local card = UIBuilder.Frame({
 		Name = "StatusCard",
 		Position = UDim2.fromOffset(Layout.StatusX, Layout.Margin),
-		Size = UDim2.fromOffset(206, Layout.Minimap),
+		Size = UDim2.fromOffset(Layout.px(196), Layout.px(78)),
 		BackgroundColor3 = Palette.PanelBg,
-		BackgroundTransparency = 0.1,
+		BackgroundTransparency = 0.35,
 		Parent = gui,
 	})
-	UIBuilder.Round(card, 14)
-	UIBuilder.Stroke(card, Palette.LockerBlue, 3)
+	UIBuilder.Round(card, Layout.px(10))
+	UIBuilder.Stroke(card, Palette.LockerBlue, 2)
 
 	local inner = UIBuilder.Frame({
-		Position = UDim2.fromOffset(12, 8),
-		Size = UDim2.new(1, -24, 1, -16),
+		Position = UDim2.fromOffset(Layout.px(10), Layout.px(6)),
+		Size = UDim2.new(1, -Layout.px(20), 1, -Layout.px(12)),
 		BackgroundTransparency = 1,
 		Parent = card,
 	})
 	local rows = Instance.new("UIListLayout")
-	rows.Padding = UDim.new(0, 2)
+	rows.Padding = UDim.new(0, Layout.px(1))
 	rows.SortOrder = Enum.SortOrder.LayoutOrder
 	rows.Parent = inner
 
-	local cashKey, cashValue = statLine(inner, 1, Palette.CashGreen)
-	local auraKey, auraValue = statLine(inner, 2, Palette.AuraPurple)
-	local gradeKey, gradeValue = statLine(inner, 3, Palette.BusYellow)
-	local periodLabel = UIBuilder.Label({
-		Size = UDim2.new(1, 0, 0, 22),
-		LayoutOrder = 4,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextScaled = false,
-		TextSize = 15,
-		TextColor3 = Palette.Chalk,
-		Text = "",
-		Parent = inner,
-	})
+	local cashKey, cashValue = statLine(inner, 1, Palette.CashGreen, 22)
+	local auraKey, auraValue = statLine(inner, 2, Palette.AuraPurple, 18)
+	local periodKey, periodValue = statLine(inner, 3, Palette.BusYellow, 15)
 
 	-- ---- lock chip, top right, only while the base is locked ----
 	local lockFrame = UIBuilder.Frame({
 		Name = "LockTimer",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -12, 0, 12),
-		Size = UDim2.fromOffset(168, 40),
+		Position = UDim2.new(1, -Layout.Margin, 0, Layout.Margin),
+		Size = UDim2.fromOffset(Layout.px(158), Layout.px(34)),
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.1,
 		Visible = false,
 		Parent = gui,
 	})
-	UIBuilder.Round(lockFrame, 12)
+	UIBuilder.Round(lockFrame, Layout.px(10))
 	UIBuilder.Stroke(lockFrame, Palette.DetentionRed, 3)
 	local lockLabel = UIBuilder.Label({
 		Size = UDim2.fromScale(1, 1),
 		Text = "BASE LOCKED 0:00",
 		TextScaled = false,
-		TextSize = 19,
+		TextSize = Layout.px(18),
 		TextColor3 = Color3.fromRGB(255, 157, 143),
 		Parent = lockFrame,
 	})
@@ -126,8 +116,8 @@ function HudController.Init(gui: ScreenGui)
 	-- ---- the menu hub: one panel that reaches every other panel ----
 	local _, menuContent = UIBuilder.Panel(gui, "Menu", "MENU")
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.fromOffset(150, 92)
-	grid.CellPadding = UDim2.fromOffset(10, 10)
+	grid.CellSize = UDim2.fromOffset(Layout.px(150), Layout.px(92))
+	grid.CellPadding = UDim2.fromOffset(Layout.px(10), Layout.px(10))
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = menuContent
 	for i, item in MENU_ITEMS do
@@ -144,18 +134,18 @@ function HudController.Init(gui: ScreenGui)
 		UIBuilder.Stroke(tile, item.color, 3)
 		tile.Parent = menuContent
 		UIBuilder.Label({
-			Position = UDim2.fromOffset(0, 10),
-			Size = UDim2.new(1, 0, 0, 38),
+			Position = UDim2.fromOffset(0, Layout.px(10)),
+			Size = UDim2.new(1, 0, 0, Layout.px(38)),
 			Text = item.icon,
 			Parent = tile,
 		})
 		UIBuilder.Label({
-			Position = UDim2.new(0, 0, 1, -34),
-			Size = UDim2.new(1, 0, 0, 26),
+			Position = UDim2.new(0, 0, 1, -Layout.px(34)),
+			Size = UDim2.new(1, 0, 0, Layout.px(26)),
 			Text = item.label,
 			TextColor3 = item.color,
 			TextScaled = false,
-			TextSize = 18,
+			TextSize = Layout.px(18),
 			Parent = tile,
 		})
 	end
@@ -164,17 +154,19 @@ function HudController.Init(gui: ScreenGui)
 	local stamp = UIBuilder.Label({
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.fromScale(1, 1),
-		Size = UDim2.fromOffset(220, 18),
+		Size = UDim2.fromOffset(Layout.px(280), Layout.px(18)),
 		Text = "",
 		TextColor3 = Color3.fromRGB(140, 150, 140),
 		TextScaled = false,
-		TextSize = 13,
+		TextSize = Layout.px(14),
 		TextXAlignment = Enum.TextXAlignment.Right,
 		Parent = menuContent,
 	})
 	task.spawn(function()
 		while stamp.Parent do
-			stamp.Text = ("build %d · %s"):format(
+			local grade = player:GetAttribute("Grade")
+			stamp.Text = ("%s · build %d · %s"):format(
+				Rebirths.GradeName(typeof(grade) == "number" and grade or 0),
 				game.PlaceVersion,
 				player:GetAttribute("DataLoaded") == true and "saved" or "saving…"
 			)
@@ -187,10 +179,10 @@ function HudController.Init(gui: ScreenGui)
 		Name = "MenuButton",
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, Layout.Margin, 1, -Layout.Margin),
-		Size = UDim2.fromOffset(112, 52),
+		Size = UDim2.fromOffset(Layout.px(104), Layout.px(44)),
 		Text = "☰  MENU",
 		TextScaled = false,
-		TextSize = 22,
+		TextSize = Layout.px(21),
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.1,
 	}, function()
@@ -219,17 +211,17 @@ function HudController.Init(gui: ScreenGui)
 		auraKey.Text = NumberFormat.Abbreviate(typeof(aura) == "number" and aura or 0) .. " aura"
 		auraValue.Text = typeof(rank) == "string" and rank or "NPC"
 
+		-- grade name lives in MENU now; only the multiplier is worth the space
 		local grade = player:GetAttribute("Grade")
 		local gradeNum = typeof(grade) == "number" and grade or 0
-		gradeKey.Text = Rebirths.GradeName(gradeNum)
-		gradeValue.Text = ("x%.1f"):format(Rebirths.Multiplier(gradeNum))
+		periodValue.Text = ("x%.1f"):format(Rebirths.Multiplier(gradeNum))
 
 		local period = ReplicatedStorage:GetAttribute("Period")
 		local periodEnds = ReplicatedStorage:GetAttribute("PeriodEndsAt")
 		if typeof(period) == "string" and typeof(periodEnds) == "number" then
-			periodLabel.Text = period:upper() .. " · " .. NumberFormat.Clock(periodEnds - workspace:GetServerTimeNow())
+			periodKey.Text = period:upper() .. " " .. NumberFormat.Clock(periodEnds - workspace:GetServerTimeNow())
 		else
-			periodLabel.Text = "SCHOOL'S IN SESSION"
+			periodKey.Text = "SCHOOL'S IN"
 		end
 
 		local lockUntil = player:GetAttribute("LockUntil")

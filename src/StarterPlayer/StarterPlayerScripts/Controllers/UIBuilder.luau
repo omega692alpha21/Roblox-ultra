@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Sounds = require(ReplicatedStorage.Config.Sounds)
+local Layout = require(script.Parent.Layout)
 
 local UIBuilder = {}
 
@@ -152,20 +153,20 @@ function UIBuilder.Panel(_parent: Instance, name: string, title: string): (Frame
 		Name = name .. "Panel",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(520, 420),
+		Size = UDim2.fromOffset(Layout.px(520), Layout.px(420)),
 		BackgroundColor3 = Palette.PanelBg,
 		Visible = false,
 		ZIndex = 2,
 		Parent = layer(),
 	})
-	UIBuilder.Round(panel, 16)
+	UIBuilder.Round(panel, Layout.px(14))
 	UIBuilder.Stroke(panel, Palette.CashGreen, 3)
 	UIBuilder.Sheen(panel)
 
 	UIBuilder.Label({
 		Name = "Title",
-		Position = UDim2.fromOffset(16, 8),
-		Size = UDim2.new(1, -100, 0, 36),
+		Position = UDim2.fromOffset(Layout.px(16), Layout.px(8)),
+		Size = UDim2.new(1, -Layout.px(100), 0, Layout.px(34)),
 		Text = title,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = Palette.BusYellow,
@@ -175,8 +176,8 @@ function UIBuilder.Panel(_parent: Instance, name: string, title: string): (Frame
 	local close = UIBuilder.Button({
 		Name = "Close",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -10, 0, 8),
-		Size = UDim2.fromOffset(36, 36),
+		Position = UDim2.new(1, -Layout.px(10), 0, Layout.px(8)),
+		Size = UDim2.fromOffset(Layout.px(34), Layout.px(34)),
 		Text = "X",
 		BackgroundColor3 = Palette.DetentionRed,
 	}, function()
@@ -187,8 +188,8 @@ function UIBuilder.Panel(_parent: Instance, name: string, title: string): (Frame
 
 	local content = UIBuilder.Frame({
 		Name = "Content",
-		Position = UDim2.fromOffset(12, 52),
-		Size = UDim2.new(1, -24, 1, -64),
+		Position = UDim2.fromOffset(Layout.px(12), Layout.px(48)),
+		Size = UDim2.new(1, -Layout.px(24), 1, -Layout.px(60)),
 		BackgroundTransparency = 1,
 		Parent = panel,
 	})

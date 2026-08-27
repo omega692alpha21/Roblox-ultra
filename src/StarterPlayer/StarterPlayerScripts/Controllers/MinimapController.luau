@@ -16,7 +16,7 @@ local MinimapController = {}
 local player = Players.LocalPlayer
 
 local SIZE = Layout.Minimap -- px on screen
-local SCALE = 0.30 -- px per stud
+local SCALE = 0.26 * Layout.Scale -- px per stud
 local MAP_ROT = true -- rotate the map under the arrow, GTA style
 
 type Shape = { x: number, z: number, w: number, d: number, color: Color3, z2: number? }
@@ -60,12 +60,14 @@ function MinimapController.Init(gui: ScreenGui)
 	frame.ClipsDescendants = true
 	frame.ZIndex = 20
 	frame.Parent = gui
+	-- a rounded panel, not a circle: UICorner does not clip descendants, so a
+	-- circular frame just left the square map poking out past the ring
 	local round = Instance.new("UICorner")
-	round.CornerRadius = UDim.new(1, 0)
+	round.CornerRadius = UDim.new(0, Layout.px(12))
 	round.Parent = frame
 	local ring = Instance.new("UIStroke")
 	ring.Color = Color3.fromRGB(245, 197, 49)
-	ring.Thickness = 3
+	ring.Thickness = 2
 	ring.Parent = frame
 
 	-- the world, drawn once and then moved/rotated as a single layer
@@ -93,7 +95,7 @@ function MinimapController.Init(gui: ScreenGui)
 		local dot = Instance.new("TextLabel")
 		dot.AnchorPoint = Vector2.new(0.5, 0.5)
 		dot.Position = UDim2.fromOffset(marker.x * SCALE, marker.z * SCALE)
-		dot.Size = UDim2.fromOffset(14, 14)
+		dot.Size = UDim2.fromOffset(Layout.px(14), Layout.px(14))
 		dot.BackgroundTransparency = 1
 		dot.Text = marker.icon
 		dot.TextScaled = true
@@ -110,7 +112,7 @@ function MinimapController.Init(gui: ScreenGui)
 		end
 		local dot = Instance.new("Frame")
 		dot.AnchorPoint = Vector2.new(0.5, 0.5)
-		dot.Size = UDim2.fromOffset(7, 7)
+		dot.Size = UDim2.fromOffset(Layout.px(7), Layout.px(7))
 		dot.BackgroundColor3 = Color3.fromRGB(255, 108, 96)
 		dot.BorderSizePixel = 0
 		dot.ZIndex = 24
@@ -133,7 +135,7 @@ function MinimapController.Init(gui: ScreenGui)
 	local arrow = Instance.new("TextLabel")
 	arrow.AnchorPoint = Vector2.new(0.5, 0.5)
 	arrow.Position = UDim2.fromScale(0.5, 0.5)
-	arrow.Size = UDim2.fromOffset(20, 20)
+	arrow.Size = UDim2.fromOffset(Layout.px(20), Layout.px(20))
 	arrow.BackgroundTransparency = 1
 	arrow.Font = Enum.Font.FredokaOne
 	arrow.Text = "▲"
@@ -146,8 +148,8 @@ function MinimapController.Init(gui: ScreenGui)
 	-- north pip on the ring
 	local north = Instance.new("TextLabel")
 	north.AnchorPoint = Vector2.new(0.5, 0)
-	north.Position = UDim2.new(0.5, 0, 0, 2)
-	north.Size = UDim2.fromOffset(14, 14)
+	north.Position = UDim2.new(0.5, 0, 0, Layout.px(2))
+	north.Size = UDim2.fromOffset(Layout.px(13), Layout.px(13))
 	north.BackgroundTransparency = 1
 	north.Font = Enum.Font.FredokaOne
 	north.Text = "N"

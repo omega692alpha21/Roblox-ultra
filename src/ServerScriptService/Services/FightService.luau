@@ -11,6 +11,7 @@ local Remotes = require(ReplicatedStorage.Remotes)
 local StealService = require(script.Parent.StealService)
 local RivalService = require(script.Parent.RivalService)
 local DodgeballService = require(script.Parent.DodgeballService)
+local ActionAnim = require(script.Parent.ActionAnim)
 local Signals = require(script.Parent.Parent.Signals)
 
 local FightService = {}
@@ -31,9 +32,12 @@ local function onPunch(player: Player)
 
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if not root then
+	if not root or not character then
 		return
 	end
+	-- swing on every punch, hit or miss: a punch that connects invisibly is
+	-- what made the action read as broken
+	ActionAnim.Punch(character)
 
 	-- find the closest other character within range, biased to who we're facing
 	local bestTarget: Player? = nil

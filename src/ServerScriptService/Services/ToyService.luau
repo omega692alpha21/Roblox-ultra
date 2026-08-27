@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Remotes)
 local AuraService = require(script.Parent.AuraService)
+local ActionAnim = require(script.Parent.ActionAnim)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 
@@ -427,7 +428,13 @@ function ToyService.Init()
 		end
 		lastFire[player] = now
 		local dir = direction.Magnitude > 0.01 and direction.Unit or root.CFrame.LookVector
-		fireProjectile(player, def, root.Position + dir * 2.5 + Vector3.new(0, 1.5, 0), dir)
+		if character then
+			ActionAnim.Throw(character)
+		end
+		-- let the arm come over the top before the projectile leaves the hand
+		task.delay(0.15, function()
+			fireProjectile(player, def, root.Position + dir * 2.5 + Vector3.new(0, 1.5, 0), dir)
+		end)
 	end)
 
 	-- the toy cart: buy with lunch money, no Robux anywhere near it
