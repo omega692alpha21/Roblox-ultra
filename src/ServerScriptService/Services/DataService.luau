@@ -14,7 +14,7 @@ local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Signals = require(script.Parent.Parent.Signals)
 
 local STORE_NAME = "PlayerData_v1"
-local LOCK_STALE_SECONDS = 600
+local LOCK_STALE_SECONDS = 120
 local MAX_PURCHASE_IDS = 50
 
 export type Profile = {
@@ -170,29 +170,56 @@ local function loadProfile(player: Player)
 	end
 
 	local claimed: Profile? = nil
-	local ok = withRetries("load " .. player.Name, function()
+	local ok = false
+	for lockAttempt = 1, 6 do
 		local denied = false
-		ds:UpdateAsync(key(player.UserId), function(old)
-			local record = if type(old) == "table" then old else {}
-			local lock = record.lock
-			if lock and lock.id ~= sessionId and os.time() - (lock.t or 0) < LOCK_STALE_SECONDS then
-				denied = true
-				return nil -- abort the write, another server holds the lock
+		ok = withRetries("load " .. player.Name, function()
+			denied = false
+			ds:UpdateAsync(key(player.UserId), function(old)
+				local record = if type(old) == "table" then old else {}
+				local lock = record.lock
+				if lock and lock.id ~= sessionId and os.time() - (lock.t or 0) < LOCK_STALE_SECONDS then
+					denied = true
+					return nil -- abort the write, another server holds the lock
+				end
+				record.lock = { id = sessionId, t = os.time() }
+				record.data = reconcile(record.data)
+				claimed = record.data
+				return record
+			end)
+			if denied then
+				error("session locked by another server")
 			end
-			record.lock = { id = sessionId, t = os.time() }
-			record.data = reconcile(record.data)
-			claimed = record.data
-			return record
+			return true
 		end)
-		if denied then
-			error("session locked by another server")
+		if ok or not player.Parent then
+			break
 		end
-		return true
-	end)
+		if denied and lockAttempt < 6 then
+			-- previous server hasn't released the save yet: wait it out, keep the player informed
+			pcall(function()
+				(require(ReplicatedStorage.Remotes) :: any).Get("Notify"):FireClient(
+					player,
+					("Your save is finishing up on another server — retrying (%d/5)..."):format(lockAttempt),
+					"info"
+				)
+			end)
+			task.wait(12)
+		else
+			break
+		end
+	end
 
 	if not ok or not claimed then
 		player:SetAttribute("DataLoaded", false)
 		warn(`[DataService] could not load data for {player.Name}; play disabled this session`)
+		pcall(function()
+			(require(ReplicatedStorage.Remotes) :: any).Get("Notify"):FireClient(
+				player,
+				"⚠️ Couldn't load your save. Please rejoin in a couple of minutes — nothing was lost.",
+				"bad"
+			)
+		end)
 		return
 	end
 	if not player.Parent then

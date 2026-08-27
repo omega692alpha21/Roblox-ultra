@@ -104,7 +104,7 @@ end
 function CharacterSelectController.Init(gui: ScreenGui)
 	task.spawn(function()
 		-- wait for the profile, then only prompt players who never picked
-		for _ = 1, 120 do
+		for _ = 1, 360 do
 			if player:GetAttribute("DataLoaded") == true then
 				break
 			end
