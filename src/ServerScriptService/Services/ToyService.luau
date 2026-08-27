@@ -25,15 +25,16 @@ export type ToyDef = {
 	price: number,
 	ammoPerBuy: number, -- 0 = permanent, no ammo
 	cooldown: number,
+	speed: number, -- launch speed, studs/s — the ballistic solve works from this
 	desc: string,
 }
 
 local TOYS: { ToyDef } = {
-	{ id = "slingshot", name = "Slingshot", price = 500, ammoPerBuy = 0, cooldown = 0.75,
-	  desc = "Pebbles. Unlimited. Knocks people off their feet." },
-	{ id = "snowball", name = "Snowballs", price = 200, ammoPerBuy = 10, cooldown = 0.5,
-	  desc = "Ten to a bundle. A hit slows them to a waddle." },
-	{ id = "firecracker", name = "Firecrackers", price = 800, ammoPerBuy = 5, cooldown = 1.4,
+	{ id = "slingshot", name = "Slingshot", price = 500, ammoPerBuy = 0, cooldown = 0.75, speed = 160,
+	  desc = "Pebbles. Unlimited. Flat and fast — knocks people off their feet." },
+	{ id = "snowball", name = "Snowballs", price = 200, ammoPerBuy = 10, cooldown = 0.5, speed = 95,
+	  desc = "Ten to a bundle. Lobs in an arc. A hit slows them to a waddle." },
+	{ id = "firecracker", name = "Firecrackers", price = 800, ammoPerBuy = 5, cooldown = 1.4, speed = 78,
 	  desc = "Five to a pack. Big bang, bigger blast — and prefects hear it." },
 }
 
@@ -204,7 +205,33 @@ local function playerOf(part: BasePart): Player?
 	return model and Players:GetPlayerFromCharacter(model) or nil
 end
 
-local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, direction: Vector3)
+-- Launch velocity that lands a projectile of the given speed on `target`.
+--
+-- Aiming used to send the camera's look direction straight through as the
+-- velocity, so a shot fired from the chest of a player the camera looks *down*
+-- at went wherever it liked. Solving the trajectory instead means the shot
+-- lands where the crosshair is, which is what makes aiming a mechanic.
+local function ballistic(origin: Vector3, target: Vector3, speed: number): Vector3
+	local delta = target - origin
+	local flat = Vector3.new(delta.X, 0, delta.Z)
+	local distance = flat.Magnitude
+	local g = workspace.Gravity
+	if distance < 0.1 or g <= 0 then
+		return (delta.Magnitude > 0.01 and delta.Unit or Vector3.new(0, 1, 0)) * speed
+	end
+	local v2 = speed * speed
+	local discriminant = v2 * v2 - g * (g * distance * distance + 2 * delta.Y * v2)
+	if discriminant < 0 then
+		-- out of range: throw as far as we can along the line to the target
+		return delta.Unit * speed
+	end
+	-- the low arc: the flatter of the two solutions, which reads as a throw
+	local tangent = (v2 - math.sqrt(discriminant)) / (g * distance)
+	local horizontal = speed / math.sqrt(1 + tangent * tangent)
+	return flat.Unit * horizontal + Vector3.new(0, horizontal * tangent, 0)
+end
+
+local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, velocity: Vector3)
 	local pellet = Instance.new("Part")
 	pellet.Name = "ToyProjectile"
 	pellet.Shape = Enum.PartType.Ball
@@ -216,18 +243,19 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, dir
 		pellet.Size = Vector3.new(0.45, 0.45, 0.45)
 		pellet.Color = Color3.fromRGB(102, 96, 88)
 		pellet.Material = Enum.Material.Slate
-		pellet.AssemblyLinearVelocity = direction * 150
 	elseif def.id == "snowball" then
 		pellet.Size = Vector3.new(1, 1, 1)
 		pellet.Color = Color3.fromRGB(240, 248, 255)
 		pellet.Material = Enum.Material.Sand
-		pellet.AssemblyLinearVelocity = direction * 85 + Vector3.new(0, 22, 0)
 	else
 		pellet.Size = Vector3.new(0.7, 1.4, 0.7)
 		pellet.Shape = Enum.PartType.Cylinder
 		pellet.Color = Color3.fromRGB(196, 58, 52)
-		pellet.AssemblyLinearVelocity = direction * 70 + Vector3.new(0, 26, 0)
 	end
+	-- the ballistic solve owns the velocity now; gravity does the rest
+	pellet.Massless = false
+	pellet.CFrame = CFrame.lookAt(origin, origin + velocity.Unit)
+	pellet.AssemblyLinearVelocity = velocity
 	pellet.Parent = workspace
 	Debris:AddItem(pellet, 6)
 
@@ -392,8 +420,8 @@ function ToyService.Init()
 		TEMPLATES[def.id] = buildTool(def)
 	end
 
-	Remotes.Get("UseToy").OnServerEvent:Connect(function(player, toyId, direction)
-		if typeof(toyId) ~= "string" or typeof(direction) ~= "Vector3" then
+	Remotes.Get("UseToy").OnServerEvent:Connect(function(player, toyId, aimPoint)
+		if typeof(toyId) ~= "string" or typeof(aimPoint) ~= "Vector3" then
 			return
 		end
 		local def = findDef(toyId)
@@ -427,13 +455,26 @@ function ToyService.Init()
 			setAmmo(player, def.id, have - 1)
 		end
 		lastFire[player] = now
-		local dir = direction.Magnitude > 0.01 and direction.Unit or root.CFrame.LookVector
+		-- the client sends the world point under its crosshair; we re-solve the
+		-- throw here so a spoofed point can only ever pick a legal target
+		local muzzle = root.Position + Vector3.new(0, 1.6, 0)
+		local aim: Vector3
+		if typeof(aimPoint) == "Vector3" and (aimPoint - muzzle).Magnitude < 600 then
+			aim = aimPoint
+		else
+			aim = muzzle + root.CFrame.LookVector * 60
+		end
+		local toAim = aim - muzzle
+		local flat = Vector3.new(toAim.X, 0, toAim.Z)
+		local facing = flat.Magnitude > 0.1 and flat.Unit or root.CFrame.LookVector
+		local origin = muzzle + facing * 2.2
+		local velocity = ballistic(origin, aim, def.speed)
 		if character then
 			ActionAnim.Throw(character)
 		end
 		-- let the arm come over the top before the projectile leaves the hand
 		task.delay(0.15, function()
-			fireProjectile(player, def, root.Position + dir * 2.5 + Vector3.new(0, 1.5, 0), dir)
+			fireProjectile(player, def, origin, velocity)
 		end)
 	end)
 

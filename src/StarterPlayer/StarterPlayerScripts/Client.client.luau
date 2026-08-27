@@ -64,6 +64,7 @@ local ORDER = {
 	"GraphicsHintController",
 	"DialogueController",
 	"JailController",
+	"AimController",
 	"ToyController",
 	"MinimapController",
 }

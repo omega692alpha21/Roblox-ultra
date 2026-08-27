@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage.Remotes)
 local Layout = require(script.Parent.Layout)
+local AimController = require(script.Parent.AimController)
 
 local ToyController = {}
 
@@ -78,7 +79,10 @@ function ToyController.Init(gui: ScreenGui)
 		if not camera or not owns(selected) then
 			return
 		end
-		Remotes.Get("UseToy"):FireServer(selected, camera.CFrame.LookVector)
+		-- the world point under the reticle, not a camera vector: the server
+		-- solves the arc that lands there
+		local aim = AimController.Point() or (camera.CFrame.Position + camera.CFrame.LookVector * 80)
+		Remotes.Get("UseToy"):FireServer(selected, aim)
 		-- a quick squash so the tap feels answered
 		action.Size = UDim2.fromOffset(Layout.ToyButtonSize - Layout.px(8), Layout.ToyButtonSize - Layout.px(8))
 		task.delay(0.08, function()
@@ -155,6 +159,8 @@ function ToyController.Init(gui: ScreenGui)
 				end
 			end
 			action.Visible = anyOwned
+			-- the reticle is only meaningful while there is something to throw
+			AimController.SetEnabled(anyOwned)
 			-- one toy means nothing to switch between: hide the strip entirely
 			rail.Visible = ownedCount > 1
 			local left = ammoOf(selected)
