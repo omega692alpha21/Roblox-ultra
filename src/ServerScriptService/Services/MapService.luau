@@ -1147,10 +1147,11 @@ local function buildMainShell(parent: Instance)
 	-- brick clock tower rising over the entrance (the campus landmark)
 	local towerBrick = Color3.fromRGB(126, 78, 62)
 	part({ Name = "ClockTower", Size = Vector3.new(14, 34, 14), CFrame = CFrame.new(0, 33, 78), Color = towerBrick, Material = Enum.Material.Brick, Parent = parent })
-	part({ Name = "TowerTrim", Size = Vector3.new(15, 1.6, 15), CFrame = CFrame.new(0, 50.6, 78), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "TowerClockBlock", Size = Vector3.new(15.5, 12, 15.5), CFrame = CFrame.new(0, 44, 78), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "TowerTrim", Size = Vector3.new(16.2, 1.6, 16.2), CFrame = CFrame.new(0, 50.6, 78), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 	part({ Name = "TowerCap", Size = Vector3.new(12, 4, 12), CFrame = CFrame.new(0, 53.4, 78), Color = Color3.fromRGB(60, 72, 86), Material = Enum.Material.Slate, Parent = parent })
 	part({ Name = "TowerSpire", Size = Vector3.new(1.2, 7, 1.2), CFrame = CFrame.new(0, 58.9, 78), Color = Color3.fromRGB(255, 196, 60), Material = Enum.Material.Metal, Parent = parent })
-	for _, side in { { normal = Enum.NormalId.Front, cf = CFrame.new(0, 44, 85.2) }, { normal = Enum.NormalId.Back, cf = CFrame.new(0, 44, 70.8) } } do
+	for _, side in { { normal = Enum.NormalId.Front, cf = CFrame.new(0, 44, 86.0) }, { normal = Enum.NormalId.Back, cf = CFrame.new(0, 44, 70.0) } } do
 		local face = part({ Name = "ClockFace", Size = Vector3.new(8, 8, 0.4), CFrame = side.cf, Color = Color3.fromRGB(240, 236, 224), Material = Enum.Material.SmoothPlastic, Parent = parent })
 		local hourHand = part({ Name = "ClockHour", Size = Vector3.new(0.6, 2.6, 0.2), CFrame = side.cf * CFrame.new(0, 1.1, side.normal == Enum.NormalId.Front and 0.31 or -0.31), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
 		local minuteHand = part({ Name = "ClockMinute", Size = Vector3.new(0.5, 3.4, 0.2), CFrame = side.cf * CFrame.new(1.0, 0.6, side.normal == Enum.NormalId.Front and 0.32 or -0.32) * CFrame.Angles(0, 0, math.rad(-55)), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
@@ -1202,6 +1203,186 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 			table.insert(beds, mattress)
 		end
 	end
+end
+
+-- ===== 1:1 reference-art detail pass =========================================
+-- Brick academy w/ white trim + castellated towers, furnished interiors,
+-- courtyard balconies + lined courts, front lawn with fence and parking.
+
+local WHITE_TRIM = Color3.fromRGB(232, 228, 218)
+local BRICK = Color3.fromRGB(126, 78, 62)
+local HEDGE = Color3.fromRGB(52, 96, 48)
+
+local function buildCornerTower(parent: Instance, x: number, z: number)
+	part({ Name = "CornerTower", Size = Vector3.new(12, 26, 12), CFrame = CFrame.new(x, 13, z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
+	part({ Name = "TowerBand", Size = Vector3.new(13, 1.2, 13), CFrame = CFrame.new(x, 24.5, z), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	-- crenellated top
+	for _, offset in { Vector3.new(-4.5, 0, -4.5), Vector3.new(4.5, 0, -4.5), Vector3.new(-4.5, 0, 4.5), Vector3.new(4.5, 0, 4.5), Vector3.new(0, 0, -4.5), Vector3.new(0, 0, 4.5), Vector3.new(-4.5, 0, 0), Vector3.new(4.5, 0, 0) } do
+		part({ Name = "Merlon", Size = Vector3.new(2.4, 2.2, 2.4), CFrame = CFrame.new(x + offset.X, 27.2, z + offset.Z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
+	end
+	local shield = part({ Name = "TowerShield", Size = Vector3.new(3.4, 4, 0.4), CFrame = CFrame.new(x, 18, z + (z > 0 and 6.3 or -6.3)), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
+	signText(shield, "D", Color3.fromRGB(255, 196, 60), z > 0 and Enum.NormalId.Front or Enum.NormalId.Back)
+end
+
+local function buildPortico(parent: Instance, x: number)
+	-- white columned entry with a stepped pediment, on the south face
+	local z = 86.5
+	for i = 0, 3 do
+		part({ Name = "PorticoColumn", Size = Vector3.new(1.8, 13, 1.8), CFrame = CFrame.new(x - 7.5 + i * 5, 6.5, z), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+	part({ Name = "PorticoBeam", Size = Vector3.new(20, 2, 5), CFrame = CFrame.new(x, 14, z - 0.6), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "PorticoPed1", Size = Vector3.new(16, 1.6, 4.4), CFrame = CFrame.new(x, 15.8, z - 0.6), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "PorticoPed2", Size = Vector3.new(10, 1.6, 4.0), CFrame = CFrame.new(x, 17.4, z - 0.6), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "PorticoPed3", Size = Vector3.new(4, 1.6, 3.6), CFrame = CFrame.new(x, 19.0, z - 0.6), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+end
+
+local function buildFrontYard(parent: Instance)
+	-- lawns + hedges in the strip between the building and the courtyard
+	part({ Name = "FrontLawnWest", Size = Vector3.new(120, 0.35, 22), CFrame = CFrame.new(-85, 0.18, 102), Color = Color3.fromRGB(96, 152, 80), Material = Enum.Material.Grass, Parent = parent })
+	part({ Name = "FrontLawnEast", Size = Vector3.new(50, 0.35, 22), CFrame = CFrame.new(50, 0.18, 102), Color = Color3.fromRGB(96, 152, 80), Material = Enum.Material.Grass, Parent = parent })
+	for _, side in { -1, 1 } do
+		part({ Name = "FrontHedge", Size = Vector3.new(110, 3.2, 2.6), CFrame = CFrame.new(side * 85, 1.6, 91), Color = HEDGE, Material = Enum.Material.Grass, Parent = parent })
+	end
+	-- short iron fence runs framing the lawns (kept clear of the courtyard)
+	for _, run in { { x0 = -140, x1 = -30 }, { x0 = 78, x1 = 145 } } do
+		local mid = (run.x0 + run.x1) / 2
+		local length = run.x1 - run.x0
+		for x = run.x0, run.x1, 14 do
+			part({ Name = "FencePier", Size = Vector3.new(2, 5, 2), CFrame = CFrame.new(x, 2.5, 113), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
+		end
+		part({ Name = "FenceRail", Size = Vector3.new(length, 0.5, 0.4), CFrame = CFrame.new(mid, 3.9, 113), Color = Color3.fromRGB(30, 34, 40), Material = Enum.Material.Metal, Parent = parent })
+		part({ Name = "FenceRailLow", Size = Vector3.new(length, 0.5, 0.4), CFrame = CFrame.new(mid, 1.3, 113), Color = Color3.fromRGB(30, 34, 40), Material = Enum.Material.Metal, Parent = parent })
+	end
+	-- parking lot east of the entrance strip
+	part({ Name = "ParkingLot", Size = Vector3.new(64, 0.3, 22), CFrame = CFrame.new(110, 0.16, 100), Color = Color3.fromRGB(74, 76, 80), Material = Enum.Material.Asphalt, Parent = parent })
+	for i = 0, 5 do
+		part({ Name = "ParkingLine", Size = Vector3.new(0.6, 0.32, 10), CFrame = CFrame.new(86 + i * 9, 0.2, 95), Color = Color3.fromRGB(230, 230, 230), Parent = parent })
+	end
+end
+
+local function detailHallway(parent: Instance)
+	-- terrazzo accent tiles down the hallway + water coolers + open lockers
+	for i = 0, 7 do
+		part({ Name = "TerrazzoTile", Size = Vector3.new(6, 0.22, 6), CFrame = CFrame.new(-140 + i * 40, 0.12, 0), Color = Color3.fromRGB(228, 224, 214), Material = Enum.Material.Marble, Parent = parent })
+	end
+	for _, x in { -70, 70 } do
+		local cooler = part({ Name = "WaterCooler", Size = Vector3.new(1.8, 4, 1.8), CFrame = CFrame.new(x, 2, -12.4), Color = Color3.fromRGB(36, 38, 42), Parent = parent })
+		local _ = cooler
+		part({ Name = "CoolerJug", Size = Vector3.new(1.4, 1.6, 1.4), CFrame = CFrame.new(x, 4.8, -12.4), Color = Color3.fromRGB(190, 220, 240), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+	end
+	-- a few open lockers with shelves + books (reference shot detail)
+	for _, spec in { { x = -110, z = 13.2 }, { x = -46, z = -13.2 }, { x = 94, z = 13.2 } } do
+		local inward = spec.z > 0 and -1 or 1
+		part({ Name = "OpenLockerBox", Size = Vector3.new(2.2, 7.8, 1.4), CFrame = CFrame.new(spec.x, 4.2, spec.z + inward * 0.2), Color = Color3.fromRGB(38, 70, 140), Parent = parent })
+		part({ Name = "OpenLockerDoor", Size = Vector3.new(2.1, 7.8, 0.3), CFrame = CFrame.new(spec.x - 1.7, 4.2, spec.z + inward * 1.3) * CFrame.Angles(0, math.rad(inward * 65), 0), Color = Color3.fromRGB(58, 104, 196), Parent = parent })
+		for shelf = 0, 1 do
+			part({ Name = "LockerShelf", Size = Vector3.new(1.9, 0.2, 1.2), CFrame = CFrame.new(spec.x, 3.2 + shelf * 2.4, spec.z + inward * 0.2), Color = Color3.fromRGB(30, 56, 118), Parent = parent })
+			part({ Name = "LockerBook", Size = Vector3.new(0.5, 1.1, 0.9), CFrame = CFrame.new(spec.x - 0.4, 3.9 + shelf * 2.4, spec.z + inward * 0.2), Color = ({ Color3.fromRGB(214, 82, 60), Color3.fromRGB(240, 214, 120) })[shelf + 1], Parent = parent })
+		end
+	end
+end
+
+local function detailCourtyard(parent: Instance)
+	-- white court boundary lines
+	for _, line in {
+		{ size = Vector3.new(34, 0.24, 0.7), cf = CFrame.new(-38, 0.14, 147) },
+		{ size = Vector3.new(34, 0.24, 0.7), cf = CFrame.new(-38, 0.14, 169) },
+		{ size = Vector3.new(0.7, 0.24, 22), cf = CFrame.new(-55, 0.14, 158) },
+		{ size = Vector3.new(0.7, 0.24, 22), cf = CFrame.new(-21, 0.14, 158) },
+		{ size = Vector3.new(30, 0.24, 0.7), cf = CFrame.new(40, 0.14, 149.5) },
+		{ size = Vector3.new(30, 0.24, 0.7), cf = CFrame.new(40, 0.14, 166.5) },
+		{ size = Vector3.new(0.7, 0.24, 17), cf = CFrame.new(25, 0.14, 158) },
+		{ size = Vector3.new(0.7, 0.24, 17), cf = CFrame.new(55, 0.14, 158) },
+	} do
+		part({ Name = "CourtLine", Size = line.size, CFrame = line.cf, Color = Color3.fromRGB(240, 240, 240), Parent = parent })
+	end
+	-- palm trees flanking the courts
+	for _, x in { -66, 66 } do
+		for layer = 0, 3 do
+			part({ Name = "PalmTrunk", Size = Vector3.new(1.4 - layer * 0.15, 3, 1.4 - layer * 0.15), CFrame = CFrame.new(x + layer * 0.5, 1.5 + layer * 2.8, 176), Color = Color3.fromRGB(140, 104, 76), Material = Enum.Material.Wood, Parent = parent })
+		end
+		for leaf = 0, 5 do
+			local angle = leaf * math.pi / 3
+			part({ Name = "PalmLeaf", Size = Vector3.new(6, 0.3, 1.8), CFrame = CFrame.new(x + 1.5 + math.cos(angle) * 2.6, 13, 176 + math.sin(angle) * 2.6) * CFrame.Angles(0, -angle, math.rad(-18)), Color = Color3.fromRGB(64, 132, 60), Material = Enum.Material.Grass, Parent = parent })
+		end
+	end
+	-- balcony walkway over the courtyard face of the main building
+	part({ Name = "BalconyFloor", Size = Vector3.new(96, 1, 7), CFrame = CFrame.new(0, 17.2, 89.5), Color = Color3.fromRGB(200, 196, 186), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "BalconyRail", Size = Vector3.new(96, 2.4, 0.5), CFrame = CFrame.new(0, 18.9, 93), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	for i = 0, 8 do
+		if i ~= 4 then -- keep the entrance walk clear
+			part({ Name = "BalconyPost", Size = Vector3.new(1.2, 16, 1.2), CFrame = CFrame.new(-44 + i * 11, 8.5, 92), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		end
+	end
+end
+
+local function furnishClassroom(parent: Instance)
+	local c = Vector3.new(0, 0, -150)
+	-- whiteboards on the far wall
+	for _, x in { -18, 6 } do
+		part({ Name = "Whiteboard", Size = Vector3.new(20, 8, 0.5), CFrame = CFrame.new(c.X + x + 6, 7, c.Z - 28), Color = Color3.fromRGB(244, 244, 244), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		part({ Name = "BoardFrame", Size = Vector3.new(21, 0.8, 0.6), CFrame = CFrame.new(c.X + x + 6, 2.8, c.Z - 28), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent })
+	end
+	-- corkboards + bookshelf on the side wall
+	part({ Name = "Corkboard", Size = Vector3.new(0.5, 6, 10), CFrame = CFrame.new(c.X + 38, 7, c.Z + 6), Color = Color3.fromRGB(196, 156, 108), Parent = parent })
+	part({ Name = "Bookshelf", Size = Vector3.new(1.6, 9, 14), CFrame = CFrame.new(c.X + 38.5, 4.5, c.Z - 12), Color = Color3.fromRGB(140, 104, 76), Material = Enum.Material.Wood, Parent = parent })
+	for row = 0, 2 do
+		for slot = 0, 4 do
+			part({ Name = "ShelfBook", Size = Vector3.new(1.0, 1.6, 1.6), CFrame = CFrame.new(c.X + 38.3, 2.4 + row * 2.6, c.Z - 17.5 + slot * 2.6), Color = ({ Color3.fromRGB(214, 82, 60), Color3.fromRGB(90, 140, 200), Color3.fromRGB(110, 180, 110), Color3.fromRGB(240, 214, 120), Color3.fromRGB(168, 90, 220) })[slot + 1], Parent = parent })
+		end
+	end
+	-- desks + blue chairs in rows
+	for row = 0, 1 do
+		for col = 0, 3 do
+			local dx, dz = c.X - 24 + col * 14, c.Z - 8 + row * 14
+			part({ Name = "DeskTop", Size = Vector3.new(8, 0.5, 4), CFrame = CFrame.new(dx, 3.4, dz), Color = Color3.fromRGB(214, 200, 176), Material = Enum.Material.WoodPlanks, Parent = parent })
+			for _, leg in { { -3.5, -1.5 }, { 3.5, -1.5 }, { -3.5, 1.5 }, { 3.5, 1.5 } } do
+				part({ Name = "DeskLeg", Size = Vector3.new(0.4, 3.2, 0.4), CFrame = CFrame.new(dx + leg[1], 1.6, dz + leg[2]), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent })
+			end
+			part({ Name = "ChairSeat", Size = Vector3.new(2.6, 0.4, 2.4), CFrame = CFrame.new(dx, 2.2, dz + 3.4), Color = Color3.fromRGB(58, 104, 196), Parent = parent })
+			part({ Name = "ChairBack", Size = Vector3.new(2.6, 2.6, 0.4), CFrame = CFrame.new(dx, 3.7, dz + 4.5), Color = Color3.fromRGB(58, 104, 196), Parent = parent })
+		end
+	end
+	-- drop-ceiling light panels
+	for _, x in { -20, 8 } do
+		for _, z in { -14, 2 } do
+			part({ Name = "CeilingPanel", Size = Vector3.new(10, 0.3, 4), CFrame = CFrame.new(c.X + x, 13.6, c.Z + z), Color = Color3.fromRGB(250, 250, 240), Material = Enum.Material.Neon, Parent = parent })
+		end
+	end
+end
+
+local function furnishCafeteria(parent: Instance)
+	local c = Vector3.new(-215, 0, 60)
+	-- warm accent wall panels
+	for _, z in { c.Z - 33, c.Z + 33 } do
+		part({ Name = "CafeAccent", Size = Vector3.new(66, 8, 0.6), CFrame = CFrame.new(c.X, 6, z), Color = Color3.fromRGB(226, 148, 62), Parent = parent })
+	end
+	-- neon rectangle light overhead
+	for _, spec in {
+		{ size = Vector3.new(18, 0.4, 0.8), cf = CFrame.new(c.X, 13.4, c.Z - 5) },
+		{ size = Vector3.new(18, 0.4, 0.8), cf = CFrame.new(c.X, 13.4, c.Z + 5) },
+		{ size = Vector3.new(0.8, 0.4, 10), cf = CFrame.new(c.X - 9, 13.4, c.Z) },
+		{ size = Vector3.new(0.8, 0.4, 10), cf = CFrame.new(c.X + 9, 13.4, c.Z) },
+	} do
+		part({ Name = "CafeNeon", Size = spec.size, CFrame = spec.cf, Color = Color3.fromRGB(255, 244, 214), Material = Enum.Material.Neon, Parent = parent })
+	end
+	-- painted queue squares on the floor
+	for i = 0, 4 do
+		part({ Name = "QueueSquare", Size = Vector3.new(4.4, 0.22, 4.4), CFrame = CFrame.new(c.X - 22 + i * 6, 0.13, c.Z + 26), Color = Color3.fromRGB(240, 240, 240), Transparency = 0.35, Parent = parent })
+	end
+end
+
+local function detailGym(parent: Instance)
+	local c = Vector3.new(215, 0, 60)
+	-- red/white pennant stripe around the top of the walls
+	for i = 0, 15 do
+		part({ Name = "GymStripe", Size = Vector3.new(4.2, 2.2, 0.4), CFrame = CFrame.new(c.X - 32 + i * 4.3, 12.5, c.Z - 33.6), Color = i % 2 == 0 and Color3.fromRGB(196, 44, 44) or Color3.fromRGB(240, 240, 240), Parent = parent })
+	end
+	-- high window band
+	part({ Name = "GymWindowBand", Size = Vector3.new(50, 3.2, 0.5), CFrame = CFrame.new(c.X, 10, c.Z + 33.6), Color = Color3.fromRGB(200, 224, 240), Material = Enum.Material.Glass, Transparency = 0.4, Parent = parent })
+	-- basketball hoop on the gym wall
+	part({ Name = "GymBoard", Size = Vector3.new(6, 4, 0.4), CFrame = CFrame.new(c.X, 9.6, c.Z - 32.8), Color = Color3.fromRGB(240, 240, 240), Parent = parent })
+	part({ Name = "GymRim", Size = Vector3.new(1.6, 0.3, 1.6), CFrame = CFrame.new(c.X, 8.2, c.Z - 31.6), Color = Color3.fromRGB(226, 100, 60), Material = Enum.Material.Neon, Parent = parent })
 end
 
 function MapService.Build(): Map
@@ -1314,8 +1495,8 @@ function MapService.Build(): Map
 	for i, clique in Cliques.List do
 		local board = part({
 			Name = "CliqueBoard_" .. clique.id,
-			Size = Vector3.new(18, 12, 1),
-			CFrame = CFrame.new(-45 + (i - 1) * 30, 6, 182),
+			Size = Vector3.new(13, 8, 1),
+			CFrame = CFrame.new(-45 + (i - 1) * 30, 4.5, 183),
 			Color = clique.color,
 			Parent = folder,
 		})
@@ -1364,16 +1545,20 @@ function MapService.Build(): Map
 		part({ Name = "NetPost", Size = Vector3.new(0.6, 8, 0.6), CFrame = CFrame.new(40, 4, postZ), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
 	end
 	part({ Name = "VolleyNet", Size = Vector3.new(0.2, 2.4, 17), CFrame = CFrame.new(40, 6.4, 158), Color = Color3.fromRGB(235, 235, 235), Material = Enum.Material.Fabric, Transparency = 0.35, Parent = folder })
-	-- bunting strings across the courtyard
+	-- bunting strings across the courtyard: poles, a visible line, hanging flags
 	local buntingColors = { Color3.fromRGB(232, 76, 76), Color3.fromRGB(255, 196, 60), Color3.fromRGB(74, 160, 90), Color3.fromRGB(64, 140, 226), Color3.fromRGB(168, 90, 220) }
 	for line = 0, 1 do
 		local z = 132 + line * 36
+		for _, px in { -58, 58 } do
+			part({ Name = "BuntingPole", Size = Vector3.new(0.7, 14, 0.7), CFrame = CFrame.new(px, 7, z), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
+		end
+		part({ Name = "BuntingLine", Size = Vector3.new(116, 0.18, 0.18), CFrame = CFrame.new(0, 13.6, z), Color = Color3.fromRGB(220, 220, 220), Parent = folder })
 		for i = 0, 14 do
 			local x = -52 + i * 7.5
 			part({
 				Name = "BuntingFlag",
-				Size = Vector3.new(1.6, 2, 0.15),
-				CFrame = CFrame.new(x, 13 - math.abs(i - 7) * -0.12, z) * CFrame.Angles(math.rad(8), 0, 0),
+				Size = Vector3.new(1.4, 1.7, 0.15),
+				CFrame = CFrame.new(x, 12.6, z) * CFrame.Angles(math.rad(8), 0, 0),
 				Color = buntingColors[(i % #buntingColors) + 1],
 				Material = Enum.Material.SmoothPlastic,
 				Parent = folder,
@@ -1384,6 +1569,18 @@ function MapService.Build(): Map
 	buildFountain(folder, Vector3.new(0, 0, 122))
 	buildBanners(folder)
 	buildMainShell(folder)
+	buildCornerTower(folder, -168, -84)
+	buildCornerTower(folder, 168, -84)
+	buildCornerTower(folder, -168, 84)
+	buildCornerTower(folder, 168, 84)
+	buildPortico(folder, -60)
+	buildPortico(folder, 60)
+	buildFrontYard(folder)
+	detailHallway(folder)
+	detailCourtyard(folder)
+	furnishClassroom(folder)
+	furnishCafeteria(folder)
+	detailGym(folder)
 	local dormBeds: { BasePart } = {}
 	buildDorm(folder, Vector3.new(-195, 0, 200), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
 	buildDorm(folder, Vector3.new(195, 0, 200), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
