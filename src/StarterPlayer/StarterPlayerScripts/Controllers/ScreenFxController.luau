@@ -22,6 +22,33 @@ function ScreenFxController.Init(_gui: ScreenGui)
 		end
 	end)
 
+	-- landing impact: small camera dip scaled by fall speed
+	local function hookCharacter(character: Model)
+		local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
+		if not humanoid then
+			return
+		end
+		local lastVelY = 0
+		local root = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
+		if root then
+			task.spawn(function()
+				while character.Parent do
+					lastVelY = root.AssemblyLinearVelocity.Y
+					task.wait(0.05)
+				end
+			end)
+		end
+		humanoid.StateChanged:Connect(function(_, new)
+			if new == Enum.HumanoidStateType.Landed then
+				magnitude = math.clamp(math.abs(lastVelY) / 60, 0.15, 1.1)
+			end
+		end)
+	end
+	if player.Character then
+		hookCharacter(player.Character)
+	end
+	player.CharacterAdded:Connect(hookCharacter)
+
 	RunService.RenderStepped:Connect(function(dt: number)
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")

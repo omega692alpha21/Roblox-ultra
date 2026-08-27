@@ -1,0 +1,25 @@
+{
+  "name": "millions-club",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Club": { "$path": "src/ReplicatedStorage" }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Club": { "$path": "src/ServerScriptService" }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$path": "src/StarterPlayer/StarterPlayerScripts"
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": { "Technology": "Future" }
+    }
+  }
+}
