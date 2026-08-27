@@ -27,6 +27,7 @@ export type Plot = {
 export type Map = {
 	plots: { Plot },
 	trim: { TrimRun },
+	props: { PropRequest },
 	library: Vector3,
 	tennis: Vector3,
 	pool: Vector3,
@@ -1692,6 +1693,31 @@ local function moulding(cf: CFrame, kind: string, length: number)
 	table.insert(trimRuns, { kind = kind, cframe = cf, length = length })
 end
 
+-- Props are real furniture: CC0 models from Poly Haven, repacked as .glb and
+-- uploaded to this account (tools/polyhaven.py). Same constraint as the
+-- mouldings — MeshPart.MeshId is not assignable from a script — so MapService
+-- only records where each one goes and PropService places it from a template.
+--
+-- `cframe` positions the prop's BASE CENTRE, because a desk is placed by where
+-- its feet land, not by where the middle of its bounding box floats. `fallback`
+-- is the block-built furniture standing in for it; PropService deletes that
+-- once the real model has loaded, so a failed asset leaves a furnished room
+-- rather than an empty one.
+-- `hang` flips that: a pendant lamp is placed by the point it hangs from.
+export type PropRequest = { kind: string, cframe: CFrame, scale: number?, hang: boolean?, fallback: Instance? }
+
+local propRequests: { PropRequest } = {}
+
+local function prop(kind: string, cf: CFrame, options: { scale: number?, hang: boolean?, fallback: Instance? }?)
+	table.insert(propRequests, {
+		kind = kind,
+		cframe = cf,
+		scale = options and options.scale,
+		hang = options and options.hang,
+		fallback = options and options.fallback,
+	})
+end
+
 local function buildInteriorWall(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } })
 	local dir = (to - from)
 	local length = dir.Magnitude
@@ -2147,6 +2173,175 @@ local function buildCourtyardWings(parent: Instance)
 	end
 end
 
+-- Everything that is not architecture. A room reads as lived-in from the
+-- clutter more than from the walls: a bin by the door, a plant in the corner,
+-- a clock over the board. These are recorded, not built -- PropService places
+-- them from Poly Haven templates once the models have loaded.
+local function furnishProps()
+	local function row(kind: string, y: number, yaw: number, points: { { number } })
+		for _, pt in points do
+			prop(kind, CFrame.new(pt[1], y, pt[2]) * CFrame.Angles(0, math.rad(yaw), 0))
+		end
+	end
+
+	-- ---------------- lobby ----------------
+	-- the clock tower comes down through the middle of the lobby, so the
+	-- seating goes in the two side bays rather than across the doors
+	prop("Sofa", CFrame.new(30, 0, 112) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Sofa2", CFrame.new(40, 0, 112) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("CoffeeTable", CFrame.new(35, 0, 112))
+	prop("ArmChair", CFrame.new(35, 0, 106))
+	prop("ArmChair", CFrame.new(35, 0, 118) * CFrame.Angles(0, math.pi, 0))
+	prop("GrandfatherClock", CFrame.new(56, 0, 119) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("WhaleStatue", CFrame.new(-34, 0, 108), { scale = 2.0 })
+	prop("RayStatue", CFrame.new(-45, 0, 108), { scale = 2.0 })
+	prop("Vase1", CFrame.new(-38, 3.8, 92))
+	prop("Vase2", CFrame.new(-22, 3.8, 92))
+	row("PlanterPot", 0, 0, { { -56, 86 }, { 56, 86 }, { -56, 118 } })
+	row("PottedPlant", 0, 0, { { -50, 100 }, { 50, 106 } })
+	prop("Clock", CFrame.new(-40, 12, 102.8))
+
+	-- ---------------- atrium ----------------
+	row("PlanterBox", 0, 0, { { -28, -20 }, { 28, -20 }, { -28, 32 }, { 28, 32 } })
+	row("PottedPlant", 0, 0, { { -34, 6 }, { 34, 6 } })
+	row("Bin", 0, 0, { { -44, 30 }, { 44, 30 } })
+
+	-- ---------------- corridors ----------------
+	row("Bin", 0, 0, { { -56, 70 }, { 56, 70 }, { -56, -56 }, { 56, -56 } })
+	row("Extinguisher", 0, 0, { { -57, 60 }, { 57, 60 }, { -57, -50 }, { 57, -50 } })
+	row("WetFloorSign", 0, 25, { { -46, 46 }, { 40, -30 } })
+	prop("Clock", CFrame.new(-58.4, 12, 20) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Clock", CFrame.new(58.4, 12, 20) * CFrame.Angles(0, math.rad(-90), 0))
+	row("FireAlarm", 8, 90, { { -58.4, 40 } })
+	row("FireAlarm", 8, -90, { { 58.4, 40 } })
+
+	-- ---------------- classroom 101 (west wing) ----------------
+	prop("OfficeDesk", CFrame.new(-84, 0, -118))
+	prop("Laptop", CFrame.new(-84, 2.9, -118))
+	prop("Stationery", CFrame.new(-80, 2.9, -118))
+	prop("Chalkboard", CFrame.new(-68, 0, -117) * CFrame.Angles(0, math.rad(-30), 0))
+	prop("Bookshelf", CFrame.new(-104, 0, -110) * CFrame.Angles(0, math.rad(90), 0))
+	prop("SteelShelves", CFrame.new(-104, 0, -100) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Bin", CFrame.new(-64, 0, -100))
+	prop("Extinguisher", CFrame.new(-64, 0, -117))
+	prop("PottedPlant", CFrame.new(-104, 0, -119))
+	prop("Clock", CFrame.new(-74, 11, -120.4))
+
+	-- ---------------- classroom wing (z = -150) ----------------
+	prop("OfficeDesk", CFrame.new(0, 0, -172))
+	prop("Laptop", CFrame.new(0, 2.9, -172))
+	prop("Notepads", CFrame.new(3.4, 2.9, -172))
+	prop("Chalkboard", CFrame.new(-16, 0, -175) * CFrame.Angles(0, math.rad(20), 0))
+	prop("ProjectorScreen", CFrame.new(16, 0, -176))
+	prop("Bookshelf", CFrame.new(36, 0, -162) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("SteelShelves2", CFrame.new(36, 0, -150) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("BunsenBurner", CFrame.new(-3.4, 2.9, -172))
+	prop("Bin", CFrame.new(36, 0, -128))
+	prop("Extinguisher", CFrame.new(-36, 0, -128))
+	prop("PottedPlant", CFrame.new(-36, 0, -174))
+	prop("Clock", CFrame.new(0, 11, -178.4))
+
+	-- ---------------- library ----------------
+	-- four study tables on the reading carpet, two chairs each
+	for i, x in { -33, -11, 11, 33 } do
+		prop("Table", CFrame.new(x, 0, -209))
+		prop("Chair", CFrame.new(x, 0, -213) * CFrame.Angles(0, math.pi, 0))
+		prop("Chair2", CFrame.new(x, 0, -205))
+		if i % 2 == 1 then
+			prop("Vase4", CFrame.new(x, 2.7, -209))
+		end
+	end
+	prop("Sofa", CFrame.new(-38, 0, -217) * CFrame.Angles(0, math.rad(90), 0))
+	prop("ArmChair", CFrame.new(38, 0, -217) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("SideTable", CFrame.new(-41, 0, -211) * CFrame.Angles(0, math.rad(90), 0))
+	prop("LoungeChair", CFrame.new(41, 0, -211) * CFrame.Angles(0, math.rad(-90), 0))
+	-- against the front wall either side of the doors, not down the aisles
+	row("SteelShelves", 0, 180, { { -38, -202 }, { 38, -202 } })
+	prop("Mirror", CFrame.new(0, 6, -264.4))
+	prop("PictureFrame", CFrame.new(-24, 8, -264.4))
+	prop("PictureFrame", CFrame.new(24, 8, -264.4))
+	row("PlanterPot", 0, 0, { { -30, -201 }, { 30, -201 } })
+	prop("Bin", CFrame.new(-38, 0, -204))
+
+	-- ---------------- cafeteria ----------------
+	-- the hall runs from the west windows to the locker corridor: x -220..-186,
+	-- z 32..58. Two rows of four, benched on both sides.
+	for _, cx in { -212, -196 } do
+		for _, cz in { 36, 48 } do
+			prop("DiningTable", CFrame.new(cx, 0, cz))
+			prop("Bench", CFrame.new(cx, 0, cz - 4.4))
+			prop("Bench", CFrame.new(cx, 0, cz + 4.4) * CFrame.Angles(0, math.pi, 0))
+		end
+	end
+	prop("Stool", CFrame.new(-219, 0, 42))
+	prop("Stool", CFrame.new(-189, 0, 42))
+	prop("Bin", CFrame.new(-220, 0, 30))
+	prop("Extinguisher", CFrame.new(-189, 0, 33))
+	row("PottedPlant", 0, 0, { { -219, 56 }, { -189, 56 } })
+
+	-- ---------------- gym ----------------
+	row("Football", 0, 0, { { -22, -98 }, { 18, -112 } })
+	row("AmericanFootball", 0, 0, { { 8, -94 } })
+	row("Baseball", 0, 0, { { -12, -118 } })
+	prop("Dartboard", CFrame.new(-48.4, 8, -105) * CFrame.Angles(0, math.rad(90), 0))
+	row("Bin", 0, 0, { { -46, -70 }, { 46, -70 } })
+
+	-- ---------------- dorms ----------------
+	for _, sx in { -1, 1 } do
+		local cx = sx * 176
+		prop("DayBed", CFrame.new(cx - sx * 16, 0, -226) * CFrame.Angles(0, math.rad(sx * 90), 0))
+		prop("Nightstand", CFrame.new(cx - sx * 16, 0, -218) * CFrame.Angles(0, math.rad(sx * 90), 0))
+		prop("Drawer", CFrame.new(cx + sx * 16, 0, -226) * CFrame.Angles(0, math.rad(-sx * 90), 0))
+		prop("Cabinet", CFrame.new(cx + sx * 16, 0, -216) * CFrame.Angles(0, math.rad(-sx * 90), 0))
+		prop("Pillows", CFrame.new(cx - sx * 16, 1.9, -226))
+		prop("Television", CFrame.new(cx + sx * 16, 3.3, -226) * CFrame.Angles(0, math.rad(-sx * 90), 0))
+		prop("Boombox", CFrame.new(cx + sx * 16, 3.3, -216) * CFrame.Angles(0, math.rad(-sx * 90), 0))
+		prop("LoungeChair", CFrame.new(cx, 0, -204) * CFrame.Angles(0, math.pi, 0))
+		prop("ModernCoffeeTable", CFrame.new(cx, 0, -198))
+		prop("PottedPlant", CFrame.new(cx - sx * 22, 0, -200))
+		prop("Bin", CFrame.new(cx + sx * 22, 0, -200))
+	end
+
+	-- ---------------- grounds ----------------
+	row("PicnicTable", 0, 0, { { -86, 150 }, { 86, 150 }, { -86, 176 }, { 86, 176 } })
+	row("PlanterBox", 0, 0, { { -44, 138 }, { 44, 138 }, { -70, 138 }, { 70, 138 } })
+	row("Shrub", 0, 0, {
+		{ -110, 130 }, { -100, 143 }, { 100, 143 }, { 110, 130 },
+		{ -130, 96 }, { 130, 96 }, { -150, 40 }, { 150, 40 },
+	})
+	row("Flowers", 0, 0, {
+		{ -52, 132 }, { -36, 132 }, { 36, 132 }, { 52, 132 },
+		{ -120, 112 }, { 120, 112 },
+	})
+	row("SecurityLight", 9, 0, { { -62, 126.5 }, { 62, 126.5 } })
+	row("IndustrialLamp", 9, 180, { { -30, 126.5 }, { 30, 126.5 } })
+	prop("Bin", CFrame.new(-32, 0, 133))
+	prop("Bin", CFrame.new(32, 0, 133))
+
+	-- ---------------- second dressing pass ----------------
+	-- the pieces that turn a furnished room into an inhabited one
+	prop("Ottoman", CFrame.new(27, 0, 106))
+	prop("GreenChair", CFrame.new(-46, 0, 96) * CFrame.Angles(0, math.rad(90), 0))
+	prop("FramedPicture", CFrame.new(-44, 9, 102.8))
+	prop("FramedPicture", CFrame.new(38, 9, 102.8))
+	prop("Shelf", CFrame.new(-104, 0, -104) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Clipboard", CFrame.new(-86, 2.9, -118))
+	prop("Table2", CFrame.new(0, 0, -216))
+	prop("Chair", CFrame.new(0, 0, -220) * CFrame.Angles(0, math.pi, 0))
+	prop("Fern", CFrame.new(-35, 0, -209))
+	prop("Fern", CFrame.new(35, 0, -209))
+	for _, x in { -15, 15 } do
+		prop("CeilingLamp", CFrame.new(x, 24.5, -232), { hang = true })
+	end
+	for _, z in { 36, 50 } do
+		prop("HangingLamp", CFrame.new(-204, 13, z), { hang = true })
+	end
+	-- stacking chairs along the gym wall, left out after an assembly
+	for i = 0, 3 do
+		prop("MonoblocChair", CFrame.new(-44, 0, -76 + i * 9) * CFrame.Angles(0, math.rad(90 + i * 7), 0))
+	end
+end
+
 local function furnishClassroom(parent: Instance)
 	local c = Vector3.new(0, 0, -150)
 	-- whiteboards on the far wall
@@ -2166,12 +2361,20 @@ local function furnishClassroom(parent: Instance)
 	for row = 0, 1 do
 		for col = 0, 3 do
 			local dx, dz = c.X - 24 + col * 14, c.Z - 8 + row * 14
-			part({ Name = "DeskTop", Size = Vector3.new(8, 0.5, 4), CFrame = CFrame.new(dx, 3.4, dz), Color = Color3.fromRGB(214, 200, 176), Material = Enum.Material.WoodPlanks, Parent = parent })
+			local unit = Instance.new("Folder")
+			unit.Name = "DeskUnit"
+			unit.Parent = parent
+			part({ Name = "DeskTop", Size = Vector3.new(8, 0.5, 4), CFrame = CFrame.new(dx, 3.4, dz), Color = Color3.fromRGB(214, 200, 176), Material = Enum.Material.WoodPlanks, Parent = unit })
 			for _, leg in { { -3.5, -1.5 }, { 3.5, -1.5 }, { -3.5, 1.5 }, { 3.5, 1.5 } } do
-				part({ Name = "DeskLeg", Size = Vector3.new(0.4, 3.2, 0.4), CFrame = CFrame.new(dx + leg[1], 1.6, dz + leg[2]), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent })
+				part({ Name = "DeskLeg", Size = Vector3.new(0.4, 3.2, 0.4), CFrame = CFrame.new(dx + leg[1], 1.6, dz + leg[2]), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = unit })
 			end
-			part({ Name = "ChairSeat", Size = Vector3.new(2.6, 0.4, 2.4), CFrame = CFrame.new(dx, 2.2, dz + 3.4), Color = Color3.fromRGB(58, 104, 196), Parent = parent })
-			part({ Name = "ChairBack", Size = Vector3.new(2.6, 2.6, 0.4), CFrame = CFrame.new(dx, 3.7, dz + 4.5), Color = Color3.fromRGB(58, 104, 196), Parent = parent })
+			local seat = Instance.new("Folder")
+			seat.Name = "ChairUnit"
+			seat.Parent = parent
+			part({ Name = "ChairSeat", Size = Vector3.new(2.6, 0.4, 2.4), CFrame = CFrame.new(dx, 2.2, dz + 3.4), Color = Color3.fromRGB(58, 104, 196), Parent = seat })
+			part({ Name = "ChairBack", Size = Vector3.new(2.6, 2.6, 0.4), CFrame = CFrame.new(dx, 3.7, dz + 4.5), Color = Color3.fromRGB(58, 104, 196), Parent = seat })
+			prop("SchoolDesk", CFrame.new(dx, 0, dz) * CFrame.Angles(0, math.pi, 0), { fallback = unit })
+			prop("SchoolChair", CFrame.new(dx, 0, dz + 3.6) * CFrame.Angles(0, math.pi, 0), { fallback = seat })
 		end
 	end
 	-- drop-ceiling: full grid texture + glowing panels
@@ -2805,6 +3008,7 @@ local function optimize(root: Instance)
 end
 
 	trimRuns = {}
+	propRequests = {}
 
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
@@ -3092,23 +3296,34 @@ end
 	buildHoops(folder, Vector3.new(0, 0, -105))
 	-- gym stage at the north end
 	part({ Name = "GymStage", Size = Vector3.new(60, 3, 16), CFrame = CFrame.new(0, 1.5, -136), Color = Color3.fromRGB(120, 70, 50), Material = Enum.Material.WoodPlanks, Parent = folder })
-	-- classroom 101 desks
-	for row = 0, 2 do
+	-- Classroom 101. The grid used to run to z = -86, which put its back row
+	-- on the far side of the interior wall at z = -94 -- desks in the corridor.
+	-- It now sits wholly between the board wall and that partition.
+	for row = 0, 1 do
 		for col = 0, 2 do
+			local dx, dz = -96 + col * 12, -111 + row * 10
 			-- a top on legs with a chair behind it, rather than a solid block:
 			-- furniture you can see under is most of what makes a room read
-			local dx, dz = -82 + col * 8, -110 + row * 12
-			part({ Name = "ClassDeskTop", Size = Vector3.new(6, 0.4, 3), CFrame = CFrame.new(dx, 2.6, dz), Color = Color3.fromRGB(196, 158, 118), Material = Enum.Material.WoodPlanks, Parent = folder })
+			local unit = Instance.new("Folder")
+			unit.Name = "ClassDeskUnit"
+			unit.Parent = folder
+			part({ Name = "ClassDeskTop", Size = Vector3.new(6, 0.4, 3), CFrame = CFrame.new(dx, 2.6, dz), Color = Color3.fromRGB(196, 158, 118), Material = Enum.Material.WoodPlanks, Parent = unit })
 			for _, lx in { -2.5, 2.5 } do
 				for _, lz in { -1.2, 1.2 } do
-					part({ Name = "ClassDeskLeg", Size = Vector3.new(0.35, 2.4, 0.35), CFrame = CFrame.new(dx + lx, 1.2, dz + lz), Color = Color3.fromRGB(104, 108, 116), Material = Enum.Material.Metal, Parent = folder })
+					part({ Name = "ClassDeskLeg", Size = Vector3.new(0.35, 2.4, 0.35), CFrame = CFrame.new(dx + lx, 1.2, dz + lz), Color = Color3.fromRGB(104, 108, 116), Material = Enum.Material.Metal, Parent = unit })
 				end
 			end
-			part({ Name = "ClassChairSeat", Size = Vector3.new(2.6, 0.35, 2.4), CFrame = CFrame.new(dx, 1.7, dz + 3.4), Color = Color3.fromRGB(86, 116, 158), Material = Enum.Material.SmoothPlastic, Parent = folder })
-			part({ Name = "ClassChairBack", Size = Vector3.new(2.6, 2.2, 0.35), CFrame = CFrame.new(dx, 2.8, dz + 4.4), Color = Color3.fromRGB(86, 116, 158), Material = Enum.Material.SmoothPlastic, Parent = folder })
+			local seat = Instance.new("Folder")
+			seat.Name = "ClassChairUnit"
+			seat.Parent = folder
+			part({ Name = "ClassChairSeat", Size = Vector3.new(2.6, 0.35, 2.4), CFrame = CFrame.new(dx, 1.7, dz + 3.4), Color = Color3.fromRGB(86, 116, 158), Material = Enum.Material.SmoothPlastic, Parent = seat })
+			part({ Name = "ClassChairBack", Size = Vector3.new(2.6, 2.2, 0.35), CFrame = CFrame.new(dx, 2.8, dz + 4.4), Color = Color3.fromRGB(86, 116, 158), Material = Enum.Material.SmoothPlastic, Parent = seat })
 			for _, lx in { -1, 1 } do
-				part({ Name = "ClassChairLeg", Size = Vector3.new(0.3, 1.5, 0.3), CFrame = CFrame.new(dx + lx, 0.75, dz + 3.4), Color = Color3.fromRGB(104, 108, 116), Material = Enum.Material.Metal, Parent = folder })
+				part({ Name = "ClassChairLeg", Size = Vector3.new(0.3, 1.5, 0.3), CFrame = CFrame.new(dx + lx, 0.75, dz + 3.4), Color = Color3.fromRGB(104, 108, 116), Material = Enum.Material.Metal, Parent = seat })
 			end
+			-- the board is to the north, so both face -Z
+			prop("SchoolDesk", CFrame.new(dx, 0, dz) * CFrame.Angles(0, math.pi, 0), { fallback = unit })
+			prop("SchoolChair", CFrame.new(dx, 0, dz + 3.6) * CFrame.Angles(0, math.pi, 0), { fallback = seat })
 		end
 	end
 	-- against the far wall, facing the desks. It used to sit at z = -67, which
@@ -3293,6 +3508,8 @@ end
 		print(("[MapService] cleared %d plants growing through the new venues"):format(cleared))
 	end
 
+	furnishProps()
+
 	optimize(folder)
 	folder.Parent = workspace
 
@@ -3301,6 +3518,7 @@ end
 	return {
 		plots = plots,
 		trim = trimRuns,
+		props = propRequests,
 		library = LIBRARY,
 		tennis = TENNIS,
 		pool = POOL,

@@ -2,11 +2,13 @@
 """Execute MapService.Build() under luau CLI with datatype shims, dump every
 Part to JSON, then software-render camera shots to PNG so the map can be seen
 without Roblox. Usage: python3 render_map.py <repo_root> <out_dir>"""
-import json, math, os, subprocess, sys
+import json, math, os, shutil, subprocess, sys
 
 REPO = sys.argv[1] if len(sys.argv) > 1 else "/home/user/Roblox-ultra"
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.abspath(__file__))
+# the luau CLI is not checked in; point LUAU_BIN at it, or leave it on PATH
+LUAU = os.environ.get("LUAU_BIN") or shutil.which("luau") or os.path.join(SP, "luau")
 
 SHIM = r'''
 -- ===== datatype + instance shims =====
@@ -252,6 +254,20 @@ local function walk(inst)
   end
 end
 walk(map.folder)
+
+-- Props are recorded, not built, so they never appear in the part walk. Dump
+-- the requests too: the placement checker needs them to test furniture against
+-- walls before any of it reaches a server.
+local props = {}
+for _, request in ipairs(map.props or {}) do
+  local cf = request.cframe
+  table.insert(props, string.format(
+    '{"k":"%s","p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"sc":%.3f,"hang":%s}',
+    esc(request.kind), cf.p[1], cf.p[2], cf.p[3],
+    cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
+    request.scale or 1, tostring(request.hang == true)))
+end
+print("PROPS[" .. table.concat(props, ",") .. "]")
 print("[" .. table.concat(out, ",") .. "]")
 '''
 
@@ -266,7 +282,7 @@ program = (
 )
 lua_path = os.path.join(OUT, "_map_export.luau")
 open(lua_path, "w").write(program)
-result = subprocess.run([os.path.join(SP, "luau"), lua_path], capture_output=True, text=True, timeout=120)
+result = subprocess.run([LUAU, lua_path], capture_output=True, text=True, timeout=120)
 if result.returncode != 0:
     print("LUAU ERROR:\n" + result.stderr[:4000] + "\n" + result.stdout[:2000])
     sys.exit(1)
@@ -277,7 +293,12 @@ parts = json.loads(_json_line)
 with open(os.path.join(OUT, "_map_export.json"), "w") as fh:
     json.dump(parts, fh)
 print(f"wrote {len(parts)} parts to _map_export.json")
-print(f"exported {len(parts)} parts")
+
+_prop_line = next((l for l in reversed(result.stdout.splitlines()) if l.startswith("PROPS[")), "PROPS[]")
+props = json.loads(_prop_line[len("PROPS"):])
+with open(os.path.join(OUT, "_map_props.json"), "w") as fh:
+    json.dump(props, fh)
+print(f"exported {len(parts)} parts and {len(props)} prop placements")
 
 # ===== renderer =====
 from PIL import Image, ImageDraw
