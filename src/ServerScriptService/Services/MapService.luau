@@ -3128,7 +3128,9 @@ local UPPER_ROOMS: { UpperRoom } = {
 	{ name = "StudyHall", label = "STUDY HALL", icon = "📖", center = Vector3.new(-190, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(196, 176, 216), floor = Color3.fromRGB(120, 96, 130) },
 	{ name = "DramaStudio", label = "DRAMA", icon = "🎭", center = Vector3.new(-122, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(214, 96, 120), floor = Color3.fromRGB(78, 60, 72) },
 	{ name = "Infirmary", label = "NURSE", icon = "🏥", center = Vector3.new(122, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(232, 240, 244), floor = Color3.fromRGB(206, 224, 226) },
-	{ name = "StaffRoom", label = "STAFF ROOM", icon = "☕", center = Vector3.new(190, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(150, 140, 128), floor = Color3.fromRGB(126, 104, 84) },
+	-- The staff room used to be here. Teachers live in their own lodge off the
+	-- west path now, so this is the students' common room.
+	{ name = "CommonRoom", label = "COMMON ROOM", icon = "🛋️", center = Vector3.new(190, UPPER_Y, -94), size = Vector2.new(52, 52), color = Color3.fromRGB(238, 176, 96), floor = Color3.fromRGB(126, 104, 84) },
 }
 
 -- A flight of stairs as solid blocks: each tread is a box from the ground to
@@ -3243,8 +3245,8 @@ local function buildUpperFloor(parent: Instance)
 	for _, sx in { -46, 46 } do
 		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, 117.2), Vector3.new(sx, 0, 90)), 16, 1, 1.8, 12)
 	end
-	for _, sx in { -196, 196 } do
-		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, -21.2), Vector3.new(sx, 0, 6)), 16, 1, 1.8, 12)
+	for _, sx in { -178, 178 } do
+		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, -11.2), Vector3.new(sx, 0, 16)), 16, 1, 1.8, 12)
 	end
 
 	-- ---- the rooms ----
@@ -3755,7 +3757,7 @@ local function furnishUpperRooms(parent: Instance)
 	prop("Bin", CFrame.new(144, Y, -74))
 	prop("PottedPlant", CFrame.new(104, Y, -74))
 
-	-- ---- Staff Room (190, -94) ----
+	-- ---- Common Room (190, -94) ----
 	prop("Sofa", CFrame.new(176, Y, -110) * CFrame.Angles(0, math.rad(90), 0))
 	prop("Sofa2", CFrame.new(190, Y, -116))
 	prop("CoffeeTable", CFrame.new(183, Y, -110))
@@ -3763,13 +3765,13 @@ local function furnishUpperRooms(parent: Instance)
 	prop("Table", CFrame.new(202, Y, -88))
 	prop("Chair", CFrame.new(202, Y, -84) * CFrame.Angles(0, math.pi, 0))
 	prop("VintageMicrowave", CFrame.new(210, Y + 3.4, -100) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("VintageElectricKettle", CFrame.new(210, Y + 3.4, -94) * CFrame.Angles(0, math.rad(-90), 0))
-	part({ Name = "StaffCounter", Size = Vector3.new(5, 3.2, 22), CFrame = CFrame.new(211, Y + 1.6, -97), Color = Color3.fromRGB(150, 116, 82), Material = Enum.Material.WoodPlanks, Parent = parent })
-	-- pigeonholes, which is the one thing a staff room always has
+	prop("Boombox", CFrame.new(210, Y + 3.4, -94) * CFrame.Angles(0, math.rad(-90), 0))
+	part({ Name = "CommonCounter", Size = Vector3.new(5, 3.2, 22), CFrame = CFrame.new(211, Y + 1.6, -97), Color = Color3.fromRGB(150, 116, 82), Material = Enum.Material.WoodPlanks, Parent = parent })
+	-- cubbies, one per homeroom
 	for row = 0, 3 do
 		for col = 0, 5 do
 			part({
-				Name = "Pigeonhole",
+				Name = "Cubby",
 				Size = Vector3.new(0.6, 2.4, 3.4),
 				CFrame = CFrame.new(165.2, Y + 4 + row * 2.6, -108 + col * 3.6),
 				Color = row % 2 == col % 2 and Color3.fromRGB(206, 200, 188) or Color3.fromRGB(178, 170, 158),
@@ -3969,7 +3971,12 @@ end
 -- both built around it (see FLOOR_HOLE) rather than the stair passing through
 -- solid geometry, because a secret passage you can see the seams of is not
 -- one. Access is checked on the server and the code is never sent to a client.
-local SANCTUM_HOLE = { x0 = -222, z0 = 16, x1 = -206, z1 = 40 }
+-- The stairwell is inside a closed store cupboard in the corner of the office,
+-- not a pit in the middle of its floor. That was the bug in the screenshots:
+-- the hole was cut in the open, the bookshelf stood beside it rather than in
+-- front of it, and you walked into the principal's office and saw a staircase.
+local SANCTUM_CLOSET = { x0 = -224, z0 = 14, x1 = -208, z1 = 42 }
+local SANCTUM_HOLE = { x0 = -222, z0 = 16, x1 = -210, z1 = 40 }
 local SANCTUM_FLOOR = -80
 local SANCTUM_CENTRE = Vector3.new(-214, SANCTUM_FLOOR, -34)
 
@@ -4012,45 +4019,83 @@ end
 
 local function buildSanctum(parent: Instance): BasePart
 	local HOLE = SANCTUM_HOLE
+	local CLOSET = SANCTUM_CLOSET
 	local shaftX = (HOLE.x0 + HOLE.x1) / 2
+	local STONE = Color3.fromRGB(120, 114, 104)
+
+	-- ---- the cupboard the stair lives in ----
+	-- Three walls and a ceiling, so from the office it is a bookshelf against
+	-- a wall and nothing else. The fourth side is the school's own west wall.
+	local function slab(name: string, size: Vector3, at: Vector3, colour: Color3?)
+		tag(part({
+			Name = name,
+			Size = size,
+			CFrame = CFrame.new(at),
+			Color = colour or Color3.fromRGB(238, 234, 224),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		}), "TexPlaster")
+	end
+	local closetW = CLOSET.x1 - CLOSET.x0
+	local closetD = CLOSET.z1 - CLOSET.z0
+	slab("OfficeClosetEnd", Vector3.new(closetW, 16, 1.4), Vector3.new((CLOSET.x0 + CLOSET.x1) / 2, 8, CLOSET.z0))
+	slab("OfficeClosetEnd", Vector3.new(closetW, 16, 1.4), Vector3.new((CLOSET.x0 + CLOSET.x1) / 2, 8, CLOSET.z1))
+	slab("OfficeClosetLid", Vector3.new(closetW, 1, closetD), Vector3.new((CLOSET.x0 + CLOSET.x1) / 2, 16.5, (CLOSET.z0 + CLOSET.z1) / 2))
+	-- the face onto the office, with a doorway the bookshelf fills exactly
+	for _, piece in {
+		{ CLOSET.z0, 22 },
+		{ 36, CLOSET.z1 },
+	} do
+		local z0, z1 = piece[1], piece[2]
+		slab("OfficeClosetFace", Vector3.new(1.4, 16, z1 - z0), Vector3.new(CLOSET.x1, 8, (z0 + z1) / 2))
+	end
+	slab("OfficeClosetHead", Vector3.new(1.4, 2.6, 14), Vector3.new(CLOSET.x1, 14.7, 29))
+
+	-- ---- masonry around the shaft head, so the cut edge is not raw ground ----
+	for _, wall in {
+		{ Vector3.new(HOLE.x1 - HOLE.x0 + 4, 34, 2), Vector3.new(shaftX, -17, HOLE.z1 + 1) },
+		{ Vector3.new(2, 34, HOLE.z1 - HOLE.z0 + 4), Vector3.new(HOLE.x0 - 1, -17, (HOLE.z0 + HOLE.z1) / 2) },
+		{ Vector3.new(2, 34, HOLE.z1 - HOLE.z0 + 4), Vector3.new(HOLE.x1 + 1, -17, (HOLE.z0 + HOLE.z1) / 2) },
+	} do
+		part({ Name = "SanctumShaftLining", Size = wall[1], CFrame = CFrame.new(wall[2]), Color = STONE, Material = Enum.Material.Slate, Parent = parent })
+	end
 
 	-- ---- the bookshelf that is a door ----
+	-- It sits IN the cupboard's doorway, filling it, at the office face.
 	local shelf = part({
 		Name = "SecretBookshelf",
-		Size = Vector3.new(2.4, 15, 16),
-		CFrame = CFrame.new(-222.6, 7.5, 28),
+		Size = Vector3.new(2.4, 14, 14),
+		CFrame = CFrame.new(CLOSET.x1 - 0.5, 7, 29),
 		Color = Color3.fromRGB(88, 58, 40),
 		Material = Enum.Material.WoodPlanks,
 		Parent = parent,
 	})
 	for level = 0, 3 do
-		part({ Name = "SecretShelfBoard", Size = Vector3.new(2.6, 0.5, 15.4), CFrame = CFrame.new(-222.6, 2 + level * 3.6, 28), Color = Color3.fromRGB(112, 76, 52), Material = Enum.Material.Wood, Parent = parent }).CanCollide = false
-		for book = 0, 8 do
+		part({ Name = "SecretShelfBoard", Size = Vector3.new(2.6, 0.5, 13.4), CFrame = CFrame.new(CLOSET.x1 - 0.5, 2 + level * 3.4, 29), Color = Color3.fromRGB(112, 76, 52), Material = Enum.Material.Wood, Parent = parent }).CanCollide = false
+		for book = 0, 7 do
 			part({
 				Name = "SecretShelfBook",
-				Size = Vector3.new(1.6, 2.6, 1.1),
-				CFrame = CFrame.new(-221.9, 3.6 + level * 3.6, 21.4 + book * 1.55),
-				Color = Color3.fromHSV(((level * 9 + book) % 12) / 12, 0.45, 0.62),
+				Size = Vector3.new(1.6, 2.4, 1.1),
+				CFrame = CFrame.new(CLOSET.x1 - 1.2, 3.4 + level * 3.4, 23.4 + book * 1.55),
+				Color = Color3.fromHSV(((level * 8 + book) % 12) / 12, 0.45, 0.62),
 				Material = Enum.Material.Fabric,
 				Parent = parent,
 			}).CanCollide = false
 		end
 	end
-	part({ Name = "SanctumJamb", Size = Vector3.new(1.4, 16, 2), CFrame = CFrame.new(-220, 8, 14.6), Color = Color3.fromRGB(120, 114, 104), Material = Enum.Material.Slate, Parent = parent })
-	part({ Name = "SanctumJamb", Size = Vector3.new(1.4, 16, 2), CFrame = CFrame.new(-220, 8, 41.4), Color = Color3.fromRGB(120, 114, 104), Material = Enum.Material.Slate, Parent = parent })
 
 	-- ---- the descent ----
 	-- A hundred and ten treads, a hundred and sixty-eight studs down, landing
 	-- at the north end of the boulevard. It is a long walk on purpose: the
 	-- estate underneath is the reward for it.
 	local STEPS, RISE, RUN = 110, 1.53, 1.6
-	local topZ = 36
+	local topZ = 38
 	local bottomY = -RISE * STEPS
 	local bottomZ = topZ - RUN * STEPS
 	for i = 0, STEPS - 1 do
 		part({
 			Name = "SanctumTread",
-			Size = Vector3.new(14, 1.6, RUN + 0.4),
+			Size = Vector3.new(12, 1.6, RUN + 0.4),
 			CFrame = CFrame.new(shaftX, -RISE * i - 0.8, topZ - i * RUN),
 			Color = Color3.fromRGB(150, 142, 128),
 			Material = Enum.Material.Slate,
@@ -4076,7 +4121,7 @@ local function buildSanctum(parent: Instance): BasePart
 			part({
 				Name = "SanctumShaftWall",
 				Size = Vector3.new(2, 34, segLength + 1),
-				CFrame = CFrame.new(shaftX + side * 8, wallTop - 17, segZ),
+				CFrame = CFrame.new(shaftX + side * 7, wallTop - 17, segZ),
 				Color = Color3.fromRGB(104, 98, 90),
 				Material = Enum.Material.Slate,
 				Parent = parent,
@@ -4087,7 +4132,7 @@ local function buildSanctum(parent: Instance): BasePart
 		if roofY < -3 then
 			part({
 				Name = "SanctumShaftRoof",
-				Size = Vector3.new(18, 2, segLength / math.cos(pitch) + 1),
+				Size = Vector3.new(16, 2, segLength / math.cos(pitch) + 1),
 				CFrame = CFrame.new(shaftX, roofY, segZ) * CFrame.Angles(pitch, 0, 0),
 				Color = Color3.fromRGB(88, 82, 76),
 				Material = Enum.Material.Slate,
@@ -4095,13 +4140,12 @@ local function buildSanctum(parent: Instance): BasePart
 			})
 		end
 	end
-	part({ Name = "SanctumShaftHead", Size = Vector3.new(18, 20, 2), CFrame = CFrame.new(shaftX, 8, topZ + 3), Color = Color3.fromRGB(104, 98, 90), Material = Enum.Material.Slate, Parent = parent })
 
 	-- torches all the way down
 	for i = 0, 10 do
 		local tz = topZ - 6 - i * (STEPS * RUN / 11)
 		local ty = -RISE * ((topZ - tz) / RUN) + 7
-		local flame = part({ Name = "SanctumTorch", Size = Vector3.new(1.4, 2.4, 1.4), CFrame = CFrame.new(shaftX - 6.4, ty, tz), Color = Color3.fromRGB(255, 168, 76), Material = Enum.Material.Neon, Parent = parent })
+		local flame = part({ Name = "SanctumTorch", Size = Vector3.new(1.4, 2.4, 1.4), CFrame = CFrame.new(shaftX - 5.4, ty, tz), Color = Color3.fromRGB(255, 168, 76), Material = Enum.Material.Neon, Parent = parent })
 		flame.CanCollide = false
 		local light = Instance.new("PointLight")
 		light.Brightness = 2
@@ -4126,10 +4170,10 @@ local function buildSanctum(parent: Instance): BasePart
 	shell("SanctumCavernE", Vector3.new(4, CY1 - CY0, CZ1 - CZ0), Vector3.new(CX1, (CY0 + CY1) / 2, (CZ0 + CZ1) / 2))
 	shell("SanctumCavernS", Vector3.new(CX1 - CX0, CY1 - CY0, 4), Vector3.new((CX0 + CX1) / 2, (CY0 + CY1) / 2, CZ0))
 	-- north wall in two halves, leaving the tunnel mouth open
-	shell("SanctumCavernN", Vector3.new(shaftX - 11 - CX0, CY1 - CY0, 4), Vector3.new((CX0 + shaftX - 11) / 2, (CY0 + CY1) / 2, CZ1))
-	shell("SanctumCavernN", Vector3.new(CX1 - (shaftX + 11), CY1 - CY0, 4), Vector3.new((shaftX + 11 + CX1) / 2, (CY0 + CY1) / 2, CZ1))
-	shell("SanctumCavernN", Vector3.new(22, CY1 - (-96), 4), Vector3.new(shaftX, (CY1 + (-96)) / 2, CZ1))
-	shell("SanctumCavernN", Vector3.new(22, -120 - CY0, 4), Vector3.new(shaftX, (CY0 + (-120)) / 2, CZ1))
+	shell("SanctumCavernN", Vector3.new(shaftX - 10 - CX0, CY1 - CY0, 4), Vector3.new((CX0 + shaftX - 10) / 2, (CY0 + CY1) / 2, CZ1))
+	shell("SanctumCavernN", Vector3.new(CX1 - (shaftX + 10), CY1 - CY0, 4), Vector3.new((shaftX + 10 + CX1) / 2, (CY0 + CY1) / 2, CZ1))
+	shell("SanctumCavernN", Vector3.new(20, CY1 - (-96), 4), Vector3.new(shaftX, (CY1 + (-96)) / 2, CZ1))
+	shell("SanctumCavernN", Vector3.new(20, -120 - CY0, 4), Vector3.new(shaftX, (CY0 + (-120)) / 2, CZ1))
 
 	local _ = bottomZ
 	return shelf
@@ -4226,7 +4270,7 @@ local function buildWayfinding(parent: Instance)
 	boardBack.CanCollide = false
 	local face = part({ Name = "DirectoryFace", Size = Vector3.new(18, 20, 0.4), CFrame = CFrame.new(-24, 12, 119.9), Color = Palette.Blackboard, Parent = parent })
 	face.CanCollide = false
-	signText(face, "DIRECTORY\n\nGROUND\n101 MATHS · WEST\nMUSIC · EAST\nGREENHOUSE · WEST YARD\nEAST LAB · EAST YARD\nGYM · STRAIGHT ON\n\nUPSTAIRS\nART · HISTORY\nCOMPUTERS · LANGUAGES\nSTUDY · DRAMA\nNURSE · STAFF", Palette.Chalk, Enum.NormalId.Front)
+	signText(face, "DIRECTORY\n\nGROUND\n101 MATHS · WEST\nMUSIC · EAST\nGREENHOUSE · WEST YARD\nEAST LAB · EAST YARD\nGYM · STRAIGHT ON\n\nUPSTAIRS\nART · HISTORY\nCOMPUTERS · LANGUAGES\nSTUDY · DRAMA\nNURSE · COMMON ROOM\n\nOUTSIDE\nTEACHERS' QUARTERS\nWEST PATH", Palette.Chalk, Enum.NormalId.Front)
 
 	-- ---- overhead direction signs at the two junctions ----
 	for _, spec in {
@@ -4801,7 +4845,9 @@ end
 	furnishSubjectRooms(folder)
 	furnishUpperRooms(folder)
 	buildTeachersQuarters(folder, Vector3.new(-300, 0, -170))
-	buildCampusPath(folder, Vector3.new(-244, 0, -170), Vector3.new(-258, 0, -170), 14)
+	-- the walk out to the lodge, from the west side of the campus
+	buildCampusPath(folder, Vector3.new(-232, 0, -60), Vector3.new(-232, 0, -170), 14)
+	buildCampusPath(folder, Vector3.new(-232, 0, -170), Vector3.new(-258, 0, -170), 14)
 	buildWayfinding(folder)
 	local secretDoor = buildSanctum(folder)
 	furnishProps()

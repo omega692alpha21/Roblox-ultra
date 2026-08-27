@@ -60,6 +60,9 @@ local MARKERS: { Marker } = {
 	{ x = -340, z = -20, icon = "🏊", color = Color3.fromRGB(140, 216, 240) },
 	{ x = 116, z = -28, icon = "⚗️", color = Color3.fromRGB(150, 240, 190) },
 	{ x = -116, z = 0, icon = "👥", color = Color3.fromRGB(180, 255, 200) },
+	{ x = -300, z = -170, icon = "🎓", color = Color3.fromRGB(226, 186, 120) }, -- teachers' quarters
+	{ x = -176, z = -212, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
+	{ x = 176, z = -212, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
 }
 
 function MinimapController.Init(gui: ScreenGui)
