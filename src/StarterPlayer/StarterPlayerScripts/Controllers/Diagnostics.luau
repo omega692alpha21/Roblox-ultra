@@ -69,12 +69,28 @@ function Diagnostics.Report(playerGui: Instance, results: { Result })
 		end)
 	end
 
+	-- live status line: build number, save state, error count — one glance/screenshot
+	local Players = game:GetService("Players")
+	local localPlayer = Players.LocalPlayer
+	task.spawn(function()
+		while badge.Parent do
+			local dataLoaded = localPlayer:GetAttribute("DataLoaded")
+			local outfit = localPlayer:GetAttribute("Outfit")
+			badge.Size = UDim2.fromOffset(190, 26)
+			badge.Text = ("b%d · %s · %s%s"):format(
+				game.PlaceVersion,
+				dataLoaded == true and "save✓" or "save…",
+				outfit ~= nil and "char✓" or "char–",
+				#failures > 0 and (" · %d ERR"):format(#failures) or ""
+			)
+			badge.BackgroundColor3 = (#failures > 0 or dataLoaded ~= true)
+				and Color3.fromRGB(190, 46, 46)
+				or Color3.fromRGB(46, 140, 70)
+			task.wait(3)
+		end
+	end)
+
 	if healthy then
-		-- shrink to a quiet dot after a few seconds
-		task.delay(6, function()
-			badge.Text = "●"
-			badge.Size = UDim2.fromOffset(26, 26)
-		end)
 		return
 	end
 

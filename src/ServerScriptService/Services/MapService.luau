@@ -1057,6 +1057,22 @@ local function buildTerrain()
 		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(-6, 8), math.sin(angle) * dist)
 		terrain:FillBall(pos, rng:NextNumber(28, 64), Enum.Material.Grass)
 	end
+	-- no terrain (or its animated grass blades) under any interior floor
+	terrain.Decoration = false
+	for _, region in {
+		{ cf = CFrame.new(0, -2.3, 0), size = Vector3.new(330, 5, 162) }, -- main building
+		{ cf = CFrame.new(-215, -2.3, 60), size = Vector3.new(64, 5, 64) },
+		{ cf = CFrame.new(-215, -2.3, -60), size = Vector3.new(64, 5, 64) },
+		{ cf = CFrame.new(215, -2.3, 60), size = Vector3.new(64, 5, 64) },
+		{ cf = CFrame.new(215, -2.3, -60), size = Vector3.new(64, 5, 64) },
+		{ cf = CFrame.new(0, -2.3, -150), size = Vector3.new(74, 5, 54) },
+		{ cf = CFrame.new(-195, -2.3, 200), size = Vector3.new(64, 5, 54) },
+		{ cf = CFrame.new(195, -2.3, 200), size = Vector3.new(64, 5, 54) },
+		{ cf = CFrame.new(-100, -2.3, -210), size = Vector3.new(30, 5, 22) },
+	} do
+		terrain:FillBlock(region.cf, region.size, Enum.Material.Air)
+	end
+
 	-- a few distant rocky peaks for the horizon
 	for i = 1, 8 do
 		local angle = (i / 8) * math.pi * 2 + 0.3
