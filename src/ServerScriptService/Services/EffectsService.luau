@@ -56,6 +56,29 @@ local function burst(part: BasePart, color: Color3, count: number)
 	end)
 end
 
+-- A one-shot hit at a world point: particles plus a sound, on a throwaway
+-- part that cleans itself up. Actions that produce nothing visible at the
+-- point of contact are what made punching and throwing feel like nothing
+-- happened.
+function EffectsService.Hit(position: Vector3, color: Color3, soundKey: string, count: number?)
+	local marker = Instance.new("Part")
+	marker.Name = "HitFx"
+	marker.Size = Vector3.new(0.2, 0.2, 0.2)
+	marker.Transparency = 1
+	marker.Anchored = true
+	marker.CanCollide = false
+	marker.CanQuery = false
+	marker.CanTouch = false
+	marker.CastShadow = false
+	marker.CFrame = CFrame.new(position)
+	marker.Parent = workspace
+	burst(marker, color, count or 14)
+	EffectsService.PlaySound(marker, soundKey)
+	task.delay(2.5, function()
+		marker:Destroy()
+	end)
+end
+
 -- Floating "+$X" that rises and fades at a world position.
 function EffectsService.CashPopup(position: Vector3, amount: number)
 	local anchor = Instance.new("Part")

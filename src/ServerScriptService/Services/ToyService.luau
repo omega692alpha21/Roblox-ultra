@@ -14,6 +14,7 @@ local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Remotes)
 local AuraService = require(script.Parent.AuraService)
 local ActionAnim = require(script.Parent.ActionAnim)
+local EffectsService = require(script.Parent.EffectsService)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 
@@ -254,6 +255,28 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 	end
 	-- the ballistic solve owns the velocity now; gravity does the rest
 	pellet.Massless = false
+	pellet.CanQuery = false
+	pellet.CastShadow = false
+	-- a trail: a projectile you can actually follow is a projectile you can
+	-- learn to lead
+	local a0 = Instance.new("Attachment")
+	a0.Position = Vector3.new(0, 0.2, 0)
+	a0.Parent = pellet
+	local a1 = Instance.new("Attachment")
+	a1.Position = Vector3.new(0, -0.2, 0)
+	a1.Parent = pellet
+	local trail = Instance.new("Trail")
+	trail.Attachment0 = a0
+	trail.Attachment1 = a1
+	trail.Lifetime = 0.28
+	trail.MinLength = 0.1
+	trail.LightEmission = 0.4
+	trail.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.25),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	trail.Color = ColorSequence.new(pellet.Color)
+	trail.Parent = pellet
 	pellet.CFrame = CFrame.lookAt(origin, origin + velocity.Unit)
 	pellet.AssemblyLinearVelocity = velocity
 	pellet.Parent = workspace
@@ -267,6 +290,7 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 		spent = true
 		if def.id == "firecracker" then
 			-- bang: everyone nearby gets shoved, and the noise carries
+			EffectsService.Hit(at, Color3.fromRGB(255, 168, 64), "Bang", 40)
 			local flash = Instance.new("Explosion")
 			flash.Position = at
 			flash.BlastRadius = 14
@@ -289,6 +313,12 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 			if character then
 				knock(character, at, def.id == "slingshot" and 46 or 34)
 			end
+			EffectsService.Hit(
+				at,
+				def.id == "snowball" and Color3.fromRGB(235, 245, 255) or Color3.fromRGB(190, 180, 165),
+				"Impact",
+				16
+			)
 			Remotes.Get("ScreenFx"):FireClient(hitPlayer, "shake", 0.7)
 			if def.id == "snowball" then
 				slowTarget(hitPlayer, 3)
@@ -472,6 +502,7 @@ function ToyService.Init()
 		if character then
 			ActionAnim.Throw(character)
 		end
+		EffectsService.PlaySound(root, "Throw")
 		-- let the arm come over the top before the projectile leaves the hand
 		task.delay(0.15, function()
 			fireProjectile(player, def, origin, velocity)

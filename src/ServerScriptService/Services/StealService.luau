@@ -44,7 +44,7 @@ function StealService.RefreshWalkSpeed(player: Player)
 		humanoid.WalkSpeed = 0
 		return
 	end
-	local speed = 16
+	local speed = GameConfig.BaseWalkSpeed
 	if player:GetAttribute("PassSpeed") then
 		speed += GameConfig.SpeedPassBonus
 	end
@@ -260,7 +260,10 @@ function StealService.Init()
 				continue
 			end
 			if carry.carryModel then
-				carry.carryModel:PivotTo(root.CFrame * CFrame.new(0, 1.2, 2.2) * CFrame.Angles(math.rad(-15), math.rad(180), 0))
+				local carried = carry.carryModel.PrimaryPart
+				if carried then
+					carried.CFrame = root.CFrame * CFrame.new(0, 1.2, 2.2) * CFrame.Angles(math.rad(-15), math.rad(180), 0)
+				end
 			end
 			local myPlot = PlotService.GetPlot(thief)
 			if myPlot and MapService.IsInsidePlot(myPlot, root.Position) then

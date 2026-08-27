@@ -2,6 +2,7 @@
 -- Ambient life: NPC students wander Crumbworth High between points of interest,
 -- walking, idling, and giving the campus a pulse. Purely cosmetic — no prompts.
 
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local StudentGen = require(script.Parent.StudentGen)
@@ -30,6 +31,7 @@ local AMBIENT_IDS = {
 
 type Npc = {
 	model: Model,
+	root: BasePart?,
 	position: Vector3,
 	target: Vector3,
 	speed: number,
@@ -121,6 +123,7 @@ function NPCDirector.Init(count: number?)
 		StudentGen.Stand(model, CFrame.new(start))
 		local npc: Npc = {
 			model = model,
+			root = (model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")) :: BasePart?,
 			position = start,
 			target = pickTarget(start),
 			speed = rng:NextNumber(6, 10),
@@ -131,10 +134,41 @@ function NPCDirector.Init(count: number?)
 		table.insert(npcs, npc)
 	end
 
+	-- Model:PivotTo on a rigged student writes ~20 part CFrames and replicates
+	-- every one of them. Twenty students at 60Hz is 24,000 CFrame updates a
+	-- second, which starved replication and made *everyone's* movement stutter.
+	-- Setting the anchored root instead sends one CFrame; each client's own
+	-- joint solver carries the limbs along, exactly like a real character.
+	local ACTIVE_RANGE = 260
+
 	RunService.Heartbeat:Connect(function(dt: number)
 		local now = os.clock()
+		local watchers: { Vector3 } = {}
+		for _, player in Players:GetPlayers() do
+			local character = player.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root then
+				table.insert(watchers, root.Position)
+			end
+		end
+		if #watchers == 0 then
+			return
+		end
+
 		for _, npc in npcs do
 			if not npc.model.Parent then
+				continue
+			end
+			-- nobody can see them: skip entirely. Streaming has already sent
+			-- them away, so simulating them is pure server cost.
+			local visible = false
+			for _, watcher in watchers do
+				if (watcher - npc.position).Magnitude < ACTIVE_RANGE then
+					visible = true
+					break
+				end
+			end
+			if not visible then
 				continue
 			end
 			if not npc.walking then
@@ -154,7 +188,13 @@ function NPCDirector.Init(count: number?)
 				continue
 			end
 			npc.position += flat.Unit * npc.speed * dt
-			npc.model:PivotTo(CFrame.lookAt(npc.position + Vector3.new(0, 2.6, 0), npc.position + flat.Unit * 10 + Vector3.new(0, 2.6, 0)))
+			local root = npc.root
+			if root then
+				root.CFrame = CFrame.lookAt(
+					npc.position + Vector3.new(0, 2.6, 0),
+					npc.position + flat.Unit * 10 + Vector3.new(0, 2.6, 0)
+				)
+			end
 		end
 	end)
 end

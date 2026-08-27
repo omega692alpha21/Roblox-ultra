@@ -96,6 +96,13 @@ local function loadTemplate(assetId: number): Model?
 			part.Anchored = true
 			part.CanCollide = false
 			part.CastShadow = true
+			-- scenery: nothing raycasts a shrub, nothing touches a shrub, and
+			-- precise mesh collision on 150 scattered plants is pure cost
+			part.CanQuery = false
+			part.CanTouch = false
+			if part:IsA("MeshPart") then
+				part.CollisionFidelity = Enum.CollisionFidelity.Box
+			end
 			local style = styles and (styles :: any)[part.Name]
 			if style then
 				part.Color = style.color

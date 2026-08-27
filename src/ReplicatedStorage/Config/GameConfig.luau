@@ -19,7 +19,7 @@ return {
 	StarterCash = 250,
 
 	-- Stealing
-	CarrySpeedMultiplier = 0.6, -- thief walkspeed while carrying
+	CarrySpeedMultiplier = 0.7, -- thief walkspeed while carrying
 	StealDepositRadius = 6,
 
 	-- Locks
@@ -34,9 +34,15 @@ return {
 	OfflineEarningsCapHours = 2,
 	OfflineEarningsCapHours2x = 4, -- with 2x Cash pass
 
+	-- Movement. Roblox's default 16/7.2 is a walking pace built for obbies;
+	-- this genre reads as sluggish at that speed, so the whole game moves a
+	-- notch faster and jumps a little higher.
+	BaseWalkSpeed = 20,
+	JumpHeight = 8.4,
+
 	-- Speed pass
 	SpeedPassBonus = 6, -- added walkspeed
-	SprintBonus = 8, -- extra walkspeed while holding sprint
+	SprintBonus = 10, -- extra walkspeed while holding sprint
 
 	-- School RPG layer
 	ClassBellIntervalSeconds = 300, -- time between class bells

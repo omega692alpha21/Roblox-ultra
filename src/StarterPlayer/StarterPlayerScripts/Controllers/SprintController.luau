@@ -3,10 +3,12 @@
 -- actual speed; the client adds the feel — an FOV kick while sprinting.
 
 local ContextActionService = game:GetService("ContextActionService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
+local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Remotes = require(ReplicatedStorage.Remotes)
 local Layout = require(script.Parent.Layout)
@@ -23,6 +25,18 @@ local function setSprint(on: boolean)
 	end
 	sprinting = on
 	Remotes.Get("Sprint"):FireServer(on)
+
+	-- Apply it here too. The server is still authoritative — it recomputes the
+	-- real speed a moment later and lands on this same number — but waiting a
+	-- full round trip to start moving faster is exactly what makes a sprint
+	-- button feel dead.
+	local player = Players.LocalPlayer
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.WalkSpeed > 0 then
+		humanoid.WalkSpeed = math.max(1, humanoid.WalkSpeed + (on and GameConfig.SprintBonus or -GameConfig.SprintBonus))
+	end
+
 	local camera = workspace.CurrentCamera
 	if camera then
 		TweenService:Create(

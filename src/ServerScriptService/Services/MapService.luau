@@ -2167,6 +2167,43 @@ local function detailCorridor(parent: Instance)
 end
 
 function MapService.Build(): Map
+-- Every part the school builds defaults to queryable, touchable and
+-- shadow-casting. On a campus this size that is thousands of parts taxing
+-- every raycast, every Touched event and every light update — which is a large
+-- part of why moving around felt heavy.
+--
+-- A part that is anchored, non-collidable and carries no interaction is
+-- decoration by definition: nothing should ever raycast it, touch it, or ask
+-- it for a shadow. Structure (anything you can walk into) keeps every flag, so
+-- the aim reticle still stops at walls.
+local function optimize(root: Instance)
+	for _, part in root:GetDescendants() do
+		if not part:IsA("BasePart") then
+			continue
+		end
+		if part:IsA("MeshPart") then
+			-- precise mesh collision on scenery is the most expensive default
+			-- in the engine and buys us nothing
+			part.CollisionFidelity = Enum.CollisionFidelity.Box
+		end
+		if not part.Anchored or part.CanCollide then
+			continue
+		end
+		local interactive = part:FindFirstChildWhichIsA("ProximityPrompt")
+			or part:FindFirstChildWhichIsA("ClickDetector")
+			or part:FindFirstChildWhichIsA("SurfaceGui")
+			or part:FindFirstChildWhichIsA("BillboardGui")
+		if interactive then
+			continue
+		end
+		part.CanQuery = false
+		part.CanTouch = false
+		if part.Size.Magnitude < 12 then
+			part.CastShadow = false
+		end
+	end
+end
+
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
 
@@ -2533,6 +2570,7 @@ function MapService.Build(): Map
 	spawn.Name = "BusStop"
 	spawn.Parent = folder
 
+	optimize(folder)
 	folder.Parent = workspace
 
 	local _ = trophyFloor

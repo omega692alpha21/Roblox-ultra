@@ -314,7 +314,9 @@ function StudentGen.Create(defId: string, seedSuffix: string?): Model?
 		if part:IsA("BasePart") then
 			part.Anchored = part == rootPart
 			part.CanCollide = false
-			part.CanQuery = true
+			-- nothing raycasts students; leaving them queryable taxes every ray
+			-- in the game. Touch stays on so projectiles can still hit them.
+			part.CanQuery = false
 		end
 	end
 
@@ -412,6 +414,14 @@ local ANIMATIONS: { [string]: string } = {
 }
 
 -- Play a looping animation on a generated student (no-op on the block fallback).
+--
+-- This used to build a fresh Animation and a fresh AnimationTrack on every
+-- call and never stop the old one, so a student that walked and idled for a
+-- few minutes ended up with dozens of looping tracks layered on top of each
+-- other — on every client. Tracks are cached per model now, and switching
+-- kinds stops the one that was running.
+local tracks: { [Model]: { [string]: AnimationTrack } } = setmetatable({}, { __mode = "k" }) :: any
+
 function StudentGen.PlayAnim(model: Model, kind: string)
 	local animId = ANIMATIONS[kind]
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
@@ -419,19 +429,40 @@ function StudentGen.PlayAnim(model: Model, kind: string)
 		return
 	end
 	pcall(function()
-		local existing = humanoid:FindFirstChildOfClass("Animator")
-		local animator: Animator
+		local byKind = tracks[model]
+		if not byKind then
+			byKind = {} :: { [string]: AnimationTrack }
+			tracks[model] = byKind
+		end
+		local cache = byKind :: { [string]: AnimationTrack }
+
+		for otherKind, other in cache do
+			if otherKind ~= kind and other.IsPlaying then
+				other:Stop(0.25)
+			end
+		end
+
+		local existing = cache[kind]
 		if existing then
-			animator = existing
-		else
-			animator = Instance.new("Animator")
-			animator.Parent = humanoid
+			if not existing.IsPlaying then
+				existing:Play(0.25)
+			end
+			return
+		end
+
+		local animator = humanoid:FindFirstChildOfClass("Animator")
+		if not animator then
+			local made = Instance.new("Animator")
+			made.Parent = humanoid
+			animator = made
 		end
 		local animation = Instance.new("Animation")
 		animation.AnimationId = animId
-		local track = animator:LoadAnimation(animation)
+		animation.Parent = humanoid
+		local track = (animator :: Animator):LoadAnimation(animation)
 		track.Looped = true
-		track:Play()
+		cache[kind] = track
+		track:Play(0.25)
 	end)
 end
 

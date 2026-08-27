@@ -192,8 +192,11 @@ function HudController.Init(gui: ScreenGui)
 	UIBuilder.Stroke(menuButton, Palette.BusYellow, 3)
 	menuButton.Parent = gui
 
-	-- live updates from attributes (cash animates toward the real value)
+	-- Live updates. The cash counter animates every frame because that motion
+	-- is the reward feedback; everything else is text that only has to be
+	-- correct, so it refreshes eight times a second instead of sixty.
 	local shownCash = 0
+	local textClock = 0
 	RunService.Heartbeat:Connect(function(dt: number)
 		local cash = player:GetAttribute("Cash")
 		local income = player:GetAttribute("Income")
@@ -204,6 +207,12 @@ function HudController.Init(gui: ScreenGui)
 			shownCash += (realCash - shownCash) * math.min(dt * 8, 1)
 		end
 		cashKey.Text = "$" .. NumberFormat.Abbreviate(shownCash)
+
+		textClock += dt
+		if textClock < 0.125 then
+			return
+		end
+		textClock = 0
 		cashValue.Text = "+" .. NumberFormat.Abbreviate(typeof(income) == "number" and income or 0) .. "/s"
 
 		local aura = player:GetAttribute("Aura")

@@ -185,7 +185,14 @@ function ConveyorService.Init(map: { conveyorStart: Vector3, conveyorEnd: Vector
 				else
 					local newPos = pos + flat.Unit * 14 * dt
 					walker.position = newPos
-					walker.model:PivotTo(CFrame.lookAt(newPos + Vector3.new(0, 2.6, 0), newPos + flat.Unit * 10 + Vector3.new(0, 2.6, 0)))
+					-- root only: PivotTo would replicate every limb, every frame
+					local walkerRoot = walker.model.PrimaryPart
+					if walkerRoot then
+						walkerRoot.CFrame = CFrame.lookAt(
+							newPos + Vector3.new(0, 2.6, 0),
+							newPos + flat.Unit * 10 + Vector3.new(0, 2.6, 0)
+						)
+					end
 				end
 				continue
 			end
@@ -198,7 +205,7 @@ function ConveyorService.Init(map: { conveyorStart: Vector3, conveyorEnd: Vector
 			local pos = startPos:Lerp(endPos, alpha)
 			local root = walker.model.PrimaryPart
 			if root then
-				walker.model:PivotTo(CFrame.lookAt(pos + Vector3.new(0, 2.6, 0), endPos + Vector3.new(0, 2.6, 0)))
+				root.CFrame = CFrame.lookAt(pos + Vector3.new(0, 2.6, 0), endPos + Vector3.new(0, 2.6, 0))
 			end
 		end
 	end)

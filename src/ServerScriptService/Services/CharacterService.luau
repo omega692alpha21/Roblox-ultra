@@ -6,6 +6,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Remotes)
 local DataService = require(script.Parent.DataService)
 
@@ -257,6 +258,15 @@ function CharacterService.Init()
 			apply(character)
 		end)
 		player.CharacterAdded:Connect(function(character)
+			-- movement profile first, before any of the slow dressing work: a
+			-- player who spawns at default speed and only speeds up seconds
+			-- later feels broken
+			local humanoid = character:WaitForChild("Humanoid", 5)
+			if humanoid and humanoid:IsA("Humanoid") then
+				humanoid.WalkSpeed = GameConfig.BaseWalkSpeed
+				humanoid.UseJumpPower = false
+				humanoid.JumpHeight = GameConfig.JumpHeight
+			end
 			task.wait(0.5)
 			apply(character)
 			character.ChildAdded:Connect(function(child)
