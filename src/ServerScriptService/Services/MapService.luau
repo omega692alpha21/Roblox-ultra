@@ -722,23 +722,19 @@ local function buildZone(parent: Instance, name: string, center: Vector3, size: 
 		Material = material or Enum.Material.SmoothPlastic,
 		Parent = parent,
 	})
+	-- A plaque high on the wall, not a billboard on a post. The post used to be
+	-- a solid 9-stud pillar standing at floor level in the middle of the room's
+	-- edge, which is what was blocking doorways all over the school.
 	local sign = part({
 		Name = name .. "Sign",
-		Size = Vector3.new(math.min(size.X - 4, 30), 5, 1),
-		CFrame = CFrame.new(center) * CFrame.new(0, 11, -size.Y / 2 + 1),
+		Size = Vector3.new(math.min(size.X - 6, 26), 3.4, 0.5),
+		CFrame = CFrame.new(center) * CFrame.new(0, 12.4, -size.Y / 2 + 0.9),
 		Color = Palette.Blackboard,
 		Parent = parent,
 	})
+	sign.CanCollide = false
 	signText(sign, label, Palette.Chalk, Enum.NormalId.Front)
 	signText(sign, label, Palette.Chalk, Enum.NormalId.Back)
-	local post = part({
-		Name = name .. "SignPost",
-		Size = Vector3.new(1, 9, 1),
-		CFrame = CFrame.new(center) * CFrame.new(0, 4.5, -size.Y / 2 + 1),
-		Color = Palette.LockerBlueDark,
-		Parent = parent,
-	})
-	post.Transparency = 0
 	return floor
 end
 
@@ -2667,6 +2663,13 @@ local function optimize(root: Instance)
 			-- in the engine and buys us nothing
 			part.CollisionFidelity = Enum.CollisionFidelity.Box
 		end
+		-- Signage is never something you walk into. Generated geometry makes it
+		-- very easy to plant a board or a post exactly where a door goes, and
+		-- the only reliable defence is that none of it is ever solid.
+		local n = part.Name
+		if n:find("Sign") or n:find("Plaque") or n:find("Board") or n:find("Banner") then
+			part.CanCollide = false
+		end
 		if not part.Anchored or part.CanCollide then
 			continue
 		end
@@ -2976,8 +2979,11 @@ end
 			part({ Name = "ClassDesk", Size = Vector3.new(6, 2.6, 3), CFrame = CFrame.new(-82 + col * 8, 1.3, -110 + row * 12), Color = Color3.fromRGB(168, 128, 92), Material = Enum.Material.WoodPlanks, Parent = folder })
 		end
 	end
-	local classBoard = part({ Name = "ClassBoard", Size = Vector3.new(18, 8, 0.6), CFrame = CFrame.new(-74, 6, -67), Color = Palette.Blackboard, Parent = folder })
-	signText(classBoard, "CLASSROOM 101", Palette.White, Enum.NormalId.Back)
+	-- against the far wall, facing the desks. It used to sit at z = -67, which
+	-- is the doorway, so the room could not be walked into.
+	local classBoard = part({ Name = "ClassBoard", Size = Vector3.new(18, 8, 0.6), CFrame = CFrame.new(-74, 6, -121), Color = Palette.Blackboard, Parent = folder })
+	classBoard.CanCollide = false
+	signText(classBoard, "CLASSROOM 101", Palette.White, Enum.NormalId.Front)
 
 	-- trophy hall boards
 	local trophyCashBoard = part({
