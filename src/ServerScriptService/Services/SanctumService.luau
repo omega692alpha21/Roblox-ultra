@@ -16,6 +16,7 @@ local TweenService = game:GetService("TweenService")
 
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Remotes)
+local SanctumMap = require(script.Parent.SanctumMap)
 
 local SanctumService = {}
 
@@ -68,6 +69,14 @@ local function open(player: Player)
 end
 
 function SanctumService.Init(map: { secretDoor: BasePart? })
+	-- the estate itself, built once and left alone
+	task.spawn(function()
+		local ok, err = pcall(SanctumMap.Build)
+		if not ok then
+			warn("[SanctumService] the estate failed to build: " .. tostring(err))
+		end
+	end)
+
 	shelf = map.secretDoor
 	local door = shelf
 	if not door then

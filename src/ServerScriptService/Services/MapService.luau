@@ -2347,7 +2347,7 @@ local function furnishProps()
 	prop("Stool", CFrame.new(-189, 0, -32))
 	prop("Bin", CFrame.new(-221, 0, -48))
 	prop("Extinguisher", CFrame.new(-189, 0, -48))
-	row("PottedPlant", 0, 0, { { -221, 1 }, { -189, 1 } })
+	row("PottedPlant", 0, 0, { { -221, 2 }, { -186, 2 } })
 
 	-- ---------------- the principal's office ----------------
 	-- Everything here stays clear of x -222..-206, z 16..40: that is the
@@ -3060,16 +3060,20 @@ local UPPER_CEIL = 31.6
 -- Each entry is a floor rectangle {x0, z0, x1, z1}. The holes -- the atrium,
 -- the courtyards, the gym, the lobby light well and the four stair wells --
 -- are cut by leaving them out, which is why the south band is in pieces.
+--
+-- The stair wells have to stop exactly where the top tread does. They used to
+-- run four studs past it, so you climbed sixteen studs, stepped forward off
+-- the last step and fell straight back down the hole.
 local UPPER_SLABS = {
 	-- south band, around the lobby light well and the two lobby stairs
 	{ -224, 81, -52, 124 },
-	{ -52, 81, -40, 84 },
+	{ -52, 81, -40, 89 },
 	{ -52, 118, -40, 124 },
 	{ -40, 81, -34, 124 },
 	{ -34, 81, 34, 88 },
 	{ -34, 118, 34, 124 },
 	{ 34, 81, 40, 124 },
-	{ 40, 81, 52, 84 },
+	{ 40, 81, 52, 89 },
 	{ 40, 118, 52, 124 },
 	{ 52, 81, 224, 124 },
 	-- the upper hall, straight across over the main hallway
@@ -3077,12 +3081,12 @@ local UPPER_SLABS = {
 	-- west wing, around its stair well
 	{ -224, -64, -202, 49 },
 	{ -202, -64, -190, -22 },
-	{ -202, 10, -190, 49 },
+	{ -202, 6, -190, 49 },
 	{ -190, -64, -172, 49 },
 	-- east wing, mirrored
 	{ 172, -64, 190, 49 },
 	{ 190, -64, 202, -22 },
-	{ 190, 10, 202, 49 },
+	{ 190, 6, 202, 49 },
 	{ 202, -64, 224, 49 },
 	-- north band, open over the gym
 	{ -224, -124, -50, -64 },
@@ -3234,11 +3238,13 @@ local function buildUpperFloor(parent: Instance)
 	-- ---- getting up there ----
 	-- two grand flights out of the lobby, one in each wing. 16 treads of 1 by
 	-- 1.8 is a climb Roblox's step height takes without a stutter.
+	-- 12 wide, which is the full width of the well: a flight narrower than its
+	-- own hole leaves a slot down each side to fall through
 	for _, sx in { -46, 46 } do
-		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, 117.2), Vector3.new(sx, 0, 90)), 16, 1, 1.8, 10)
+		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, 117.2), Vector3.new(sx, 0, 90)), 16, 1, 1.8, 12)
 	end
 	for _, sx in { -196, 196 } do
-		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, -21.2), Vector3.new(sx, 0, 6)), 16, 1, 1.8, 10)
+		buildStair(parent, CFrame.lookAt(Vector3.new(sx, 0, -21.2), Vector3.new(sx, 0, 6)), 16, 1, 1.8, 12)
 	end
 
 	-- ---- the rooms ----
@@ -4030,124 +4036,102 @@ local function buildSanctum(parent: Instance): BasePart
 			}).CanCollide = false
 		end
 	end
-
-	-- ---- the shaft head, hidden behind it ----
 	part({ Name = "SanctumJamb", Size = Vector3.new(1.4, 16, 2), CFrame = CFrame.new(-220, 8, 14.6), Color = Color3.fromRGB(120, 114, 104), Material = Enum.Material.Slate, Parent = parent })
 	part({ Name = "SanctumJamb", Size = Vector3.new(1.4, 16, 2), CFrame = CFrame.new(-220, 8, 41.4), Color = Color3.fromRGB(120, 114, 104), Material = Enum.Material.Slate, Parent = parent })
 
 	-- ---- the descent ----
-	-- 52 treads at 1.54 by 1.54 drops eighty studs over eighty, which is a
-	-- flight a Roblox character walks down without catching on a single step.
-	local STEPS, RISE, RUN = 52, 1.54, 1.54
+	-- A hundred and ten treads, a hundred and sixty-eight studs down, landing
+	-- at the north end of the boulevard. It is a long walk on purpose: the
+	-- estate underneath is the reward for it.
+	local STEPS, RISE, RUN = 110, 1.53, 1.6
+	local topZ = 36
+	local bottomY = -RISE * STEPS
+	local bottomZ = topZ - RUN * STEPS
 	for i = 0, STEPS - 1 do
 		part({
 			Name = "SanctumTread",
 			Size = Vector3.new(14, 1.6, RUN + 0.4),
-			CFrame = CFrame.new(shaftX, -RISE * i - 0.8, 36 - i * RUN),
+			CFrame = CFrame.new(shaftX, -RISE * i - 0.8, topZ - i * RUN),
 			Color = Color3.fromRGB(150, 142, 128),
 			Material = Enum.Material.Slate,
 			Parent = parent,
 		})
 	end
-	-- shaft walls, so the flight is a passage and not a ledge over the void
-	local shaftLength = STEPS * RUN + 8
-	for _, side in { -1, 1 } do
-		part({
-			Name = "SanctumShaftWall",
-			-- stops a stud below the floor: a shaft wall poking up through the
-			-- office carpet is not much of a secret
-			Size = Vector3.new(2, 92, shaftLength),
-			CFrame = CFrame.new(shaftX + side * 8, -47, 38 - shaftLength / 2),
-			Color = Color3.fromRGB(104, 98, 90),
-			Material = Enum.Material.Slate,
-			Parent = parent,
-		})
+
+	-- The tunnel around it, in segments rather than one enormous rotated slab.
+	-- Everything stays below y = -1: above that is the principal's office, and
+	-- a stairwell wall standing in the middle of his carpet would give the
+	-- game away as thoroughly as an open trapdoor.
+	local SEGMENTS = 11
+	local perSegment = STEPS / SEGMENTS
+	local pitch = math.atan2(RISE, RUN)
+	for seg = 0, SEGMENTS - 1 do
+		local firstStep = seg * perSegment
+		local midStep = firstStep + perSegment / 2
+		local segZ = topZ - midStep * RUN
+		local segLength = perSegment * RUN
+		local topOfTread = -RISE * firstStep
+		local wallTop = math.min(-1, topOfTread + 14)
+		for _, side in { -1, 1 } do
+			part({
+				Name = "SanctumShaftWall",
+				Size = Vector3.new(2, 34, segLength + 1),
+				CFrame = CFrame.new(shaftX + side * 8, wallTop - 17, segZ),
+				Color = Color3.fromRGB(104, 98, 90),
+				Material = Enum.Material.Slate,
+				Parent = parent,
+			})
+		end
+		-- the ceiling follows the pitch, fourteen studs over the treads
+		local roofY = -RISE * midStep + 14
+		if roofY < -3 then
+			part({
+				Name = "SanctumShaftRoof",
+				Size = Vector3.new(18, 2, segLength / math.cos(pitch) + 1),
+				CFrame = CFrame.new(shaftX, roofY, segZ) * CFrame.Angles(pitch, 0, 0),
+				Color = Color3.fromRGB(88, 82, 76),
+				Material = Enum.Material.Slate,
+				Parent = parent,
+			})
+		end
 	end
-	part({ Name = "SanctumShaftBack", Size = Vector3.new(18, 92, 2), CFrame = CFrame.new(shaftX, -47, 39), Color = Color3.fromRGB(104, 98, 90), Material = Enum.Material.Slate, Parent = parent })
-	-- torches down the wall
-	for i = 0, 5 do
-		local tz = 30 - i * 13
-		local ty = -RISE * ((30 - tz) / RUN) + 7
+	part({ Name = "SanctumShaftHead", Size = Vector3.new(18, 20, 2), CFrame = CFrame.new(shaftX, 8, topZ + 3), Color = Color3.fromRGB(104, 98, 90), Material = Enum.Material.Slate, Parent = parent })
+
+	-- torches all the way down
+	for i = 0, 10 do
+		local tz = topZ - 6 - i * (STEPS * RUN / 11)
+		local ty = -RISE * ((topZ - tz) / RUN) + 7
 		local flame = part({ Name = "SanctumTorch", Size = Vector3.new(1.4, 2.4, 1.4), CFrame = CFrame.new(shaftX - 6.4, ty, tz), Color = Color3.fromRGB(255, 168, 76), Material = Enum.Material.Neon, Parent = parent })
 		flame.CanCollide = false
 		local light = Instance.new("PointLight")
 		light.Brightness = 2
-		light.Range = 34
+		light.Range = 40
 		light.Color = Color3.fromRGB(255, 174, 96)
 		light.Parent = flame
 	end
 
-	-- ---- the chamber ----
-	local C = SANCTUM_CENTRE
-	local ROOM, HEIGHT = 150, 64
-	tag(part({ Name = "SanctumFloor", Size = Vector3.new(ROOM, 2, ROOM), CFrame = CFrame.new(C.X, C.Y - 1, C.Z), Color = Color3.fromRGB(58, 54, 50), Material = Enum.Material.Slate, Parent = parent }), "TexBlueStone")
-	for _, wall in {
-		{ Vector3.new(ROOM, HEIGHT, 2), Vector3.new(0, HEIGHT / 2, -ROOM / 2) },
-		{ Vector3.new(ROOM, HEIGHT, 2), Vector3.new(0, HEIGHT / 2, ROOM / 2) },
-		{ Vector3.new(2, HEIGHT, ROOM), Vector3.new(-ROOM / 2, HEIGHT / 2, 0) },
-		{ Vector3.new(2, HEIGHT, ROOM), Vector3.new(ROOM / 2, HEIGHT / 2, 0) },
-	} do
-		tag(part({ Name = "SanctumWall", Size = wall[1], CFrame = CFrame.new(C + wall[2]), Color = Color3.fromRGB(74, 68, 62), Material = Enum.Material.Slate, Parent = parent }), "TexBrick")
+	-- ---- the cavern the estate sits in ----
+	-- The old chamber hung in the open under the school. This is a sealed box
+	-- around the whole estate, with a gap in its north wall exactly where the
+	-- tunnel comes through.
+	local CX0, CX1 = -378, -50
+	local CZ0, CZ1 = -402, -74
+	local CY0, CY1 = -178, -66
+	local function shell(name: string, size: Vector3, at: Vector3)
+		part({ Name = name, Size = size, CFrame = CFrame.new(at), Color = Color3.fromRGB(46, 42, 40), Material = Enum.Material.Slate, Parent = parent })
 	end
-	-- ceiling, in four pieces around the shaft
-	local top = C.Y + HEIGHT
-	for _, rect in {
-		{ C.X - ROOM / 2, C.Z - ROOM / 2, HOLE.x0, C.Z + ROOM / 2 },
-		{ HOLE.x1, C.Z - ROOM / 2, C.X + ROOM / 2, C.Z + ROOM / 2 },
-		{ HOLE.x0, C.Z - ROOM / 2, HOLE.x1, -6 },
-		{ HOLE.x0, 42, HOLE.x1, C.Z + ROOM / 2 },
-	} do
-		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
-		if x1 - x0 < 0.5 or z1 - z0 < 0.5 then
-			continue
-		end
-		part({ Name = "SanctumCeiling", Size = Vector3.new(x1 - x0, 2, z1 - z0), CFrame = CFrame.new((x0 + x1) / 2, top, (z0 + z1) / 2), Color = Color3.fromRGB(46, 42, 38), Material = Enum.Material.Slate, Parent = parent })
-	end
+	shell("SanctumCavernFloor", Vector3.new(CX1 - CX0, 4, CZ1 - CZ0), Vector3.new((CX0 + CX1) / 2, CY0, (CZ0 + CZ1) / 2))
+	shell("SanctumCavernRoof", Vector3.new(CX1 - CX0, 4, CZ1 - CZ0), Vector3.new((CX0 + CX1) / 2, CY1, (CZ0 + CZ1) / 2))
+	shell("SanctumCavernW", Vector3.new(4, CY1 - CY0, CZ1 - CZ0), Vector3.new(CX0, (CY0 + CY1) / 2, (CZ0 + CZ1) / 2))
+	shell("SanctumCavernE", Vector3.new(4, CY1 - CY0, CZ1 - CZ0), Vector3.new(CX1, (CY0 + CY1) / 2, (CZ0 + CZ1) / 2))
+	shell("SanctumCavernS", Vector3.new(CX1 - CX0, CY1 - CY0, 4), Vector3.new((CX0 + CX1) / 2, (CY0 + CY1) / 2, CZ0))
+	-- north wall in two halves, leaving the tunnel mouth open
+	shell("SanctumCavernN", Vector3.new(shaftX - 11 - CX0, CY1 - CY0, 4), Vector3.new((CX0 + shaftX - 11) / 2, (CY0 + CY1) / 2, CZ1))
+	shell("SanctumCavernN", Vector3.new(CX1 - (shaftX + 11), CY1 - CY0, 4), Vector3.new((shaftX + 11 + CX1) / 2, (CY0 + CY1) / 2, CZ1))
+	shell("SanctumCavernN", Vector3.new(22, CY1 - (-96), 4), Vector3.new(shaftX, (CY1 + (-96)) / 2, CZ1))
+	shell("SanctumCavernN", Vector3.new(22, -120 - CY0, 4), Vector3.new(shaftX, (CY0 + (-120)) / 2, CZ1))
 
-	-- ---- the pyramid ----
-	local BASE, LAYERS = 100, 22
-	for i = 0, LAYERS - 1 do
-		local span = BASE * (1 - i / LAYERS)
-		tag(part({
-			Name = "SanctumPyramid",
-			Size = Vector3.new(span, 2.4, span),
-			CFrame = CFrame.new(C.X, C.Y + 1.2 + i * 2.2, C.Z),
-			Color = Color3.fromRGB(196, 176, 132),
-			Material = Enum.Material.Sandstone,
-			Parent = parent,
-		}), "TexBlueStone")
-	end
-	local cap = part({
-		Name = "SanctumCapstone",
-		Size = Vector3.new(9, 7, 9),
-		CFrame = CFrame.new(C.X, C.Y + 1.2 + LAYERS * 2.2 + 2, C.Z),
-		Color = Color3.fromRGB(246, 206, 92),
-		Material = Enum.Material.Neon,
-		Parent = parent,
-	})
-	local capGlow = Instance.new("PointLight")
-	capGlow.Brightness = 3
-	capGlow.Range = 90
-	capGlow.Color = Color3.fromRGB(255, 214, 120)
-	capGlow.Parent = cap
-
-	-- braziers at the four corners, and a throne facing the stair
-	for _, corner in { { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } } do
-		local bx, bz = C.X + corner[1] * 62, C.Z + corner[2] * 62
-		part({ Name = "SanctumBrazier", Size = Vector3.new(6, 8, 6), CFrame = CFrame.new(bx, C.Y + 4, bz), Color = Color3.fromRGB(92, 76, 52), Material = Enum.Material.Metal, Parent = parent })
-		local fire = part({ Name = "SanctumBrazierFire", Shape = Enum.PartType.Ball, Size = Vector3.new(5, 5, 5), CFrame = CFrame.new(bx, C.Y + 9.5, bz), Color = Color3.fromRGB(255, 152, 60), Material = Enum.Material.Neon, Parent = parent })
-		fire.CanCollide = false
-		local light = Instance.new("PointLight")
-		light.Brightness = 2.6
-		light.Range = 70
-		light.Color = Color3.fromRGB(255, 164, 84)
-		light.Parent = fire
-	end
-	part({ Name = "SanctumThrone", Size = Vector3.new(10, 4, 8), CFrame = CFrame.new(C.X, C.Y + 2, C.Z + 62), Color = Color3.fromRGB(88, 62, 44), Material = Enum.Material.WoodPlanks, Parent = parent })
-	part({ Name = "SanctumThroneBack", Size = Vector3.new(10, 16, 2), CFrame = CFrame.new(C.X, C.Y + 10, C.Z + 66), Color = Color3.fromRGB(88, 62, 44), Material = Enum.Material.WoodPlanks, Parent = parent })
-	local crest = part({ Name = "SanctumCrest", Size = Vector3.new(7, 7, 0.6), CFrame = CFrame.new(C.X, C.Y + 14, C.Z + 64.8), Color = Color3.fromRGB(246, 206, 92), Material = Enum.Material.Neon, Parent = parent })
-	crest.CanCollide = false
-
+	local _ = bottomZ
 	return shelf
 end
 
@@ -4843,7 +4827,7 @@ end
 		detentionSpot = detentionCenter,
 		infirmary = Vector3.new(122, 17, -94),
 		secretDoor = secretDoor,
-		sanctumSpawn = SANCTUM_CENTRE + Vector3.new(0, 6, 62),
+		sanctumSpawn = Vector3.new(-214, -166, -140),
 		folder = folder,
 	}
 end
