@@ -62,16 +62,18 @@ local function tierOf(player: Player): Config.Tier
 	return Config.TierByName(typeof(name) == "string" and name :: string or "GUEST") or Config.Tiers[1]
 end
 
--- fallback if the mesh can't load: a simple part-built robe
-local function buildRobeFallback(root: BasePart, tier: Config.Tier): Model
+-- The robe, built from parts: flared skirt, hanging sleeves, sloped
+-- shoulders, and a deep pointed hood with darkness inside. Reads as cloth
+-- because everything tapers: wide at the hem, narrow at the chest.
+local function buildRobeParts(root: BasePart, tier: Config.Tier): Model
 	local robe = Instance.new("Model")
 	robe.Name = "RobeForm"
-	local function piece(name: string, size: Vector3, offset: CFrame, color: Color3, material: Enum.Material?): Part
-		local p = Instance.new("Part")
+	local function piece(className: string, name: string, size: Vector3, offset: CFrame, color: Color3?, material: Enum.Material?): BasePart
+		local p = Instance.new(className) :: BasePart
 		p.Name = name
 		p.Size = size
 		p.CFrame = root.CFrame * offset
-		p.Color = color
+		p.Color = color or tier.robe
 		p.Material = material or Enum.Material.Fabric
 		p.Anchored = false
 		p.CanCollide = false
@@ -83,84 +85,52 @@ local function buildRobeFallback(root: BasePart, tier: Config.Tier): Model
 		p.Parent = robe
 		return p
 	end
-	piece("Robe_HoodBack", Vector3.new(2.0, 2.3, 0.4), CFrame.new(0, 3.5, 0.8), tier.robe)
-	piece("Robe_HoodTop", Vector3.new(2.0, 0.45, 1.8), CFrame.new(0, 4.5, 0.15) * CFrame.Angles(math.rad(-14), 0, 0), tier.robe)
-	piece("Robe_HoodL", Vector3.new(0.38, 2.1, 1.6), CFrame.new(-1.0, 3.4, 0.25), tier.robe)
-	piece("Robe_HoodR", Vector3.new(0.38, 2.1, 1.6), CFrame.new(1.0, 3.4, 0.25), tier.robe)
-	piece("Robe_Void", Vector3.new(1.6, 1.8, 0.16), CFrame.new(0, 3.35, 0.58), Color3.fromRGB(6, 6, 8), Enum.Material.SmoothPlastic)
-	piece("Robe_Mantle", Vector3.new(3.1, 1.0, 2.0), CFrame.new(0, 2.35, 0.1), tier.robe)
-	piece("Robe_Mantle2", Vector3.new(2.7, 0.9, 1.8), CFrame.new(0, 1.6, 0.1), tier.robe)
-	piece("Robe_Cape", Vector3.new(2.7, 3.9, 0.3), CFrame.new(0, 0.55, 1.0), tier.robe)
-	piece("Robe_Drape", Vector3.new(2.4, 3.0, 1.6), CFrame.new(0, 0.1, 0.1), tier.robe)
-	piece("Robe_Flare", Vector3.new(2.9, 1.2, 1.95), CFrame.new(0, -1.5, 0.1), tier.robe)
-	piece("Robe_Hem", Vector3.new(2.95, 0.14, 1.9), CFrame.new(0, -2.05, 0.1), tier.trim, Enum.Material.SmoothPlastic)
+
+	-- skirt: three tapering tiers, widest at the hem
+	piece("Part", "Robe_Skirt1", Vector3.new(3.3, 1.1, 2.3), CFrame.new(0, -1.65, 0))
+	piece("Part", "Robe_Skirt2", Vector3.new(2.8, 1.2, 2.0), CFrame.new(0, -0.55, 0))
+	piece("Part", "Robe_Skirt3", Vector3.new(2.35, 1.4, 1.7), CFrame.new(0, 0.7, 0))
+	-- skirt slopes so the taper reads at every angle
+	for _, side in { -1, 1 } do
+		piece("WedgePart", "Robe_SkirtSlope", Vector3.new(2.3, 2.4, 0.5),
+			CFrame.new(side * 1.55, -0.9, 0) * CFrame.Angles(0, side * math.rad(90), 0) * CFrame.Angles(math.rad(180), 0, 0))
+	end
+	-- chest, narrower than everything below
+	piece("Part", "Robe_Chest", Vector3.new(2.0, 1.4, 1.45), CFrame.new(0, 2.0, 0))
+	-- sloped shoulders
+	for _, side in { -1, 1 } do
+		piece("WedgePart", "Robe_Shoulder", Vector3.new(1.4, 0.9, 1.0),
+			CFrame.new(side * 1.25, 2.6, 0) * CFrame.Angles(0, side * math.rad(-90), 0))
+	end
+	-- hanging sleeves, tilted slightly outward, open at the bottom
+	for _, side in { -1, 1 } do
+		piece("Part", "Robe_Sleeve", Vector3.new(0.8, 2.3, 1.15),
+			CFrame.new(side * 1.6, 1.25, 0) * CFrame.Angles(0, 0, side * math.rad(-7)))
+		piece("Part", "Robe_Cuff", Vector3.new(0.9, 0.35, 1.25),
+			CFrame.new(side * 1.78, 0.2, 0) * CFrame.Angles(0, 0, side * math.rad(-7)), tier.trim, Enum.Material.SmoothPlastic)
+	end
+	-- the hood: collar, deep sides, tilted back, pointed peak
+	piece("Part", "Robe_Collar", Vector3.new(1.8, 0.55, 1.55), CFrame.new(0, 2.95, 0))
+	piece("Part", "Robe_HoodL", Vector3.new(0.34, 1.45, 1.45), CFrame.new(-0.78, 3.75, 0.12))
+	piece("Part", "Robe_HoodR", Vector3.new(0.34, 1.45, 1.45), CFrame.new(0.78, 3.75, 0.12))
+	piece("Part", "Robe_HoodBack", Vector3.new(1.9, 1.7, 0.42), CFrame.new(0, 3.8, 0.72) * CFrame.Angles(math.rad(8), 0, 0))
+	piece("Part", "Robe_HoodBrow", Vector3.new(1.9, 0.5, 1.0), CFrame.new(0, 4.4, -0.25) * CFrame.Angles(math.rad(-26), 0, 0))
+	piece("WedgePart", "Robe_HoodPeak", Vector3.new(1.3, 1.0, 1.2), CFrame.new(0, 4.95, 0.35) * CFrame.Angles(0, math.rad(180), 0))
+	-- darkness where a face would never be
+	piece("Part", "Robe_Void", Vector3.new(1.35, 1.35, 0.2), CFrame.new(0, 3.7, 0.45), Color3.fromRGB(5, 5, 7), Enum.Material.SmoothPlastic)
+	-- hem in the tier color
+	piece("Part", "Robe_Hem", Vector3.new(3.36, 0.16, 2.36), CFrame.new(0, -2.15, 0), tier.trim, Enum.Material.SmoothPlastic)
+
+	robe.PrimaryPart = robe:FindFirstChild("Robe_Collar") :: BasePart
 	return robe
 end
 
 local function buildRobe(root: BasePart, tier: Config.Tier): Model
-	-- the layered part-built robe won: better hood, better silhouette
-	local partRobe = buildRobeFallback(root, tier)
-	pcall(function()
-		partRobe:ScaleTo(tier.scale)
-	end)
-	if partRobe then
-		return partRobe
-	end
-	if not robeTemplate then
-		return buildRobeFallback(root, tier)
-	end
-	local robe = robeTemplate:Clone()
-	robe.Name = "RobeForm"
+	local robe = buildRobeParts(root, tier)
 	pcall(function()
 		robe:ScaleTo(tier.scale)
 	end)
-	local parts: { BasePart } = {}
-	for _, p in robe:GetDescendants() do
-		if p:IsA("BasePart") then
-			table.insert(parts, p)
-		end
-	end
-	table.sort(parts, function(a, b)
-		return a.Name < b.Name
-	end)
-	-- part0 = cloth, part1 = hem band (GLB import drops the glTF colors)
-	for i, p in parts do
-		if i == 1 then
-			p.Color = tier.robe
-			p.Material = Enum.Material.Fabric
-		else
-			p.Color = tier.trim
-			p.Material = Enum.Material.SmoothPlastic
-		end
-	end
-	local primary = parts[1]
-	if not primary then
-		return buildRobeFallback(root, tier)
-	end
-	robe.PrimaryPart = primary
-	-- authored with the hem at root-2.1; bounding center sits 1.39 above root
-	robe:PivotTo(root.CFrame * CFrame.new(0, 1.39 * tier.scale, 0))
-	for _, p in parts do
-		local w = Instance.new("WeldConstraint")
-		w.Part0 = root
-		w.Part1 = p
-		w.Parent = p
-	end
-	-- the darkness inside the hood
-	local void = Instance.new("Part")
-	void.Name = "Robe_Void"
-	void.Size = Vector3.new(1.5, 1.7, 0.18) * tier.scale
-	void.CFrame = root.CFrame * CFrame.new(0, 3.55 * tier.scale, 0.45 * tier.scale)
-	void.Color = Color3.fromRGB(6, 6, 8)
-	void.Material = Enum.Material.SmoothPlastic
-	void.Anchored = false
-	void.CanCollide = false
-	void.Massless = true
-	local w = Instance.new("WeldConstraint")
-	w.Part0 = root
-	w.Part1 = void
-	w.Parent = void
-	void.Parent = robe
+	local _ = robeTemplate -- mesh robe retired; kept loaded for map displays
 	return robe
 end
 

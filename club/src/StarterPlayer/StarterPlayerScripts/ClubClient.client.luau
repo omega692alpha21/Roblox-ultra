@@ -84,9 +84,9 @@ local function framed(size: UDim2, position: UDim2, anchor: Vector2): Frame
 end
 
 -- ------------------------------------------------------------------- chip ---
-local chip = framed(UDim2.fromOffset(210, 40), UDim2.new(0, 10, 0, 64), Vector2.new(0, 0))
-local chipLabel = label({ Size = UDim2.new(1, 0, 0.6, 0), Text = "ROBES", TextColor3 = GOLD, Parent = chip })
-local chipSub = label({ Position = UDim2.fromScale(0, 0.6), Size = UDim2.new(1, 0, 0.4, 0), Text = "", TextColor3 = CREAM, TextTransparency = 0.2, Parent = chip })
+local chip = framed(UDim2.fromOffset(148, 26), UDim2.new(0, 8, 0, 6), Vector2.new(0, 0))
+chip.BackgroundTransparency = 0.25
+local chipLabel = label({ Size = UDim2.new(1, -12, 1, 0), Position = UDim2.fromOffset(6, 0), Text = "ROBES", TextColor3 = GOLD, TextScaled = false, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = chip })
 
 task.spawn(function()
 	while true do
@@ -95,13 +95,13 @@ task.spawn(function()
 		local count = tonumber(ReplicatedStorage:GetAttribute("SeatCount")) or 0
 		local price = tonumber(ReplicatedStorage:GetAttribute("SeatPrice")) or 0
 		if tier ~= "GUEST" then
-			chipLabel.Text = "◆ " .. tier .. " ROBE"
-			chipSub.Text = if typeof(seat) == "number" then ("SEAT № %d OF %d"):format(seat, Config.FoundingSeats) else "MEMBER"
+			chipLabel.Text = if typeof(seat) == "number"
+				then ("◆ %s · №%d/%d"):format(tier, seat, Config.FoundingSeats)
+				else "◆ " .. tier
 		else
-			chipLabel.Text = "ROBES"
-			chipSub.Text = if count >= Config.FoundingSeats
-				then "ALL 100 ROBES GRANTED"
-				else ("ROBE № %d · %s R$"):format(count + 1, fmt(price))
+			chipLabel.Text = if count >= Config.FoundingSeats
+				then "ROBES · CLOSED"
+				else ("ROBE №%d · %s R$"):format(count + 1, fmt(price))
 		end
 		task.wait(2)
 	end
