@@ -1638,102 +1638,266 @@ function MapService.Build(): Map
 
 	buildTerrain()
 
-	-- solid interior base floor: no terrain grass inside the school
+	-- ================= THE FLOOR PLAN =================
+	-- Followed from the CAD plan: a symmetric school. Central spine =
+	-- entrance lobby (south) -> atrium -> big gym hall (north, protruding).
+	-- Each wing = ring corridor around an open inner courtyard, rooms on the
+	-- perimeter. Main corridor (the conveyor) runs the full width at z=70.
+	--
+	--   x: -224 .. 224      z: -124 (north) .. 124 (south), gym to -146
+	--   S rooms row  z[76,124]   : plots A/B + janitor | LOBBY | mirrored
+	--   Main corridor z[64,76]   : full width, lockers, conveyor line
+	--   Middle band  z[-64,64]   : outer col rooms | inner corridor |
+	--                              courtyard | spine atrium | mirrored
+	--   N corridor   z[-64,-52]  : per wing
+	--   N rooms row  z[-124,-64] : plots C/D + classroom | gym flanks
+	-- ===================================================
+
+	-- interior base slab
 	tag(part({
 		Name = "SchoolBaseFloor",
-		Size = Vector3.new(336, 1, 168),
+		Size = Vector3.new(448, 1, 248),
 		CFrame = CFrame.new(0, -0.55, 0),
 		Color = Color3.fromRGB(196, 194, 188),
 		Parent = folder,
 	}), "TexFloorTile")
 
-	-- hallway (the conveyor) along the X axis
+	-- main corridor floor + stripe (the conveyor line)
 	tag(part({
 		Name = "HallwayFloor",
-		Size = Vector3.new(320, 1, 28),
-		CFrame = CFrame.new(0, -0.5, 0),
+		Size = Vector3.new(448, 1, 12),
+		CFrame = CFrame.new(0, -0.5, 70),
 		Color = Color3.fromRGB(196, 194, 188),
 		Parent = folder,
 	}), "TexFloorTile")
 	part({
 		Name = "HallwayStripe",
-		Size = Vector3.new(320, 0.2, 3),
-		CFrame = CFrame.new(0, 0.11, 0),
+		Size = Vector3.new(440, 0.2, 2.4),
+		CFrame = CFrame.new(0, 0.11, 70),
 		Color = Palette.BusYellow,
 		Material = Enum.Material.Neon,
 		Parent = folder,
 	})
-	for _, xEnd in { -160, 160 } do
+
+	-- ---------------- plots: 8 homerooms on the perimeter rows ----------------
+	local plots: { Plot } = {}
+	-- south row (doors north onto the main corridor)
+	for i, x in { -190, -122 } do
+		local c = Vector3.new(x, 0, 100)
+		table.insert(plots, buildPlot(i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
+	end
+	for i, x in { 122, 190 } do
+		local c = Vector3.new(x, 0, 100)
+		table.insert(plots, buildPlot(2 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
+	end
+	-- north row (doors south onto the wing corridor)
+	for i, x in { -190, -122 } do
+		local c = Vector3.new(x, 0, -94)
+		table.insert(plots, buildPlot(4 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
+	end
+	for i, x in { 122, 190 } do
+		local c = Vector3.new(x, 0, -94)
+		table.insert(plots, buildPlot(6 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
+	end
+
+	-- ---------------- room floors (plan rooms, both wings) ----------------
+	buildZone(folder, "Cafeteria", Vector3.new(-204, 0, -29), Vector2.new(40, 70), Color3.fromRGB(235, 214, 156), "CAFETERIA", Enum.Material.CeramicTiles)
+	buildZone(folder, "PrincipalsOffice", Vector3.new(-204, 0, 35), Vector2.new(40, 58), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)", Enum.Material.Marble)
+	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(204, 0, -29), Vector2.new(40, 70), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
+	buildZone(folder, "Detention", Vector3.new(204, 0, 35), Vector2.new(40, 58), Color3.fromRGB(126, 126, 132), "DETENTION", Enum.Material.Concrete)
+	tag(buildZone(folder, "Classroom101", Vector3.new(-74, 0, -94), Vector2.new(28, 60), Color3.fromRGB(148, 118, 96), "CLASSROOM 101\nPOP QUIZ", Enum.Material.Carpet), "TexCarpet")
+	buildZone(folder, "MusicRoom", Vector3.new(74, 0, -94), Vector2.new(28, 60), Color3.fromRGB(196, 168, 210), "MUSIC ROOM", Enum.Material.Carpet)
+	buildZone(folder, "Gym", Vector3.new(0, 0, -105), Vector2.new(100, 82), Color3.fromRGB(210, 160, 110), "GYM — FIGHT ZONE", Enum.Material.WoodPlanks)
+	buildCheckerFloor(folder, Vector3.new(0, 0, 0), Vector2.new(120, 128)) -- atrium
+	-- courtyards: open-air grass
+	for _, cx in { -116, 116 } do
+		local lawn = part({
+			Name = "CourtyardLawn",
+			Size = Vector3.new(112, 1, 104),
+			CFrame = CFrame.new(cx, -0.45, 0),
+			Color = Color3.fromRGB(112, 168, 82),
+			Material = Enum.Material.Grass,
+			Parent = folder,
+		})
+		tag(lawn, "TexGround")
+	end
+
+	-- ---------------- walls: exterior (two-story look) ----------------
+	local T = true
+	-- south face: wings + lobby with grand doors
+	buildWallRun(folder, Vector3.new(-224, 0, 124), Vector3.new(-60, 0, 124), {}, T)
+	buildWallRun(folder, Vector3.new(60, 0, 124), Vector3.new(224, 0, 124), {}, T)
+	buildWallRun(folder, Vector3.new(-60, 0, 124), Vector3.new(60, 0, 124), { { at = 44, width = 14 }, { at = 76, width = 14 } }, T)
+	-- north face (interrupted by the gym block)
+	buildWallRun(folder, Vector3.new(-224, 0, -124), Vector3.new(-60, 0, -124), {}, T)
+	buildWallRun(folder, Vector3.new(60, 0, -124), Vector3.new(224, 0, -124), {}, T)
+	buildWallRun(folder, Vector3.new(-60, 0, -124), Vector3.new(-50, 0, -124), {}, T)
+	buildWallRun(folder, Vector3.new(50, 0, -124), Vector3.new(60, 0, -124), {}, T)
+	-- gym protrusion
+	buildWallRun(folder, Vector3.new(-50, 0, -124), Vector3.new(-50, 0, -146), {}, T)
+	buildWallRun(folder, Vector3.new(50, 0, -146), Vector3.new(50, 0, -124), {}, T)
+	buildWallRun(folder, Vector3.new(-50, 0, -146), Vector3.new(50, 0, -146), {}, T)
+	-- east/west faces
+	buildWallRun(folder, Vector3.new(-224, 0, -124), Vector3.new(-224, 0, 124), {}, T)
+	buildWallRun(folder, Vector3.new(224, 0, 124), Vector3.new(224, 0, -124), {}, T)
+
+	-- ---------------- walls: interior ----------------
+	local function mirrorX(v: Vector3): Vector3
+		return Vector3.new(-v.X, v.Y, v.Z)
+	end
+	local function wingWalls(sgn: number)
+		local function W(a: Vector3, b: Vector3, gaps)
+			if sgn < 0 then
+				buildWallRun(folder, a, b, gaps or {})
+			else
+				buildWallRun(folder, mirrorX(a), mirrorX(b), gaps or {})
+			end
+		end
+		-- z=76: south rooms onto main corridor (plot doors + janitor)
+		W(Vector3.new(-224, 0, 76), Vector3.new(-60, 0, 76), { { at = 34, width = 14 }, { at = 102, width = 14 }, { at = 150, width = 8 } })
+		-- z=64: outer column south wall (principal door)
+		W(Vector3.new(-224, 0, 64), Vector3.new(-184, 0, 64), { { at = 20, width = 12 } })
+		-- z=52: courtyard south colonnade (two arches to the corridor)
+		W(Vector3.new(-172, 0, 52), Vector3.new(-60, 0, 52), { { at = 32, width = 16 }, { at = 80, width = 16 } })
+		-- z=-52: courtyard north wall (arch to wing corridor)
+		W(Vector3.new(-172, 0, -52), Vector3.new(-60, 0, -52), { { at = 56, width = 16 } })
+		-- z=-64: north rooms onto wing corridor (plots + classroom + corridor mouth)
+		W(Vector3.new(-224, 0, -64), Vector3.new(-184, 0, -64), {}) -- cafeteria north (no door)
+		W(Vector3.new(-172, 0, -64), Vector3.new(-60, 0, -64), { { at = 50, width = 14 }, { at = 92, width = 10 } })
+		-- x=-184: outer column onto inner corridor (cafeteria + principal doors)
+		W(Vector3.new(-184, 0, -64), Vector3.new(-184, 0, 64), { { at = 35, width = 12 }, { at = 99, width = 12 } })
+		-- x=-172: inner corridor onto courtyard (two arches)
+		W(Vector3.new(-172, 0, -52), Vector3.new(-172, 0, 52), { { at = 28, width = 14 }, { at = 76, width = 14 } })
+		-- room separators, south row then north row
+		W(Vector3.new(-156, 0, 76), Vector3.new(-156, 0, 124), {})
+		W(Vector3.new(-88, 0, 76), Vector3.new(-88, 0, 124), {})
+		W(Vector3.new(-156, 0, -124), Vector3.new(-156, 0, -64), {})
+		W(Vector3.new(-88, 0, -124), Vector3.new(-88, 0, -64), {})
+		-- cafeteria/principal divider
+		W(Vector3.new(-224, 0, 6), Vector3.new(-184, 0, 6), {})
+	end
+	wingWalls(-1)
+	wingWalls(1)
+
+	-- spine walls
+	buildWallRun(folder, Vector3.new(-60, 0, 76), Vector3.new(-60, 0, 124), {}) -- lobby west
+	buildWallRun(folder, Vector3.new(60, 0, 76), Vector3.new(60, 0, 124), {}) -- lobby east
+	buildWallRun(folder, Vector3.new(-60, 0, -64), Vector3.new(-60, 0, 64), { { at = 70, width = 12 } }) -- atrium west (arch to courtyard)
+	buildWallRun(folder, Vector3.new(60, 0, -64), Vector3.new(60, 0, 64), { { at = 70, width = 12 } }) -- atrium east
+	buildWallRun(folder, Vector3.new(-50, 0, -64), Vector3.new(50, 0, -64), { { at = 50, width = 20 } }) -- gym south (grand doors)
+	buildWallRun(folder, Vector3.new(-60, 0, -64), Vector3.new(-60, 0, -124), {}) -- west flank outer
+	buildWallRun(folder, Vector3.new(60, 0, -124), Vector3.new(60, 0, -64), {}) -- east flank outer
+	buildWallRun(folder, Vector3.new(-50, 0, -64), Vector3.new(-50, 0, -124), {}) -- gym west (flank divider)
+	buildWallRun(folder, Vector3.new(50, 0, -124), Vector3.new(50, 0, -64), {}) -- gym east
+
+	-- open doors on the main rooms
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-204, 0, 64), Vector3.new(-204, 0, 60)), 12, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(204, 0, 64), Vector3.new(204, 0, 60)), 12, true)
+	addOpenDoor(folder, CFrame.lookAt(Vector3.new(0, 0, -64), Vector3.new(0, 0, -68)), 18, true)
+
+	-- ---------------- lockers along the main corridor ----------------
+	for _, bankX in { -150, -104, -36, 36, 104, 150 } do
+		tag(part({
+			Name = "LockerBank",
+			Size = Vector3.new(24, 8.4, 1.6),
+			CFrame = CFrame.new(bankX, 4.2, 77.4),
+			Color = Color3.fromRGB(46, 84, 168),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = folder,
+		}), "TexLocker")
+	end
+	for _, xEnd in { -218, 218 } do
 		local sign = part({
 			Name = "HallwaySign",
-			Size = Vector3.new(2, 6, 24),
-			CFrame = CFrame.new(xEnd, 8, 0),
+			Size = Vector3.new(2, 5, 10),
+			CFrame = CFrame.new(xEnd, 7, 70),
 			Color = Palette.Blackboard,
 			Parent = folder,
 		})
 		signText(sign, "MAIN HALLWAY", Palette.BusYellow, Enum.NormalId.Left)
 		signText(sign, "MAIN HALLWAY", Palette.BusYellow, Enum.NormalId.Right)
 	end
+	-- corridor ceiling lights
+	for i = 0, 26 do
+		part({ Name = "CeilingDot", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 2.2, 2.2), CFrame = CFrame.new(-208 + i * 16, 14.4, 70) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(255, 248, 230), Material = Enum.Material.Neon, Parent = folder })
+	end
 
-	-- navy locker banks lining both hallway walls (reference-look lockers)
-	for _, zSide in { -13.2, 13.2 } do
-		for _, bankX in { -130, -90, -50, 50, 90, 130 } do
-			tag(part({
-				Name = "LockerBank",
-				Size = Vector3.new(24, 8.4, 1.6),
-				CFrame = CFrame.new(bankX, 4.2, zSide),
-				Color = Color3.fromRGB(46, 84, 168),
-				Material = Enum.Material.SmoothPlastic,
-				Parent = folder,
-			}), "TexLocker")
+	-- ---------------- roofs (flat slabs; courtyards stay open) ----------------
+	local function roofSlab(cx: number, cz: number, sx: number, sz: number, y: number?)
+		part({
+			Name = "RoofSlab",
+			Size = Vector3.new(sx, 1.2, sz),
+			CFrame = CFrame.new(cx, y or 17.2, cz),
+			Color = Color3.fromRGB(96, 108, 120),
+			Material = Enum.Material.Slate,
+			Parent = folder,
+		})
+	end
+	roofSlab(0, 100, 448, 48) -- south rooms + lobby
+	roofSlab(0, 70, 448, 12) -- corridor
+	roofSlab(-198, 0, 52, 128) -- west outer col + inner corridor
+	roofSlab(198, 0, 52, 128) -- east outer col + inner corridor
+	roofSlab(-116, 58, 112, 12) -- west colonnade
+	roofSlab(116, 58, 112, 12) -- east colonnade
+	roofSlab(-116, -58, 112, 12) -- west north leg
+	roofSlab(116, -58, 112, 12) -- east north leg
+	roofSlab(0, 0, 120, 128) -- atrium (with skylight ring)
+	roofSlab(-142, -94, 164, 60) -- west north rooms
+	roofSlab(142, -94, 164, 60) -- east north rooms
+	roofSlab(-55, -94, 10, 60) -- west flank
+	roofSlab(55, -94, 10, 60) -- east flank
+	roofSlab(0, -105, 104, 86, 24.4) -- gym hall, taller
+	-- atrium skylight
+	part({
+		Name = "Skylight",
+		Size = Vector3.new(44, 0.6, 44),
+		CFrame = CFrame.new(0, 17.4, 6),
+		Color = Color3.fromRGB(170, 215, 240),
+		Material = Enum.Material.Glass,
+		Transparency = 0.45,
+		Parent = folder,
+	})
+
+	-- ---------------- signature interiors ----------------
+	buildFountain(folder, Vector3.new(0, 0, 6)) -- atrium centerpiece
+	buildCafeteriaTables(folder, Vector3.new(-204, 0, -29))
+	buildGymMarkings(folder, Vector3.new(0, 0, -105))
+	buildHoops(folder, Vector3.new(0, 0, -105))
+	-- gym stage at the north end
+	part({ Name = "GymStage", Size = Vector3.new(60, 3, 16), CFrame = CFrame.new(0, 1.5, -136), Color = Color3.fromRGB(120, 70, 50), Material = Enum.Material.WoodPlanks, Parent = folder })
+	-- classroom 101 desks
+	for row = 0, 2 do
+		for col = 0, 2 do
+			part({ Name = "ClassDesk", Size = Vector3.new(6, 2.6, 3), CFrame = CFrame.new(-82 + col * 8, 1.3, -110 + row * 12), Color = Color3.fromRGB(168, 128, 92), Material = Enum.Material.WoodPlanks, Parent = folder })
 		end
 	end
-
-	-- 8 homeroom plots: 4 above the hallway, 4 below
-	local plots: { Plot } = {}
-	local xs = { -117, -39, 39, 117 }
-	for i, x in xs do
-		-- top row: plot sits at negative z, front faces +Z (toward hallway)
-		local centerTop = Vector3.new(x, 0, -52)
-		table.insert(plots, buildPlot(i, CFrame.lookAt(centerTop, centerTop + Vector3.new(0, 0, 1)), folder))
-	end
-	for i, x in xs do
-		local centerBottom = Vector3.new(x, 0, 52)
-		table.insert(plots, buildPlot(4 + i, CFrame.lookAt(centerBottom, centerBottom + Vector3.new(0, 0, -1)), folder))
-	end
-
-	-- surrounding zones
-	buildZone(folder, "Cafeteria", Vector3.new(-215, 0, 60), Vector2.new(70, 70), Color3.fromRGB(235, 214, 156), "CAFETERIA", Enum.Material.CeramicTiles)
-	buildZone(folder, "PrincipalsOffice", Vector3.new(-215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)", Enum.Material.Marble)
-	buildZone(folder, "Gym", Vector3.new(215, 0, 60), Vector2.new(70, 70), Color3.fromRGB(210, 160, 110), "GYM — FIGHT ZONE", Enum.Material.WoodPlanks)
-	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
-	tag(buildZone(folder, "Courtyard", Vector3.new(0, 0, 150), Vector2.new(120, 70), Color3.fromRGB(134, 138, 159), "COURTYARD — CLIQUES", Enum.Material.Concrete), "TexGround")
-	tag(buildZone(folder, "Classroom101", Vector3.new(0, 0, -150), Vector2.new(80, 60), Color3.fromRGB(148, 118, 96), "CLASSROOM 101\nPOP QUIZ", Enum.Material.Carpet), "TexCarpet")
+	local classBoard = part({ Name = "ClassBoard", Size = Vector3.new(18, 8, 0.6), CFrame = CFrame.new(-74, 6, -67), Color = Palette.Blackboard, Parent = folder })
+	signText(classBoard, "CLASSROOM 101", Palette.White, Enum.NormalId.Back)
 
 	-- trophy hall boards
 	local trophyCashBoard = part({
 		Name = "TrophyCashBoard",
-		Size = Vector3.new(24, 18, 1),
-		CFrame = CFrame.new(215 - 14, 9, -92),
+		Size = Vector3.new(1, 12, 22),
+		CFrame = CFrame.new(221.5, 7, -42),
 		Color = Palette.Blackboard,
 		Parent = folder,
 	})
 	local trophyAuraBoard = part({
 		Name = "TrophyAuraBoard",
-		Size = Vector3.new(24, 18, 1),
-		CFrame = CFrame.new(215 + 14, 9, -92),
+		Size = Vector3.new(1, 12, 22),
+		CFrame = CFrame.new(221.5, 7, -14),
 		Color = Palette.Blackboard,
 		Parent = folder,
 	})
 
-	-- clique boards in the courtyard
+	-- clique boards along the west courtyard's north wall
 	local Cliques = require(ReplicatedStorage.Config.Cliques)
 	local cliqueBoards: { [string]: BasePart } = {}
 	for i, clique in Cliques.List do
 		local board = part({
 			Name = "CliqueBoard_" .. clique.id,
 			Size = Vector3.new(13, 8, 1),
-			CFrame = CFrame.new(-45 + (i - 1) * 30, 4.5, 183),
+			CFrame = CFrame.new(-166 + (i - 1) * 30, 4.5, -47),
 			Color = clique.color,
 			Parent = folder,
 		})
@@ -1742,158 +1906,53 @@ function MapService.Build(): Map
 		cliqueBoards[clique.id] = board
 	end
 
-	-- decorations
-	buildBus(folder, CFrame.new(-120, 0, 120) * CFrame.Angles(0, math.rad(15), 0))
-	buildHallwayLights(folder)
-	buildBenches(folder)
-	buildCafeteriaTables(folder, Vector3.new(-215, 0, 60))
-	buildGymMarkings(folder, Vector3.new(215, 0, 60))
-	buildStatues(folder)
-	buildPerimeter(folder)
-	buildZoneWalls(folder, Vector3.new(-215, 0, 60), Vector2.new(70, 70), Vector3.new(1, 0, 0))
-	buildZoneWalls(folder, Vector3.new(-215, 0, -60), Vector2.new(70, 70), Vector3.new(1, 0, 0))
-	buildZoneWalls(folder, Vector3.new(215, 0, 60), Vector2.new(70, 70), Vector3.new(-1, 0, 0))
-	buildZoneWalls(folder, Vector3.new(215, 0, -60), Vector2.new(70, 70), Vector3.new(-1, 0, 0))
-	buildZoneWalls(folder, Vector3.new(0, 0, -150), Vector2.new(80, 60), Vector3.new(0, 0, 1))
-	buildRoof(folder, Vector3.new(-215, 0, 60), Vector2.new(70, 70))
-	buildRoof(folder, Vector3.new(-215, 0, -60), Vector2.new(70, 70))
-	buildRoof(folder, Vector3.new(215, 0, 60), Vector2.new(70, 70))
-	buildRoof(folder, Vector3.new(215, 0, -60), Vector2.new(70, 70))
-	buildRoof(folder, Vector3.new(0, 0, -150), Vector2.new(80, 60))
-	-- walkways stitching the campus together
-	buildPath(folder, Vector3.new(-160, 0, 0), Vector3.new(-180, 0, 60), 8)
-	buildPath(folder, Vector3.new(-160, 0, 0), Vector3.new(-180, 0, -60), 8)
-	buildPath(folder, Vector3.new(160, 0, 0), Vector3.new(180, 0, 60), 8)
-	buildPath(folder, Vector3.new(160, 0, 0), Vector3.new(180, 0, -60), 8)
-	buildPath(folder, Vector3.new(0, 0, 30), Vector3.new(0, 0, 115), 10)
-	buildPath(folder, Vector3.new(0, 0, -30), Vector3.new(0, 0, -120), 8)
-	-- courtyard sports courts + festival bunting (reference-look campus yard)
-	local courtBase = part({ Name = "BasketballCourt", Size = Vector3.new(34, 0.2, 22), CFrame = CFrame.new(-38, 0.11, 158), Color = Color3.fromRGB(52, 118, 190), Material = Enum.Material.SmoothPlastic, Parent = folder })
-	local _ = courtBase
-	part({ Name = "CourtKey", Size = Vector3.new(10, 0.22, 22), CFrame = CFrame.new(-38, 0.12, 158), Color = Color3.fromRGB(226, 130, 62), Material = Enum.Material.SmoothPlastic, Parent = folder })
-	for _, hoopX in { -54, -22 } do
-		part({ Name = "HoopPost", Size = Vector3.new(0.8, 11, 0.8), CFrame = CFrame.new(hoopX, 5.5, 158), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
-		part({ Name = "HoopBoard", Size = Vector3.new(0.4, 4, 6), CFrame = CFrame.new(hoopX + (hoopX < -38 and 0.7 or -0.7), 9.6, 158), Color = Color3.fromRGB(240, 240, 240), Parent = folder })
-		part({ Name = "HoopRim", Size = Vector3.new(1.6, 0.3, 1.6), CFrame = CFrame.new(hoopX + (hoopX < -38 and 1.8 or -1.8), 8.2, 158), Color = Color3.fromRGB(226, 100, 60), Material = Enum.Material.Neon, Parent = folder })
+	-- west courtyard dressing: flowerbeds + trees; east courtyard: courts
+	buildFlowerbed(folder, Vector3.new(-150, 0, 20))
+	buildFlowerbed(folder, Vector3.new(-86, 0, 20))
+	buildTree(folder, Vector3.new(-146, 0, -16), 1.1)
+	buildTree(folder, Vector3.new(-90, 0, 24), 0.95)
+	local courtBase = part({ Name = "BasketballCourt", Size = Vector3.new(34, 0.2, 22), CFrame = CFrame.new(96, 0.11, -14), Color = Color3.fromRGB(52, 118, 190), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	local _cb = courtBase
+	part({ Name = "CourtKey", Size = Vector3.new(10, 0.22, 22), CFrame = CFrame.new(96, 0.12, -14), Color = Color3.fromRGB(226, 130, 62), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	for _, hoopX in { 80, 112 } do
+		part({ Name = "HoopPost", Size = Vector3.new(0.8, 11, 0.8), CFrame = CFrame.new(hoopX, 5.5, -14), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
 	end
-	local volleyBase = part({ Name = "VolleyballCourt", Size = Vector3.new(30, 0.2, 18), CFrame = CFrame.new(40, 0.11, 158), Color = Color3.fromRGB(226, 148, 168), Material = Enum.Material.SmoothPlastic, Parent = folder })
-	local _2 = volleyBase
-	for _, postZ in { 149.5, 166.5 } do
-		part({ Name = "NetPost", Size = Vector3.new(0.6, 8, 0.6), CFrame = CFrame.new(40, 4, postZ), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
-	end
-	part({ Name = "VolleyNet", Size = Vector3.new(0.2, 2.4, 17), CFrame = CFrame.new(40, 6.4, 158), Color = Color3.fromRGB(235, 235, 235), Material = Enum.Material.Fabric, Transparency = 0.35, Parent = folder })
-	-- bunting strings across the courtyard: poles, a visible line, hanging flags
-	local buntingColors = { Color3.fromRGB(232, 76, 76), Color3.fromRGB(255, 196, 60), Color3.fromRGB(74, 160, 90), Color3.fromRGB(64, 140, 226), Color3.fromRGB(168, 90, 220) }
-	for line = 0, 1 do
-		local z = 132 + line * 36
-		for _, px in { -58, 58 } do
-			part({ Name = "BuntingPole", Size = Vector3.new(0.7, 14, 0.7), CFrame = CFrame.new(px, 7, z), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
-		end
-		part({ Name = "BuntingLine", Size = Vector3.new(116, 0.18, 0.18), CFrame = CFrame.new(0, 13.6, z), Color = Color3.fromRGB(220, 220, 220), Parent = folder })
-		for i = 0, 14 do
-			local x = -52 + i * 7.5
-			part({
-				Name = "BuntingFlag",
-				Size = Vector3.new(1.4, 1.7, 0.15),
-				CFrame = CFrame.new(x, 12.6, z) * CFrame.Angles(math.rad(8), 0, 0),
-				Color = buntingColors[(i % #buntingColors) + 1],
-				Material = Enum.Material.SmoothPlastic,
-				Parent = folder,
-			})
-		end
-	end
+	local volleyBase = part({ Name = "VolleyballCourt", Size = Vector3.new(30, 0.2, 18), CFrame = CFrame.new(120, 0.11, 24), Color = Color3.fromRGB(226, 148, 168), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	local _vb = volleyBase
+	part({ Name = "VolleyNet", Size = Vector3.new(0.2, 2.4, 17), CFrame = CFrame.new(120, 6.4, 24), Color = Color3.fromRGB(235, 235, 235), Material = Enum.Material.Fabric, Transparency = 0.35, Parent = folder })
 
-	buildFountain(folder, Vector3.new(0, 0, 122))
-	buildBanners(folder)
-	buildMainShell(folder)
-	buildCornerTower(folder, -168, -84)
-	buildCornerTower(folder, 168, -84)
-	buildCornerTower(folder, -168, 84)
-	buildCornerTower(folder, 168, 84)
-	buildPortico(folder, -60)
-	buildPortico(folder, 60)
-	buildFrontYard(folder)
-	detailHallway(folder)
-	for _, zc in { -52, 52 } do
-		for _, xc in { -117, -39, 39, 117 } do
-			for _, off in { -14, 14 } do
-				part({ Name = "RoomCeilingDot", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 2.2, 2.2), CFrame = CFrame.new(xc + off, 26.0, zc) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(255, 248, 230), Material = Enum.Material.Neon, Parent = folder })
-			end
-		end
-	end
-	for _, zRow in { -8, 8 } do
-		for i = 0, 19 do
-			part({ Name = "CeilingDot", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 2.2, 2.2), CFrame = CFrame.new(-152 + i * 16, 26.0, zRow) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(255, 248, 230), Material = Enum.Material.Neon, Parent = folder })
-		end
-	end
-	detailCourtyard(folder)
-	buildHomeroomWalls(folder)
-	-- swung-open doors on every room entrance
-	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-180, 0, 60), Vector3.new(-176, 0, 60)), 14, true)
-	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-180, 0, -60), Vector3.new(-176, 0, -60)), 14, true)
-	addOpenDoor(folder, CFrame.lookAt(Vector3.new(180, 0, 60), Vector3.new(176, 0, 60)), 14, true)
-	addOpenDoor(folder, CFrame.lookAt(Vector3.new(180, 0, -60), Vector3.new(176, 0, -60)), 14, true)
-	addOpenDoor(folder, CFrame.lookAt(Vector3.new(0, 0, -120), Vector3.new(0, 0, -116)), 16, true)
-	addOpenDoor(folder, CFrame.lookAt(Vector3.new(-195, 0, 170), Vector3.new(-195, 0, 174)), 14, true)
-	addOpenDoor(folder, CFrame.lookAt(Vector3.new(195, 0, 170), Vector3.new(195, 0, 174)), 14, true)
-	-- every outbuilding gets a real front wall with a doorway...
-	buildWallRun(folder, Vector3.new(-180, 0, 25), Vector3.new(-180, 0, 95), { { at = 35, width = 14 } }) -- cafeteria front
-	buildWallRun(folder, Vector3.new(-180, 0, -95), Vector3.new(-180, 0, -25), { { at = 35, width = 14 } }) -- principal front
-	buildWallRun(folder, Vector3.new(180, 0, 25), Vector3.new(180, 0, 95), { { at = 35, width = 14 } }) -- gym front
-	buildWallRun(folder, Vector3.new(180, 0, -95), Vector3.new(180, 0, -25), { { at = 35, width = 14 } }) -- trophy front
-	buildWallRun(folder, Vector3.new(-40, 0, -120), Vector3.new(40, 0, -120), { { at = 40, width = 16 } }) -- classroom front
-	-- ...and an enclosed corridor tying it into the main building
-	buildCorridor(folder, Vector3.new(-167, 0, 0), Vector3.new(-181, 0, 60), 10)
-	buildCorridor(folder, Vector3.new(-167, 0, 0), Vector3.new(-181, 0, -60), 10)
-	buildCorridor(folder, Vector3.new(167, 0, 0), Vector3.new(181, 0, 60), 10)
-	buildCorridor(folder, Vector3.new(167, 0, 0), Vector3.new(181, 0, -60), 10)
-	buildCorridor(folder, Vector3.new(0, 0, -85), Vector3.new(0, 0, -121), 12)
-	buildCourtyardWings(folder)
-	furnishClassroom(folder)
-	furnishCafeteria(folder)
-	detailGym(folder)
+	-- lobby dressing
+	part({ Name = "LobbyDesk", Size = Vector3.new(18, 3.4, 4), CFrame = CFrame.new(0, 1.7, 92), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = folder })
+	local crest = part({ Name = "LobbyCrest", Size = Vector3.new(16, 10, 0.8), CFrame = CFrame.new(0, 8, 78), Color = Palette.Blackboard, Parent = folder })
+	signText(crest, "CRUMBWORTH HIGH\nEST. 1954", Palette.BusYellow, Enum.NormalId.Back)
+
+	-- corner towers on the plan's four corners
+	buildCornerTower(folder, -224, -124)
+	buildCornerTower(folder, 224, -124)
+	buildCornerTower(folder, -224, 124)
+	buildCornerTower(folder, 224, 124)
+
+	-- ---------------- outside: entrance, dorms, grounds ----------------
+	buildPath(folder, Vector3.new(0, 0, 124), Vector3.new(0, 0, 170), 14)
+	buildBus(folder, CFrame.new(-46, 0, 158) * CFrame.Angles(0, math.rad(8), 0))
+	part({ Name = "FrontRoad", Size = Vector3.new(360, 0.4, 22), CFrame = CFrame.new(0, 0.05, 176), Color = Color3.fromRGB(70, 72, 78), Material = Enum.Material.Asphalt, Parent = folder })
 	local dormBeds: { BasePart } = {}
-	buildDorm(folder, Vector3.new(-195, 0, 200), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
-	buildDorm(folder, Vector3.new(195, 0, 200), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
-	buildPath(folder, Vector3.new(-60, 0, 150), Vector3.new(-170, 0, 195), 8)
-	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(170, 0, 195), 8)
-
-	-- detention room: where curfew-breakers get dragged after dark
-	local detentionCenter = Vector3.new(-100, 0, -210)
-	buildZone(folder, "Detention", detentionCenter, Vector2.new(36, 28), Color3.fromRGB(126, 126, 132), "DETENTION", Enum.Material.Concrete)
-	do
-		local dx0, dx1 = detentionCenter.X - 18, detentionCenter.X + 18
-		local dz0, dz1 = detentionCenter.Z - 14, detentionCenter.Z + 14
-		buildWallRun(folder, Vector3.new(dx0, 0, dz0), Vector3.new(dx1, 0, dz0), {})
-		buildWallRun(folder, Vector3.new(dx0, 0, dz1), Vector3.new(dx1, 0, dz1), { { at = 18, width = 10 } })
-		buildWallRun(folder, Vector3.new(dx0, 0, dz0), Vector3.new(dx0, 0, dz1), {})
-		buildWallRun(folder, Vector3.new(dx1, 0, dz0), Vector3.new(dx1, 0, dz1), {})
-		part({ Name = "DetentionRoof", Size = Vector3.new(40, 1.4, 32), CFrame = CFrame.new(detentionCenter.X, 16.8, detentionCenter.Z), Color = Color3.fromRGB(84, 98, 110), Material = Enum.Material.Slate, Parent = folder })
-	end
-	buildPath(folder, Vector3.new(-40, 0, -150), Vector3.new(-95, 0, -195), 6)
-	buildEntranceArch(folder)
+	buildDorm(folder, Vector3.new(-140, 0, 200), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
+	buildDorm(folder, Vector3.new(140, 0, 200), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
+	buildPath(folder, Vector3.new(-60, 0, 150), Vector3.new(-130, 0, 192), 8)
+	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(130, 0, 192), 8)
 	buildFlagpole(folder)
-	buildHoops(folder, Vector3.new(215, 0, 60))
-	buildRoad(folder)
-	buildCanopy(folder)
-	buildProps(folder)
 	buildTreeline(folder, buildTree)
-	buildCheckerFloor(folder, Vector3.new(-215, 0, 60), Vector2.new(70, 70))
-	buildLeaves(folder, Vector3.new(0, 0, 150))
-	for _, pos in { Vector3.new(-34, 0, 96), Vector3.new(34, 0, 96), Vector3.new(-60, 0, 130), Vector3.new(60, 0, 130) } do
-		buildFlowerbed(folder, pos)
-	end
-	for _, pos in {
-		Vector3.new(-40, 0, 130), Vector3.new(45, 0, 128), Vector3.new(-15, 0, 172),
-		Vector3.new(30, 0, 175), Vector3.new(-52, 0, 168), Vector3.new(55, 0, 150),
-	} do
-		buildTree(folder, pos, 1 + (pos.X % 3) * 0.15)
+	for _, pos in { Vector3.new(-90, 0, 150), Vector3.new(90, 0, 150), Vector3.new(-150, 0, 160), Vector3.new(150, 0, 160) } do
+		buildTree(folder, pos, 1 + (pos.X % 3) * 0.12)
 	end
 
-	-- spawn
+	local detentionCenter = Vector3.new(204, 0, 35)
+
+	-- spawn: the bus stop out front
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Size = Vector3.new(14, 1, 14)
-	spawn.CFrame = CFrame.new(0, 0.5, 22)
+	spawn.CFrame = CFrame.new(20, 0.5, 152)
 	spawn.Anchored = true
 	spawn.Color = Palette.BusYellow
 	spawn.Material = Enum.Material.SmoothPlastic
@@ -1908,8 +1967,8 @@ function MapService.Build(): Map
 
 	return {
 		plots = plots,
-		conveyorStart = Vector3.new(-150, 0, 0),
-		conveyorEnd = Vector3.new(150, 0, 0),
+		conveyorStart = Vector3.new(-190, 0, 70),
+		conveyorEnd = Vector3.new(190, 0, 70),
 		trophyCashBoard = trophyCashBoard,
 		trophyAuraBoard = trophyAuraBoard,
 		cliqueBoards = cliqueBoards,

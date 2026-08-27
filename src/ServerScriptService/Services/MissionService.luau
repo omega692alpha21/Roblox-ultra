@@ -45,8 +45,8 @@ local GIVERS: { Giver } = {
 		name = "Principal Crumb",
 		baseId = "valedictorian",
 		suitColor = Color3.fromRGB(70, 70, 80),
-		position = Vector3.new(-186, 0, -60),
-		faceToward = Vector3.new(0, 0, -60),
+		position = Vector3.new(-204, 0, 50),
+		faceToward = Vector3.new(-204, 0, 64),
 		allDone = "Keep it up. This school runs on lunch money and I pretend not to know.",
 		missions = {
 			{
@@ -127,8 +127,8 @@ local GIVERS: { Giver } = {
 		name = "Lunch Lady Sue",
 		baseId = "lunch_lady_supreme",
 		suitColor = Color3.fromRGB(230, 230, 235),
-		position = Vector3.new(-215, 0, 32),
-		faceToward = Vector3.new(-215, 0, 100),
+		position = Vector3.new(-204, 0, -6),
+		faceToward = Vector3.new(-204, 0, -50),
 		allDone = "Extra tots for you today, sugar. You've earned 'em.",
 		missions = {
 			{

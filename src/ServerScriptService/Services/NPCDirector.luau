@@ -9,17 +9,18 @@ local StudentGen = require(script.Parent.StudentGen)
 local NPCDirector = {}
 
 local POIS = {
-	Vector3.new(-140, 0, 6), -- hallway west
-	Vector3.new(140, 0, -6), -- hallway east
-	Vector3.new(0, 0, 22), -- bus stop / spawn
-	Vector3.new(-200, 0, 60), -- cafeteria
-	Vector3.new(200, 0, 60), -- gym
-	Vector3.new(0, 0, 150), -- courtyard
-	Vector3.new(0, 0, -140), -- classroom
-	Vector3.new(200, 0, -60), -- trophy hall
-	Vector3.new(-70, 0, 110), -- flowerbeds
-	Vector3.new(-195, 0, 175), -- boys dorm porch
-	Vector3.new(195, 0, 175), -- girls dorm porch
+	Vector3.new(-150, 0, 70), -- main corridor west
+	Vector3.new(150, 0, 70), -- main corridor east
+	Vector3.new(20, 0, 152), -- bus stop / spawn
+	Vector3.new(-204, 0, -29), -- cafeteria
+	Vector3.new(0, 0, -100), -- gym
+	Vector3.new(-116, 0, 0), -- west courtyard (cliques)
+	Vector3.new(116, 0, 0), -- east courtyard (courts)
+	Vector3.new(-74, 0, -94), -- classroom 101
+	Vector3.new(204, 0, -29), -- trophy hall
+	Vector3.new(0, 0, 6), -- atrium fountain
+	Vector3.new(-136, 0, 196), -- boys dorm porch
+	Vector3.new(136, 0, 196), -- girls dorm porch
 }
 
 local AMBIENT_IDS = {

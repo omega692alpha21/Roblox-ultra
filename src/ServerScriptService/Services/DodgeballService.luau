@@ -14,7 +14,7 @@ local Signals = require(script.Parent.Parent.Signals)
 
 local DodgeballService = {}
 
-local GYM = Vector3.new(215, 0, 60)
+local GYM = Vector3.new(0, 0, -100)
 local HIT_CASH = 120
 local THROW_SPEED = 95
 

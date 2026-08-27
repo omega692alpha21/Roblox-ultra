@@ -27,12 +27,12 @@ local rng = Random.new(17)
 -- painterly pipeline: these meshes carry UVs; shading is baked into painted
 -- textures assigned at runtime (import drops glTF materials, keeps UVs)
 local TEXTURES: { [number]: { string } } = {
-	[ASSETS.Tree] = { "rbxassetid://74529926286988", "rbxassetid://137509817678545" },
-	[ASSETS.Tree2] = { "rbxassetid://74529926286988", "rbxassetid://137509817678545" },
-	[ASSETS.Conifer] = { "rbxassetid://74529926286988", "rbxassetid://137509817678545" },
-	[ASSETS.Rock1] = { "rbxassetid://135718983358766" },
-	[ASSETS.Rock2] = { "rbxassetid://135718983358766" },
-	[ASSETS.Tuft] = { "rbxassetid://104458814889341" },
+	[ASSETS.Tree] = { "rbxassetid://90233154274220", "rbxassetid://134583843090546" },
+	[ASSETS.Tree2] = { "rbxassetid://90233154274220", "rbxassetid://134583843090546" },
+	[ASSETS.Conifer] = { "rbxassetid://90233154274220", "rbxassetid://134583843090546" },
+	[ASSETS.Rock1] = { "rbxassetid://72515799328452" },
+	[ASSETS.Rock2] = { "rbxassetid://72515799328452" },
+	[ASSETS.Tuft] = { "rbxassetid://125982551958174" },
 }
 
 -- Roblox's GLB import ignores glTF material colors, so each asset carries a
