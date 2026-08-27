@@ -161,6 +161,7 @@ local function beginLesson(player: Player, subject: Subjects.Subject)
 		finished = false,
 	}
 	sessions[player] = session
+	Signals.ClassAttended:Fire(player, subject.id)
 	Remotes.Get("ClassStart"):FireClient(player, {
 		subject = subject.id,
 		name = subject.name,

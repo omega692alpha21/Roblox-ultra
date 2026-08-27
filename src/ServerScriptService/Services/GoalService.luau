@@ -21,6 +21,7 @@ local EconomyService = require(script.Parent.EconomyService)
 local PlotService = require(script.Parent.PlotService)
 local Subjects = require(ReplicatedStorage.Config.Subjects)
 local ClassService = require(script.Parent.ClassService)
+local OnboardingService = require(script.Parent.OnboardingService)
 local QuestService = require(script.Parent.QuestService)
 local RewardService = require(script.Parent.RewardService)
 
@@ -151,6 +152,16 @@ local function computeGoal(player: Player): Goal?
 	local profile = DataService.Get(player)
 	if not profile then
 		return nil
+	end
+	-- a player still on their first day has exactly one thing to do, and it is
+	-- not whichever pile happens to be biggest
+	local first = OnboardingService.Current(player)
+	if first then
+		return {
+			text = first.text,
+			progress = (first.index - 1) / first.total,
+			kind = "tutorial",
+		}
 	end
 	-- highest value first: free money you already earned, then free money you
 	-- already unlocked, then the thing that grows income

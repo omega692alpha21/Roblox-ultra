@@ -37,4 +37,7 @@ return {
 	RivalFoiled = makeSignal(), -- (puncher) Rico dropped his loot
 	Fused = makeSignal(), -- (player, defId) fused 3 dupes into a star
 	EventScore = makeSignal(), -- (player, eventId) scored during a live event
+	Locked = makeSignal(), -- (player) locked their own homeroom
+	ToyUsed = makeSignal(), -- (player, toyId) threw a toy
+	ClassAttended = makeSignal(), -- (player, subjectId) sat down in a lesson
 }

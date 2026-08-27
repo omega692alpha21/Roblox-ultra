@@ -17,6 +17,7 @@ local ActionAnim = require(script.Parent.ActionAnim)
 local EffectsService = require(script.Parent.EffectsService)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
+local Signals = require(script.Parent.Parent.Signals)
 
 local ToyService = {}
 
@@ -503,6 +504,7 @@ function ToyService.Init()
 			ActionAnim.Throw(character)
 		end
 		EffectsService.PlaySound(root, "Throw")
+		Signals.ToyUsed:Fire(player, def.id)
 		-- let the arm come over the top before the projectile leaves the hand
 		task.delay(0.15, function()
 			fireProjectile(player, def, origin, velocity)

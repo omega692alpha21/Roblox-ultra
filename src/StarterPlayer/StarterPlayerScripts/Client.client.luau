@@ -61,7 +61,7 @@ local ORDER = {
 	"PunchController",
 	"ScreenFxController",
 	"SprintController",
-	"TutorialController",
+	"OnboardingController",
 	"CharacterSelectController",
 	"GraphicsHintController",
 	"DialogueController",

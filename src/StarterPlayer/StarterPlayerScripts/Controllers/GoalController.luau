@@ -22,6 +22,7 @@ local player = Players.LocalPlayer
 -- differently from "keep going"
 local ACCENTS: { [string]: Color3 } = {
 	class = Palette.DetentionRed,
+	tutorial = Palette.CashGreen,
 	collect = Palette.CashGreen,
 	claim = Palette.BusYellow,
 	graduate = Palette.LockerBlue,

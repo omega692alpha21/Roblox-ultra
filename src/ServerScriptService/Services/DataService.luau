@@ -38,6 +38,7 @@ export type Profile = {
 	rep: { [string]: number }, -- reputation tracks: popular/smart/athletic/creative/troublemaker
 	grades: { [string]: number }, -- report card: subject id -> best score ratio 0..1
 	classLevel: number, -- chosen class difficulty, 1 remedial / 2 standard / 3 honors
+	tutorialDone: { [string]: boolean }, -- onboarding chain: which steps are behind you
 	outfit: string?, -- starter character: "boy" | "girl"
 }
 
@@ -63,6 +64,7 @@ local function template(): Profile
 		rep = {},
 		grades = {},
 		classLevel = 2,
+		tutorialDone = {},
 	}
 end
 

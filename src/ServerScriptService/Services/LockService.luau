@@ -11,6 +11,7 @@ local Remotes = require(ReplicatedStorage.Remotes)
 local DataService = require(script.Parent.DataService)
 local PlotService = require(script.Parent.PlotService)
 local MapService = require(script.Parent.MapService)
+local Signals = require(script.Parent.Parent.Signals)
 
 local LockService = {}
 
@@ -84,6 +85,7 @@ function LockService.Init(map: MapService.Map)
 			local duration = LockService.LockDurationFor(player)
 			cooldownUntil[player] = now + duration + GameConfig.LockCooldownSeconds
 			lockPlot(plot, duration, player)
+			Signals.Locked:Fire(player)
 			Remotes.Get("Notify"):FireClient(player, ("Base locked for %ds!"):format(duration), "good")
 		end)
 
