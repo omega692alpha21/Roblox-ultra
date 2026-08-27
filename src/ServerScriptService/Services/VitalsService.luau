@@ -22,19 +22,18 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local Cliques = require(ReplicatedStorage.Config.Cliques)
 local Remotes = require(ReplicatedStorage.Remotes)
 
 local VitalsService = {}
 
-local MAX_HEALTH = 100
 local REGEN_DELAY = 7 -- seconds after the last hit before health comes back
 local REGEN_RATE = 5 -- health per second
 local KNOCKOUT_SECONDS = 5 -- how long you walk it off
 
-local ENERGY_MAX = 100
+-- the Regular role's baseline; every other role scales off these
 local ENERGY_DRAIN = 15 -- per second while sprinting
 local ENERGY_REGEN = 22 -- per second while not
-local ENERGY_RESUME = 25 -- energy needed before you can sprint again
 
 local lastHit: { [Player]: number } = {}
 local knockedOut: { [Player]: number } = {}
@@ -59,7 +58,7 @@ local function knockOut(player: Player, from: Player?)
 	local humanoid = humanoidOf(player)
 	local character = player.Character
 	if humanoid then
-		humanoid.Health = MAX_HEALTH
+		humanoid.Health = humanoid.MaxHealth
 	end
 	if character then
 		character:PivotTo(CFrame.new(infirmary + Vector3.new(math.random(-4, 4), 0, math.random(-4, 4))))
@@ -84,8 +83,13 @@ local function knockOut(player: Player, from: Player?)
 	end
 end
 
--- The one way anything in the game takes health off a player.
+-- The one way anything in the game takes health off a player. `from`'s role
+-- decides how hard it lands, so a Bully's punch and a Nerd's punch are not the
+-- same punch.
 function VitalsService.Damage(player: Player, amount: number, from: Player?)
+	if from then
+		amount *= Cliques.For(from).damageMult
+	end
 	if amount <= 0 or (knockedOut[player] or 0) > os.clock() then
 		return
 	end
@@ -107,7 +111,33 @@ end
 
 function VitalsService.Energy(player: Player): number
 	local value = player:GetAttribute("Energy")
-	return typeof(value) == "number" and value or ENERGY_MAX
+	return typeof(value) == "number" and value or Cliques.For(player).energyMax
+end
+
+-- Apply the player's role to their body. Called on spawn and again whenever
+-- the role changes, so re-sorting at the courtyard board takes effect without
+-- waiting for a respawn.
+function VitalsService.ApplyRole(player: Player)
+	local role = Cliques.For(player)
+	local energyMax = role.energyMax
+	local previous = player:GetAttribute("EnergyMax")
+	local energy = player:GetAttribute("Energy")
+	player:SetAttribute("EnergyMax", energyMax)
+	-- keep the same proportion full rather than refilling on a switch
+	if typeof(previous) == "number" and previous > 0 and typeof(energy) == "number" then
+		player:SetAttribute("Energy", math.clamp(energy / previous, 0, 1) * energyMax)
+	else
+		player:SetAttribute("Energy", energyMax)
+	end
+	player:SetAttribute("HealthMax", role.maxHealth)
+
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		local fraction = if humanoid.MaxHealth > 0 then humanoid.Health / humanoid.MaxHealth else 1
+		humanoid.MaxHealth = role.maxHealth
+		humanoid.Health = math.clamp(fraction, 0, 1) * role.maxHealth
+	end
 end
 
 local function setup(player: Player, character: Model)
@@ -115,11 +145,12 @@ local function setup(player: Player, character: Model)
 	if not humanoid then
 		return
 	end
-	humanoid.MaxHealth = MAX_HEALTH
-	humanoid.Health = MAX_HEALTH
-	player:SetAttribute("Energy", ENERGY_MAX)
-	player:SetAttribute("EnergyMax", ENERGY_MAX)
-	player:SetAttribute("HealthMax", MAX_HEALTH)
+	local role = Cliques.For(player)
+	humanoid.MaxHealth = role.maxHealth
+	humanoid.Health = role.maxHealth
+	player:SetAttribute("Energy", role.energyMax)
+	player:SetAttribute("EnergyMax", role.energyMax)
+	player:SetAttribute("HealthMax", role.maxHealth)
 end
 
 function VitalsService.Init(map: any?)
@@ -127,9 +158,7 @@ function VitalsService.Init(map: any?)
 		infirmary = map.infirmary
 	end
 	local function join(player: Player)
-		player:SetAttribute("Energy", ENERGY_MAX)
-		player:SetAttribute("EnergyMax", ENERGY_MAX)
-		player:SetAttribute("HealthMax", MAX_HEALTH)
+		VitalsService.ApplyRole(player)
 		if player.Character then
 			setup(player, player.Character)
 		end
@@ -156,9 +185,11 @@ function VitalsService.Init(map: any?)
 				end
 			end
 
-			local energy = VitalsService.Energy(player)
+			local role = Cliques.For(player)
+			local cap = role.energyMax
+			local energy = math.min(VitalsService.Energy(player), cap)
 			if player:GetAttribute("Sprinting") == true then
-				energy -= ENERGY_DRAIN * dt
+				energy -= ENERGY_DRAIN * role.energyDrainMult * dt
 				if energy <= 0 then
 					energy = 0
 					-- out of breath: drop the sprint rather than letting it run
@@ -167,8 +198,8 @@ function VitalsService.Init(map: any?)
 					player:SetAttribute("Winded", true)
 				end
 			else
-				energy = math.min(ENERGY_MAX, energy + ENERGY_REGEN * dt)
-				if player:GetAttribute("Winded") == true and energy >= ENERGY_RESUME then
+				energy = math.min(cap, energy + ENERGY_REGEN * dt)
+				if player:GetAttribute("Winded") == true and energy >= cap * 0.25 then
 					player:SetAttribute("Winded", false)
 				end
 			end

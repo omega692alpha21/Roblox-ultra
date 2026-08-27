@@ -220,6 +220,26 @@ local KINDS: { [string]: Spec } = {
 	FoodPomegranate           = { id = 133554564369919 }, -- food_pomegranate_01
 	FoodLime                  = { id = 101084756510824 }, -- food_lime_01
 	SecurityCamera            = { id = 87648122418410 }, -- security_camera_01
+	SecurityCamera2           = { id = 106680159739384 }, -- security_camera_02
+	IndustrialWallSconce      = { id = 136740980816623 }, -- industrial_wall_sconce
+	IndustrialPipeLamp        = { id = 100856850355548 }, -- industrial_pipe_lamp
+	WoodenLantern             = { id = 88370277212715 }, -- wooden_lantern_01
+	BrassDiyaLantern          = { id = 79201622626217 }, -- brass_diya_lantern
+	BrassGoblets              = { id = 99950920043662 }, -- brass_goblets
+	SeadogsCompass            = { id = 113461380061442 }, -- seadogs_compass
+	RoundSpectacles           = { id = 91854786811748 }, -- round_spectacles
+	FishermansHat             = { id = 102707969131345 }, -- fishermans_hat
+	Lifebuoy                  = { id = 85417523120496, collide = true, shadow = true }, -- lifebuoy
+	PortableCassettePlayer    = { id = 139717598875490 }, -- portable_cassette_player
+	RetroMultimeter           = { id = 105043316656546 }, -- retro_multimeter
+	VintageMicrowave          = { id = 100784728832916 }, -- vintage_microwave
+	VintageElectricKettle     = { id = 93379284647430 }, -- vintage_electric_kettle
+	Gamepad                   = { id = 134849661344062 }, -- gamepad
+	DigitalWristWatch         = { id = 135307635136700 }, -- digital_wrist_watch
+	VintageFlashlight         = { id = 76534356243124 }, -- vintage_flashlight
+	SmallPlasticTorch         = { id = 79977435727486 }, -- small_plastic_torch
+	SignalFlashlight          = { id = 100347980077890 }, -- signal_flashlight
+	WineBarrel                = { id = 93648510641155, collide = true, shadow = true }, -- wine_barrel_01
 }
 
 local templates: { [string]: Model } = {}

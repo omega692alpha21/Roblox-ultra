@@ -167,7 +167,11 @@ function AimController.Init(gui: ScreenGui)
 		-- something, snap to their chest. Aiming stays yours; this only forgives
 		-- the last few pixels, which matters a lot on a phone.
 		local best: BasePart? = nil
+		-- an Athlete's throw finds the target from further off the reticle;
+		-- a Nerd's does not
+		local assist = Players.LocalPlayer:GetAttribute("AimAssist")
 		local bestDistance = viewport.Y * ASSIST_FRACTION
+			* (if typeof(assist) == "number" then assist else 1)
 		for _, root in targets do
 			local screen, onScreen = camera:WorldToViewportPoint(root.Position)
 			if onScreen then

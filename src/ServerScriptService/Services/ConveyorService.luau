@@ -95,6 +95,10 @@ local function spawnWalker()
 			Remotes.Get("Notify"):FireClient(player, "Your data hasn't loaded yet!", "bad")
 			return
 		end
+		if not PlotService.HasPlot(player) then
+			Remotes.Get("Notify"):FireClient(player, "You have no homeroom yet — every room is taken. You're in line.", "bad")
+			return
+		end
 		if PlotService.CrewCount(player) >= PlotService.MaxSlots(player) then
 			Remotes.Get("Notify"):FireClient(player, "Your homeroom is full! Rebirth or get the +2 Slots pass.", "bad")
 			return

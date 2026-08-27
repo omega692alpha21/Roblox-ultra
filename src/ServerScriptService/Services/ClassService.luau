@@ -150,6 +150,9 @@ local function beginLesson(player: Player, subject: Subjects.Subject)
 	end
 	local profile = DataService.Get(player)
 	local level = Subjects.Level(profile and profile.classLevel or nil)
+	-- a Nerd gets longer on the clock and a Bully gets less: same lesson, and
+	-- the role decides how much of it you can actually get through
+	local seconds = math.max(8, level.seconds + Cliques.For(player).classTimeBonus)
 	local rounds = ClassGames.Build(subject.id, ROUNDS_PER_CLASS, level.id)
 	local session: Session = {
 		subjectId = subject.id,
@@ -157,7 +160,7 @@ local function beginLesson(player: Player, subject: Subjects.Subject)
 		rounds = rounds,
 		answered = {},
 		correct = 0,
-		deadline = os.clock() + level.seconds,
+		deadline = os.clock() + seconds,
 		finished = false,
 	}
 	sessions[player] = session
@@ -171,9 +174,9 @@ local function beginLesson(player: Player, subject: Subjects.Subject)
 		level = level.id,
 		levelName = level.name,
 		rounds = ClassGames.Public(rounds),
-		seconds = level.seconds,
+		seconds = seconds,
 	})
-	task.delay(level.seconds + 1.5, function()
+	task.delay(seconds + 1.5, function()
 		local live = sessions[player]
 		if live == session then
 			finish(player, session)

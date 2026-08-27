@@ -249,10 +249,18 @@ function PlotService.GetStudentModel(player: Player, uid: string): Model?
 	return models and models[uid] or nil
 end
 
-local function assignPlot(player: Player)
+-- Players who joined a full school, oldest first. There are eight homerooms;
+-- a ninth player used to get a warn() in the log and no homeroom at all, which
+-- meant they could pay to recruit a student that then had nowhere to sit.
+local waiting: { Player } = {}
+
+local function assignPlot(player: Player): boolean
 	local m = map
 	if not m then
-		return
+		return false
+	end
+	if playerPlot[player] then
+		return true
 	end
 	for _, plot in m.plots do
 		if not plotOwner[plot.index] then
@@ -262,13 +270,32 @@ local function assignPlot(player: Player)
 			if label then
 				label.Text = player.DisplayName .. "'s\nHOMEROOM"
 			end
-			return
+			player:SetAttribute("HomeroomIndex", plot.index)
+			Remotes.Get("Notify"):FireClient(
+				player,
+				("🏫 Homeroom %d is yours. Recruit students in the main hallway."):format(plot.index),
+				"good"
+			)
+			PlotService.RebuildCrew(player)
+			return true
 		end
 	end
-	warn("[PlotService] no free plot for " .. player.Name)
+	if not table.find(waiting, player) then
+		table.insert(waiting, player)
+		Remotes.Get("Notify"):FireClient(
+			player,
+			"Every homeroom is taken right now. You are next in line — hang around.",
+			"warn"
+		)
+	end
+	return false
 end
 
 local function releasePlot(player: Player)
+	local queued = table.find(waiting, player)
+	if queued then
+		table.remove(waiting, queued)
+	end
 	local plot = playerPlot[player]
 	if plot then
 		plotOwner[plot.index] = nil
@@ -285,7 +312,19 @@ local function releasePlot(player: Player)
 			label.Text = "HOMEROOM " .. plot.index
 		end
 		plot.pileLabel.Text = "$0"
+		player:SetAttribute("HomeroomIndex", nil)
+		-- hand the room to whoever has been waiting longest
+		while #waiting > 0 do
+			local next_ = table.remove(waiting, 1)
+			if next_ and next_.Parent and assignPlot(next_) then
+				break
+			end
+		end
 	end
+end
+
+function PlotService.HasPlot(player: Player): boolean
+	return playerPlot[player] ~= nil
 end
 
 function PlotService.Init(builtMap: MapService.Map)

@@ -1,5 +1,9 @@
 --!strict
--- Cliques panel: the four clique cards with perks + join buttons.
+-- Roles panel: what each role is good at, and a button to re-sort into it.
+--
+-- The perk lines used to be a hand-written table that drifted from the config
+-- the moment a number changed. They are generated from the role's own stats
+-- now, so the panel cannot lie about what the server will do.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,15 +17,41 @@ local CliqueController = {}
 
 local player = Players.LocalPlayer
 
-local PERK_TEXT: { [string]: string } = {
-	jocks = "+2 walkspeed, harder punches",
-	nerds = "+50% quiz rewards",
-	preps = "+1h offline earnings cap",
-	rebels = "carry stolen students faster",
-}
+-- Read the role's numbers and say only what is actually different about it.
+local function perkLine(role): string
+	local notes: { string } = {}
+	local function pct(value: number): string
+		return ("%+d%%"):format(math.floor((value - 1) * 100 + 0.5))
+	end
+	if role.maxHealth ~= 100 then
+		table.insert(notes, ("%d health"):format(role.maxHealth))
+	end
+	if role.walkSpeedBonus ~= 0 then
+		table.insert(notes, ("%+d speed"):format(role.walkSpeedBonus))
+	end
+	if role.damageMult ~= 1 then
+		table.insert(notes, pct(role.damageMult) .. " damage")
+	end
+	if role.energyDrainMult ~= 1 then
+		table.insert(notes, pct(2 - role.energyDrainMult) .. " stamina")
+	end
+	if role.aimAssistMult ~= 1 then
+		table.insert(notes, pct(role.aimAssistMult) .. " aim")
+	end
+	if role.quizRewardMult ~= 1 then
+		table.insert(notes, pct(role.quizRewardMult) .. " class pay")
+	end
+	if role.cashMult ~= 1 then
+		table.insert(notes, pct(role.cashMult) .. " all cash")
+	end
+	if role.classTimeBonus ~= 0 then
+		table.insert(notes, ("%+ds in class"):format(role.classTimeBonus))
+	end
+	return table.concat(notes, " · ")
+end
 
 function CliqueController.Init(gui: ScreenGui)
-	local _, content = UIBuilder.Panel(gui, "Cliques", "COURTYARD — PICK YOUR CLIQUE")
+	local _, content = UIBuilder.Panel(gui, "Cliques", "ROLES — RE-SORT AT THE COURTYARD BOARD")
 	local list = UIBuilder.List(content)
 
 	local joinButtons: { [string]: TextButton } = {}
@@ -38,7 +68,7 @@ function CliqueController.Init(gui: ScreenGui)
 		UIBuilder.Label({
 			Position = UDim2.fromOffset(12, 6),
 			Size = UDim2.new(1, -140, 0, 30),
-			Text = clique.name,
+			Text = clique.icon .. "  " .. clique.name,
 			TextColor3 = clique.color,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			Parent = frame,
@@ -46,7 +76,7 @@ function CliqueController.Init(gui: ScreenGui)
 		UIBuilder.Label({
 			Position = UDim2.fromOffset(12, 38),
 			Size = UDim2.new(1, -140, 0, 16),
-			Text = PERK_TEXT[clique.id] or "",
+			Text = perkLine(clique),
 			TextColor3 = Palette.Chalk,
 			TextScaled = false,
 			TextSize = 14,

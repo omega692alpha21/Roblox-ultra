@@ -40,6 +40,8 @@ export type Map = {
 	dormBeds: { BasePart },
 	detentionSpot: Vector3,
 	infirmary: Vector3,
+	secretDoor: BasePart,
+	sanctumSpawn: Vector3,
 	folder: Folder,
 }
 
@@ -2331,20 +2333,41 @@ local function furnishProps()
 	prop("Bin", CFrame.new(-38, 0, -204))
 
 	-- ---------------- cafeteria ----------------
-	-- the hall runs from the west windows to the locker corridor: x -220..-186,
-	-- z 32..58. Two rows of four, benched on both sides.
-	for _, cx in { -212, -196 } do
-		for _, cz in { 36, 48 } do
+	-- The real cafeteria is the outer bay at x -224..-184, z -52..6. What used
+	-- to be here laid four dining tables out at z 36..52, which is the middle
+	-- of the principal's office.
+	for _, cx in { -212, -198 } do
+		for _, cz in { -40, -24 } do
 			prop("DiningTable", CFrame.new(cx, 0, cz))
 			prop("Bench", CFrame.new(cx, 0, cz - 4.4))
 			prop("Bench", CFrame.new(cx, 0, cz + 4.4) * CFrame.Angles(0, math.pi, 0))
 		end
 	end
-	prop("Stool", CFrame.new(-219, 0, 42))
-	prop("Stool", CFrame.new(-189, 0, 42))
-	prop("Bin", CFrame.new(-220, 0, 30))
-	prop("Extinguisher", CFrame.new(-189, 0, 33))
-	row("PottedPlant", 0, 0, { { -219, 56 }, { -189, 56 } })
+	prop("Stool", CFrame.new(-221, 0, -32))
+	prop("Stool", CFrame.new(-189, 0, -32))
+	prop("Bin", CFrame.new(-221, 0, -48))
+	prop("Extinguisher", CFrame.new(-189, 0, -48))
+	row("PottedPlant", 0, 0, { { -221, 1 }, { -189, 1 } })
+
+	-- ---------------- the principal's office ----------------
+	-- Everything here stays clear of x -222..-206, z 16..40: that is the
+	-- sanctum shaft, and a filing cabinet standing in it would give the game
+	-- away before the bookshelf did.
+	prop("OfficeDesk", CFrame.new(-196, 0, 46) * CFrame.Angles(0, math.pi, 0))
+	prop("Laptop", CFrame.new(-196, 2.9, 46))
+	prop("Notepads", CFrame.new(-192, 2.9, 46))
+	prop("ArmChair", CFrame.new(-196, 0, 52) * CFrame.Angles(0, math.pi, 0))
+	prop("SchoolChair", CFrame.new(-200, 0, 40))
+	prop("SchoolChair", CFrame.new(-192, 0, 40))
+	prop("Cabinet", CFrame.new(-187, 0, 56) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("SteelShelves2", CFrame.new(-187, 0, 46) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("GrandfatherClock", CFrame.new(-187, 0, 12) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("Sofa", CFrame.new(-214, 0, 10) * CFrame.Angles(0, math.rad(90), 0))
+	prop("CoffeeTable", CFrame.new(-208, 0, 10))
+	prop("PottedPlant", CFrame.new(-189, 0, 60))
+	prop("Vase1", CFrame.new(-199, 2.9, 46))
+	prop("Bin", CFrame.new(-203, 0, 60))
+	prop("FramedPicture", CFrame.new(-204, 9, 63.2) * CFrame.Angles(0, math.pi, 0))
 
 	-- ---------------- gym ----------------
 	row("Football", 0, 0, { { -22, -98 }, { 18, -112 } })
@@ -3753,6 +3776,381 @@ local function furnishUpperRooms(parent: Instance)
 	prop("Clock", CFrame.new(190, Y + 11, -119.4))
 end
 
+
+-- ================= THE TEACHERS' QUARTERS =================
+-- Every professor in the timetable stands in a classroom all day and then
+-- stands in it all night. They live here now: a lodge off the west path with
+-- a common room downstairs and a study apiece above it, in the same brick as
+-- the school so it reads as part of the campus rather than a prop dropped
+-- next to it.
+--
+-- Students can walk in. That is the point -- a staff room you can be caught in
+-- is worth more than one you cannot enter.
+local TEACHERS = {
+	{ name = "MR. TANGENT", subject = "Mathematics", color = Color3.fromRGB(120, 176, 255) },
+	{ name = "DR. FIZZLE", subject = "Chemistry", color = Color3.fromRGB(150, 240, 190) },
+	{ name = "MS. FERN", subject = "Biology", color = Color3.fromRGB(150, 220, 130) },
+	{ name = "MAESTRO QUILL", subject = "Music", color = Color3.fromRGB(212, 160, 240) },
+	{ name = "COACH BRICKER", subject = "Gym", color = Color3.fromRGB(255, 176, 88) },
+}
+
+local function buildTeachersQuarters(parent: Instance, center: Vector3)
+	local W, D = 84, 64
+	local halfW, halfD = W / 2, D / 2
+	local GROUND, UPPER, RIDGE = 16, 32, 44
+	local BRICK = Color3.fromRGB(138, 78, 62)
+	local STONE = Color3.fromRGB(206, 200, 188)
+
+	local function at(x: number, y: number, z: number): CFrame
+		return CFrame.new(center + Vector3.new(x, y, z))
+	end
+
+	-- ---- ground, plinth, floors ----
+	tag(part({ Name = "QuartersPlinth", Size = Vector3.new(W + 8, 2, D + 8), CFrame = at(0, 1, 0), Color = STONE, Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
+	tag(part({ Name = "QuartersFloor", Size = Vector3.new(W, 1, D), CFrame = at(0, 2.5, 0), Color = Color3.fromRGB(150, 110, 78), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
+	-- the upper deck, with a well over the common room so the fire is visible
+	-- from the landing
+	for _, rect in {
+		{ -halfW, -halfD, halfW, -14 },
+		{ -halfW, 14, halfW, halfD },
+		{ -halfW, -14, -16, 14 },
+		{ 16, -14, halfW, 14 },
+	} do
+		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
+		tag(part({ Name = "QuartersUpperFloor", Size = Vector3.new(x1 - x0, 1, z1 - z0), CFrame = at((x0 + x1) / 2, GROUND + 2.5, (z0 + z1) / 2), Color = Color3.fromRGB(150, 110, 78), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
+		tag(part({ Name = "QuartersSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, GROUND + 1.7, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
+	end
+	-- railing round the well
+	for _, rail in {
+		{ -16, -14, 16, -14 }, { -16, 14, 16, 14 },
+		{ -16, -14, -16, 14 }, { 16, -14, 16, 14 },
+	} do
+		buildRailing(parent, center + Vector3.new(rail[1], GROUND + 3, rail[2]), center + Vector3.new(rail[3], GROUND + 3, rail[4]))
+	end
+
+	-- ---- shell: brick with punched windows, doors on the campus side ----
+	local function wall(name: string, size: Vector3, offset: Vector3)
+		tag(part({ Name = name, Size = size, CFrame = at(offset.X, offset.Y, offset.Z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+	end
+	wall("QuartersWallN", Vector3.new(W, UPPER + 4, 2), Vector3.new(0, (UPPER + 4) / 2 + 3, -halfD))
+	wall("QuartersWallW", Vector3.new(2, UPPER + 4, D), Vector3.new(-halfW, (UPPER + 4) / 2 + 3, 0))
+	wall("QuartersWallS", Vector3.new(W, UPPER + 4, 2), Vector3.new(0, (UPPER + 4) / 2 + 3, halfD))
+	-- east face: two piers and a lintel, the gap between them is the way in
+	for _, sz in { -1, 1 } do
+		wall("QuartersWallE", Vector3.new(2, UPPER + 4, halfD - 7), Vector3.new(halfW, (UPPER + 4) / 2 + 3, sz * (halfD / 2 + 3.5)))
+	end
+	wall("QuartersWallE", Vector3.new(2, UPPER + 4 - 14, 14), Vector3.new(halfW, (UPPER + 4) / 2 + 10, 0))
+	for _, sz in { -7, 7 } do
+		part({ Name = "QuartersDoorPost", Size = Vector3.new(3, 14, 2.4), CFrame = at(halfW, 10, sz), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
+	end
+
+	-- windows: two rows of six on the long faces
+	for _, sz in { -1, 1 } do
+		for i = 0, 5 do
+			for _, wy in { 11, 26 } do
+				local wx = -32 + i * 13
+				part({ Name = "QuartersWinFrame", Size = Vector3.new(8, 9, 2.6), CFrame = at(wx, wy, sz * halfD), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent })
+				local glass = part({ Name = "QuartersWindow", Size = Vector3.new(6.2, 7, 2.9), CFrame = at(wx, wy, sz * halfD), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+				glass.CanCollide = false
+				tag(glass, "TexWindow")
+			end
+		end
+	end
+
+	-- ---- pitched roof ----
+	for step = 0, 6 do
+		local inset = step * 6
+		part({
+			Name = "QuartersRoof",
+			Size = Vector3.new(W + 8 - inset, 2, D + 8 - inset),
+			CFrame = at(0, UPPER + 5 + step * 1.9, 0),
+			Color = Color3.fromRGB(96, 90, 84),
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		})
+	end
+	local _ = RIDGE
+	part({ Name = "QuartersChimney", Size = Vector3.new(9, 26, 9), CFrame = at(-halfW + 8, UPPER + 6, 0), Color = Color3.fromRGB(120, 68, 54), Material = Enum.Material.Brick, Parent = parent })
+
+	-- ---- the sign over the door ----
+	local sign = part({ Name = "QuartersSign", Size = Vector3.new(30, 5, 0.8), CFrame = at(halfW + 2.4, 18, 0), Color = Palette.Blackboard, Parent = parent })
+	sign.CanCollide = false
+	signText(sign, "TEACHERS' QUARTERS", Palette.BusYellow, Enum.NormalId.Right)
+	signText(sign, "STAFF ONLY (GOOD LUCK)", Palette.BusYellow, Enum.NormalId.Left)
+
+	-- ---- the common room ----
+	-- a hearth on the west wall, which is the whole reason to come in
+	part({ Name = "Hearth", Size = Vector3.new(4, 14, 20), CFrame = at(-halfW + 3, 10, 0), Color = Color3.fromRGB(150, 142, 130), Material = Enum.Material.Slate, Parent = parent })
+	part({ Name = "HearthOpening", Size = Vector3.new(2, 8, 12), CFrame = at(-halfW + 4.2, 7, 0), Color = Color3.fromRGB(28, 24, 22), Parent = parent }).CanCollide = false
+	local fire = part({ Name = "HearthFire", Size = Vector3.new(1.6, 4, 9), CFrame = at(-halfW + 4.6, 5.4, 0), Color = Color3.fromRGB(255, 148, 52), Material = Enum.Material.Neon, Parent = parent })
+	fire.CanCollide = false
+	local glow = Instance.new("PointLight")
+	glow.Brightness = 2.4
+	glow.Range = 52
+	glow.Color = Color3.fromRGB(255, 168, 96)
+	glow.Parent = fire
+	part({ Name = "HearthMantel", Size = Vector3.new(5.4, 1.2, 22), CFrame = at(-halfW + 3.4, 14.6, 0), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
+
+	prop("ArmChair", CFrame.new(center + Vector3.new(-28, 3, -8)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("ArmChair", CFrame.new(center + Vector3.new(-28, 3, 8)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("Sofa", CFrame.new(center + Vector3.new(-18, 3, 0)) * CFrame.Angles(0, math.rad(90), 0))
+	prop("CoffeeTable", CFrame.new(center + Vector3.new(-23, 3, 0)))
+	prop("Bookshelf", CFrame.new(center + Vector3.new(-34, 3, -22)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("Bookshelf", CFrame.new(center + Vector3.new(-34, 3, 22)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("GrandfatherClock", CFrame.new(center + Vector3.new(-6, 3, -29)))
+	prop("PottedPlant", CFrame.new(center + Vector3.new(34, 3, -28)))
+	prop("Fern", CFrame.new(center + Vector3.new(-12, 3, 26)))
+
+	-- the long table they mark books at
+	part({ Name = "StaffTable", Size = Vector3.new(26, 0.7, 7), CFrame = at(6, 6.4, -20), Color = Color3.fromRGB(122, 86, 56), Material = Enum.Material.WoodPlanks, Parent = parent })
+	for _, lx in { -11, 11 } do
+		part({ Name = "StaffTableLeg", Size = Vector3.new(1.2, 3.6, 6), CFrame = at(6 + lx, 4.3, -20), Color = Color3.fromRGB(96, 66, 44), Material = Enum.Material.Wood, Parent = parent })
+	end
+	for i = 0, 3 do
+		prop("Chair", CFrame.new(center + Vector3.new(-3 + i * 6, 3, -15)) * CFrame.Angles(0, math.pi, 0))
+	end
+
+	-- a kitchen counter along the north wall
+	part({ Name = "StaffCounterTop", Size = Vector3.new(30, 0.6, 5), CFrame = at(18, 6.4, -halfD + 4), Color = Color3.fromRGB(216, 212, 202), Material = Enum.Material.Marble, Parent = parent })
+	part({ Name = "StaffCounterBody", Size = Vector3.new(30, 3.4, 4.6), CFrame = at(18, 4.4, -halfD + 4), Color = Color3.fromRGB(96, 108, 122), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	part({ Name = "StaffSink", Size = Vector3.new(5, 0.4, 3.4), CFrame = at(10, 6.6, -halfD + 4), Color = Color3.fromRGB(184, 190, 196), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	prop("VintageElectricKettle", CFrame.new(center + Vector3.new(22, 6.8, -halfD + 4)))
+	prop("VintageMicrowave", CFrame.new(center + Vector3.new(28, 6.8, -halfD + 4)))
+
+	-- ---- the stair up, in the east bay ----
+	buildStair(parent, CFrame.lookAt(center + Vector3.new(30, 3, 24), center + Vector3.new(30, 3, -4)), 14, 1, 1.9, 9)
+
+	-- ---- five studies upstairs ----
+	for index, teacher in TEACHERS do
+		local sz = -halfD + 14 + (index - 1) * 11
+		local doorX = 14
+		-- a partition per study, opening onto the landing
+		buildInteriorWall(
+			parent,
+			center + Vector3.new(-halfW + 2, GROUND + 3, sz),
+			center + Vector3.new(doorX, GROUND + 3, sz),
+			{}
+		)
+		local plaque = part({
+			Name = "StudyPlaque",
+			Size = Vector3.new(11, 2.6, 0.5),
+			CFrame = at(doorX + 1.6, GROUND + 12, sz - 6),
+			Color = Palette.Blackboard,
+			Parent = parent,
+		})
+		plaque.CanCollide = false
+		signText(plaque, teacher.name .. "\n" .. teacher.subject, teacher.color, Enum.NormalId.Right)
+
+		-- a bed, a desk and a lamp: a study is a room somebody lives in
+		part({ Name = "StudyBed", Size = Vector3.new(7, 2.6, 12), CFrame = at(-halfW + 8, GROUND + 4.3, sz - 6), Color = Color3.fromRGB(128, 92, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
+		part({ Name = "StudyMattress", Size = Vector3.new(6.4, 1.2, 11), CFrame = at(-halfW + 8, GROUND + 6.2, sz - 6), Color = teacher.color, Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+		prop("OfficeDesk", CFrame.new(center + Vector3.new(-halfW + 22, GROUND + 3, sz - 6)) * CFrame.Angles(0, math.rad(-90), 0))
+		prop("SchoolChair", CFrame.new(center + Vector3.new(-halfW + 28, GROUND + 3, sz - 6)) * CFrame.Angles(0, math.rad(90), 0))
+		prop("SteelShelves2", CFrame.new(center + Vector3.new(-halfW + 16, GROUND + 3, sz - 9)))
+	end
+	-- and a landing worth standing on
+	prop("Sofa2", CFrame.new(center + Vector3.new(28, GROUND + 3, 22)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("SideTable", CFrame.new(center + Vector3.new(22, GROUND + 3, 22)))
+	prop("PottedPlant", CFrame.new(center + Vector3.new(30, GROUND + 3, -26)))
+end
+
+
+-- ================= THE SANCTUM =================
+-- A door behind the bookshelf in the principal's office, a keypad, and a long
+-- stair down to a pyramid nobody else on the server knows is there.
+--
+-- The shaft is a real hole: the school's base slab and the office floor are
+-- both built around it (see FLOOR_HOLE) rather than the stair passing through
+-- solid geometry, because a secret passage you can see the seams of is not
+-- one. Access is checked on the server and the code is never sent to a client.
+local SANCTUM_HOLE = { x0 = -222, z0 = 16, x1 = -206, z1 = 40 }
+local SANCTUM_FLOOR = -80
+local SANCTUM_CENTRE = Vector3.new(-214, SANCTUM_FLOOR, -34)
+
+-- A floor slab with a rectangle missing, emitted as up to four parts.
+local function floorWithHole(parent: Instance, name: string, centre: Vector3, size: Vector2, hole, texTag: string?)
+	local x0, x1 = centre.X - size.X / 2, centre.X + size.X / 2
+	local z0, z1 = centre.Z - size.Y / 2, centre.Z + size.Y / 2
+	local hx0 = math.max(x0, hole.x0)
+	local hx1 = math.min(x1, hole.x1)
+	local hz0 = math.max(z0, hole.z0)
+	local hz1 = math.min(z1, hole.z1)
+	local rects
+	if hx0 >= hx1 or hz0 >= hz1 then
+		rects = { { x0, z0, x1, z1 } } -- the hole misses this slab entirely
+	else
+		rects = {
+			{ x0, z0, hx0, z1 },
+			{ hx1, z0, x1, z1 },
+			{ hx0, z0, hx1, hz0 },
+			{ hx0, hz1, hx1, z1 },
+		}
+	end
+	for index, rect in rects do
+		local rx0, rz0, rx1, rz1 = rect[1], rect[2], rect[3], rect[4]
+		if rx1 - rx0 < 0.05 or rz1 - rz0 < 0.05 then
+			continue
+		end
+		local piece = part({
+			Name = name .. index,
+			Size = Vector3.new(rx1 - rx0, 1, rz1 - rz0),
+			CFrame = CFrame.new((rx0 + rx1) / 2, centre.Y, (rz0 + rz1) / 2),
+			Color = Color3.fromRGB(196, 194, 188),
+			Parent = parent,
+		})
+		if texTag then
+			tag(piece, texTag)
+		end
+	end
+end
+
+local function buildSanctum(parent: Instance): BasePart
+	local HOLE = SANCTUM_HOLE
+	local shaftX = (HOLE.x0 + HOLE.x1) / 2
+
+	-- ---- the bookshelf that is a door ----
+	local shelf = part({
+		Name = "SecretBookshelf",
+		Size = Vector3.new(2.4, 15, 16),
+		CFrame = CFrame.new(-222.6, 7.5, 28),
+		Color = Color3.fromRGB(88, 58, 40),
+		Material = Enum.Material.WoodPlanks,
+		Parent = parent,
+	})
+	for level = 0, 3 do
+		part({ Name = "SecretShelfBoard", Size = Vector3.new(2.6, 0.5, 15.4), CFrame = CFrame.new(-222.6, 2 + level * 3.6, 28), Color = Color3.fromRGB(112, 76, 52), Material = Enum.Material.Wood, Parent = parent }).CanCollide = false
+		for book = 0, 8 do
+			part({
+				Name = "SecretShelfBook",
+				Size = Vector3.new(1.6, 2.6, 1.1),
+				CFrame = CFrame.new(-221.9, 3.6 + level * 3.6, 21.4 + book * 1.55),
+				Color = Color3.fromHSV(((level * 9 + book) % 12) / 12, 0.45, 0.62),
+				Material = Enum.Material.Fabric,
+				Parent = parent,
+			}).CanCollide = false
+		end
+	end
+
+	-- ---- the shaft head, hidden behind it ----
+	part({ Name = "SanctumJamb", Size = Vector3.new(1.4, 16, 2), CFrame = CFrame.new(-220, 8, 14.6), Color = Color3.fromRGB(120, 114, 104), Material = Enum.Material.Slate, Parent = parent })
+	part({ Name = "SanctumJamb", Size = Vector3.new(1.4, 16, 2), CFrame = CFrame.new(-220, 8, 41.4), Color = Color3.fromRGB(120, 114, 104), Material = Enum.Material.Slate, Parent = parent })
+
+	-- ---- the descent ----
+	-- 52 treads at 1.54 by 1.54 drops eighty studs over eighty, which is a
+	-- flight a Roblox character walks down without catching on a single step.
+	local STEPS, RISE, RUN = 52, 1.54, 1.54
+	for i = 0, STEPS - 1 do
+		part({
+			Name = "SanctumTread",
+			Size = Vector3.new(14, 1.6, RUN + 0.4),
+			CFrame = CFrame.new(shaftX, -RISE * i - 0.8, 36 - i * RUN),
+			Color = Color3.fromRGB(150, 142, 128),
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		})
+	end
+	-- shaft walls, so the flight is a passage and not a ledge over the void
+	local shaftLength = STEPS * RUN + 8
+	for _, side in { -1, 1 } do
+		part({
+			Name = "SanctumShaftWall",
+			-- stops a stud below the floor: a shaft wall poking up through the
+			-- office carpet is not much of a secret
+			Size = Vector3.new(2, 92, shaftLength),
+			CFrame = CFrame.new(shaftX + side * 8, -47, 38 - shaftLength / 2),
+			Color = Color3.fromRGB(104, 98, 90),
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		})
+	end
+	part({ Name = "SanctumShaftBack", Size = Vector3.new(18, 92, 2), CFrame = CFrame.new(shaftX, -47, 39), Color = Color3.fromRGB(104, 98, 90), Material = Enum.Material.Slate, Parent = parent })
+	-- torches down the wall
+	for i = 0, 5 do
+		local tz = 30 - i * 13
+		local ty = -RISE * ((30 - tz) / RUN) + 7
+		local flame = part({ Name = "SanctumTorch", Size = Vector3.new(1.4, 2.4, 1.4), CFrame = CFrame.new(shaftX - 6.4, ty, tz), Color = Color3.fromRGB(255, 168, 76), Material = Enum.Material.Neon, Parent = parent })
+		flame.CanCollide = false
+		local light = Instance.new("PointLight")
+		light.Brightness = 2
+		light.Range = 34
+		light.Color = Color3.fromRGB(255, 174, 96)
+		light.Parent = flame
+	end
+
+	-- ---- the chamber ----
+	local C = SANCTUM_CENTRE
+	local ROOM, HEIGHT = 150, 64
+	tag(part({ Name = "SanctumFloor", Size = Vector3.new(ROOM, 2, ROOM), CFrame = CFrame.new(C.X, C.Y - 1, C.Z), Color = Color3.fromRGB(58, 54, 50), Material = Enum.Material.Slate, Parent = parent }), "TexBlueStone")
+	for _, wall in {
+		{ Vector3.new(ROOM, HEIGHT, 2), Vector3.new(0, HEIGHT / 2, -ROOM / 2) },
+		{ Vector3.new(ROOM, HEIGHT, 2), Vector3.new(0, HEIGHT / 2, ROOM / 2) },
+		{ Vector3.new(2, HEIGHT, ROOM), Vector3.new(-ROOM / 2, HEIGHT / 2, 0) },
+		{ Vector3.new(2, HEIGHT, ROOM), Vector3.new(ROOM / 2, HEIGHT / 2, 0) },
+	} do
+		tag(part({ Name = "SanctumWall", Size = wall[1], CFrame = CFrame.new(C + wall[2]), Color = Color3.fromRGB(74, 68, 62), Material = Enum.Material.Slate, Parent = parent }), "TexBrick")
+	end
+	-- ceiling, in four pieces around the shaft
+	local top = C.Y + HEIGHT
+	for _, rect in {
+		{ C.X - ROOM / 2, C.Z - ROOM / 2, HOLE.x0, C.Z + ROOM / 2 },
+		{ HOLE.x1, C.Z - ROOM / 2, C.X + ROOM / 2, C.Z + ROOM / 2 },
+		{ HOLE.x0, C.Z - ROOM / 2, HOLE.x1, -6 },
+		{ HOLE.x0, 42, HOLE.x1, C.Z + ROOM / 2 },
+	} do
+		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
+		if x1 - x0 < 0.5 or z1 - z0 < 0.5 then
+			continue
+		end
+		part({ Name = "SanctumCeiling", Size = Vector3.new(x1 - x0, 2, z1 - z0), CFrame = CFrame.new((x0 + x1) / 2, top, (z0 + z1) / 2), Color = Color3.fromRGB(46, 42, 38), Material = Enum.Material.Slate, Parent = parent })
+	end
+
+	-- ---- the pyramid ----
+	local BASE, LAYERS = 100, 22
+	for i = 0, LAYERS - 1 do
+		local span = BASE * (1 - i / LAYERS)
+		tag(part({
+			Name = "SanctumPyramid",
+			Size = Vector3.new(span, 2.4, span),
+			CFrame = CFrame.new(C.X, C.Y + 1.2 + i * 2.2, C.Z),
+			Color = Color3.fromRGB(196, 176, 132),
+			Material = Enum.Material.Sandstone,
+			Parent = parent,
+		}), "TexBlueStone")
+	end
+	local cap = part({
+		Name = "SanctumCapstone",
+		Size = Vector3.new(9, 7, 9),
+		CFrame = CFrame.new(C.X, C.Y + 1.2 + LAYERS * 2.2 + 2, C.Z),
+		Color = Color3.fromRGB(246, 206, 92),
+		Material = Enum.Material.Neon,
+		Parent = parent,
+	})
+	local capGlow = Instance.new("PointLight")
+	capGlow.Brightness = 3
+	capGlow.Range = 90
+	capGlow.Color = Color3.fromRGB(255, 214, 120)
+	capGlow.Parent = cap
+
+	-- braziers at the four corners, and a throne facing the stair
+	for _, corner in { { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } } do
+		local bx, bz = C.X + corner[1] * 62, C.Z + corner[2] * 62
+		part({ Name = "SanctumBrazier", Size = Vector3.new(6, 8, 6), CFrame = CFrame.new(bx, C.Y + 4, bz), Color = Color3.fromRGB(92, 76, 52), Material = Enum.Material.Metal, Parent = parent })
+		local fire = part({ Name = "SanctumBrazierFire", Shape = Enum.PartType.Ball, Size = Vector3.new(5, 5, 5), CFrame = CFrame.new(bx, C.Y + 9.5, bz), Color = Color3.fromRGB(255, 152, 60), Material = Enum.Material.Neon, Parent = parent })
+		fire.CanCollide = false
+		local light = Instance.new("PointLight")
+		light.Brightness = 2.6
+		light.Range = 70
+		light.Color = Color3.fromRGB(255, 164, 84)
+		light.Parent = fire
+	end
+	part({ Name = "SanctumThrone", Size = Vector3.new(10, 4, 8), CFrame = CFrame.new(C.X, C.Y + 2, C.Z + 62), Color = Color3.fromRGB(88, 62, 44), Material = Enum.Material.WoodPlanks, Parent = parent })
+	part({ Name = "SanctumThroneBack", Size = Vector3.new(10, 16, 2), CFrame = CFrame.new(C.X, C.Y + 10, C.Z + 66), Color = Color3.fromRGB(88, 62, 44), Material = Enum.Material.WoodPlanks, Parent = parent })
+	local crest = part({ Name = "SanctumCrest", Size = Vector3.new(7, 7, 0.6), CFrame = CFrame.new(C.X, C.Y + 14, C.Z + 64.8), Color = Color3.fromRGB(246, 206, 92), Material = Enum.Material.Neon, Parent = parent })
+	crest.CanCollide = false
+
+	return shelf
+end
+
 -- ================= FINDING YOUR WAY =================
 -- A school you cannot navigate is a maze with lockers. Three things fix that,
 -- and they are the three things real buildings use: a board at the door that
@@ -3932,13 +4330,8 @@ end
 	-- ===================================================
 
 	-- interior base slab
-	tag(part({
-		Name = "SchoolBaseFloor",
-		Size = Vector3.new(448, 1, 248),
-		CFrame = CFrame.new(0, -0.55, 0),
-		Color = Color3.fromRGB(196, 194, 188),
-		Parent = folder,
-	}), "TexFloorTile")
+	-- built around the sanctum shaft rather than over it
+	floorWithHole(folder, "SchoolBaseFloor", Vector3.new(0, -0.55, 0), Vector2.new(448, 248), SANCTUM_HOLE, "TexFloorTile")
 
 	-- main corridor floor + stripe (the conveyor line)
 	tag(part({
@@ -3981,6 +4374,13 @@ end
 	-- ---------------- room floors (plan rooms, both wings) ----------------
 	buildZone(folder, "Cafeteria", Vector3.new(-204, 0, -23), Vector2.new(40, 58), Color3.fromRGB(235, 214, 156), "CAFETERIA", Enum.Material.CeramicTiles)
 	buildZone(folder, "PrincipalsOffice", Vector3.new(-204, 0, 35), Vector2.new(40, 58), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)", Enum.Material.Marble)
+	-- and cut the same shaft out of the office floor the zone just laid down
+	for _, existing in folder:GetChildren() do
+		if existing.Name == "PrincipalsOfficeFloor" then
+			existing:Destroy()
+		end
+	end
+	floorWithHole(folder, "PrincipalsOfficeFloor", Vector3.new(-204, -0.5, 35), Vector2.new(40, 58), SANCTUM_HOLE, "TexFloorTile")
 	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(204, 0, -23), Vector2.new(40, 58), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
 	buildZone(folder, "Detention", Vector3.new(204, 0, 35), Vector2.new(40, 58), Color3.fromRGB(126, 126, 132), "DETENTION", Enum.Material.Concrete)
 	tag(buildZone(folder, "Classroom101", Vector3.new(-74, 0, -94), Vector2.new(28, 60), Color3.fromRGB(148, 118, 96), "ROOM 101\nMATHEMATICS", Enum.Material.Carpet), "TexCarpet")
@@ -4416,7 +4816,10 @@ end
 	buildUpperFloor(folder)
 	furnishSubjectRooms(folder)
 	furnishUpperRooms(folder)
+	buildTeachersQuarters(folder, Vector3.new(-300, 0, -170))
+	buildCampusPath(folder, Vector3.new(-244, 0, -170), Vector3.new(-258, 0, -170), 14)
 	buildWayfinding(folder)
+	local secretDoor = buildSanctum(folder)
 	furnishProps()
 
 	optimize(folder)
@@ -4439,6 +4842,8 @@ end
 		dormBeds = dormBeds,
 		detentionSpot = detentionCenter,
 		infirmary = Vector3.new(122, 17, -94),
+		secretDoor = secretDoor,
+		sanctumSpawn = SANCTUM_CENTRE + Vector3.new(0, 6, 62),
 		folder = folder,
 	}
 end

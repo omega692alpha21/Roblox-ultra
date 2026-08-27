@@ -32,6 +32,55 @@ function ScreenFxController.Init(gui: ScreenGui)
 	hurt.Active = false
 	hurt.Parent = gui
 
+	-- A number that floats off whatever you just hit. Without it a landed
+	-- punch and a whiff look identical from behind your own shoulder, which is
+	-- most of why the fight mechanics read as broken.
+	Remotes.Get("HitMarker").OnClientEvent:Connect(function(position, amount, knockout)
+		if typeof(position) ~= "Vector3" then
+			return
+		end
+		local anchor = Instance.new("Part")
+		anchor.Anchored = true
+		anchor.CanCollide = false
+		anchor.CanQuery = false
+		anchor.CanTouch = false
+		anchor.Transparency = 1
+		anchor.Size = Vector3.one
+		anchor.CFrame = CFrame.new(position)
+		anchor.Parent = workspace
+
+		local billboard = Instance.new("BillboardGui")
+		billboard.Size = UDim2.fromOffset(140, 60)
+		billboard.AlwaysOnTop = true
+		billboard.Parent = anchor
+
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.fromScale(1, 1)
+		label.Font = Enum.Font.FredokaOne
+		label.TextScaled = true
+		label.TextStrokeTransparency = 0.2
+		local hit = tonumber(amount) or 0
+		if knockout == true then
+			label.Text = "KO!"
+			label.TextColor3 = Color3.fromRGB(255, 96, 72)
+		elseif hit > 0 then
+			label.Text = "-" .. math.floor(hit)
+			label.TextColor3 = Color3.fromRGB(255, 214, 120)
+		else
+			label.Text = "✦"
+			label.TextColor3 = Color3.fromRGB(226, 232, 240)
+		end
+		label.Parent = billboard
+
+		local rise = TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		TweenService:Create(anchor, rise, { CFrame = CFrame.new(position + Vector3.new(0, 6, 0)) }):Play()
+		TweenService:Create(label, rise, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+		task.delay(0.8, function()
+			anchor:Destroy()
+		end)
+	end)
+
 	Remotes.Get("ScreenFx").OnClientEvent:Connect(function(kind, intensity)
 		if kind == "shake" then
 			magnitude = math.clamp(tonumber(intensity) or 0.5, 0, 3)

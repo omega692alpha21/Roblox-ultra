@@ -326,7 +326,11 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 				"Impact",
 				16
 			)
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			local before = humanoid and humanoid.Health or 0
 			VitalsService.Damage(hitPlayer, def.id == "slingshot" and 14 or 7, shooter)
+			local after = humanoid and humanoid.Health or 0
+			Remotes.Get("HitMarker"):FireClient(shooter, at, math.max(1, math.floor(before - after + 0.5)), after <= 0)
 			if def.id == "snowball" then
 				slowTarget(hitPlayer, 3)
 				Remotes.Get("Notify"):FireClient(hitPlayer, "❄️ " .. shooter.DisplayName .. " got you with a snowball!", "info")
@@ -342,6 +346,18 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 		local hitPlayer = playerOf(hit)
 		if hitPlayer == shooter then
 			return
+		end
+		if not hitPlayer then
+			-- a student, not a player. Their limbs are CanQuery = false but
+			-- still touchable, so this is the only way a thrown toy ever
+			-- registers on the twenty people actually walking the corridor.
+			local model = hit:FindFirstAncestorOfClass("Model")
+			if model and model:FindFirstChildOfClass("Humanoid") and not Players:GetPlayerFromCharacter(model) then
+				local origin = shooter.Character and shooter.Character:GetPivot().Position or pellet.Position
+				ActionAnim.KnockDown(model, origin)
+				Remotes.Get("HitMarker"):FireClient(shooter, pellet.Position, 0, false)
+				AuraService.Add(shooter, 1)
+			end
 		end
 		detonate(pellet.Position, hitPlayer)
 	end)

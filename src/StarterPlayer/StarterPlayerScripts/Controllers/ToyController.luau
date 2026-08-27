@@ -109,7 +109,6 @@ function ToyController.Init(gui: ScreenGui)
 		chip.Text = toy.icon
 		chip.AutoButtonColor = true
 		chip.ZIndex = 29
-		chip.Visible = false
 		chip.Parent = rail
 		Layout.FitText(chip, 30)
 		local c = Instance.new("UICorner")
@@ -136,6 +135,15 @@ function ToyController.Init(gui: ScreenGui)
 		count.ZIndex = 30
 		count.Parent = chip
 		chip.Activated:Connect(function()
+			if not owns(toy.id) then
+				-- locked: a shake, not a switch, so the tap is answered
+				local home = chip.Position
+				chip.Position = home + UDim2.fromScale(0.02, 0)
+				task.delay(0.06, function()
+					chip.Position = home
+				end)
+				return
+			end
 			selected = toy.id
 			action.Text = toy.icon
 		end)
@@ -148,18 +156,26 @@ function ToyController.Init(gui: ScreenGui)
 			for _, toy in TOYS do
 				local chip = chips[toy.id]
 				local have = owns(toy.id)
-				chip.Visible = have
+				-- every slot stays on the bar. A toy you have not bought is a
+				-- dim slot with a padlock, which tells you it exists; hiding it
+				-- told you nothing and made the bar jump about as you shopped.
+				chip.BackgroundTransparency = have and 0.15 or 0.55
+				chip.TextTransparency = have and 0 or 0.45
+				local stroke = chip:FindFirstChildOfClass("UIStroke")
+				if stroke then
+					stroke.Transparency = (have and selected == toy.id) and 0 or 1
+				end
+				local count = chip:FindFirstChild("Count") :: TextLabel?
+				if count then
+					if not have then
+						count.Text = "🔒"
+					else
+						local left = ammoOf(toy.id)
+						count.Text = left == math.huge and "∞" or tostring(left)
+					end
+				end
 				if have then
 					anyOwned = true
-					local stroke = chip:FindFirstChildOfClass("UIStroke")
-					if stroke then
-						stroke.Transparency = selected == toy.id and 0 or 1
-					end
-					local count = chip:FindFirstChild("Count") :: TextLabel?
-					if count then
-						local left = ammoOf(toy.id)
-						count.Text = left == math.huge and "" or tostring(left)
-					end
 				end
 			end
 			if not owns(selected) then

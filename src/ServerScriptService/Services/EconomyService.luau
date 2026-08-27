@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
+local Cliques = require(ReplicatedStorage.Config.Cliques)
 local Students = require(ReplicatedStorage.Config.Students)
 local Rebirths = require(ReplicatedStorage.Config.Rebirths)
 local Rewards = require(ReplicatedStorage.Config.Rewards)
@@ -131,6 +132,8 @@ function EconomyService.AddCash(player: Player, amount: number, countsAsEarned: 
 	if not profile or amount <= 0 then
 		return
 	end
+	-- the Regular's edge: no special talent, better pay for everything
+	amount = math.floor(amount * Cliques.For(player).cashMult)
 	profile.cash += amount
 	if countsAsEarned then
 		profile.totalEarned += amount

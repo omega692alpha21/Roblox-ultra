@@ -1,8 +1,19 @@
 --!strict
--- Punches: knockback and health, server-validated cooldown + range.
--- Primary purpose is catching thieves; the Gym is the free-for-all flex zone.
--- A landed punch takes health off now (VitalsService owns the number), which
--- is what gives a scrap an end other than both parties getting bored.
+-- Punches: server-validated cooldown, range and cone.
+--
+-- This did not work, and the reason is worth writing down. It only ever looked
+-- for other PLAYERS. In a school with twenty students walking the corridor and
+-- a crew sitting in every homeroom, the overwhelmingly common case is swinging
+-- at an NPC -- and the swing played, and nothing happened, so the mechanic
+-- read as broken. It hits anything with a Humanoid now.
+--
+-- NPCs cannot be queried spatially: StudentGen turns CanQuery off on every
+-- limb, because thousands of queryable parts is what made the game stutter.
+-- So the search walks the models in the workspace instead, which is a few
+-- dozen at a punch every 0.35 seconds and costs nothing.
+--
+-- Punching an NPC pays nothing. It knocks them flat, they get up, and that is
+-- the whole reward -- otherwise the corridor becomes an aura farm.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -22,12 +33,23 @@ local FightService = {}
 
 local lastPunch: { [Player]: number } = {}
 
+type Target = {
+	root: BasePart,
+	humanoid: Humanoid?,
+	model: Model,
+	player: Player?,
+}
+
 local function onPunch(player: Player)
 	local now = os.clock()
 	if now - (lastPunch[player] or 0) < GameConfig.PunchCooldownSeconds then
 		return
 	end
 	lastPunch[player] = now
+
+	if VitalsService.IsKnockedOut(player) then
+		return
+	end
 
 	-- holding a dodgeball? the punch input throws it instead
 	if DodgeballService.TryThrow(player) then
@@ -44,73 +66,63 @@ local function onPunch(player: Player)
 	ActionAnim.Punch(character)
 	EffectsService.PlaySound(root, "Punch")
 
-	-- find the closest other character within range, biased to who we're facing
-	local bestTarget: Player? = nil
+	-- best thing in front of us: mostly facing, partly close
+	local best: Target? = nil
 	local bestScore = -math.huge
-	for _, other in Players:GetPlayers() do
-		if other == player then
-			continue
-		end
-		local otherRoot = other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-		if not otherRoot then
-			continue
-		end
-		local offset = otherRoot.Position - root.Position
+	for _, candidate in targetsNear(character :: Model, root) do
+		local offset = candidate.root.Position - root.Position
 		local distance = offset.Magnitude
-		if distance > GameConfig.PunchRange then
+		if distance < 0.01 then
 			continue
 		end
 		local facing = root.CFrame.LookVector:Dot(offset.Unit)
-		if facing < 0.2 then
-			continue
+		if facing < 0 then
+			continue -- behind you
 		end
-		local score = facing - distance / GameConfig.PunchRange
+		local score = facing * 2 - distance / GameConfig.PunchRange
 		if score > bestScore then
 			bestScore = score
-			bestTarget = other
+			best = candidate
 		end
 	end
 
-	if not bestTarget then
-		-- no player in range: check Rico the Bully
+	if not best then
+		-- no player and no student: Rico is the last thing worth checking
 		local ricoRoot = RivalService.GetRoot()
 		if ricoRoot then
 			local offset = ricoRoot.Position - root.Position
-			if offset.Magnitude <= GameConfig.PunchRange and root.CFrame.LookVector:Dot(offset.Unit) > 0.2 then
+			if offset.Magnitude <= GameConfig.PunchRange and root.CFrame.LookVector:Dot(offset.Unit) > 0 then
 				RivalService.OnPunched(player)
 			end
 		end
 		return
 	end
-	local target = bestTarget :: Player
-	local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if not targetRoot then
-		return
-	end
+	local target = best :: Target
 
 	local knockback = GameConfig.PunchKnockback
-	local cliqueId = player:GetAttribute("Clique")
-	local clique = typeof(cliqueId) == "string" and Cliques.Get(cliqueId) or nil
-	if clique then
-		knockback *= clique.knockbackMult
-	end
+	local role = Cliques.For(player)
+	knockback *= role.knockbackMult
 
-	local direction = (targetRoot.Position - root.Position).Unit
-	targetRoot.AssemblyLinearVelocity = direction * knockback + Vector3.new(0, knockback * 0.5, 0)
-	-- contact: particles and a thud at the point of impact, so a landed punch
-	-- looks and sounds different from a whiff
-	EffectsService.Hit(
-		targetRoot.Position + direction * -1.2 + Vector3.new(0, 0.6, 0),
-		Color3.fromRGB(255, 214, 120),
-		"PunchHit",
-		18
-	)
-	Remotes.Get("ScreenFx"):FireClient(player, "shake", 0.55)
-	VitalsService.Damage(target, GameConfig.PunchDamage, player)
+	local direction = (target.root.Position - root.Position).Unit
+	local impact = target.root.Position + direction * -1.2 + Vector3.new(0, 0.6, 0)
+	EffectsService.Hit(impact, Color3.fromRGB(255, 214, 120), "PunchHit", 18)
 
-	if StealService.IsCarrying(target) then
-		Signals.ThiefHit:Fire(player, target)
-		StealService.OnThiefPunched(target, player)
+	if target.player then
+		local hit = target.player :: Player
+		target.root.AssemblyLinearVelocity = direction * knockback + Vector3.new(0, knockback * 0.5, 0)
+		Remotes.Get("ScreenFx"):FireClient(player, "shake", 0.55)
+		local before = target.humanoid and target.humanoid.Health or 0
+		VitalsService.Damage(hit, GameConfig.PunchDamage, player)
+		local after = target.humanoid and target.humanoid.Health or 0
+		Remotes.Get("HitMarker"):FireClient(player, impact, math.max(1, math.floor(before - after + 0.5)), after <= 0)
+		if StealService.IsCarrying(hit) then
+			Signals.ThiefHit:Fire(player, hit)
+			StealService.OnThiefPunched(hit, player)
+		end
+	else
+		-- a student: they go over, they get up, nobody gets paid
+		ActionAnim.KnockDown(target.model, root.Position)
+		Remotes.Get("HitMarker"):FireClient(player, impact, 0, false)
 	end
 end
 

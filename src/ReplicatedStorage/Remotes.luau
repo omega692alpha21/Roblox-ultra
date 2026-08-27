@@ -22,7 +22,9 @@ local EVENTS = {
 	"OfflineEarnings", -- (amount: number, awaySeconds: number)
 	"CrewState", -- (crew: {{uid, id, mut, star}})
 	"Dialogue", -- (speaker: string, lines: {string})
-	"ScreenFx", -- (kind: "shake", intensity: number)
+	"ScreenFx", -- (kind: "shake" | "hurt", intensity: number)
+	"HitMarker", -- (position: Vector3, amount: number, knockout: boolean)
+	"SecretKeypad", -- server -> client: open the bookshelf keypad
 	-- client -> server
 	"FuseStudent", -- (defId: string)
 	"DoRebirth",
@@ -43,6 +45,7 @@ local EVENTS = {
 	"RequestJailSkip", -- client -> server: use the pass, or get the purchase prompt
 	"UseToy", -- client -> server (toyId: string, direction: Vector3)
 	"BuyToy", -- client -> server (toyId: string)
+	"SecretPin", -- client -> server (code: string)
 }
 
 local FUNCTIONS = {

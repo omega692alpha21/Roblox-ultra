@@ -58,6 +58,8 @@ return {
 	PunchRange = 8,
 	PunchKnockback = 40,
 	PunchDamage = 9,
+	-- the account that owns the place: the principal
+	OwnerUserId = 11578479542,
 	RepPerThiefHit = 2,
 	RepPerSteal = 10,
 
