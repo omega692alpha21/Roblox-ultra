@@ -133,6 +133,20 @@ function HudController.Init(gui: ScreenGui)
 		button.Parent = nav
 	end
 
+	-- build stamp so testers can confirm which version their server runs
+	UIBuilder.Label({
+		Name = "BuildStamp",
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, -8, 1, -4),
+		Size = UDim2.fromOffset(120, 16),
+		Text = "build " .. tostring(game.PlaceVersion),
+		TextColor3 = Color3.fromRGB(160, 170, 160),
+		TextScaled = false,
+		TextSize = 12,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		Parent = gui,
+	})
+
 	-- live updates from attributes (cash animates toward the real value)
 	local shownCash = 0
 	RunService.Heartbeat:Connect(function(dt: number)
