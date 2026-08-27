@@ -15,10 +15,11 @@ gui.IgnoreGuiInset = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = playerGui
 
-local Controllers = script.Parent:FindFirstChild("Controllers")
+-- StarterPlayerScripts contents are copied into PlayerScripts, and this
+-- script can start running before its sibling folder has arrived. Waiting for
+-- it is the difference between a working HUD and a silently dead client.
+local Controllers = script.Parent:WaitForChild("Controllers", 15)
 if not Controllers then
-	-- without this folder every controller require fails and the whole HUD
-	-- silently disappears, which is exactly what happened
 	local warnGui = Instance.new("ScreenGui")
 	warnGui.Name = "ClientFatal"
 	warnGui.DisplayOrder = 998
@@ -31,7 +32,7 @@ if not Controllers then
 	label.Font = Enum.Font.Code
 	label.TextScaled = true
 	label.TextColor3 = Color3.new(1, 1, 1)
-	label.Text = "FATAL: Controllers folder missing"
+	label.Text = "FATAL: Controllers folder never replicated"
 	label.Parent = warnGui
 	return
 end
@@ -63,7 +64,11 @@ local ORDER = {
 local results: { { name: string, ok: boolean, err: string? } } = {}
 for _, name in ORDER do
 	local ok, err = pcall(function()
-		(require(Controllers:FindFirstChild(name) :: ModuleScript) :: any).Init(gui)
+		local module = Controllers:WaitForChild(name, 10)
+		if not module then
+			error("module never replicated", 0)
+		end
+		(require(module :: ModuleScript) :: any).Init(gui)
 	end)
 	table.insert(results, { name = name, ok = ok, err = if ok then nil else tostring(err) })
 	if not ok then
