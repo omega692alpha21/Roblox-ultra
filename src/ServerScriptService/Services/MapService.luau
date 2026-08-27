@@ -1713,7 +1713,7 @@ local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gap
 			return p
 		end
 		-- base course
-		slab("FacadeBase", segLen, 3.2, 2.6, 1.6, Color3.fromRGB(198, 194, 184), Enum.Material.Concrete)
+		slab("FacadeBase", segLen, 3.2, 2.6, 1.6, Color3.fromRGB(198, 194, 184), Enum.Material.Concrete, "TexBlueStone")
 		-- three storeys of solid brick with punched, white-framed windows
 		for floor = 0, 2 do
 			local y0 = 3.2 + floor * 11.6
@@ -1733,6 +1733,11 @@ local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gap
 				part({ Name = "Muntin", Size = Vector3.new(winW, 0.45, 3.0), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 				-- sill under each window
 				part({ Name = "FacadeSill", Size = Vector3.new(winW + 2.6, 0.6, 2.5), CFrame = cf * CFrame.new(wx, y0 + 1.7, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+				-- keystone above and shutters either side: relief, not flat color
+				part({ Name = "Keystone", Size = Vector3.new(2.0, 2.2, 2.8), CFrame = cf * CFrame.new(wx, y0 + 10.6, 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+				for _, sh in { -1, 1 } do
+					part({ Name = "Shutter", Size = Vector3.new(2.4, 7.0, 2.7), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 2.2), y0 + 6.2, 0), Color = Color3.fromRGB(46, 74, 60), Material = Enum.Material.WoodPlanks, Parent = parent })
+				end
 			end
 			-- slim string course between storeys only
 			if floor < 2 then
@@ -1783,10 +1788,18 @@ local function buildGrandFacade(parent: Instance)
 			wedge.Color = SLATE
 			wedge.Material = Enum.Material.Slate
 			wedge.Parent = parent
+			tag(wedge, "TexRoof")
 		end
-		-- eaves overhang
+		-- eaves overhang + carved brackets underneath
 		trimBand(cx, baseY - 0.3, cz + d / 2, w + 4, 2.4, 1.2)
 		trimBand(cx, baseY - 0.3, cz - d / 2, w + 4, 2.4, 1.2)
+		local brackets = math.floor(w / 14)
+		for bI = 0, brackets do
+			local bx = cx - w / 2 + bI * (w / math.max(brackets, 1))
+			for _, bz in { cz + d / 2, cz - d / 2 } do
+				part({ Name = "EaveBracket", Size = Vector3.new(1.4, 2.6, 3.2), CFrame = CFrame.new(bx, baseY - 2.0, bz), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+			end
+		end
 	end
 
 	-- dormer windows punched into a pitched roof face
@@ -1823,7 +1836,40 @@ local function buildGrandFacade(parent: Instance)
 
 	-- ---- central block: portico, clock tower, grand steps ----
 	-- projecting entrance bay (the white stone block in the reference)
-	part({ Name = "EntryBay", Size = Vector3.new(56, 46, 14), CFrame = CFrame.new(0, 23, Z + 5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	-- the bay is a frame, not a plug: piers each side, header above, so the
+	-- doors underneath actually open into the lobby
+	for _, side in { -1, 1 } do
+		part({ Name = "EntryBayPier", Size = Vector3.new(15, 46, 14), CFrame = CFrame.new(side * 20.5, 23, Z + 5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+	part({ Name = "EntryBayHeader", Size = Vector3.new(56, 26, 14), CFrame = CFrame.new(0, 33, Z + 5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	-- arched transom over the doors
+	part({ Name = "EntryTransom", Size = Vector3.new(24, 4.6, 1.2), CFrame = CFrame.new(0, 17.4, Z - 1.6), Color = Color3.fromRGB(150, 196, 222), Material = Enum.Material.Glass, Transparency = 0.25, Parent = parent })
+	part({ Name = "EntryTransomBar", Size = Vector3.new(0.5, 4.6, 1.5), CFrame = CFrame.new(0, 17.4, Z - 1.7), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	-- double doors, swung open
+	for _, side in { -1, 1 } do
+		part({
+			Name = "MainDoor",
+			Size = Vector3.new(11, 14, 0.9),
+			CFrame = CFrame.new(side * 11.5, 7.6, Z - 2.2) * CFrame.Angles(0, side * math.rad(72), 0),
+			Color = Color3.fromRGB(96, 60, 40),
+			Material = Enum.Material.WoodPlanks,
+			Parent = parent,
+		})
+		part({
+			Name = "MainDoorGlass",
+			Size = Vector3.new(6.4, 7, 1.1),
+			CFrame = CFrame.new(side * 11.5, 10.2, Z - 2.2) * CFrame.Angles(0, side * math.rad(72), 0),
+			Color = Color3.fromRGB(150, 196, 222),
+			Material = Enum.Material.Glass,
+			Transparency = 0.3,
+			Parent = parent,
+		})
+	end
+	-- door surround
+	for _, side in { -1, 1 } do
+		part({ Name = "EntryJambStone", Size = Vector3.new(3, 16, 6), CFrame = CFrame.new(side * 13.5, 8, Z + 1), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+	part({ Name = "EntryLintelStone", Size = Vector3.new(30, 2.4, 6), CFrame = CFrame.new(0, 16.8, Z + 1), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	trimBand(0, 46.4, Z + 5, 60, 16, 2.2)
 	-- pediment over the bay
 	local ped = Instance.new("WedgePart")
@@ -1851,7 +1897,7 @@ local function buildGrandFacade(parent: Instance)
 			part({ Name = "ColumnBase", Size = Vector3.new(4.6, 1.2, 4.6), CFrame = CFrame.new(i * 11, 0.6, Z + 13), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 		end
 	end
-	part({ Name = "PorticoRoof", Size = Vector3.new(58, 2.2, 16), CFrame = CFrame.new(0, 36, Z + 12), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "PorticoRoof", Size = Vector3.new(78, 2.6, 18), CFrame = CFrame.new(0, 34.6, Z + 12), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 
 	-- grand steps
 	for i = 0, 4 do
@@ -1864,7 +1910,7 @@ local function buildGrandFacade(parent: Instance)
 	trimBand(0, 62.6, towerZ, 26, 26, 2.0)
 	part({ Name = "TowerClockBlock", Size = Vector3.new(25, 15, 25), CFrame = CFrame.new(0, 71, towerZ), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	trimBand(0, 79.2, towerZ, 27.5, 27.5, 2.0)
-	part({ Name = "TowerCap", Size = Vector3.new(21, 6, 21), CFrame = CFrame.new(0, 82.8, towerZ), Color = SLATE, Material = Enum.Material.Slate, Parent = parent })
+	tag(part({ Name = "TowerCap", Size = Vector3.new(21, 6, 21), CFrame = CFrame.new(0, 82.8, towerZ), Color = SLATE, Material = Enum.Material.Slate, Parent = parent }), "TexRoof")
 	part({ Name = "TowerSpire", Size = Vector3.new(1.5, 11, 1.5), CFrame = CFrame.new(0, 91.2, towerZ), Color = Color3.fromRGB(255, 196, 60), Material = Enum.Material.Metal, Parent = parent })
 	for _, spec in {
 		{ z = towerZ + 12.6, n = Enum.NormalId.Front },
@@ -1911,6 +1957,30 @@ local function buildGrandFacade(parent: Instance)
 	for _, x in { -225.2, 225.2 } do
 		part({ Name = "FacadeTrim", Size = Vector3.new(2.6, 1.5, 248), CFrame = CFrame.new(x, 14.6, 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 		part({ Name = "FacadeTrim", Size = Vector3.new(2.6, 1.5, 248), CFrame = CFrame.new(x, 26.2, 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	end
+
+	-- ---- entrance plaza, lamps and planters ----
+	part({ Name = "EntrancePlaza", Size = Vector3.new(120, 0.5, 46), CFrame = CFrame.new(0, 0.15, Z + 40), Color = Color3.fromRGB(186, 182, 174), Material = Enum.Material.Concrete, Parent = parent })
+	tag(part({ Name = "PlazaWalk", Size = Vector3.new(26, 0.6, 34), CFrame = CFrame.new(0, 0.2, Z + 40), Color = Color3.fromRGB(206, 200, 190), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
+	for _, lx in { -54, -30, 30, 54 } do
+		part({ Name = "WalkLampPost", Size = Vector3.new(0.9, 16, 0.9), CFrame = CFrame.new(lx, 8, Z + 34), Color = Color3.fromRGB(52, 56, 62), Material = Enum.Material.Metal, Parent = parent })
+		part({ Name = "WalkLampHead", Size = Vector3.new(2.6, 3, 2.6), CFrame = CFrame.new(lx, 16.6, Z + 34), Color = Color3.fromRGB(255, 244, 214), Material = Enum.Material.Neon, Parent = parent })
+		part({ Name = "WalkLampCap", Size = Vector3.new(3.4, 0.8, 3.4), CFrame = CFrame.new(lx, 18.4, Z + 34), Color = Color3.fromRGB(52, 56, 62), Material = Enum.Material.Metal, Parent = parent })
+	end
+	for _, px in { -44, 44 } do
+		part({ Name = "Planter", Size = Vector3.new(10, 3.4, 10), CFrame = CFrame.new(px, 1.7, Z + 26), Color = Color3.fromRGB(176, 170, 160), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "PlanterSoil", Size = Vector3.new(8.6, 0.6, 8.6), CFrame = CFrame.new(px, 3.5, Z + 26), Color = Color3.fromRGB(78, 58, 42), Material = Enum.Material.Ground, Parent = parent })
+		part({ Name = "PlanterShrub", Size = Vector3.new(7, 5.4, 7), CFrame = CFrame.new(px, 6.4, Z + 26), Color = Color3.fromRGB(62, 116, 58), Material = Enum.Material.Grass, Parent = parent })
+	end
+	-- flower boxes under the ground-floor windows (the Reddit-street touch)
+	for i = 0, 25 do
+		local bx = -206 + i * 16.4
+		if math.abs(bx) > 40 then
+			part({ Name = "WindowBox", Size = Vector3.new(8, 1.6, 2.4), CFrame = CFrame.new(bx, 10.2, Z + 1.6), Color = Color3.fromRGB(104, 68, 44), Material = Enum.Material.WoodPlanks, Parent = parent })
+			for f = 0, 2 do
+				part({ Name = "BoxBloom", Shape = Enum.PartType.Ball, Size = Vector3.new(1.9, 1.9, 1.9), CFrame = CFrame.new(bx - 2.4 + f * 2.4, 11.4, Z + 1.6), Color = f == 1 and Color3.fromRGB(226, 96, 108) or Color3.fromRGB(238, 176, 84), Material = Enum.Material.Grass, Parent = parent })
+			end
+		end
 	end
 
 	-- ---- hedges + lawn strip hugging the front ----
@@ -2023,7 +2093,7 @@ function MapService.Build(): Map
 	-- south face: wings + lobby with grand doors
 	buildFacadeWall(folder, Vector3.new(-224, 0, 124), Vector3.new(-60, 0, 124), {})
 	buildFacadeWall(folder, Vector3.new(60, 0, 124), Vector3.new(224, 0, 124), {})
-	buildFacadeWall(folder, Vector3.new(-60, 0, 124), Vector3.new(60, 0, 124), { { at = 44, width = 14 }, { at = 76, width = 14 } })
+	buildFacadeWall(folder, Vector3.new(-60, 0, 124), Vector3.new(60, 0, 124), { { at = 60, width = 26 } })
 	-- north face (interrupted by the gym block)
 	buildFacadeWall(folder, Vector3.new(-224, 0, -124), Vector3.new(-60, 0, -124), {})
 	buildFacadeWall(folder, Vector3.new(60, 0, -124), Vector3.new(224, 0, -124), {})
@@ -2082,7 +2152,8 @@ function MapService.Build(): Map
 	wingWalls(1)
 
 	-- spine walls
-	buildInteriorWall(folder, Vector3.new(-60, 0, 76), Vector3.new(-60, 0, 124), {}) -- lobby west
+	buildInteriorWall(folder, Vector3.new(-60, 0, 76), Vector3.new(-60, 0, 124), {})
+	buildInteriorWall(folder, Vector3.new(-26, 0, 76), Vector3.new(26, 0, 76), { { at = 26, width = 22 } }) -- lobby west
 	buildInteriorWall(folder, Vector3.new(60, 0, 76), Vector3.new(60, 0, 124), {}) -- lobby east
 	buildInteriorWall(folder, Vector3.new(-60, 0, -64), Vector3.new(-60, 0, 64), { { at = 70, width = 12 } }) -- atrium west (arch to courtyard)
 	buildInteriorWall(folder, Vector3.new(60, 0, -64), Vector3.new(60, 0, 64), { { at = 70, width = 12 } }) -- atrium east

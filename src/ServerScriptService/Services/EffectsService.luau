@@ -99,23 +99,23 @@ end
 
 -- Warm afternoon lighting + post effects, all from code.
 local function setupLighting()
-	Lighting.ClockTime = 12.8
-	Lighting.Brightness = 3.1
+	Lighting.ClockTime = 14.4
+	Lighting.Brightness = 2.7
 	Lighting.EnvironmentDiffuseScale = 1
 	Lighting.EnvironmentSpecularScale = 1
 	Lighting.GlobalShadows = true
 	Lighting.ShadowSoftness = 0.22
-	Lighting.ExposureCompensation = 0.1
-	Lighting.Ambient = Color3.fromRGB(120, 118, 110)
-	Lighting.OutdoorAmbient = Color3.fromRGB(130, 135, 125)
+	Lighting.ExposureCompensation = 0.18
+	Lighting.Ambient = Color3.fromRGB(128, 122, 112)
+	Lighting.OutdoorAmbient = Color3.fromRGB(140, 142, 134)
 
 	local atmosphere = Instance.new("Atmosphere")
-	atmosphere.Density = 0.26
+	atmosphere.Density = 0.32
 	atmosphere.Offset = 0.4
 	atmosphere.Color = Color3.fromRGB(199, 199, 189)
 	atmosphere.Decay = Color3.fromRGB(92, 105, 120)
 	atmosphere.Glare = 0.3
-	atmosphere.Haze = 1.2
+	atmosphere.Haze = 1.8
 	atmosphere.Parent = Lighting
 
 	local bloom = Instance.new("BloomEffect")
@@ -125,20 +125,20 @@ local function setupLighting()
 	bloom.Parent = Lighting
 
 	local color = Instance.new("ColorCorrectionEffect")
-	color.Saturation = 0.3
-	color.Contrast = 0.06
+	color.Saturation = 0.34
+	color.Contrast = 0.11
 	color.TintColor = Color3.fromRGB(255, 250, 240)
 	color.Parent = Lighting
 
 	local dof = Instance.new("DepthOfFieldEffect")
-	dof.FarIntensity = 0.28
+	dof.FarIntensity = 0.4
 	dof.FocusDistance = 55
 	dof.InFocusRadius = 90
 	dof.NearIntensity = 0
 	dof.Parent = Lighting
 
 	local rays = Instance.new("SunRaysEffect")
-	rays.Intensity = 0.08
+	rays.Intensity = 0.16
 	rays.Spread = 0.6
 	rays.Parent = Lighting
 
