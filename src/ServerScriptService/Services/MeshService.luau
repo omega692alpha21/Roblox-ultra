@@ -18,6 +18,10 @@ local ASSETS = {
 	Rock2 = 139159390912504,
 	Tuft = 86994237989339,
 	Hedge = 100949482507815,
+	Bush = 93546111036418,
+	BenchP = 115201833785687,
+	LampP = 87843148536695,
+	SmallTree = 116514552610924,
 	Palm = 120929000216583,
 	Arch = 76176860283975,
 	LockerBank = 111684152621060,
@@ -28,7 +32,8 @@ local ASSETS = {
 local TEXTURED: { [number]: boolean } = {
 	[ASSETS.Tree] = true, [ASSETS.Tree2] = true, [ASSETS.Conifer] = true,
 	[ASSETS.Rock1] = true, [ASSETS.Rock2] = true, [ASSETS.Tuft] = true,
-	[ASSETS.Hedge] = true,
+	[ASSETS.Hedge] = true, [ASSETS.Bush] = true, [ASSETS.BenchP] = true,
+	[ASSETS.LampP] = true, [ASSETS.SmallTree] = true,
 }
 
 local rng = Random.new(17)
@@ -357,6 +362,85 @@ function MeshService.Init(map: { folder: Folder })
 			local _, size = clone:GetBoundingBox()
 			clone:PivotTo(CFrame.new(spot + Vector3.new(0, size.Y / 2, 0)))
 			clone.Parent = map.folder
+		end
+	end
+
+	-- ---- painted landscaping: the density that sells the reference look ----
+	local bush = loadTemplate(ASSETS.Bush)
+	local smallTree = loadTemplate(ASSETS.SmallTree)
+	local benchP = loadTemplate(ASSETS.BenchP)
+	local lampP = loadTemplate(ASSETS.LampP)
+	local landRng = Random.new(613)
+
+	local function place(template: Model?, name: string, cf: CFrame, scale: number)
+		if not template then
+			return
+		end
+		local clone = template:Clone()
+		clone.Name = name
+		clone:ScaleTo(scale)
+		local _, size = clone:GetBoundingBox()
+		clone:PivotTo(cf * CFrame.new(0, size.Y / 2, 0))
+		clone.Parent = map.folder
+	end
+
+	-- keep-out volumes: the building footprint, the plaza and the parking
+	local function clear(x: number, z: number): boolean
+		if math.abs(x) < 236 and z > -160 and z < 136 then
+			return false -- the school itself
+		end
+		if math.abs(x) < 74 and z > 130 and z < 210 then
+			return false -- entrance walk
+		end
+		if math.abs(x) > 72 and math.abs(x) < 196 and z > 132 and z < 196 then
+			return false -- parking aprons
+		end
+		return true
+	end
+
+	-- bushes and small trees ringing the lawns and lining the approach
+	for i = 1, 120 do
+		local a = landRng:NextNumber(0, math.pi * 2)
+		local d = landRng:NextNumber(150, 300)
+		local x, z = math.sin(a) * d, math.cos(a) * d + 20
+		if clear(x, z) then
+			local pick = landRng:NextNumber()
+			if pick < 0.55 then
+				place(bush, "PaintBush", CFrame.new(x, 0, z) * CFrame.Angles(0, landRng:NextNumber(0, 6.28), 0), landRng:NextNumber(0.7, 1.5))
+			else
+				place(smallTree, "PaintSmallTree", CFrame.new(x, 0, z) * CFrame.Angles(0, landRng:NextNumber(0, 6.28), 0), landRng:NextNumber(0.9, 1.6))
+			end
+		end
+	end
+	-- foundation planting hugging the facade
+	for i = 0, 23 do
+		local x = -220 + i * 19
+		if math.abs(x) > 46 then
+			place(bush, "PaintBush", CFrame.new(x, 0, 131) * CFrame.Angles(0, landRng:NextNumber(0, 6.28), 0), landRng:NextNumber(0.6, 0.95))
+		end
+	end
+	-- courtyard planting
+	for _, cx in { -116, 116 } do
+		for i = 0, 5 do
+			local a = i / 6 * math.pi * 2
+			place(bush, "PaintBush", CFrame.new(cx + math.sin(a) * 40, 0, math.cos(a) * 36) * CFrame.Angles(0, landRng:NextNumber(0, 6.28), 0), landRng:NextNumber(0.7, 1.2))
+		end
+		place(smallTree, "PaintSmallTree", CFrame.new(cx - 26, 0, 26), 1.3)
+		place(smallTree, "PaintSmallTree", CFrame.new(cx + 28, 0, -22), 1.15)
+	end
+	-- painted benches and lamps replace the box versions along the walk
+	for _, sgn in { -1, 1 } do
+		for _, bz in { 154, 170 } do
+			place(benchP, "PaintBench", CFrame.new(sgn * 40, 0, bz) * CFrame.Angles(0, sgn > 0 and math.pi / 2 or -math.pi / 2, 0), 1.0)
+		end
+		for _, lz in { 146, 168, 190 } do
+			place(lampP, "PaintLamp", CFrame.new(sgn * 56, 0, lz) * CFrame.Angles(0, sgn > 0 and math.pi or 0, 0), 1.0)
+		end
+	end
+	for _, part in map.folder:GetDescendants() do
+		if part:IsA("BasePart") and (part.Name == "BenchSeat" or part.Name == "BenchBack" or part.Name == "BenchLeg"
+			or part.Name == "WalkLampPost" or part.Name == "WalkLampHead" or part.Name == "WalkLampCap") then
+			part:Destroy()
 		end
 	end
 
