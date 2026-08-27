@@ -229,17 +229,54 @@ local function onChoose(player: Player, outfit: unknown)
 	end
 end
 
+-- Nobody walks Crumbworth in their own Roblox avatar: if a player never
+-- picked a starter, they get one by default (userId parity) until they do.
+local function outfitFor(player: Player): string
+	local profile = DataService.Get(player)
+	if profile and profile.outfit then
+		return profile.outfit :: string
+	end
+	local attr = player:GetAttribute("Outfit")
+	if attr == "boy" or attr == "girl" then
+		return attr :: string
+	end
+	return (player.UserId % 2 == 0) and "boy" or "girl"
+end
+
 function CharacterService.Init()
 	Remotes.Get("ChooseCharacter").OnServerEvent:Connect(onChoose)
 
 	local function hook(player: Player)
-		player.CharacterAdded:Connect(function(character)
-			task.wait(0.6) -- let the avatar finish loading before restyling it
-			local profile = DataService.Get(player)
-			if profile and profile.outfit then
-				dress(character, profile.outfit :: string)
-			end
+		local function apply(character: Model)
+			dress(character, outfitFor(player))
+		end
+		player.CharacterAppearanceLoaded:Connect(function(character)
+			-- the avatar's real clothes/hats stream in AFTER CharacterAdded
+			-- and would overwrite the outfit — dress again once they land
+			task.wait(0.1)
+			apply(character)
 		end)
+		player.CharacterAdded:Connect(function(character)
+			task.wait(0.5)
+			apply(character)
+			character.ChildAdded:Connect(function(child)
+				if child:IsA("Accessory") or child:IsA("Shirt") or child:IsA("Pants") then
+					task.wait()
+					child:Destroy()
+				end
+			end)
+			task.delay(2.5, function()
+				if character.Parent then
+					apply(character)
+				end
+			end)
+		end)
+		if player.Character then
+			task.spawn(function()
+				task.wait(0.5)
+				apply(player.Character :: Model)
+			end)
+		end
 	end
 	Players.PlayerAdded:Connect(hook)
 	for _, player in Players:GetPlayers() do
@@ -249,9 +286,9 @@ function CharacterService.Init()
 	require(script.Parent.Parent.Signals).ProfileLoaded:Connect(function(player, profile)
 		if profile.outfit then
 			player:SetAttribute("Outfit", profile.outfit)
-			if player.Character then
-				dress(player.Character, profile.outfit :: string)
-			end
+		end
+		if player.Character then
+			dress(player.Character, outfitFor(player))
 		end
 	end)
 end
