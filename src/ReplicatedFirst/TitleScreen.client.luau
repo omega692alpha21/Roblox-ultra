@@ -84,11 +84,25 @@ end
 
 -- ===== logo =====
 local logoHolder = Instance.new("Frame")
-logoHolder.AnchorPoint = Vector2.new(0.5, 0.5)
-logoHolder.Position = UDim2.fromScale(0.5, 0.38)
-logoHolder.Size = UDim2.fromScale(0.9, 0.34)
+local column = Instance.new("Frame")
+column.Name = "Column"
+column.AnchorPoint = Vector2.new(0.5, 0.5)
+column.Position = UDim2.fromScale(0.5, 0.5)
+column.Size = UDim2.new(0, 460, 1, -40)
+column.BackgroundTransparency = 1
+column.Parent = backdrop
+local columnLayout = Instance.new("UIListLayout")
+columnLayout.FillDirection = Enum.FillDirection.Vertical
+columnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+columnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+columnLayout.Padding = UDim.new(0, 14)
+columnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+columnLayout.Parent = column
+
+logoHolder.LayoutOrder = 1
+logoHolder.Size = UDim2.new(1, 0, 0, 150)
 logoHolder.BackgroundTransparency = 1
-logoHolder.Parent = backdrop
+logoHolder.Parent = column
 
 local logoScale = Instance.new("UIScale")
 logoScale.Scale = 0.7
@@ -133,7 +147,7 @@ local function wordLabel(text: string, yScale: number, fill: Color3, shadow: Col
 	local shadowLabel = Instance.new("TextLabel")
 	shadowLabel.AnchorPoint = Vector2.new(0.5, 0)
 	shadowLabel.Position = UDim2.new(0.5, 4, yScale, 5)
-	shadowLabel.Size = UDim2.fromScale(1, 0.42)
+	shadowLabel.Size = UDim2.fromScale(1, 0.4)
 	shadowLabel.BackgroundTransparency = 1
 	shadowLabel.Font = Enum.Font.FredokaOne
 	shadowLabel.Text = text
@@ -144,7 +158,7 @@ local function wordLabel(text: string, yScale: number, fill: Color3, shadow: Col
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0)
 	label.Position = UDim2.fromScale(0.5, yScale)
-	label.Size = UDim2.fromScale(1, 0.42)
+	label.Size = UDim2.fromScale(1, 0.4)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.FredokaOne
 	label.Text = text
@@ -175,12 +189,11 @@ tagline.Parent = logoHolder
 
 -- ===== loading bar + tip =====
 local barHolder = Instance.new("Frame")
-barHolder.AnchorPoint = Vector2.new(0.5, 0.5)
-barHolder.Position = UDim2.fromScale(0.5, 0.68)
-barHolder.Size = UDim2.new(0.62, 0, 0, 16)
+barHolder.LayoutOrder = 2
+barHolder.Size = UDim2.new(1, -60, 0, 16)
 barHolder.BackgroundColor3 = Color3.fromRGB(44, 58, 41)
 barHolder.BorderSizePixel = 0
-barHolder.Parent = backdrop
+barHolder.Parent = column
 local barCorner = Instance.new("UICorner")
 barCorner.CornerRadius = UDim.new(1, 0)
 barCorner.Parent = barHolder
@@ -210,12 +223,11 @@ statusLabel.TextColor3 = Color3.fromRGB(150, 170, 145)
 statusLabel.Parent = barHolder
 
 local tipCard = Instance.new("Frame")
-tipCard.AnchorPoint = Vector2.new(0.5, 1)
-tipCard.Position = UDim2.fromScale(0.5, 0.93)
-tipCard.Size = UDim2.new(0.78, 0, 0, 76)
+tipCard.LayoutOrder = 4
+tipCard.Size = UDim2.new(1, -20, 0, 72)
 tipCard.BackgroundColor3 = Color3.fromRGB(33, 45, 30)
 tipCard.BorderSizePixel = 0
-tipCard.Parent = backdrop
+tipCard.Parent = column
 local tipCorner = Instance.new("UICorner")
 tipCorner.CornerRadius = UDim.new(0, 14)
 tipCorner.Parent = tipCard
@@ -250,9 +262,8 @@ tipText.Parent = tipCard
 
 -- ===== play button (hidden until loaded) =====
 local playButton = Instance.new("TextButton")
-playButton.AnchorPoint = Vector2.new(0.5, 0.5)
-playButton.Position = UDim2.fromScale(0.5, 0.68)
-playButton.Size = UDim2.fromOffset(260, 68)
+playButton.LayoutOrder = 2
+playButton.Size = UDim2.new(1, -60, 0, 62)
 playButton.BackgroundColor3 = GREEN
 playButton.Font = Enum.Font.FredokaOne
 playButton.Text = "CONTINUE  \u{25B6}"
@@ -260,7 +271,7 @@ playButton.TextScaled = true
 playButton.TextColor3 = Color3.new(1, 1, 1)
 playButton.AutoButtonColor = true
 playButton.Visible = false
-playButton.Parent = backdrop
+playButton.Parent = column
 local playCorner = Instance.new("UICorner")
 playCorner.CornerRadius = UDim.new(0, 16)
 playCorner.Parent = playButton
@@ -273,9 +284,8 @@ playScale.Parent = playButton
 
 -- NEW STUDENT: pick your starter before entering
 local newButton = Instance.new("TextButton")
-newButton.AnchorPoint = Vector2.new(0.5, 0.5)
-newButton.Position = UDim2.fromScale(0.5, 0.79)
-newButton.Size = UDim2.fromOffset(260, 54)
+newButton.LayoutOrder = 3
+newButton.Size = UDim2.new(1, -60, 0, 52)
 newButton.BackgroundColor3 = Color3.fromRGB(38, 50, 96)
 newButton.Font = Enum.Font.FredokaOne
 newButton.Text = "\u{2605}  NEW STUDENT"
@@ -283,7 +293,7 @@ newButton.TextScaled = true
 newButton.TextColor3 = Color3.new(1, 1, 1)
 newButton.AutoButtonColor = true
 newButton.Visible = false
-newButton.Parent = backdrop
+newButton.Parent = column
 local newCorner = Instance.new("UICorner")
 newCorner.CornerRadius = UDim.new(0, 14)
 newCorner.Parent = newButton
@@ -317,7 +327,9 @@ local driftConn = RunService.RenderStepped:Connect(function(dt: number)
 			drifter.label.Position = UDim2.fromScale(pos.X.Scale, newY)
 		end
 	end
-	logoHolder.Position = UDim2.new(0.5, 0, 0.38, math.sin(elapsed * 1.6) * 6)
+	if elapsed > 1 then -- let the entrance tween finish before the idle bob
+		logoScale.Scale = 1 + math.sin(elapsed * 1.6) * 0.012
+	end
 end)
 
 -- rotating tips

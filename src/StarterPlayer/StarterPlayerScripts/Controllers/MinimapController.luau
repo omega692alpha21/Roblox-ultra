@@ -46,7 +46,13 @@ local MARKERS: { Marker } = {
 	{ x = -116, z = 0, icon = "👥", color = Color3.fromRGB(180, 255, 200) },
 }
 
-function MinimapController.Init(gui: ScreenGui)
+function MinimapController.Init(_shared: ScreenGui)
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "MinimapUI"
+	gui.ResetOnSpawn = false
+	gui.IgnoreGuiInset = false
+	gui.DisplayOrder = 55
+	gui.Parent = (game:GetService("Players").LocalPlayer :: any):WaitForChild("PlayerGui")
 	local frame = Instance.new("Frame")
 	frame.Name = "Minimap"
 	frame.Position = UDim2.fromOffset(14, 14)

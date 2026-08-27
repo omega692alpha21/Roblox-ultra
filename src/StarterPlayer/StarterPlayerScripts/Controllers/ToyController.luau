@@ -22,7 +22,15 @@ local TOYS: { Toy } = {
 
 local selected = "slingshot"
 
-function ToyController.Init(gui: ScreenGui)
+function ToyController.Init(_shared: ScreenGui)
+	-- own ScreenGui, high DisplayOrder: the toy controls must never be hidden
+	-- behind another panel or lost if a shared gui is rebuilt
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "ToyUI"
+	gui.ResetOnSpawn = false
+	gui.IgnoreGuiInset = false
+	gui.DisplayOrder = 60
+	gui.Parent = (game:GetService("Players").LocalPlayer :: any):WaitForChild("PlayerGui")
 	local function ammoOf(id: string): number
 		if id == "slingshot" then
 			return math.huge

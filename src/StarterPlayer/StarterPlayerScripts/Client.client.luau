@@ -49,6 +49,34 @@ for _, name in ORDER do
 	table.insert(results, { name = name, ok = ok, err = if ok then nil else tostring(err) })
 	if not ok then
 		warn(("[LML] %s.Init FAILED: %s"):format(name, tostring(err)))
+		-- put the error where a screenshot can read it: silent client
+		-- failures are how the toy HUD went missing for a whole build
+		task.spawn(function()
+			local found = playerGui:FindFirstChild("ClientErrors")
+			local errGui: ScreenGui
+			if found and found:IsA("ScreenGui") then
+				errGui = found
+			else
+				local made = Instance.new("ScreenGui")
+				made.Name = "ClientErrors"
+				made.ResetOnSpawn = false
+				made.DisplayOrder = 90
+				made.Parent = playerGui
+				local list = Instance.new("UIListLayout")
+				list.Padding = UDim.new(0, 4)
+				list.Parent = made
+				errGui = made
+			end
+			local label = Instance.new("TextLabel")
+			label.Size = UDim2.new(0, 620, 0, 30)
+			label.Position = UDim2.fromOffset(10, 200)
+			label.BackgroundColor3 = Color3.fromRGB(150, 26, 26)
+			label.Font = Enum.Font.Code
+			label.TextScaled = true
+			label.TextColor3 = Color3.new(1, 1, 1)
+			label.Text = ("%s: %s"):format(name, tostring(err):sub(1, 90))
+			label.Parent = errGui
+		end)
 	end
 end
 
