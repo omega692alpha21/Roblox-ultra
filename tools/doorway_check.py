@@ -21,7 +21,8 @@ parts = json.load(open(dump))
 # (name, cx, cy, cz, sx, sy, sz) - y spans 1..9, floor to head height
 LANES = [
     ("main entrance",       0, 5,  100,  14, 8, 30),
-    ("lobby into atrium",   0, 5,   68,  14, 8, 12),
+    ("lobby into corridor", 0, 5,   79,  20, 8, 14),
+    ("corridor into atrium",0, 5,   62,  20, 8, 14),
     ("main corridor",       0, 5,   70, 430, 8,  8),
     ("room 101 door",     -74, 5,  -64,  10, 8, 10),
     ("music room door",    74, 5,  -64,  10, 8, 10),
@@ -40,6 +41,21 @@ LANES = [
 ALLOWED = ("Fountain", "Locker", "Bench", "Planter", "Tree", "Flower", "Hedge")
 
 
+def world_extents(part):
+    """Half-extents along the world axes, accounting for rotation.
+
+    A rotated cylinder reports its Size along its own axes, so a standing
+    column reads as a beam lying on its side unless the rotation is applied.
+    """
+    r = part.get("r")
+    if not r or len(r) != 9:
+        return [v / 2 for v in part["s"]]
+    return [
+        0.5 * sum(abs(r[row * 3 + col]) * part["s"][col] for col in range(3))
+        for row in range(3)
+    ]
+
+
 def centre_in(part, lane):
     _, cx, cy, cz, sx, sy, sz = lane
     for i, (bc, bs) in enumerate(((cx, sx), (cy, sy), (cz, sz))):
@@ -52,15 +68,15 @@ bad = 0
 for lane in LANES:
     hits = [p for p in parts
             if p.get("cc", True)
-            and max(p["s"]) > 0.6
+            and max(world_extents(p)) > 0.3
             and not any(a in p["n"] for a in ALLOWED)
             and centre_in(p, lane)]
     if hits:
         print(f"\n  {lane[0]}: {len(hits)} solid part(s) in the way")
         for h in sorted(hits, key=lambda p: p["n"])[:10]:
             x, y, z = h["p"]
-            w, ht, d = h["s"]
-            print(f"      {h['n']:24s} at ({x:7.1f},{y:5.1f},{z:7.1f})  size {w:.1f}x{ht:.1f}x{d:.1f}")
+            w, ht, d = (v * 2 for v in world_extents(h))
+            print(f"      {h['n']:24s} at ({x:7.1f},{y:5.1f},{z:7.1f})  spans {w:.1f}x{ht:.1f}x{d:.1f}")
         bad += len(hits)
 
 print("\nPASS - every walkway is clear" if bad == 0 else f"\nFAIL - {bad} obstruction(s)")

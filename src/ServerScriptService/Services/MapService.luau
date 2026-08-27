@@ -2667,7 +2667,9 @@ local function optimize(root: Instance)
 		-- very easy to plant a board or a post exactly where a door goes, and
 		-- the only reliable defence is that none of it is ever solid.
 		local n = part.Name
-		if n:find("Sign") or n:find("Plaque") or n:find("Board") or n:find("Banner") then
+		if n:find("Sign") or n:find("Plaque") or n:find("Board") or n:find("Banner")
+			or n:find("Crest") or n:find("Emblem") or n:find("Pennant") or n:find("Motto")
+		then
 			part.CanCollide = false
 		end
 		if not part.Anchored or part.CanCollide then
@@ -2898,7 +2900,8 @@ end
 	for _, colSpec in {
 		{ z = 59, xs = { -160, -132, -104, -76 } },
 		{ z = 59, xs = { 76, 104, 132, 160 } },
-		{ z = 81, xs = { -40, 0, 40 } },
+		-- no column at x = 0: that is the middle of the lobby opening
+		{ z = 81, xs = { -40, 40 } },
 	} do
 		for _, cx in colSpec.xs do
 			part({
@@ -3034,8 +3037,12 @@ end
 
 	-- lobby dressing
 	part({ Name = "LobbyDesk", Size = Vector3.new(18, 3.4, 4), CFrame = CFrame.new(-30, 1.7, 92), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = folder })
-	local crest = part({ Name = "LobbyCrest", Size = Vector3.new(16, 10, 0.8), CFrame = CFrame.new(0, 8, 78), Color = Palette.Blackboard, Parent = folder })
-	signText(crest, "CRUMBWORTH HIGH\nEST. 1954", Palette.BusYellow, Enum.NormalId.Back)
+	-- On the wall beside the corridor opening, not across it. This was a 16
+	-- stud board hung in the middle of a 23 stud doorway, so walking in from
+	-- the lobby meant walking into a blackboard.
+	local crest = part({ Name = "LobbyCrest", Size = Vector3.new(13, 7, 0.5), CFrame = CFrame.new(-18.5, 9, 80.1), Color = Palette.Blackboard, Parent = folder })
+	crest.CanCollide = false
+	signText(crest, "CRUMBWORTH HIGH\nEST. 1954", Palette.BusYellow, Enum.NormalId.Front)
 
 	buildGrandFacade(folder)
 	buildFrontGrounds(folder)
