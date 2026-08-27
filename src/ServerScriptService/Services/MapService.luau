@@ -1906,21 +1906,21 @@ local function buildGrandFacade(parent: Instance)
 
 	-- clock tower rising behind the portico
 	local towerZ = Z - 6
-	tag(part({ Name = "ClockTower", Size = Vector3.new(24, 62, 24), CFrame = CFrame.new(0, 31, towerZ), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
-	trimBand(0, 62.6, towerZ, 26, 26, 2.0)
-	part({ Name = "TowerClockBlock", Size = Vector3.new(25, 15, 25), CFrame = CFrame.new(0, 71, towerZ), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
-	trimBand(0, 79.2, towerZ, 27.5, 27.5, 2.0)
-	tag(part({ Name = "TowerCap", Size = Vector3.new(21, 6, 21), CFrame = CFrame.new(0, 82.8, towerZ), Color = SLATE, Material = Enum.Material.Slate, Parent = parent }), "TexRoof")
-	part({ Name = "TowerSpire", Size = Vector3.new(1.5, 11, 1.5), CFrame = CFrame.new(0, 91.2, towerZ), Color = Color3.fromRGB(255, 196, 60), Material = Enum.Material.Metal, Parent = parent })
+	tag(part({ Name = "ClockTower", Size = Vector3.new(24, 54, 24), CFrame = CFrame.new(0, 44, towerZ), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+	trimBand(0, 71.6, towerZ, 26, 26, 2.0)
+	part({ Name = "TowerClockBlock", Size = Vector3.new(25, 15, 25), CFrame = CFrame.new(0, 80, towerZ), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	trimBand(0, 88.2, towerZ, 27.5, 27.5, 2.0)
+	tag(part({ Name = "TowerCap", Size = Vector3.new(21, 6, 21), CFrame = CFrame.new(0, 91.8, towerZ), Color = SLATE, Material = Enum.Material.Slate, Parent = parent }), "TexRoof")
+	part({ Name = "TowerSpire", Size = Vector3.new(1.5, 11, 1.5), CFrame = CFrame.new(0, 100.2, towerZ), Color = Color3.fromRGB(255, 196, 60), Material = Enum.Material.Metal, Parent = parent })
 	for _, spec in {
 		{ z = towerZ + 12.6, n = Enum.NormalId.Front },
 		{ z = towerZ - 12.6, n = Enum.NormalId.Back },
 	} do
-		local face = part({ Name = "ClockFace", Size = Vector3.new(11, 11, 0.5), CFrame = CFrame.new(0, 71, spec.z), Color = Color3.fromRGB(244, 240, 230), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		local face = part({ Name = "ClockFace", Size = Vector3.new(11, 11, 0.5), CFrame = CFrame.new(0, 80, spec.z), Color = Color3.fromRGB(244, 240, 230), Material = Enum.Material.SmoothPlastic, Parent = parent })
 		local dir = spec.n == Enum.NormalId.Front and 1 or -1
-		part({ Name = "ClockRing", Size = Vector3.new(12.6, 12.6, 0.3), CFrame = CFrame.new(0, 71, spec.z - dir * 0.2), Color = Color3.fromRGB(120, 90, 40), Material = Enum.Material.Metal, Parent = parent })
-		part({ Name = "ClockHour", Size = Vector3.new(0.8, 3.2, 0.25), CFrame = CFrame.new(0, 72.4, spec.z + dir * 0.35), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
-		part({ Name = "ClockMinute", Size = Vector3.new(0.6, 4.2, 0.25), CFrame = CFrame.new(1.3, 71.8, spec.z + dir * 0.36) * CFrame.Angles(0, 0, math.rad(-58)), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
+		part({ Name = "ClockRing", Size = Vector3.new(12.6, 12.6, 0.3), CFrame = CFrame.new(0, 80, spec.z - dir * 0.2), Color = Color3.fromRGB(120, 90, 40), Material = Enum.Material.Metal, Parent = parent })
+		part({ Name = "ClockHour", Size = Vector3.new(0.8, 3.2, 0.25), CFrame = CFrame.new(0, 81.4, spec.z + dir * 0.35), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
+		part({ Name = "ClockMinute", Size = Vector3.new(0.6, 4.2, 0.25), CFrame = CFrame.new(1.3, 80.8, spec.z + dir * 0.36) * CFrame.Angles(0, 0, math.rad(-58)), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
 		local _ = face
 	end
 
@@ -1996,6 +1996,105 @@ local function buildGrandFacade(parent: Instance)
 		part({ Name = "FlagPoleSmall", Size = Vector3.new(0.7, 22, 0.7), CFrame = CFrame.new(fx, 11, Z + 24), Color = Color3.fromRGB(198, 198, 202), Material = Enum.Material.Metal, Parent = parent })
 		part({ Name = "FlagSmall", Size = Vector3.new(6, 3.6, 0.2), CFrame = CFrame.new(fx + 3.2, 19, Z + 24), Color = fx < 0 and Color3.fromRGB(196, 56, 56) or Color3.fromRGB(56, 96, 196), Material = Enum.Material.Fabric, Parent = parent })
 	end
+end
+
+-- The campus front, built from the reference: a paved parking apron with
+-- parked cars and a bus, bike racks, benches, a bronze statue on a plinth,
+-- clipped hedge borders and tall conifers flanking the facade.
+local function buildFrontGrounds(parent: Instance)
+	local Z = 124
+	local ASPHALT = Color3.fromRGB(64, 66, 72)
+	local CURB = Color3.fromRGB(198, 194, 186)
+
+	-- parking apron either side of the entrance plaza
+	for _, sgn in { -1, 1 } do
+		local px = sgn * 132
+		part({ Name = "ParkingLot", Size = Vector3.new(120, 0.5, 62), CFrame = CFrame.new(px, 0.15, Z + 46), Color = ASPHALT, Material = Enum.Material.Asphalt, Parent = parent })
+		part({ Name = "ParkingCurb", Size = Vector3.new(122, 1.1, 2), CFrame = CFrame.new(px, 0.5, Z + 15.4), Color = CURB, Material = Enum.Material.Concrete, Parent = parent })
+		-- painted bays
+		for i = 0, 7 do
+			part({ Name = "ParkingLine", Size = Vector3.new(0.6, 0.15, 26), CFrame = CFrame.new(px - 56 + i * 15, 0.42, Z + 34), Color = Color3.fromRGB(232, 228, 210), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		end
+		-- parked cars: body, cabin, wheels
+		local carColors = {
+			Color3.fromRGB(196, 62, 58), Color3.fromRGB(52, 96, 176),
+			Color3.fromRGB(226, 226, 230), Color3.fromRGB(64, 148, 108),
+			Color3.fromRGB(228, 176, 66),
+		}
+		for i = 0, 4 do
+			local cx = px - 48 + i * 15
+			local col = carColors[(i + (sgn > 0 and 2 or 0)) % #carColors + 1]
+			part({ Name = "CarBody", Size = Vector3.new(7.4, 3.4, 15), CFrame = CFrame.new(cx, 2.4, Z + 34), Color = col, Material = Enum.Material.SmoothPlastic, Parent = parent })
+			part({ Name = "CarCabin", Size = Vector3.new(6.8, 3.2, 7.6), CFrame = CFrame.new(cx, 5.4, Z + 34.6), Color = col, Material = Enum.Material.SmoothPlastic, Parent = parent })
+			part({ Name = "CarGlass", Size = Vector3.new(6.9, 2.2, 6.4), CFrame = CFrame.new(cx, 5.8, Z + 34.6), Color = Color3.fromRGB(126, 158, 178), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+			for _, wz in { Z + 28.4, Z + 39.6 } do
+				for _, wx in { cx - 3.5, cx + 3.5 } do
+					part({ Name = "CarWheel", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.2, 2.8, 2.8), CFrame = CFrame.new(wx, 1.4, wz) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.SmoothPlastic, Parent = parent })
+				end
+			end
+			part({ Name = "CarLight", Size = Vector3.new(5.6, 0.8, 0.4), CFrame = CFrame.new(cx, 2.8, Z + 26.6), Color = Color3.fromRGB(255, 246, 214), Material = Enum.Material.Neon, Parent = parent })
+		end
+		-- lamp standards in the lot
+		for _, lz in { Z + 26, Z + 60 } do
+			part({ Name = "LotLampPost", Size = Vector3.new(1.1, 22, 1.1), CFrame = CFrame.new(px + 58, 11, lz), Color = Color3.fromRGB(72, 74, 80), Material = Enum.Material.Metal, Parent = parent })
+			part({ Name = "LotLampArm", Size = Vector3.new(5, 0.8, 0.8), CFrame = CFrame.new(px + 55, 21.6, lz), Color = Color3.fromRGB(72, 74, 80), Material = Enum.Material.Metal, Parent = parent })
+			part({ Name = "LotLampHead", Size = Vector3.new(3.4, 1, 2), CFrame = CFrame.new(px + 52.6, 21, lz), Color = Color3.fromRGB(255, 246, 220), Material = Enum.Material.Neon, Parent = parent })
+		end
+	end
+
+	-- bike racks by the entrance
+	for _, sgn in { -1, 1 } do
+		local bx = sgn * 68
+		part({ Name = "BikeRackBase", Size = Vector3.new(16, 0.5, 6), CFrame = CFrame.new(bx, 0.4, Z + 22), Color = Color3.fromRGB(150, 150, 156), Material = Enum.Material.Concrete, Parent = parent })
+		for i = 0, 4 do
+			part({ Name = "BikeHoop", Size = Vector3.new(0.5, 4.4, 0.5), CFrame = CFrame.new(bx - 6 + i * 3, 2.6, Z + 22), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = parent })
+			part({ Name = "BikeHoopTop", Size = Vector3.new(0.5, 0.5, 4), CFrame = CFrame.new(bx - 6 + i * 3, 4.7, Z + 22), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = parent })
+		end
+	end
+
+	-- benches along the walk
+	for _, sgn in { -1, 1 } do
+		for _, bz in { Z + 30, Z + 46 } do
+			local bx = sgn * 40
+			part({ Name = "BenchSeat", Size = Vector3.new(3.4, 0.6, 12), CFrame = CFrame.new(bx, 2.4, bz), Color = Color3.fromRGB(146, 96, 56), Material = Enum.Material.WoodPlanks, Parent = parent })
+			part({ Name = "BenchBack", Size = Vector3.new(0.6, 3.4, 12), CFrame = CFrame.new(bx + sgn * 1.4, 4.2, bz), Color = Color3.fromRGB(146, 96, 56), Material = Enum.Material.WoodPlanks, Parent = parent })
+			for _, lz in { bz - 4.6, bz + 4.6 } do
+				part({ Name = "BenchLeg", Size = Vector3.new(3.2, 2.2, 0.7), CFrame = CFrame.new(bx, 1.1, lz), Color = Color3.fromRGB(60, 62, 68), Material = Enum.Material.Metal, Parent = parent })
+			end
+		end
+	end
+
+	-- bronze founder statue on a stone plinth, centred on the walk
+	local sz = Z + 44
+	local sx = -56
+	part({ Name = "StatuePlinthBase", Size = Vector3.new(14, 1.6, 14), CFrame = CFrame.new(sx, 0.9, sz), Color = Color3.fromRGB(178, 174, 166), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "StatuePlinth", Size = Vector3.new(9, 8, 9), CFrame = CFrame.new(sx, 5.7, sz), Color = Color3.fromRGB(196, 192, 184), Material = Enum.Material.Marble, Parent = parent })
+	part({ Name = "StatuePlinthCap", Size = Vector3.new(11, 1.2, 11), CFrame = CFrame.new(sx, 10.3, sz), Color = Color3.fromRGB(206, 202, 194), Material = Enum.Material.Marble, Parent = parent })
+	local BRONZE = Color3.fromRGB(122, 92, 52)
+	part({ Name = "StatueTorso", Size = Vector3.new(4, 6, 2.6), CFrame = CFrame.new(sx, 14, sz), Color = BRONZE, Material = Enum.Material.Metal, Parent = parent })
+	part({ Name = "StatueHead", Shape = Enum.PartType.Ball, Size = Vector3.new(2.6, 2.6, 2.6), CFrame = CFrame.new(sx, 18.2, sz), Color = BRONZE, Material = Enum.Material.Metal, Parent = parent })
+	part({ Name = "StatueArm", Size = Vector3.new(1.2, 5.4, 1.2), CFrame = CFrame.new(sx - 2.8, 15.2, sz) * CFrame.Angles(0, 0, math.rad(24)), Color = BRONZE, Material = Enum.Material.Metal, Parent = parent })
+	part({ Name = "StatueArmUp", Size = Vector3.new(1.2, 6, 1.2), CFrame = CFrame.new(sx + 2.9, 16.4, sz) * CFrame.Angles(0, 0, math.rad(-38)), Color = BRONZE, Material = Enum.Material.Metal, Parent = parent })
+	for _, lx in { -1.1, 1.1 } do
+		part({ Name = "StatueLeg", Size = Vector3.new(1.5, 5, 1.5), CFrame = CFrame.new(sx + lx, 8.4, sz), Color = BRONZE, Material = Enum.Material.Metal, Parent = parent })
+	end
+	local plaque = part({ Name = "StatuePlaque", Size = Vector3.new(6, 2.2, 0.4), CFrame = CFrame.new(sx, 6.4, sz - 4.7), Color = Color3.fromRGB(96, 74, 44), Material = Enum.Material.Metal, Parent = parent })
+	signText(plaque, "CRUMBWORTH", Color3.fromRGB(238, 226, 196), Enum.NormalId.Front)
+
+	-- clipped hedge borders around the lawns
+	for _, sgn in { -1, 1 } do
+		for i = 0, 7 do
+			part({ Name = "BorderHedge", Size = Vector3.new(12, 3.6, 4.4), CFrame = CFrame.new(sgn * (74 + i * 0), 1.8, Z + 22 + i * 7), Color = Color3.fromRGB(54, 104, 52), Material = Enum.Material.Grass, Parent = parent })
+			part({ Name = "BorderHedge", Size = Vector3.new(4.4, 3.6, 12), CFrame = CFrame.new(sgn * (34 + i * 6), 1.8, Z + 66), Color = Color3.fromRGB(54, 104, 52), Material = Enum.Material.Grass, Parent = parent })
+		end
+	end
+
+	-- school sign board at the curb
+	part({ Name = "SignPost", Size = Vector3.new(1.4, 8, 1.4), CFrame = CFrame.new(58, 4, Z + 64), Color = Color3.fromRGB(96, 62, 42), Material = Enum.Material.WoodPlanks, Parent = parent })
+	part({ Name = "SignPost", Size = Vector3.new(1.4, 8, 1.4), CFrame = CFrame.new(82, 4, Z + 64), Color = Color3.fromRGB(96, 62, 42), Material = Enum.Material.WoodPlanks, Parent = parent })
+	local board = part({ Name = "SchoolSignBoard", Size = Vector3.new(28, 9, 1.2), CFrame = CFrame.new(70, 11, Z + 64), Color = Color3.fromRGB(28, 44, 78), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	signText(board, "DETENTION\nCRUMBWORTH HIGH", Color3.fromRGB(255, 208, 96), Enum.NormalId.Front)
+	part({ Name = "SignBoardTrim", Size = Vector3.new(29.4, 10.4, 0.6), CFrame = CFrame.new(70, 11, Z + 64.5), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 end
 
 function MapService.Build(): Map
@@ -2324,16 +2423,17 @@ function MapService.Build(): Map
 	part({ Name = "VolleyNet", Size = Vector3.new(0.2, 2.4, 17), CFrame = CFrame.new(120, 6.4, 24), Color = Color3.fromRGB(235, 235, 235), Material = Enum.Material.Fabric, Transparency = 0.35, Parent = folder })
 
 	-- lobby dressing
-	part({ Name = "LobbyDesk", Size = Vector3.new(18, 3.4, 4), CFrame = CFrame.new(0, 1.7, 92), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = folder })
+	part({ Name = "LobbyDesk", Size = Vector3.new(18, 3.4, 4), CFrame = CFrame.new(-30, 1.7, 92), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = folder })
 	local crest = part({ Name = "LobbyCrest", Size = Vector3.new(16, 10, 0.8), CFrame = CFrame.new(0, 8, 78), Color = Palette.Blackboard, Parent = folder })
 	signText(crest, "CRUMBWORTH HIGH\nEST. 1954", Palette.BusYellow, Enum.NormalId.Back)
 
 	buildGrandFacade(folder)
+	buildFrontGrounds(folder)
 
 	-- ---------------- outside: entrance, dorms, grounds ----------------
-	buildPath(folder, Vector3.new(0, 0, 124), Vector3.new(0, 0, 170), 14)
-	buildBus(folder, CFrame.new(-46, 0, 158) * CFrame.Angles(0, math.rad(8), 0))
-	part({ Name = "FrontRoad", Size = Vector3.new(360, 0.4, 22), CFrame = CFrame.new(0, 0.05, 176), Color = Color3.fromRGB(70, 72, 78), Material = Enum.Material.Asphalt, Parent = folder })
+	buildPath(folder, Vector3.new(0, 0, 168), Vector3.new(0, 0, 200), 14)
+	buildBus(folder, CFrame.new(-96, 0, 190) * CFrame.Angles(0, math.rad(-4), 0))
+	part({ Name = "FrontRoad", Size = Vector3.new(520, 0.4, 22), CFrame = CFrame.new(0, 0.05, 208), Color = Color3.fromRGB(70, 72, 78), Material = Enum.Material.Asphalt, Parent = folder })
 	local dormBeds: { BasePart } = {}
 	buildDorm(folder, Vector3.new(-140, 0, 200), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
 	buildDorm(folder, Vector3.new(140, 0, 200), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
@@ -2341,8 +2441,14 @@ function MapService.Build(): Map
 	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(130, 0, 192), 8)
 	buildFlagpole(folder)
 	buildTreeline(folder, buildTree)
-	for _, pos in { Vector3.new(-90, 0, 150), Vector3.new(90, 0, 150), Vector3.new(-150, 0, 160), Vector3.new(150, 0, 160) } do
-		buildTree(folder, pos, 1 + (pos.X % 3) * 0.12)
+	for _, pos in {
+		Vector3.new(-58, 0, 136), Vector3.new(58, 0, 136),
+		Vector3.new(-92, 0, 136), Vector3.new(92, 0, 136),
+		Vector3.new(-236, 0, 60), Vector3.new(236, 0, 60),
+		Vector3.new(-236, 0, -60), Vector3.new(236, 0, -60),
+		Vector3.new(-236, 0, 0), Vector3.new(236, 0, 0),
+	} do
+		buildTree(folder, pos, 1.1 + (math.abs(pos.X) % 3) * 0.12)
 	end
 
 	local detentionCenter = Vector3.new(204, 0, 35)
