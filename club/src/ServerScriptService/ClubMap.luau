@@ -221,7 +221,7 @@ local function placeMesh(template: Model?, parent: Instance, name: string, cf: C
 end
 
 -- crystals: the estate's "planting" — translucent stones, nothing alive
-local function crystalCluster(folder: Folder, template: Model?, pos: Vector3, seed: number)
+local function crystalCluster(folder: Model, template: Model?, pos: Vector3, seed: number)
 	local rng = Random.new(seed)
 	for i = 1, rng:NextInteger(3, 5) do
 		local scale = rng:NextNumber(1.2, 3.4)
@@ -254,7 +254,7 @@ local function crystalCluster(folder: Folder, template: Model?, pos: Vector3, se
 	glowOrb(folder, pos + Vector3.new(0, 0.6, 0), 0.6, Color3.fromRGB(170, 200, 255)).Transparency = 0.4
 end
 
-local function fountain(folder: Folder, pos: Vector3, radius: number)
+local function fountain(folder: Model, pos: Vector3, radius: number)
 	part({
 		Name = "FountainBasin",
 		Shape = Enum.PartType.Cylinder,
@@ -304,7 +304,7 @@ local function fountain(folder: Folder, pos: Vector3, radius: number)
 end
 
 -- ---------------------------------------------------------------- estate ---
-local function buildEstate(folder: Folder, meshes: { [string]: Model? })
+local function buildEstate(folder: Model, meshes: { [string]: Model? })
 	part({
 		Name = "Grounds",
 		Size = Vector3.new(500, 2, 500),
@@ -407,7 +407,7 @@ local function buildEstate(folder: Folder, meshes: { [string]: Model? })
 end
 
 -- ---------------------------------------------------------------- pyramid ---
-local function buildPyramid(folder: Folder): (BasePart, BasePart, BasePart)
+local function buildPyramid(folder: Model): (BasePart, BasePart, BasePart)
 	local thick = 8
 	for t = 0, PYR_TIERS - 1 do
 		local half = PYR_BASE_HALF - t * (PYR_BASE_HALF - PYR_TOP_HALF) / (PYR_TIERS - 1)
@@ -580,7 +580,7 @@ type ChamberSpec = {
 	accent: Color3,
 }
 
-local function buildChamber(folder: Folder, meshes: { [string]: Model? }, spec: ChamberSpec): (Vector3, BasePart)
+local function buildChamber(folder: Model, meshes: { [string]: Model? }, spec: ChamberSpec): (Vector3, BasePart)
 	local cx, cz = 0, PYR_CENTER_Z
 	local segW = 2 * spec.r * math.tan(math.pi / 8) + 2
 
@@ -668,7 +668,7 @@ local function buildChamber(folder: Folder, meshes: { [string]: Model? }, spec: 
 end
 
 -- ------------------------------------------------------------ grand hall ---
-local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (BasePart, BasePart)
+local function buildGrandHall(folder: Model, meshes: { [string]: Model? }): (BasePart, BasePart)
 	local cx, cz = HALL_CENTER.X, HALL_CENTER.Z
 	local segW = 2 * HALL_R * math.tan(math.pi / 8) + 2
 
@@ -915,7 +915,7 @@ local function buildGrandHall(folder: Folder, meshes: { [string]: Model? }): (Ba
 end
 
 -- the atrium corridor from the doors to the hall
-local function buildAtrium(folder: Folder, meshes: { [string]: Model? })
+local function buildAtrium(folder: Model, meshes: { [string]: Model? })
 	local zStart, zEnd = DOOR_Z, HALL_CENTER.Z + HALL_R + 2
 	local length = zStart - zEnd
 	local mid = (zStart + zEnd) / 2
@@ -984,7 +984,7 @@ end
 
 -- ------------------------------------------------------------------ build ---
 export type Map = {
-	folder: Folder,
+	folder: Model,
 	doorL: BasePart,
 	doorR: BasePart,
 	memberGate: BasePart,
@@ -996,8 +996,11 @@ export type Map = {
 }
 
 function ClubMap.Build(): Map
-	local folder = Instance.new("Folder")
+	-- a Persistent model: the estate streams in once at join and never pops
+	-- out as you move (the join is a beat slower; movement is rock solid)
+	local folder = Instance.new("Model")
 	folder.Name = "MillionsClub"
+	folder.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
 	folder.Parent = workspace
 
 	local spawn = Instance.new("SpawnLocation")
