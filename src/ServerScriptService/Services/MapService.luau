@@ -1061,7 +1061,7 @@ end
 
 
 -- A wall run with door gaps: brick base, window band, brick top, parapet cap.
-local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } })
+local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } }, tall: boolean?)
 	local dir = (to - from)
 	local length = dir.Magnitude
 	local unit = dir.Unit
@@ -1096,7 +1096,23 @@ local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: 
 			part({ Name = "ShellMullion", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m2 * 9, 8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 		end
 		part({ Name = "ShellBrickHigh", Size = Vector3.new(segLen, 6, 2), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
-		part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 16.6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+		-- white frames around the first-story windows (reference-art trim)
+		part({ Name = "ShellSill", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 5.8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "ShellLintel", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 10.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+		if tall then
+			-- second story: floor band, framed window band, brick, high parapet
+			part({ Name = "ShellFloorBand", Size = Vector3.new(segLen, 1.4, 2.6), CFrame = cf * CFrame.new(0, 16.6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "ShellWindow2", Size = Vector3.new(segLen, 4, 1.2), CFrame = cf * CFrame.new(0, 19.5, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+			local mullions2 = math.floor(segLen / 9)
+			for m3 = 1, mullions2 - 1 do
+				part({ Name = "ShellMullion2", Size = Vector3.new(0.5, 4, 1.4), CFrame = cf * CFrame.new(-segLen / 2 + m3 * 9, 19.5, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+			end
+			part({ Name = "ShellLintel2", Size = Vector3.new(segLen, 0.7, 2.3), CFrame = cf * CFrame.new(0, 21.8, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+			part({ Name = "ShellBrickTop", Size = Vector3.new(segLen, 3.6, 2), CFrame = cf * CFrame.new(0, 24, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
+			part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 26.4, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+		else
+			part({ Name = "ShellParapet", Size = Vector3.new(segLen + 0.6, 1.2, 2.8), CFrame = cf * CFrame.new(0, 16.6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+		end
 	end
 	-- door frames at each gap
 	for _, gap in gaps do
@@ -1106,6 +1122,11 @@ local function buildWallRun(parent: Instance, from: Vector3, to: Vector3, gaps: 
 			part({ Name = "DoorPost", Size = Vector3.new(1.6, 12, 2.6), CFrame = cf * CFrame.new(side * (gap.width / 2 + 0.8), 6, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 		end
 		part({ Name = "DoorLintel", Size = Vector3.new(gap.width + 4, 2, 2.8), CFrame = cf * CFrame.new(0, 13, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
+		if tall then
+			-- fill the second story above the doorway so the wall reads solid
+			part({ Name = "GapUpperBrick", Size = Vector3.new(gap.width + 4, 12.4, 2), CFrame = cf * CFrame.new(0, 20.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(168, 112, 82), Material = Enum.Material.Brick, Parent = parent })
+			part({ Name = "GapParapet", Size = Vector3.new(gap.width + 4, 1.2, 2.8), CFrame = cf * CFrame.new(0, 26.4, 0) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+		end
 	end
 end
 
@@ -1113,14 +1134,26 @@ end
 -- and all eight homerooms, wing roofs, interior lights, and a grand entrance.
 local function buildMainShell(parent: Instance)
 	local x0, x1, z0, z1 = -168, 168, -84, 84
-	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x1, 0, z0), { { at = 168, width = 16 } }) -- north (path to classroom)
-	buildWallRun(parent, Vector3.new(x0, 0, z1), Vector3.new(x1, 0, z1), { { at = 168, width = 30 } }) -- south (main entrance)
-	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x0, 0, z1), { { at = 84, width = 30 } }) -- west hallway mouth
-	buildWallRun(parent, Vector3.new(x1, 0, z0), Vector3.new(x1, 0, z1), { { at = 84, width = 30 } }) -- east hallway mouth
+	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x1, 0, z0), { { at = 168, width = 16 } }, true) -- north (path to classroom)
+	buildWallRun(parent, Vector3.new(x0, 0, z1), Vector3.new(x1, 0, z1), { { at = 168, width = 30 } }, true) -- south (main entrance)
+	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x0, 0, z1), { { at = 84, width = 30 } }, true) -- west hallway mouth
+	buildWallRun(parent, Vector3.new(x1, 0, z0), Vector3.new(x1, 0, z1), { { at = 84, width = 30 } }, true) -- east hallway mouth
 
-	-- wing roofs over the homeroom rows (skylight strip stays over the hallway)
+	-- gabled slate roofs over the homeroom rows (skylight strip stays over the hallway)
+	local pitch = math.rad(12)
 	for _, zc in { -55, 55 } do
-		part({ Name = "WingRoof", Size = Vector3.new(336, 1.4, 58), CFrame = CFrame.new(0, 16.6, zc), Color = Color3.fromRGB(84, 98, 110), Material = Enum.Material.Slate, Parent = parent })
+		for _, side in { -1, 1 } do
+			part({
+				Name = "WingRoofSlope",
+				Size = Vector3.new(336, 1.2, 30.6),
+				CFrame = CFrame.new(0, 29.8, zc + side * 14.5) * CFrame.Angles(side * pitch, 0, 0),
+				Color = Color3.fromRGB(62, 78, 70),
+				Material = Enum.Material.Slate,
+				Parent = parent,
+			})
+		end
+		part({ Name = "WingRidge", Size = Vector3.new(336, 0.9, 2.4), CFrame = CFrame.new(0, 33.2, zc), Color = Color3.fromRGB(52, 64, 58), Material = Enum.Material.Slate, Parent = parent })
+		part({ Name = "WingCeiling", Size = Vector3.new(336, 0.8, 58), CFrame = CFrame.new(0, 26.6, zc), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.SmoothPlastic, Parent = parent })
 	end
 	-- interior lights above each homeroom
 	for _, zc in { -52, 52 } do
@@ -1140,7 +1173,7 @@ local function buildMainShell(parent: Instance)
 	for _, side in { -1, 1 } do
 		part({ Name = "EntranceColumn", Size = Vector3.new(2.4, 15, 2.4), CFrame = CFrame.new(side * 17, 7.5, 87), Color = Color3.fromRGB(226, 218, 196), Material = Enum.Material.Concrete, Parent = parent })
 	end
-	local facade = part({ Name = "FacadeSign", Size = Vector3.new(52, 6, 1.4), CFrame = CFrame.new(0, 19.5, 84), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
+	local facade = part({ Name = "FacadeSign", Size = Vector3.new(52, 5.4, 1.4), CFrame = CFrame.new(0, 24.4, 84.4), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
 	signText(facade, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Front)
 	signText(facade, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Back)
 
@@ -1214,13 +1247,13 @@ local BRICK = Color3.fromRGB(126, 78, 62)
 local HEDGE = Color3.fromRGB(52, 96, 48)
 
 local function buildCornerTower(parent: Instance, x: number, z: number)
-	part({ Name = "CornerTower", Size = Vector3.new(12, 26, 12), CFrame = CFrame.new(x, 13, z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
-	part({ Name = "TowerBand", Size = Vector3.new(13, 1.2, 13), CFrame = CFrame.new(x, 24.5, z), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "CornerTower", Size = Vector3.new(12, 36, 12), CFrame = CFrame.new(x, 18, z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
+	part({ Name = "TowerBand", Size = Vector3.new(13, 1.2, 13), CFrame = CFrame.new(x, 34.4, z), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	-- crenellated top
 	for _, offset in { Vector3.new(-4.5, 0, -4.5), Vector3.new(4.5, 0, -4.5), Vector3.new(-4.5, 0, 4.5), Vector3.new(4.5, 0, 4.5), Vector3.new(0, 0, -4.5), Vector3.new(0, 0, 4.5), Vector3.new(-4.5, 0, 0), Vector3.new(4.5, 0, 0) } do
-		part({ Name = "Merlon", Size = Vector3.new(2.4, 2.2, 2.4), CFrame = CFrame.new(x + offset.X, 27.2, z + offset.Z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
+		part({ Name = "Merlon", Size = Vector3.new(2.4, 2.2, 2.4), CFrame = CFrame.new(x + offset.X, 37.1, z + offset.Z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
 	end
-	local shield = part({ Name = "TowerShield", Size = Vector3.new(3.4, 4, 0.4), CFrame = CFrame.new(x, 18, z + (z > 0 and 6.3 or -6.3)), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
+	local shield = part({ Name = "TowerShield", Size = Vector3.new(3.4, 4, 0.4), CFrame = CFrame.new(x, 29, z + (z > 0 and 6.3 or -6.3)), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
 	signText(shield, "D", Color3.fromRGB(255, 196, 60), z > 0 and Enum.NormalId.Front or Enum.NormalId.Back)
 end
 
@@ -1253,6 +1286,24 @@ local function buildFrontYard(parent: Instance)
 		part({ Name = "FenceRail", Size = Vector3.new(length, 0.5, 0.4), CFrame = CFrame.new(mid, 3.9, 113), Color = Color3.fromRGB(30, 34, 40), Material = Enum.Material.Metal, Parent = parent })
 		part({ Name = "FenceRailLow", Size = Vector3.new(length, 0.5, 0.4), CFrame = CFrame.new(mid, 1.3, 113), Color = Color3.fromRGB(30, 34, 40), Material = Enum.Material.Metal, Parent = parent })
 	end
+	-- tall cypress pairs flanking the porticos and gates
+	for _, x in { -74, -46, 46, 74, -20, 20 } do
+		for layer = 0, 2 do
+			local w = 3.4 - layer * 0.9
+			part({ Name = "Cypress", Size = Vector3.new(w, 4.6, w), CFrame = CFrame.new(x, 2.3 + layer * 4.2, 93.5) * CFrame.Angles(0, math.rad(45), 0), Color = Color3.fromRGB(44, 88, 46), Material = Enum.Material.Grass, Parent = parent })
+		end
+	end
+	-- lampposts lighting the entrance walk
+	for _, spot in { Vector3.new(-9, 0, 100), Vector3.new(9, 0, 100), Vector3.new(-9, 0, 128), Vector3.new(9, 0, 128) } do
+		part({ Name = "LampPost", Size = Vector3.new(0.7, 9, 0.7), CFrame = CFrame.new(spot.X, 4.5, spot.Z), Color = Color3.fromRGB(34, 38, 44), Material = Enum.Material.Metal, Parent = parent })
+		local lamp = part({ Name = "LampHead", Size = Vector3.new(1.5, 1.5, 1.5), CFrame = CFrame.new(spot.X, 9.6, spot.Z), Color = Color3.fromRGB(255, 240, 200), Material = Enum.Material.Neon, Parent = parent })
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(255, 234, 190)
+		light.Brightness = 1.2
+		light.Range = 24
+		light.Parent = lamp
+	end
+
 	-- parking lot east of the entrance strip
 	part({ Name = "ParkingLot", Size = Vector3.new(64, 0.3, 22), CFrame = CFrame.new(110, 0.16, 100), Color = Color3.fromRGB(74, 76, 80), Material = Enum.Material.Asphalt, Parent = parent })
 	for i = 0, 5 do
