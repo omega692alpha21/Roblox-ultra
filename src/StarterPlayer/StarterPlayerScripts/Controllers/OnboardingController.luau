@@ -1,50 +1,23 @@
 --!strict
--- First day: the hint under the goal bar, and a marker in the world on the
--- thing you are supposed to walk to.
+-- First day: a marker in the world on the thing you are supposed to walk to.
 --
 -- The goal bar already says what the step is. What a new player is actually
 -- missing is *where*, so this puts a floating beacon on the target with a live
--- distance. Both are built locally off replicated attributes — the beacon is
--- client-side only, so it costs the server nothing.
+-- distance — in the world, where they are already looking, rather than as one
+-- more card stacked on top of the screen. It is built client-side off
+-- replicated attributes, so it costs the server nothing.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
-local Layout = require(script.Parent.Layout)
-local UIBuilder = require(script.Parent.UIBuilder)
 
 local OnboardingController = {}
 
 local player = Players.LocalPlayer
 
 function OnboardingController.Init(gui: ScreenGui)
-	-- ---- the hint, directly under the goal bar ----
-	local card = UIBuilder.Frame({
-		Name = "TutorialHint",
-		Position = UDim2.fromOffset(Layout.StatusX, Layout.Margin + Layout.px(126)),
-		Size = UDim2.fromOffset(Layout.px(280), Layout.px(46)),
-		BackgroundColor3 = Palette.PanelBg,
-		BackgroundTransparency = 0.35,
-		Visible = false,
-		Parent = gui,
-	})
-	UIBuilder.Round(card, Layout.px(9))
-	UIBuilder.Stroke(card, Palette.CashGreen, 2)
-	local hint = UIBuilder.Label({
-		Position = UDim2.fromOffset(Layout.px(10), Layout.px(5)),
-		Size = UDim2.new(1, -Layout.px(20), 1, -Layout.px(10)),
-		Text = "",
-		TextScaled = false,
-		TextSize = Layout.px(14),
-		TextWrapped = true,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Top,
-		TextColor3 = Palette.Chalk,
-		Parent = card,
-	})
-
 	-- ---- the beacon, local to this client ----
 	local beacon = Instance.new("Part")
 	beacon.Name = "TutorialBeacon"
@@ -85,18 +58,6 @@ function OnboardingController.Init(gui: ScreenGui)
 	distance.TextStrokeTransparency = 0.4
 	distance.Text = ""
 	distance.Parent = billboard
-
-	local function refreshHint()
-		local text = player:GetAttribute("TutorialHint")
-		if typeof(text) == "string" and text ~= "" then
-			card.Visible = true
-			hint.Text = text
-		else
-			card.Visible = false
-		end
-	end
-	player:GetAttributeChangedSignal("TutorialHint"):Connect(refreshHint)
-	refreshHint()
 
 	local bob = 0
 	RunService.RenderStepped:Connect(function(dt: number)

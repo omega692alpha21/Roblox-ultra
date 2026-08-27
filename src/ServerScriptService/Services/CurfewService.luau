@@ -26,15 +26,17 @@ local rng = Random.new()
 local function isIndoors(pos: Vector3): boolean
 	-- the school footprint from the floor plan (the courtyards are open to
 	-- the sky, so standing in one still counts as being outdoors at night)
-	if math.abs(pos.X) < 236 and pos.Z > -160 and pos.Z < 136 then
+	if (math.abs(pos.X) < 236 and pos.Z > -160 and pos.Z < 136)
+		-- the library counts too: it is a building, prefects do not raid it
+		or (math.abs(pos.X) < 46 and pos.Z > -266 and pos.Z < -198) then
 		local inWestCourt = math.abs(pos.X + 116) < 56 and math.abs(pos.Z) < 52
 		local inEastCourt = math.abs(pos.X - 116) < 56 and math.abs(pos.Z) < 52
 		if not (inWestCourt or inEastCourt) then
 			return true
 		end
 	end
-	for _, dormX in { -140, 140 } do
-		if math.abs(pos.X - dormX) < 35 and math.abs(pos.Z - 200) < 30 then
+	for _, dormX in { -176, 176 } do
+		if math.abs(pos.X - dormX) < 35 and math.abs(pos.Z + 212) < 30 then
 			return true
 		end
 	end

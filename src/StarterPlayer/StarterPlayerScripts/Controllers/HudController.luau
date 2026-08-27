@@ -1,16 +1,19 @@
 --!strict
--- The HUD: one status card beside the minimap, one lock chip top-right, and
--- one MENU button that opens every other screen.
+-- The HUD, laid out the way the big Roblox social games lay theirs out.
 --
--- There used to be two currency pills, a grade badge, a lock chip, an
--- eight-button nav rail and a build stamp all placed by hand. On a phone they
--- overlapped the minimap and each other, which is what "too much going on and
--- there is multiple menus" meant. Now there is exactly one always-on card and
--- one door into everything else.
+-- The middle of the screen belongs to the player and the world. Status is a
+-- row of small pills along the top. Menus are a rail of square icons on the
+-- right edge, collapsible, with a MORE tile that opens the rest. Nothing sits
+-- where you are trying to look.
+--
+-- Every size comes from Layout, which measures the real viewport — the old
+-- version guessed at a reference height and put a card across the player's
+-- face on a phone.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
@@ -22,144 +25,161 @@ local HudController = {}
 
 local player = Players.LocalPlayer
 
-local MENU_ITEMS = {
-	{ label = "REP", panel = "Rep", icon = "⭐", color = Palette.BusYellow },
-	{ label = "CREW", panel = "Crew", icon = "👥", color = Palette.AuraPurple },
-	{ label = "STORE", panel = "Store", icon = "🛒", color = Palette.CashGreen },
-	{ label = "CLASSES", panel = "Classes", icon = "📕", color = Palette.LockerBlue },
-	{ label = "GRADES", panel = "Rebirth", icon = "🎓", color = Palette.LockerBlue },
-	{ label = "REWARDS", panel = "Rewards", icon = "🎁", color = Palette.BusYellow },
-	{ label = "QUESTS", panel = "Quests", icon = "📋", color = Palette.AuraPurple },
-	{ label = "CLIQUES", panel = "Cliques", icon = "🏷️", color = Palette.DetentionRed },
-	{ label = "TOP", panel = "Top", icon = "🏆", color = Palette.Chalk },
+-- the five that earn a permanent slot on the rail; the rest live behind MORE
+local RAIL = {
+	{ icon = "🛒", panel = "Store", color = Palette.CashGreen },
+	{ icon = "👥", panel = "Crew", color = Palette.AuraPurple },
+	{ icon = "📋", panel = "Quests", color = Palette.BusYellow },
+	{ icon = "📕", panel = "Classes", color = Palette.LockerBlue },
 }
 
--- one line of the status strip: a value on the left, a smaller note on the right
-local function statLine(parent: Instance, order: number, color: Color3, size: number): (TextLabel, TextLabel)
-	local row = UIBuilder.Frame({
-		Size = UDim2.new(1, 0, 0, Layout.px(size + 4)),
-		BackgroundTransparency = 1,
+local MORE = {
+	{ label = "REP", panel = "Rep", icon = "⭐", color = Palette.BusYellow },
+	{ label = "GRADES", panel = "Rebirth", icon = "🎓", color = Palette.LockerBlue },
+	{ label = "REWARDS", panel = "Rewards", icon = "🎁", color = Palette.BusYellow },
+	{ label = "CLIQUES", panel = "Cliques", icon = "🏷️", color = Palette.DetentionRed },
+	{ label = "TOP", panel = "Top", icon = "🏆", color = Palette.Chalk },
+	{ label = "STORE", panel = "Store", icon = "🛒", color = Palette.CashGreen },
+	{ label = "CREW", panel = "Crew", icon = "👥", color = Palette.AuraPurple },
+	{ label = "QUESTS", panel = "Quests", icon = "📋", color = Palette.AuraPurple },
+	{ label = "CLASSES", panel = "Classes", icon = "📕", color = Palette.LockerBlue },
+}
+
+-- one small top pill: an icon and a value, auto-width so it is never padded out
+local function pill(parent: Instance, order: number, accent: Color3): (TextLabel, Frame)
+	local frame = UIBuilder.Frame({
+		Size = UDim2.fromOffset(0, Layout.h(0.055)),
+		AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundColor3 = Palette.PanelBg,
+		BackgroundTransparency = 0.25,
 		LayoutOrder = order,
 		Parent = parent,
 	})
-	local key = UIBuilder.Label({
-		Size = UDim2.new(0.55, 0, 1, 0),
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextScaled = false,
-		TextSize = Layout.px(size),
+	UIBuilder.Round(frame, 999)
+	UIBuilder.Stroke(frame, accent, 2)
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, Layout.h(0.022))
+	padding.PaddingRight = UDim.new(0, Layout.h(0.022))
+	padding.Parent = frame
+	local label = UIBuilder.Label({
+		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, Layout.h(0.055)),
 		Text = "",
-		Parent = row,
-	})
-	local value = UIBuilder.Label({
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.fromScale(1, 0),
-		Size = UDim2.new(0.45, 0, 1, 0),
-		TextXAlignment = Enum.TextXAlignment.Right,
 		TextScaled = false,
-		TextSize = Layout.px(size - 3),
-		TextColor3 = color,
-		Text = "",
-		Parent = row,
+		TextSize = Layout.TextSize(0.032),
+		Parent = frame,
 	})
-	return key, value
+	return label, frame
 end
 
 function HudController.Init(gui: ScreenGui)
-	-- ---- the status strip: thin, top-aligned, out of the player's face ----
-	local card = UIBuilder.Frame({
-		Name = "StatusCard",
-		Position = UDim2.fromOffset(Layout.StatusX, Layout.Margin),
-		Size = UDim2.fromOffset(Layout.px(214), Layout.px(78)),
-		BackgroundColor3 = Palette.PanelBg,
-		BackgroundTransparency = 0.35,
-		Parent = gui,
-	})
-	UIBuilder.Round(card, Layout.px(10))
-	UIBuilder.Stroke(card, Palette.LockerBlue, 2)
-
-	local inner = UIBuilder.Frame({
-		Position = UDim2.fromOffset(Layout.px(10), Layout.px(6)),
-		Size = UDim2.new(1, -Layout.px(20), 1, -Layout.px(12)),
+	-- ---------------- top centre: the status pills ----------------
+	local top = UIBuilder.Frame({
+		Name = "StatusPills",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, Layout.Margin),
+		Size = UDim2.fromOffset(0, Layout.h(0.055)),
+		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundTransparency = 1,
-		Parent = card,
-	})
-	local rows = Instance.new("UIListLayout")
-	rows.Padding = UDim.new(0, Layout.px(1))
-	rows.SortOrder = Enum.SortOrder.LayoutOrder
-	rows.Parent = inner
-
-	local cashKey, cashValue = statLine(inner, 1, Palette.CashGreen, 22)
-	local auraKey, auraValue = statLine(inner, 2, Palette.AuraPurple, 18)
-	local periodKey, periodValue = statLine(inner, 3, Palette.BusYellow, 15)
-
-	-- ---- lock chip, top right, only while the base is locked ----
-	local lockFrame = UIBuilder.Frame({
-		Name = "LockTimer",
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -Layout.Margin, 0, Layout.Margin),
-		Size = UDim2.fromOffset(Layout.px(158), Layout.px(34)),
-		BackgroundColor3 = Palette.PanelBg,
-		BackgroundTransparency = 0.1,
-		Visible = false,
 		Parent = gui,
 	})
-	UIBuilder.Round(lockFrame, Layout.px(10))
-	UIBuilder.Stroke(lockFrame, Palette.DetentionRed, 3)
-	local lockLabel = UIBuilder.Label({
-		Size = UDim2.fromScale(1, 1),
-		Text = "BASE LOCKED 0:00",
-		TextScaled = false,
-		TextSize = Layout.px(18),
-		TextColor3 = Color3.fromRGB(255, 157, 143),
-		Parent = lockFrame,
-	})
+	local topRow = Instance.new("UIListLayout")
+	topRow.FillDirection = Enum.FillDirection.Horizontal
+	topRow.VerticalAlignment = Enum.VerticalAlignment.Center
+	topRow.SortOrder = Enum.SortOrder.LayoutOrder
+	topRow.Padding = UDim.new(0, Layout.h(0.014))
+	topRow.Parent = top
 
-	-- ---- the menu hub: one panel that reaches every other panel ----
+	local cashLabel = pill(top, 1, Palette.CashGreen)
+	local auraLabel = pill(top, 2, Palette.AuraPurple)
+	local periodLabel = pill(top, 3, Palette.BusYellow)
+	local lockLabel, lockPill = pill(top, 4, Palette.DetentionRed)
+	lockPill.Visible = false
+
+	-- ---------------- right edge: the menu rail ----------------
+	local rail = UIBuilder.Frame({
+		Name = "MenuRail",
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -Layout.Margin, 0.5, 0),
+		Size = UDim2.fromOffset(Layout.RailIcon, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1,
+		Parent = gui,
+	})
+	local railList = Instance.new("UIListLayout")
+	railList.Padding = UDim.new(0, Layout.RailGap)
+	railList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	railList.SortOrder = Enum.SortOrder.LayoutOrder
+	railList.Parent = rail
+
+	local function railTile(order: number, icon: string, color: Color3, onClick: () -> ())
+		local button = UIBuilder.Button({
+			Size = UDim2.fromOffset(Layout.RailIcon, Layout.RailIcon),
+			Text = icon,
+			TextScaled = false,
+			TextSize = Layout.TextSize(0.058),
+			BackgroundColor3 = Palette.PanelBg,
+			BackgroundTransparency = 0.2,
+			LayoutOrder = order,
+		}, onClick)
+		UIBuilder.Round(button, Layout.h(0.026))
+		UIBuilder.Stroke(button, color, 2)
+		button.Parent = rail
+		return button
+	end
+
+	for index, item in RAIL do
+		railTile(index, item.icon, item.color, function()
+			UIBuilder.Toggle(item.panel)
+		end)
+	end
+	railTile(#RAIL + 1, "☰", Palette.White, function()
+		UIBuilder.Toggle("Menu")
+	end)
+
+	-- ---------------- the MORE hub ----------------
 	local _, menuContent = UIBuilder.Panel(gui, "Menu", "MENU")
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.fromOffset(Layout.px(150), Layout.px(92))
-	grid.CellPadding = UDim2.fromOffset(Layout.px(10), Layout.px(10))
+	grid.CellSize = UDim2.new(1 / 3, -Layout.h(0.012), 0, Layout.h(0.14))
+	grid.CellPadding = UDim2.fromOffset(Layout.h(0.012), Layout.h(0.012))
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = menuContent
-	for i, item in MENU_ITEMS do
+	for i, item in MORE do
 		local tile = UIBuilder.Button({
 			Text = "",
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.1,
 			LayoutOrder = i,
 		}, function()
-			-- Toggle closes every panel first, so the hub never stays behind
 			UIBuilder.Toggle(item.panel)
 		end)
-		UIBuilder.Round(tile, 12)
-		UIBuilder.Stroke(tile, item.color, 3)
+		UIBuilder.Round(tile, Layout.h(0.018))
+		UIBuilder.Stroke(tile, item.color, 2)
 		tile.Parent = menuContent
 		UIBuilder.Label({
-			Position = UDim2.fromOffset(0, Layout.px(10)),
-			Size = UDim2.new(1, 0, 0, Layout.px(38)),
+			Position = UDim2.fromScale(0, 0.08),
+			Size = UDim2.new(1, 0, 0.46, 0),
 			Text = item.icon,
 			Parent = tile,
 		})
 		UIBuilder.Label({
-			Position = UDim2.new(0, 0, 1, -Layout.px(34)),
-			Size = UDim2.new(1, 0, 0, Layout.px(26)),
+			Position = UDim2.fromScale(0, 0.6),
+			Size = UDim2.new(1, 0, 0.32, 0),
 			Text = item.label,
 			TextColor3 = item.color,
 			TextScaled = false,
-			TextSize = Layout.px(18),
+			TextSize = Layout.TextSize(0.026),
 			Parent = tile,
 		})
 	end
-	-- build number and save state live here now instead of being stamped over
-	-- the game in three different corners
 	local stamp = UIBuilder.Label({
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.fromScale(1, 1),
-		Size = UDim2.fromOffset(Layout.px(280), Layout.px(18)),
+		Size = UDim2.new(0.6, 0, 0, Layout.h(0.028)),
 		Text = "",
 		TextColor3 = Color3.fromRGB(140, 150, 140),
 		TextScaled = false,
-		TextSize = Layout.px(14),
+		TextSize = Layout.TextSize(0.022),
 		TextXAlignment = Enum.TextXAlignment.Right,
 		Parent = menuContent,
 	})
@@ -175,76 +195,52 @@ function HudController.Init(gui: ScreenGui)
 		end
 	end)
 
-	-- ---- the single MENU button, bottom left ----
-	local menuButton = UIBuilder.Button({
-		Name = "MenuButton",
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, Layout.Margin, 1, -Layout.Margin),
-		Size = UDim2.fromOffset(Layout.px(104), Layout.px(44)),
-		Text = "☰  MENU",
-		TextScaled = false,
-		TextSize = Layout.px(21),
-		BackgroundColor3 = Palette.PanelBg,
-		BackgroundTransparency = 0.1,
-	}, function()
-		UIBuilder.Toggle("Menu")
-	end)
-	UIBuilder.Round(menuButton, 999)
-	UIBuilder.Stroke(menuButton, Palette.BusYellow, 3)
-	menuButton.Parent = gui
-
-	-- Live updates. The cash counter animates every frame because that motion
-	-- is the reward feedback; everything else is text that only has to be
-	-- correct, so it refreshes eight times a second instead of sixty.
+	-- ---------------- live values ----------------
 	local shownCash = 0
 	local textClock = 0
 	RunService.Heartbeat:Connect(function(dt: number)
 		local cash = player:GetAttribute("Cash")
-		local income = player:GetAttribute("Income")
 		local realCash = typeof(cash) == "number" and cash or 0
 		if math.abs(realCash - shownCash) < 1 then
 			shownCash = realCash
 		else
 			shownCash += (realCash - shownCash) * math.min(dt * 8, 1)
 		end
-		cashKey.Text = "$" .. NumberFormat.Abbreviate(shownCash)
+		cashLabel.Text = "$" .. NumberFormat.Abbreviate(shownCash)
 
 		textClock += dt
-		if textClock < 0.125 then
+		if textClock < 0.2 then
 			return
 		end
 		textClock = 0
-		cashValue.Text = "+" .. NumberFormat.Abbreviate(typeof(income) == "number" and income or 0) .. "/s"
 
 		local aura = player:GetAttribute("Aura")
-		local rank = player:GetAttribute("Rank")
-		auraKey.Text = NumberFormat.Abbreviate(typeof(aura) == "number" and aura or 0) .. " aura"
-		auraValue.Text = typeof(rank) == "string" and rank or "NPC"
-
-		-- grade name lives in MENU now; only the multiplier is worth the space
 		local grade = player:GetAttribute("Grade")
 		local gradeNum = typeof(grade) == "number" and grade or 0
-		periodValue.Text = ("x%.1f"):format(Rebirths.Multiplier(gradeNum))
+		auraLabel.Text = ("%s ⚡ x%.1f"):format(
+			NumberFormat.Abbreviate(typeof(aura) == "number" and aura or 0),
+			Rebirths.Multiplier(gradeNum)
+		)
 
 		local period = ReplicatedStorage:GetAttribute("Period")
 		local periodEnds = ReplicatedStorage:GetAttribute("PeriodEndsAt")
 		if typeof(period) == "string" and typeof(periodEnds) == "number" then
-			periodKey.Text = period:upper() .. " " .. NumberFormat.Clock(periodEnds - workspace:GetServerTimeNow())
+			periodLabel.Text = period .. " " .. NumberFormat.Clock(periodEnds - workspace:GetServerTimeNow())
 		else
-			periodKey.Text = "SCHOOL'S IN"
+			periodLabel.Text = "School's in"
 		end
 
 		local lockUntil = player:GetAttribute("LockUntil")
 		if typeof(lockUntil) == "number" then
 			local remaining = lockUntil - workspace:GetServerTimeNow()
+			lockPill.Visible = remaining > 0
 			if remaining > 0 then
-				lockFrame.Visible = true
-				lockLabel.Text = "BASE LOCKED " .. NumberFormat.Clock(remaining)
-			else
-				lockFrame.Visible = false
+				lockLabel.Text = "🔒 " .. NumberFormat.Clock(remaining)
 			end
 		end
 	end)
+
+	local _ = TweenService
 end
 
 return HudController

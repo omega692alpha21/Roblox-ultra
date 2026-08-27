@@ -203,11 +203,12 @@ local function complete(player: Player, id: string)
 	if next_ then
 		Remotes.Get("Notify"):FireClient(
 			player,
-			("✅ %s — +$%s, +%d aura. Next: %s"):format(
+			("✅ %s — +$%s, +%d aura.\nNEXT: %s — %s"):format(
 				completed.title,
 				NumberFormat.Abbreviate(cash),
 				completed.aura,
-				next_.title
+				next_.title,
+				next_.hint
 			),
 			"good"
 		)
@@ -230,8 +231,19 @@ end
 function OnboardingService.Init()
 	Signals.ProfileLoaded:Connect(function(player: Player)
 		task.delay(1.5, function()
-			if player.Parent then
-				publish(player)
+			if not player.Parent then
+				return
+			end
+			publish(player)
+			-- the hint is said once, on arrival, as a notification rather than
+			-- a card that sits on the screen forever
+			local current = OnboardingService.Current(player)
+			if current then
+				Remotes.Get("Notify"):FireClient(
+					player,
+					("FIRST DAY %d/%d — %s"):format(current.index + 1, current.total, current.hint),
+					"info"
+				)
 			end
 		end)
 	end)

@@ -16,7 +16,7 @@ local MinimapController = {}
 local player = Players.LocalPlayer
 
 local SIZE = Layout.Minimap -- px on screen
-local SCALE = 0.26 * Layout.Scale -- px per stud
+local SCALE = SIZE / 620 -- px per stud: the campus, fitted to the dial
 local MAP_ROT = true -- rotate the map under the arrow, GTA style
 
 type Shape = { x: number, z: number, w: number, d: number, color: Color3, z2: number? }
@@ -33,8 +33,11 @@ local SHAPES: { Shape } = {
 	{ x = -132, z = 170, w = 120, d = 62, color = Color3.fromRGB(58, 60, 66) }, -- west lot
 	{ x = 132, z = 170, w = 120, d = 62, color = Color3.fromRGB(58, 60, 66) }, -- east lot
 	{ x = 0, z = 208, w = 520, d = 22, color = Color3.fromRGB(48, 50, 56) }, -- road
-	{ x = -140, z = 200, w = 64, d = 54, color = Color3.fromRGB(92, 76, 68) }, -- boys dorm
-	{ x = 140, z = 200, w = 64, d = 54, color = Color3.fromRGB(92, 76, 68) }, -- girls dorm
+	{ x = -176, z = -212, w = 64, d = 54, color = Color3.fromRGB(92, 76, 68) }, -- boys dorm
+	{ x = 176, z = -212, w = 64, d = 54, color = Color3.fromRGB(92, 76, 68) }, -- girls dorm
+	{ x = 0, z = -232, w = 92, d = 68, color = Color3.fromRGB(150, 142, 128) }, -- library
+	{ x = 340, z = -20, w = 190, d = 110, color = Color3.fromRGB(58, 104, 88) }, -- tennis
+	{ x = -340, z = -20, w = 120, d = 88, color = Color3.fromRGB(96, 168, 200) }, -- pool
 }
 
 type Marker = { x: number, z: number, icon: string, color: Color3 }
@@ -47,6 +50,9 @@ local MARKERS: { Marker } = {
 	{ x = -74, z = -94, icon = "➗", color = Color3.fromRGB(120, 176, 255) },
 	{ x = 74, z = -94, icon = "🎵", color = Color3.fromRGB(212, 160, 240) },
 	{ x = -116, z = -28, icon = "🧬", color = Color3.fromRGB(150, 220, 130) },
+	{ x = 0, z = -232, icon = "📚", color = Color3.fromRGB(240, 226, 190) },
+	{ x = 340, z = -20, icon = "🎾", color = Color3.fromRGB(200, 240, 120) },
+	{ x = -340, z = -20, icon = "🏊", color = Color3.fromRGB(140, 216, 240) },
 	{ x = 116, z = -28, icon = "⚗️", color = Color3.fromRGB(150, 240, 190) },
 	{ x = -116, z = 0, icon = "👥", color = Color3.fromRGB(180, 255, 200) },
 }
@@ -66,7 +72,7 @@ function MinimapController.Init(gui: ScreenGui)
 	-- a rounded panel, not a circle: UICorner does not clip descendants, so a
 	-- circular frame just left the square map poking out past the ring
 	local round = Instance.new("UICorner")
-	round.CornerRadius = UDim.new(0, Layout.px(12))
+	round.CornerRadius = UDim.new(0, math.floor(SIZE * 0.14))
 	round.Parent = frame
 	local ring = Instance.new("UIStroke")
 	ring.Color = Color3.fromRGB(245, 197, 49)
@@ -98,7 +104,7 @@ function MinimapController.Init(gui: ScreenGui)
 		local dot = Instance.new("TextLabel")
 		dot.AnchorPoint = Vector2.new(0.5, 0.5)
 		dot.Position = UDim2.fromOffset(marker.x * SCALE, marker.z * SCALE)
-		dot.Size = UDim2.fromOffset(Layout.px(14), Layout.px(14))
+		dot.Size = UDim2.fromOffset(math.floor(SIZE * 0.13), math.floor(SIZE * 0.13))
 		dot.BackgroundTransparency = 1
 		dot.Text = marker.icon
 		dot.TextScaled = true
@@ -115,7 +121,7 @@ function MinimapController.Init(gui: ScreenGui)
 		end
 		local dot = Instance.new("Frame")
 		dot.AnchorPoint = Vector2.new(0.5, 0.5)
-		dot.Size = UDim2.fromOffset(Layout.px(7), Layout.px(7))
+		dot.Size = UDim2.fromOffset(math.max(4, math.floor(SIZE * 0.06)), math.max(4, math.floor(SIZE * 0.06)))
 		dot.BackgroundColor3 = Color3.fromRGB(255, 108, 96)
 		dot.BorderSizePixel = 0
 		dot.ZIndex = 24
@@ -138,7 +144,7 @@ function MinimapController.Init(gui: ScreenGui)
 	local home = Instance.new("TextLabel")
 	home.Name = "Home"
 	home.AnchorPoint = Vector2.new(0.5, 0.5)
-	home.Size = UDim2.fromOffset(Layout.px(16), Layout.px(16))
+	home.Size = UDim2.fromOffset(math.floor(SIZE * 0.14), math.floor(SIZE * 0.14))
 	home.BackgroundTransparency = 1
 	home.Text = "🏠"
 	home.TextScaled = true
@@ -162,7 +168,7 @@ function MinimapController.Init(gui: ScreenGui)
 	local arrow = Instance.new("TextLabel")
 	arrow.AnchorPoint = Vector2.new(0.5, 0.5)
 	arrow.Position = UDim2.fromScale(0.5, 0.5)
-	arrow.Size = UDim2.fromOffset(Layout.px(20), Layout.px(20))
+	arrow.Size = UDim2.fromOffset(math.floor(SIZE * 0.17), math.floor(SIZE * 0.17))
 	arrow.BackgroundTransparency = 1
 	arrow.Font = Enum.Font.FredokaOne
 	arrow.Text = "▲"
@@ -175,8 +181,8 @@ function MinimapController.Init(gui: ScreenGui)
 	-- north pip on the ring
 	local north = Instance.new("TextLabel")
 	north.AnchorPoint = Vector2.new(0.5, 0)
-	north.Position = UDim2.new(0.5, 0, 0, Layout.px(2))
-	north.Size = UDim2.fromOffset(Layout.px(13), Layout.px(13))
+	north.Position = UDim2.new(0.5, 0, 0, 2)
+	north.Size = UDim2.fromOffset(math.floor(SIZE * 0.11), math.floor(SIZE * 0.11))
 	north.BackgroundTransparency = 1
 	north.Font = Enum.Font.FredokaOne
 	north.Text = "N"

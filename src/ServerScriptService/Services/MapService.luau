@@ -26,6 +26,9 @@ export type Plot = {
 
 export type Map = {
 	plots: { Plot },
+	library: Vector3,
+	tennis: Vector3,
+	pool: Vector3,
 	conveyorStart: Vector3,
 	conveyorEnd: Vector3,
 	trophyCashBoard: BasePart,
@@ -322,6 +325,392 @@ local function buildPavilion(
 	})
 	signText(sign, label, accent, Enum.NormalId.Front)
 	signText(sign, label, accent, Enum.NormalId.Back)
+end
+
+-- ===== campus grounds: the three places that are not the school building =====
+--
+-- The floor plan is full, so these sit outside it: the library on the north
+-- quad behind the gym, the tennis stadium east, the pool west. Paths run back
+-- to the building so they read as part of the campus and not as scenery
+-- dropped on a lawn.
+
+local function buildCampusPath(parent: Instance, from: Vector3, to: Vector3, width: number)
+	local delta = to - from
+	local length = delta.Magnitude
+	if length < 1 then
+		return
+	end
+	local mid = from:Lerp(to, 0.5)
+	local path = part({
+		Name = "CampusPath",
+		Size = Vector3.new(width, 0.4, length),
+		CFrame = CFrame.lookAt(mid + Vector3.new(0, 0.05, 0), mid + delta.Unit + Vector3.new(0, 0.05, 0)),
+		Color = Color3.fromRGB(196, 190, 176),
+		Material = Enum.Material.Concrete,
+		Parent = parent,
+	})
+	tag(path, "TexPlaza")
+end
+
+local function buildLibrary(parent: Instance, center: Vector3)
+	local W, D, H = 92, 68, 26
+	local halfW, halfD = W / 2, D / 2
+	tag(part({
+		Name = "LibraryFloor",
+		Size = Vector3.new(W, 1, D),
+		CFrame = CFrame.new(center) * CFrame.new(0, -0.4, 0),
+		Color = Color3.fromRGB(150, 118, 88),
+		Material = Enum.Material.WoodPlanks,
+		Parent = parent,
+	}), "TexWood")
+
+	-- stone shell, open in the middle of the south face for the doors
+	local walls = {
+		{ size = Vector3.new(W, H, 2), offset = Vector3.new(0, H / 2, -halfD) },
+		{ size = Vector3.new(2, H, D), offset = Vector3.new(-halfW, H / 2, 0) },
+		{ size = Vector3.new(2, H, D), offset = Vector3.new(halfW, H / 2, 0) },
+		{ size = Vector3.new(halfW - 8, H, 2), offset = Vector3.new(-(halfW / 2 + 4), H / 2, halfD) },
+		{ size = Vector3.new(halfW - 8, H, 2), offset = Vector3.new(halfW / 2 + 4, H / 2, halfD) },
+		{ size = Vector3.new(16, 8, 2), offset = Vector3.new(0, H - 4, halfD) }, -- over the doors
+	}
+	for i, wall in walls do
+		tag(part({
+			Name = "LibraryWall" .. i,
+			Size = wall.size,
+			CFrame = CFrame.new(center) * CFrame.new(wall.offset),
+			Color = Color3.fromRGB(206, 198, 182),
+			Material = Enum.Material.Sandstone,
+			Parent = parent,
+		}), "TexBrick")
+	end
+
+	-- portico: six columns and a pediment over the entrance
+	for i = -2, 2 do
+		part({
+			Name = "LibraryColumn",
+			Shape = Enum.PartType.Cylinder,
+			Size = Vector3.new(H, 4, 4),
+			CFrame = CFrame.new(center) * CFrame.new(i * 13, H / 2, halfD + 8) * CFrame.Angles(0, 0, math.rad(90)),
+			Color = Color3.fromRGB(232, 226, 212),
+			Material = Enum.Material.Marble,
+			Parent = parent,
+		})
+	end
+	part({
+		Name = "LibraryPediment",
+		Size = Vector3.new(W - 6, 5, 18),
+		CFrame = CFrame.new(center) * CFrame.new(0, H + 2, halfD + 5),
+		Color = Color3.fromRGB(232, 226, 212),
+		Material = Enum.Material.Marble,
+		Parent = parent,
+	})
+	local plaque = part({
+		Name = "LibrarySign",
+		Size = Vector3.new(40, 4, 0.6),
+		CFrame = CFrame.new(center) * CFrame.new(0, H + 2, halfD + 14),
+		Color = Palette.Blackboard,
+		Parent = parent,
+	})
+	signText(plaque, "CRUMBWORTH LIBRARY", Palette.BusYellow, Enum.NormalId.Front)
+	signText(plaque, "SILENCE, PLEASE", Palette.BusYellow, Enum.NormalId.Back)
+
+	local roof = part({
+		Name = "LibraryRoof",
+		Size = Vector3.new(W + 4, 1.5, D + 4),
+		CFrame = CFrame.new(center) * CFrame.new(0, H + 0.5, 0),
+		Color = Color3.fromRGB(96, 90, 84),
+		Material = Enum.Material.Slate,
+		Parent = parent,
+	})
+	local _ = roof
+
+	-- stacks: rows of shelves down both halves, with an aisle between
+	for row = -1, 1 do
+		for side = 0, 1 do
+			local x = row * 26 + (side == 0 and -7 or 7)
+			part({
+				Name = "LibraryShelf",
+				Size = Vector3.new(5, 12, 40),
+				CFrame = CFrame.new(center) * CFrame.new(x, 6, -8),
+				Color = Color3.fromRGB(104, 72, 48),
+				Material = Enum.Material.WoodPlanks,
+				Parent = parent,
+			})
+			-- a band of spines so the shelves are not brown slabs
+			for shelfLevel = 1, 4 do
+				part({
+					Name = "LibraryBooks",
+					Size = Vector3.new(5.4, 1.8, 38),
+					CFrame = CFrame.new(center) * CFrame.new(x, shelfLevel * 2.7, -8),
+					Color = Color3.fromRGB(
+						120 + (row + 1) * 30 + side * 20,
+						70 + shelfLevel * 22,
+						80 + side * 40
+					),
+					Material = Enum.Material.Fabric,
+					Parent = parent,
+				})
+			end
+		end
+	end
+
+	-- reading floor at the front: this is where the study desks land
+	tag(part({
+		Name = "LibraryReadingFloor",
+		Size = Vector3.new(W - 8, 0.3, 22),
+		CFrame = CFrame.new(center) * CFrame.new(0, 0.2, halfD - 13),
+		Color = Color3.fromRGB(126, 60, 52),
+		Material = Enum.Material.Carpet,
+		Parent = parent,
+	}), "TexCarpet")
+
+	for _, lampX in { -30, 0, 30 } do
+		part({
+			Name = "LibraryChandelier",
+			Shape = Enum.PartType.Ball,
+			Size = Vector3.new(5, 5, 5),
+			CFrame = CFrame.new(center) * CFrame.new(lampX, H - 6, 0),
+			Color = Color3.fromRGB(255, 236, 190),
+			Material = Enum.Material.Neon,
+			Parent = parent,
+		})
+		local light = Instance.new("PointLight")
+		light.Brightness = 1.6
+		light.Range = 44
+		light.Color = Color3.fromRGB(255, 236, 196)
+		light.Parent = parent:FindFirstChild("LibraryChandelier") :: Instance
+	end
+end
+
+local function buildTennisStadium(parent: Instance, center: Vector3)
+	-- two courts side by side, fenced, with stands down both long sides
+	for _, courtX in { -24, 24 } do
+		local surface = part({
+			Name = "TennisCourt",
+			Size = Vector3.new(38, 0.3, 78),
+			CFrame = CFrame.new(center) * CFrame.new(courtX, 0.15, 0),
+			Color = Color3.fromRGB(58, 110, 92),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		})
+		local _ = surface
+		-- lines
+		for _, line in {
+			{ size = Vector3.new(27, 0.34, 0.5), offset = Vector3.new(0, 0.17, 0) },
+			{ size = Vector3.new(27, 0.34, 0.5), offset = Vector3.new(0, 0.17, 21) },
+			{ size = Vector3.new(27, 0.34, 0.5), offset = Vector3.new(0, 0.17, -21) },
+			{ size = Vector3.new(0.5, 0.34, 78), offset = Vector3.new(-13.5, 0.17, 0) },
+			{ size = Vector3.new(0.5, 0.34, 78), offset = Vector3.new(13.5, 0.17, 0) },
+			{ size = Vector3.new(0.5, 0.34, 42), offset = Vector3.new(0, 0.17, 0) },
+		} do
+			part({
+				Name = "CourtLine",
+				Size = line.size,
+				CFrame = CFrame.new(center) * CFrame.new(Vector3.new(courtX, 0, 0) + line.offset),
+				Color = Color3.fromRGB(240, 240, 236),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			})
+		end
+		part({
+			Name = "TennisNet",
+			Size = Vector3.new(30, 3.6, 0.3),
+			CFrame = CFrame.new(center) * CFrame.new(courtX, 1.8, 0),
+			Color = Color3.fromRGB(40, 44, 48),
+			Material = Enum.Material.Fabric,
+			Transparency = 0.25,
+			Parent = parent,
+		})
+		for _, postZ in { -15.5, 15.5 } do
+			part({
+				Name = "NetPost",
+				Size = Vector3.new(0.8, 4.4, 0.8),
+				CFrame = CFrame.new(center) * CFrame.new(courtX + (postZ > 0 and 15 or -15), 2.2, 0),
+				Color = Color3.fromRGB(120, 124, 130),
+				Material = Enum.Material.Metal,
+				Parent = parent,
+			})
+		end
+	end
+
+	-- bleachers: stepped rows on both flanks
+	for _, side in { -1, 1 } do
+		for tier = 1, 6 do
+			part({
+				Name = "TennisStand",
+				Size = Vector3.new(7, 2.4, 92),
+				CFrame = CFrame.new(center) * CFrame.new(side * (56 + tier * 6), tier * 2.4 - 1.2, 0),
+				Color = tier % 2 == 0 and Color3.fromRGB(196, 92, 76) or Color3.fromRGB(214, 206, 190),
+				Material = Enum.Material.Concrete,
+				Parent = parent,
+			})
+		end
+	end
+
+	-- floodlights at the four corners
+	for _, cx in { -80, 80 } do
+		for _, cz in { -52, 52 } do
+			part({
+				Name = "FloodPole",
+				Size = Vector3.new(2, 46, 2),
+				CFrame = CFrame.new(center) * CFrame.new(cx, 23, cz),
+				Color = Color3.fromRGB(108, 112, 118),
+				Material = Enum.Material.Metal,
+				Parent = parent,
+			})
+			local head = part({
+				Name = "FloodLamp",
+				Size = Vector3.new(9, 4, 2.5),
+				CFrame = CFrame.new(center) * CFrame.new(cx, 45, cz),
+				Color = Color3.fromRGB(255, 246, 214),
+				Material = Enum.Material.Neon,
+				Parent = parent,
+			})
+			local light = Instance.new("SpotLight")
+			light.Angle = 100
+			light.Brightness = 2.4
+			light.Range = 90
+			light.Face = Enum.NormalId.Bottom
+			light.Color = Color3.fromRGB(255, 248, 226)
+			light.Parent = head
+		end
+	end
+
+	local board = part({
+		Name = "TennisScoreboard",
+		Size = Vector3.new(30, 12, 1.4),
+		CFrame = CFrame.new(center) * CFrame.new(0, 20, -56),
+		Color = Palette.Blackboard,
+		Parent = parent,
+	})
+	signText(board, "CRUMBWORTH TENNIS\nHOME 6   AWAY 4", Palette.BusYellow, Enum.NormalId.Front)
+end
+
+local function buildPool(parent: Instance, center: Vector3)
+	local W, D, DEPTH = 76, 44, 13
+	local halfW, halfD = W / 2, D / 2
+
+	-- deck: four slabs around the basin, so the hole is a real hole
+	local deck = 22
+	for _, slab in {
+		{ size = Vector3.new(W + deck * 2, 1, deck), offset = Vector3.new(0, -0.4, halfD + deck / 2) },
+		{ size = Vector3.new(W + deck * 2, 1, deck), offset = Vector3.new(0, -0.4, -halfD - deck / 2) },
+		{ size = Vector3.new(deck, 1, D), offset = Vector3.new(halfW + deck / 2, -0.4, 0) },
+		{ size = Vector3.new(deck, 1, D), offset = Vector3.new(-halfW - deck / 2, -0.4, 0) },
+	} do
+		tag(part({
+			Name = "PoolDeck",
+			Size = slab.size,
+			CFrame = CFrame.new(center) * CFrame.new(slab.offset),
+			Color = Color3.fromRGB(226, 222, 212),
+			Material = Enum.Material.CeramicTiles,
+			Parent = parent,
+		}), "TexPlaza")
+	end
+
+	-- basin
+	part({
+		Name = "PoolBottom",
+		Size = Vector3.new(W, 1, D),
+		CFrame = CFrame.new(center) * CFrame.new(0, -DEPTH - 0.5, 0),
+		Color = Color3.fromRGB(126, 196, 224),
+		Material = Enum.Material.CeramicTiles,
+		Parent = parent,
+	})
+	for _, wall in {
+		{ size = Vector3.new(W + 2, DEPTH, 1), offset = Vector3.new(0, -DEPTH / 2, halfD) },
+		{ size = Vector3.new(W + 2, DEPTH, 1), offset = Vector3.new(0, -DEPTH / 2, -halfD) },
+		{ size = Vector3.new(1, DEPTH, D), offset = Vector3.new(halfW, -DEPTH / 2, 0) },
+		{ size = Vector3.new(1, DEPTH, D), offset = Vector3.new(-halfW, -DEPTH / 2, 0) },
+	} do
+		part({
+			Name = "PoolWall",
+			Size = wall.size,
+			CFrame = CFrame.new(center) * CFrame.new(wall.offset),
+			Color = Color3.fromRGB(206, 226, 236),
+			Material = Enum.Material.CeramicTiles,
+			Parent = parent,
+		})
+	end
+
+	-- lane ropes
+	for lane = -2, 2 do
+		part({
+			Name = "PoolLane",
+			Size = Vector3.new(0.5, 0.4, D - 2),
+			CFrame = CFrame.new(center) * CFrame.new(lane * 12, -1, 0),
+			Color = lane % 2 == 0 and Color3.fromRGB(232, 96, 84) or Color3.fromRGB(240, 240, 240),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		})
+	end
+
+	-- real terrain water, so this is a pool you swim in and not a blue floor
+	local waterCenter = center + Vector3.new(0, -DEPTH / 2 - 0.5, 0)
+	pcall(function()
+		workspace.Terrain:FillBlock(
+			CFrame.new(waterCenter),
+			Vector3.new(W - 1, DEPTH - 1, D - 1),
+			Enum.Material.Water
+		)
+	end)
+
+	-- diving board over the deep end
+	part({
+		Name = "DivePlatform",
+		Size = Vector3.new(6, 8, 6),
+		CFrame = CFrame.new(center) * CFrame.new(-halfW - 6, 4, 0),
+		Color = Color3.fromRGB(214, 208, 196),
+		Material = Enum.Material.Concrete,
+		Parent = parent,
+	})
+	part({
+		Name = "DiveBoard",
+		Size = Vector3.new(14, 0.6, 4),
+		CFrame = CFrame.new(center) * CFrame.new(-halfW + 2, 8.3, 0),
+		Color = Color3.fromRGB(240, 240, 236),
+		Material = Enum.Material.SmoothPlastic,
+		Parent = parent,
+	})
+
+	-- loungers and parasols down the sunny side
+	for i = -2, 2 do
+		part({
+			Name = "PoolLounger",
+			Size = Vector3.new(4, 1.4, 9),
+			CFrame = CFrame.new(center) * CFrame.new(i * 16, 0.7, halfD + 10) * CFrame.Angles(math.rad(-12), 0, 0),
+			Color = Color3.fromRGB(244, 232, 210),
+			Material = Enum.Material.Fabric,
+			Parent = parent,
+		})
+		part({
+			Name = "PoolParasolPole",
+			Size = Vector3.new(0.5, 10, 0.5),
+			CFrame = CFrame.new(center) * CFrame.new(i * 16 + 4, 5, halfD + 16),
+			Color = Color3.fromRGB(180, 176, 168),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+		part({
+			Name = "PoolParasol",
+			Shape = Enum.PartType.Cylinder,
+			Size = Vector3.new(0.6, 13, 13),
+			CFrame = CFrame.new(center) * CFrame.new(i * 16 + 4, 10, halfD + 16) * CFrame.Angles(0, 0, math.rad(90)),
+			Color = i % 2 == 0 and Color3.fromRGB(232, 108, 96) or Color3.fromRGB(246, 206, 96),
+			Material = Enum.Material.Fabric,
+			Parent = parent,
+		})
+	end
+
+	local sign = part({
+		Name = "PoolSign",
+		Size = Vector3.new(26, 5, 1),
+		CFrame = CFrame.new(center) * CFrame.new(0, 8, -halfD - 20),
+		Color = Palette.Blackboard,
+		Parent = parent,
+	})
+	signText(sign, "CRUMBWORTH POOL\nNO RUNNING", Color3.fromRGB(140, 216, 240), Enum.NormalId.Front)
+	signText(sign, "NO RUNNING", Color3.fromRGB(140, 216, 240), Enum.NormalId.Back)
 end
 
 local function buildZone(parent: Instance, name: string, center: Vector3, size: Vector2, color: Color3, label: string, material: Enum.Material?): BasePart
@@ -1163,8 +1552,9 @@ local function buildTerrain()
 	for _, region in {
 		{ cf = CFrame.new(0, -2.3, 0), size = Vector3.new(452, 5, 252) }, -- main building (plan footprint)
 		{ cf = CFrame.new(0, -2.3, -135), size = Vector3.new(104, 5, 26) }, -- gym protrusion
-		{ cf = CFrame.new(-140, -2.3, 200), size = Vector3.new(64, 5, 54) }, -- boys dorm
-		{ cf = CFrame.new(140, -2.3, 200), size = Vector3.new(64, 5, 54) }, -- girls dorm
+		{ cf = CFrame.new(-176, -2.3, -212), size = Vector3.new(64, 5, 54) }, -- boys dorm
+		{ cf = CFrame.new(176, -2.3, -212), size = Vector3.new(64, 5, 54) }, -- girls dorm
+		{ cf = CFrame.new(0, -2.3, -232), size = Vector3.new(96, 5, 72) }, -- library
 	} do
 		terrain:FillBlock(region.cf, region.size, Enum.Material.Air)
 	end
@@ -2650,8 +3040,13 @@ end
 	buildBus(folder, CFrame.new(-96, 0, 190) * CFrame.Angles(0, math.rad(-4), 0))
 	part({ Name = "FrontRoad", Size = Vector3.new(520, 0.4, 22), CFrame = CFrame.new(0, 0.05, 208), Color = Color3.fromRGB(70, 72, 78), Material = Enum.Material.Asphalt, Parent = folder })
 	local dormBeds: { BasePart } = {}
-	buildDorm(folder, Vector3.new(-140, 0, 200), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
-	buildDorm(folder, Vector3.new(140, 0, 200), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
+	-- the residential quad: behind the school, either side of the library, with
+	-- walks onto the same north path. A dorm parked between the car park and
+	-- the road is not a place anyone lives.
+	buildDorm(folder, Vector3.new(-176, 0, -212), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
+	buildDorm(folder, Vector3.new(176, 0, -212), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
+	buildCampusPath(folder, Vector3.new(-52, 0, -212), Vector3.new(-142, 0, -212), 12)
+	buildCampusPath(folder, Vector3.new(52, 0, -212), Vector3.new(142, 0, -212), 12)
 	buildPath(folder, Vector3.new(-60, 0, 150), Vector3.new(-130, 0, 192), 8)
 	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(130, 0, 192), 8)
 	buildFlagpole(folder)
@@ -2680,6 +3075,18 @@ end
 	spawn.Name = "BusStop"
 	spawn.Parent = folder
 
+	-- ---------------- campus grounds ----------------
+	local LIBRARY = Vector3.new(0, 0, -232)
+	local TENNIS = Vector3.new(340, 0, -20)
+	local POOL = Vector3.new(-340, 0, -20)
+	buildLibrary(folder, LIBRARY)
+	buildTennisStadium(folder, TENNIS)
+	buildPool(folder, POOL)
+	-- walks back to the building, so these read as campus and not scenery
+	buildCampusPath(folder, Vector3.new(0, 0, -150), LIBRARY + Vector3.new(0, 0, 44), 16)
+	buildCampusPath(folder, Vector3.new(230, 0, -20), TENNIS + Vector3.new(-96, 0, 0), 14)
+	buildCampusPath(folder, Vector3.new(-230, 0, -20), POOL + Vector3.new(96, 0, 0), 14)
+
 	optimize(folder)
 	folder.Parent = workspace
 
@@ -2687,6 +3094,9 @@ end
 
 	return {
 		plots = plots,
+		library = LIBRARY,
+		tennis = TENNIS,
+		pool = POOL,
 		conveyorStart = Vector3.new(-190, 0, 70),
 		conveyorEnd = Vector3.new(190, 0, 70),
 		trophyCashBoard = trophyCashBoard,

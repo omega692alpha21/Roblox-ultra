@@ -34,44 +34,45 @@ local ACCENTS: { [string]: Color3 } = {
 function GoalController.Init(gui: ScreenGui)
 	local card = UIBuilder.Frame({
 		Name = "GoalBar",
-		Position = UDim2.fromOffset(Layout.StatusX, Layout.Margin + Layout.px(84)),
-		Size = UDim2.fromOffset(Layout.px(214), Layout.px(38)),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, Layout.Margin + Layout.h(0.075)),
+		Size = UDim2.fromOffset(Layout.w(0.26), Layout.h(0.05)),
 		BackgroundColor3 = Palette.PanelBg,
-		BackgroundTransparency = 0.35,
+		BackgroundTransparency = 0.4,
 		Visible = false,
 		Parent = gui,
 	})
-	UIBuilder.Round(card, Layout.px(9))
+	UIBuilder.Round(card, 999)
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Palette.BusYellow
 	stroke.Thickness = 2
 	stroke.Parent = card
 
 	local label = UIBuilder.Label({
-		Position = UDim2.fromOffset(Layout.px(10), Layout.px(4)),
-		Size = UDim2.new(1, -Layout.px(20), 0, Layout.px(19)),
+		Position = UDim2.fromScale(0.04, 0.06),
+		Size = UDim2.new(0.92, 0, 0.58, 0),
 		Text = "",
 		TextScaled = false,
-		TextSize = Layout.px(15),
+		TextSize = Layout.TextSize(0.026),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = card,
 	})
 
 	local barBg = UIBuilder.Frame({
-		Position = UDim2.fromOffset(Layout.px(10), Layout.px(25)),
-		Size = UDim2.new(1, -Layout.px(20), 0, Layout.px(5)),
+		Position = UDim2.fromScale(0.04, 0.7),
+		Size = UDim2.new(0.92, 0, 0.16, 0),
 		BackgroundColor3 = Color3.fromRGB(18, 22, 28),
 		BackgroundTransparency = 0.3,
 		Parent = card,
 	})
-	UIBuilder.Round(barBg, Layout.px(3))
+	UIBuilder.Round(barBg, 999)
 	local fill = UIBuilder.Frame({
 		Size = UDim2.fromScale(0, 1),
 		BackgroundColor3 = Palette.BusYellow,
 		Parent = barBg,
 	})
-	UIBuilder.Round(fill, Layout.px(3))
+	UIBuilder.Round(fill, 999)
 
 	-- a goal that is ready to act on pulses; one that is still filling sits
 	-- still, so the eye is only pulled when there is something to do

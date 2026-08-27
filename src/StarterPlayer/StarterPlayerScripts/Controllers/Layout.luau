@@ -1,58 +1,75 @@
 --!strict
--- One layout grid for the whole HUD, sized to the device.
+-- The HUD grid, measured as fractions of the real viewport.
 --
--- Every offset here is authored against a 640pt-tall reference screen and then
--- scaled. A phone in landscape reports roughly 380pt of height, so unscaled
--- desktop sizes turn a 128pt minimap into a third of the screen and a status
--- card into a billboard across the player's face. Everything measured in
--- px() shrinks with the viewport; edge margins stay real so anchoring to a
--- corner still means the corner.
+-- Sizing in "points" and hoping was the bug: a status card authored against a
+-- guessed reference height came out a third of the screen wide on a phone.
+-- Everything here is derived from the camera's actual ViewportSize, so
+-- "the cash chip is 5% of screen height" is exactly what renders, on any
+-- device, with no conversion to get wrong.
 --
---   top-left     minimap, then a thin status strip beside it
---   top-right    lock chip
---   bottom-left  the single MENU button
---   bottom-right the action bar (RUN / PUNCH / THROW), toy chips just above
+-- The shape follows what the big Roblox social games do: the middle of the
+-- screen is empty, status hugs the top, menus are a rail of icons on the right
+-- edge, thumb buttons sit bottom-right above Roblox's own jump control.
 
 local Layout = {}
 
-local REFERENCE_HEIGHT = 640
+local VH = 720
+local VW = 1280
 
-local function computeScale(): number
+do
 	local camera = workspace.CurrentCamera
-	local height = camera and camera.ViewportSize.Y or 0
-	if height < 120 then
-		return 1
+	-- the viewport can still be (0, 0) on the first frames of a mobile join
+	for _ = 1, 60 do
+		if camera and camera.ViewportSize.Y > 50 then
+			break
+		end
+		task.wait(0.05)
+		camera = workspace.CurrentCamera
 	end
-	return math.clamp(height / REFERENCE_HEIGHT, 0.55, 1.15)
+	if camera and camera.ViewportSize.Y > 50 then
+		VH = camera.ViewportSize.Y
+		VW = camera.ViewportSize.X
+	end
 end
 
-Layout.Scale = computeScale()
+Layout.ViewportHeight = VH
+Layout.ViewportWidth = VW
 
-function Layout.px(n: number): number
-	return math.floor(n * Layout.Scale + 0.5)
+-- Pixels from a fraction of viewport height. Height, not width, because a
+-- phone in landscape is very wide and very short: sizing off width makes
+-- everything enormous on exactly the device that has least room.
+function Layout.h(fraction: number): number
+	return math.floor(VH * fraction + 0.5)
 end
 
-Layout.Margin = Layout.px(12)
-Layout.Minimap = Layout.px(112)
--- x where anything to the right of the minimap starts
-Layout.StatusX = Layout.Margin + Layout.Minimap + Layout.px(8)
+function Layout.w(fraction: number): number
+	return math.floor(VW * fraction + 0.5)
+end
 
--- Buttons sit in a single right-aligned row so they can never stack on top of
--- one another. Lower LayoutOrder ends up further left.
+-- Text that fits its box, with a ceiling so it never turns into a billboard.
+function Layout.TextSize(fraction: number): number
+	return math.clamp(math.floor(VH * fraction + 0.5), 9, 48)
+end
+
+Layout.Margin = Layout.h(0.028)
+Layout.Minimap = Layout.h(0.17)
+
+-- the right-edge menu rail
+Layout.RailIcon = Layout.h(0.115)
+Layout.RailGap = Layout.h(0.018)
+
+-- thumb buttons, bottom right, clear of Roblox's jump control
+Layout.ButtonSize = Layout.h(0.135)
+Layout.ToyButtonSize = Layout.h(0.155)
+Layout.ChipSize = Layout.h(0.085)
+
 Layout.Order = {
 	Sprint = 10,
 	Punch = 20,
 	Toy = 30,
 }
 
-Layout.ButtonSize = Layout.px(62)
-Layout.ToyButtonSize = Layout.px(70)
-Layout.ChipSize = Layout.px(38)
-
-local BAR_HEIGHT = Layout.ToyButtonSize
--- clear of Roblox's own jump button, which owns the very corner
-local BAR_BOTTOM = Layout.px(104)
-local CHIP_HEIGHT = Layout.px(32)
+local BAR_BOTTOM = Layout.h(0.30)
 
 local function makeRow(gui: Instance, name: string, height: number, bottom: number): Frame
 	local existing = gui:FindFirstChild(name)
@@ -73,20 +90,27 @@ local function makeRow(gui: Instance, name: string, height: number, bottom: numb
 	list.HorizontalAlignment = Enum.HorizontalAlignment.Right
 	list.VerticalAlignment = Enum.VerticalAlignment.Center
 	list.SortOrder = Enum.SortOrder.LayoutOrder
-	list.Padding = UDim.new(0, Layout.px(10))
+	list.Padding = UDim.new(0, Layout.h(0.02))
 	list.Parent = row
 	return row
 end
 
--- The bottom-right action bar, created on first use and shared by every
--- controller that wants a thumb button.
 function Layout.ActionBar(gui: ScreenGui): Frame
-	return makeRow(gui, "ActionBar", BAR_HEIGHT, BAR_BOTTOM)
+	return makeRow(gui, "ActionBar", Layout.ToyButtonSize, BAR_BOTTOM)
 end
 
--- A strip directly above the action bar, for the toy chips.
 function Layout.ChipRow(gui: ScreenGui): Frame
-	return makeRow(gui, "ChipRow", CHIP_HEIGHT, BAR_BOTTOM + BAR_HEIGHT + Layout.px(6))
+	return makeRow(gui, "ChipRow", Layout.ChipSize, BAR_BOTTOM + Layout.ToyButtonSize + Layout.h(0.015))
 end
+
+-- Kept so existing call sites keep working; a "px" is now a fraction of the
+-- 900-tall reference expressed against the real viewport.
+function Layout.px(n: number): number
+	return math.floor(n / 900 * VH + 0.5)
+end
+
+Layout.Scale = VH / 900
+Layout.StatusX = Layout.Margin + Layout.Minimap + Layout.h(0.02)
+Layout.PanelWidth = Layout.w(0.2)
 
 return Layout
