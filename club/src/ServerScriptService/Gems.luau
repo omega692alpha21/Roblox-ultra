@@ -13,17 +13,18 @@ local Config = require(ReplicatedStorage.Club.ClubConfig)
 local Gems = {}
 
 local gemTemplate: Model? = nil
+local cloakTemplate: Model? = nil
 
-local function loadGemTemplate()
-	if Config.Meshes.Gem == 0 then
-		return
+local function loadTemplate(assetId: number): Model?
+	if assetId == 0 then
+		return nil
 	end
 	local ok, asset = pcall(function()
-		return InsertService:LoadAsset(Config.Meshes.Gem)
+		return InsertService:LoadAsset(assetId)
 	end)
 	if not ok or not asset then
-		warn("[MC] gem mesh failed to load")
-		return
+		warn("[MC] mesh " .. assetId .. " failed to load")
+		return nil
 	end
 	local inner = asset:FindFirstChildOfClass("Model")
 	local template = Instance.new("Model")
@@ -41,9 +42,15 @@ local function loadGemTemplate()
 		end
 	end
 	asset:Destroy()
-	if #template:GetChildren() > 0 then
-		gemTemplate = template
+	if #template:GetChildren() == 0 then
+		return nil
 	end
+	return template
+end
+
+local function loadGemTemplate()
+	gemTemplate = loadTemplate(Config.Meshes.Gem)
+	cloakTemplate = loadTemplate(Config.Meshes.Cloak)
 end
 
 -- fallback stone if the mesh is unavailable: a part-built octahedron
@@ -80,7 +87,7 @@ end
 local CLOAK = Color3.fromRGB(26, 25, 30)
 local CLOAK_GUEST = Color3.fromRGB(54, 53, 58)
 
-local function buildCloak(root: BasePart, tier: Config.Tier): Model
+local function buildCloakFallback(root: BasePart, tier: Config.Tier): Model
 	local cloak = Instance.new("Model")
 	cloak.Name = "CloakForm"
 	local color = if tier.name == "GUEST" then CLOAK_GUEST else CLOAK
@@ -122,6 +129,47 @@ local function buildCloak(root: BasePart, tier: Config.Tier): Model
 	return cloak
 end
 
+local function buildCloak(root: BasePart, tier: Config.Tier): Model
+	if not cloakTemplate then
+		return buildCloakFallback(root, tier)
+	end
+	local cloak = cloakTemplate:Clone()
+	cloak.Name = "CloakForm"
+	local parts: { BasePart } = {}
+	for _, p in cloak:GetDescendants() do
+		if p:IsA("BasePart") then
+			table.insert(parts, p)
+		end
+	end
+	table.sort(parts, function(a, b)
+		return a.Name < b.Name
+	end)
+	-- part0 = cloth, part1 = hem band (GLB import drops the glTF colors)
+	for i, p in parts do
+		if i == 1 then
+			p.Color = if tier.name == "GUEST" then CLOAK_GUEST else CLOAK
+			p.Material = Enum.Material.Fabric
+		else
+			p.Color = if tier.name == "GUEST" then Color3.fromRGB(74, 72, 78) else tier.glow
+			p.Material = Enum.Material.SmoothPlastic
+		end
+	end
+	local primary = parts[1]
+	if not primary then
+		return buildCloakFallback(root, tier)
+	end
+	cloak.PrimaryPart = primary
+	-- authored with the hem at root-2.1; bounding center sits 1.39 above root
+	cloak:PivotTo(root.CFrame * CFrame.new(0, 1.39, 0))
+	for _, p in parts do
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = root
+		w.Part1 = p
+		w.Parent = p
+	end
+	return cloak
+end
+
 local function tierOf(player: Player): Config.Tier
 	local name = player:GetAttribute("Tier")
 	return Config.TierByName(typeof(name) == "string" and name :: string or "GUEST") or Config.Tiers[1]
@@ -150,7 +198,7 @@ local function dress(player: Player, character: Model)
 	local gem = (if gemTemplate then gemTemplate:Clone() else fallbackGem())
 	gem.Name = "GemForm"
 	local scaleOk = pcall(function()
-		gem:ScaleTo(1.5 * tier.scale)
+		gem:ScaleTo(0.85 * tier.scale)
 	end)
 	if not scaleOk then
 		warn("[MC] gem scale failed")
@@ -173,14 +221,14 @@ local function dress(player: Player, character: Model)
 		return
 	end
 	gem.PrimaryPart = primary
-	gem:PivotTo(root.CFrame * CFrame.new(0, 3.2, 0))
+	gem:PivotTo(root.CFrame * CFrame.new(0, 3.45, 0))
 	-- welded to the rig: replicates for free with the character. The spin and
 	-- hover bob are client-side (ClubClient animates GemWeld.C0 locally).
 	local weld = Instance.new("Weld")
 	weld.Name = "GemWeld"
 	weld.Part0 = root
 	weld.Part1 = primary
-	weld.C0 = CFrame.new(0, 3.2, 0)
+	weld.C0 = CFrame.new(0, 3.45, 0)
 	weld.Parent = primary
 	for _, p in gem:GetDescendants() do
 		if p:IsA("BasePart") and p ~= primary then
@@ -259,6 +307,19 @@ function Gems.Init()
 				end
 			end)
 			task.delay(2.5, redress)
+			-- late-loading appearance can un-hide limbs; keep forcing them off
+			task.spawn(function()
+				for _ = 1, 6 do
+					task.wait(2)
+					if character.Parent then
+						for _, part in character:GetChildren() do
+							if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+								part.Transparency = 1
+							end
+						end
+					end
+				end
+			end)
 		end
 		player.CharacterAppearanceLoaded:Connect(function(character)
 			task.wait(0.1)

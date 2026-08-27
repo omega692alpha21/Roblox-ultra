@@ -40,7 +40,7 @@ atmosphere.Haze = 1.4
 atmosphere.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
-bloom.Intensity = 0.9
+bloom.Intensity = 0.55
 bloom.Size = 40
 bloom.Threshold = 1.6
 bloom.Parent = Lighting

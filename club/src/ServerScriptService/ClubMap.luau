@@ -349,10 +349,11 @@ local function buildEstate(folder: Model, meshes: { [string]: Model? })
 	for _, x in { -22, 22 } do
 		part({
 			Name = "GoldSeam",
-			Size = Vector3.new(0.6, 0.65, length),
-			CFrame = CFrame.new(x, 0.12, mid),
+			Size = Vector3.new(0.5, 0.55, length),
+			CFrame = CFrame.new(x, 0.08, mid),
 			Color = GOLD_BRIGHT,
 			Material = Enum.Material.Neon,
+			Transparency = 0.55,
 			CanCollide = false,
 			Parent = folder,
 		})
@@ -427,16 +428,19 @@ local function buildPyramid(folder: Model): (BasePart, BasePart, BasePart)
 		slab("PyrS", Vector3.new(half * 2, PYR_TIER_H, thick), CFrame.new(0, y, zc - half + thick / 2))
 		slab("PyrE", Vector3.new(thick, PYR_TIER_H, half * 2 - thick * 2), CFrame.new(half - thick / 2, y, zc))
 		slab("PyrW", Vector3.new(thick, PYR_TIER_H, half * 2 - thick * 2), CFrame.new(-(half - thick / 2), y, zc))
-		-- gold trim tracing every tier edge on the north face
-		part({
-			Name = "TierTrim",
-			Size = Vector3.new(half * 2, 0.5, 0.5),
-			CFrame = CFrame.new(0, y + PYR_TIER_H / 2 - 0.25, zc + half - 0.2),
-			Color = GOLD_BRIGHT,
-			Material = Enum.Material.Neon,
-			CanCollide = false,
-			Parent = folder,
-		})
+		-- one restrained gold trim at the base tier only — the LED-strip wall
+		-- of lines read as glare, not luxury
+		if t == 0 then
+			part({
+				Name = "TierTrim",
+				Size = Vector3.new(half * 2, 0.4, 0.4),
+				CFrame = CFrame.new(0, y + PYR_TIER_H / 2 - 0.2, zc + half - 0.2),
+				Color = GOLD,
+				Material = Enum.Material.Metal,
+				CanCollide = false,
+				Parent = folder,
+			})
+		end
 	end
 
 	-- the capstone burns gold, with a light column rising off it

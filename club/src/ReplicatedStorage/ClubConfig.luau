@@ -60,6 +60,7 @@ local Config = {
 		Column = 139638345845432,
 		Lamppost = 71751173797781,
 		Gem = 137215970504108,
+		Cloak = 87192563381111,
 	},
 
 	Interests = {
