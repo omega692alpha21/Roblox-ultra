@@ -61,13 +61,33 @@ if not okBuild then
 	gui.PixelsPerStud = 20
 	gui.Parent = sign
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
+	label.Size = UDim2.fromScale(1, 0.35)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.FredokaOne
 	label.TextScaled = true
 	label.TextColor3 = Color3.new(1, 1, 1)
-	label.Text = "MAP BUILD FAILED — screenshot this + tell the dev"
+	label.Text = "MAP BUILD FAILED (build " .. tostring(game.PlaceVersion) .. ")"
 	label.Parent = gui
+	local errLabel = Instance.new("TextLabel")
+	errLabel.Position = UDim2.fromScale(0, 0.35)
+	errLabel.Size = UDim2.fromScale(1, 0.65)
+	errLabel.BackgroundTransparency = 1
+	errLabel.Font = Enum.Font.Code
+	errLabel.TextWrapped = true
+	errLabel.TextScaled = true
+	errLabel.TextColor3 = Color3.fromRGB(255, 220, 220)
+	errLabel.Text = tostring(mapOrErr):sub(1, 380)
+	errLabel.Parent = gui
+	-- persist the full traceback where the dev can read it via Open Cloud
+	task.spawn(function()
+		pcall(function()
+			local DataStoreService = game:GetService("DataStoreService")
+			DataStoreService:GetDataStore("ClientDiagnostics"):SetAsync(
+				("map_fail_b%d_t%d"):format(game.PlaceVersion, os.time()),
+				{ err = tostring(mapOrErr):sub(1, 3500), build = game.PlaceVersion, time = os.time() }
+			)
+		end)
+	end)
 	return
 end
 local map = mapOrErr :: any

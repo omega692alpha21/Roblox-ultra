@@ -1060,8 +1060,7 @@ local function buildTerrain()
 	-- hard rule: nothing rises above ground level anywhere inside the walls
 	terrain:FillBlock(CFrame.new(0, 34, 0), Vector3.new(640, 64, 640), Enum.Material.Air)
 
-	-- no terrain (or its animated grass blades) under any interior floor
-	terrain.Decoration = false
+	-- no terrain under any interior floor (air-carved, so no grass blades either)
 	for _, region in {
 		{ cf = CFrame.new(0, -2.3, 0), size = Vector3.new(330, 5, 162) }, -- main building
 		{ cf = CFrame.new(-215, -2.3, 60), size = Vector3.new(64, 5, 64) },
