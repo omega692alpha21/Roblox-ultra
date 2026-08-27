@@ -105,6 +105,59 @@ local function drawShingles(): any?
 	return image
 end
 
+local function drawFloorTile(): any?
+	local image = makeImage(256)
+	if not image then
+		return nil
+	end
+	-- grout base, then 2x2 large stone tiles with subtle variation
+	image:DrawRectangle(Vector2.new(0, 0), Vector2.new(256, 256), Color3.fromRGB(148, 148, 144), 0, OVERWRITE)
+	local rng = lcg(11)
+	for ty = 0, 1 do
+		for tx = 0, 1 do
+			local shade = 0.94 + nextf(rng) * 0.12
+			local base = Color3.fromRGB(196, 196, 190)
+			image:DrawRectangle(
+				Vector2.new(tx * 128 + 3, ty * 128 + 3),
+				Vector2.new(122, 122),
+				Color3.new(math.clamp(base.R * shade, 0, 1), math.clamp(base.G * shade, 0, 1), math.clamp(base.B * shade, 0, 1)),
+				0,
+				OVERWRITE
+			)
+			-- faint speckle
+			for _ = 1, 6 do
+				local sx = tx * 128 + 10 + math.floor(nextf(rng) * 100)
+				local sy = ty * 128 + 10 + math.floor(nextf(rng) * 100)
+				image:DrawRectangle(Vector2.new(sx, sy), Vector2.new(4, 4), Color3.fromRGB(170, 170, 164), 0.3, OVERWRITE)
+			end
+		end
+	end
+	return image
+end
+
+local function drawCarpet(): any?
+	local image = makeImage(256)
+	if not image then
+		return nil
+	end
+	local rng = lcg(31)
+	for ty = 0, 7 do
+		for tx = 0, 7 do
+			local dark = (tx + ty) % 2 == 0
+			local shade = 0.9 + nextf(rng) * 0.2
+			local base = dark and Color3.fromRGB(122, 96, 76) or Color3.fromRGB(150, 120, 96)
+			image:DrawRectangle(
+				Vector2.new(tx * 32, ty * 32),
+				Vector2.new(32, 32),
+				Color3.new(math.clamp(base.R * shade, 0, 1), math.clamp(base.G * shade, 0, 1), math.clamp(base.B * shade, 0, 1)),
+				0,
+				OVERWRITE
+			)
+		end
+	end
+	return image
+end
+
 local function applyTexture(part: BasePart, content: any, faces: { Enum.NormalId }, tileU: number, tileV: number)
 	for _, face in faces do
 		local texture = Instance.new("Texture")
@@ -152,6 +205,24 @@ function SurfaceArtController.Init(_gui: ScreenGui)
 				for _, part in CollectionService:GetTagged("TexRoof") do
 					if part:IsA("BasePart") then
 						applyTexture(part, shingleContent, { Enum.NormalId.Top }, 8, 8)
+					end
+				end
+			end
+			local tile = drawFloorTile()
+			if tile then
+				local tileContent = (Content :: any).fromObject(tile)
+				for _, part in CollectionService:GetTagged("TexFloorTile") do
+					if part:IsA("BasePart") then
+						applyTexture(part, tileContent, { Enum.NormalId.Top }, 12, 12)
+					end
+				end
+			end
+			local carpet = drawCarpet()
+			if carpet then
+				local carpetContent = (Content :: any).fromObject(carpet)
+				for _, part in CollectionService:GetTagged("TexCarpet") do
+					if part:IsA("BasePart") then
+						applyTexture(part, carpetContent, { Enum.NormalId.Top }, 16, 16)
 					end
 				end
 			end

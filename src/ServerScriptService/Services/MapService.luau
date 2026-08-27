@@ -1355,7 +1355,7 @@ local function detailCourtyard(parent: Instance)
 		part({ Name = "CourtLine", Size = line.size, CFrame = line.cf, Color = Color3.fromRGB(240, 240, 240), Parent = parent })
 	end
 	-- palm trees flanking the courts
-	for _, x in { -66, 66 } do
+	for _, x in { -14, 14 } do
 		for layer = 0, 3 do
 			part({ Name = "PalmTrunk", Size = Vector3.new(1.4 - layer * 0.15, 3, 1.4 - layer * 0.15), CFrame = CFrame.new(x + layer * 0.5, 1.5 + layer * 2.8, 176), Color = Color3.fromRGB(140, 104, 76), Material = Enum.Material.Wood, Parent = parent })
 		end
@@ -1370,6 +1370,86 @@ local function detailCourtyard(parent: Instance)
 	for i = 0, 8 do
 		if i ~= 4 then -- keep the entrance walk clear
 			part({ Name = "BalconyPost", Shape = Enum.PartType.Cylinder, Size = Vector3.new(16, 1.4, 1.4), CFrame = CFrame.new(-44 + i * 11, 8.5, 92) * CFrame.Angles(0, 0, math.rad(90)), Color = WHITE_TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		end
+	end
+end
+
+-- The courtyard from the reference render: wrapped on three sides by a
+-- two-story colonnade building — open balcony walkway upstairs, flat roof
+-- with parapet, flags, and window-textured back walls.
+local function buildCourtyardWings(parent: Instance)
+	local STONE = Color3.fromRGB(196, 200, 206)
+	local wings = {
+		{ from = Vector3.new(-65, 0, 115), to = Vector3.new(-65, 0, 185), inner = Vector3.new(1, 0, 0), gapAt = 45 },
+		{ from = Vector3.new(65, 0, 115), to = Vector3.new(65, 0, 185), inner = Vector3.new(-1, 0, 0), gapAt = 45 },
+		{ from = Vector3.new(-65, 0, 190), to = Vector3.new(65, 0, 190), inner = Vector3.new(0, 0, -1), gapAt = -1 },
+	}
+	for _, wing in wings do
+		local dir = (wing.to - wing.from)
+		local length = dir.Magnitude
+		local unit = dir.Unit
+		local mid = wing.from + unit * (length / 2)
+		local cf = CFrame.lookAt(mid, mid + wing.inner)
+		-- back wall (two stories of window texture; split around the walk-through gap)
+		local segments: { { number } } = if wing.gapAt >= 0
+			then { { 0, wing.gapAt - 9 }, { wing.gapAt + 9, length } }
+			else { { 0, length } }
+		for _, seg in segments do
+			local segLen2 = seg[2] - seg[1]
+			if segLen2 > 1 then
+				local segMid = wing.from + unit * ((seg[1] + seg[2]) / 2)
+				local segCf = CFrame.lookAt(segMid, segMid + wing.inner)
+				tag(part({ Name = "WingBackLow", Size = Vector3.new(segLen2, 10, 1.6), CFrame = segCf * CFrame.new(0, 5, -8) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(120, 148, 170), Material = Enum.Material.Concrete, Parent = parent }), "TexWindow")
+			end
+		end
+		tag(part({ Name = "WingBackHigh", Size = Vector3.new(length, 9, 1.6), CFrame = cf * CFrame.new(0, 15, -8) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(120, 148, 170), Material = Enum.Material.Concrete, Parent = parent }), "TexWindow")
+		-- second-floor balcony slab + railing
+		part({ Name = "WingBalcony", Size = Vector3.new(length, 1, 9), CFrame = cf * CFrame.new(0, 10.2, -3.5) * CFrame.Angles(0, math.rad(90), 0), Color = STONE, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "WingRailTop", Size = Vector3.new(length, 0.5, 0.5), CFrame = cf * CFrame.new(0, 13.4, 0.6) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(235, 235, 235), Parent = parent })
+		part({ Name = "WingRailPanel", Size = Vector3.new(length, 2.2, 0.25), CFrame = cf * CFrame.new(0, 12.2, 0.6) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(210, 214, 220), Transparency = 0.25, Parent = parent })
+		-- flat roof + parapet
+		part({ Name = "WingTopRoof", Size = Vector3.new(length + 2, 1, 11), CFrame = cf * CFrame.new(0, 20.2, -3) * CFrame.Angles(0, math.rad(90), 0), Color = Color3.fromRGB(154, 158, 164), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "WingTopParapet", Size = Vector3.new(length + 2, 1.6, 0.6), CFrame = cf * CFrame.new(0, 21.3, 2.2) * CFrame.Angles(0, math.rad(90), 0), Color = STONE, Parent = parent })
+		-- ground colonnade (cylindrical columns on the courtyard side)
+		local count = math.floor(length / 10)
+		for i = 0, count do
+			local at = i * (length / count)
+			if wing.gapAt < 0 or math.abs(at - wing.gapAt) > 9 then
+				part({ Name = "WingColumn", Shape = Enum.PartType.Cylinder, Size = Vector3.new(10, 1.6, 1.6), CFrame = CFrame.lookAt(wing.from + unit * at, wing.from + unit * at + wing.inner) * CFrame.new(0, 5, 0.6) * CFrame.Angles(0, 0, math.rad(90)), Color = STONE, Material = Enum.Material.Concrete, Parent = parent })
+			end
+		end
+		-- upper-floor columns matching the rhythm
+		for i = 0, count do
+			local at = i * (length / count)
+			part({ Name = "WingColumnUp", Size = Vector3.new(1.2, 9, 1.2), CFrame = CFrame.lookAt(wing.from + unit * at, wing.from + unit * at + wing.inner) * CFrame.new(0, 15.5, -7.4), Color = STONE, Material = Enum.Material.Concrete, Parent = parent })
+		end
+	end
+	-- flags on the south wing roof
+	local flagColors = { Color3.fromRGB(232, 76, 76), Color3.fromRGB(255, 196, 60), Color3.fromRGB(64, 140, 226), Color3.fromRGB(74, 160, 90) }
+	for i = 0, 3 do
+		local x = -45 + i * 30
+		part({ Name = "RoofFlagPole", Size = Vector3.new(0.5, 8, 0.5), CFrame = CFrame.new(x, 24.7, 190), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent })
+		part({ Name = "RoofFlag", Size = Vector3.new(4, 2.4, 0.2), CFrame = CFrame.new(x + 2.2, 27.4, 190), Color = flagColors[i + 1], Parent = parent })
+	end
+	-- raised stone viewing platform with steps on the west edge (reference left side)
+	part({ Name = "CourtPlatform", Size = Vector3.new(16, 3, 26), CFrame = CFrame.new(-52, 1.5, 128), Color = Color3.fromRGB(178, 182, 188), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "CourtSteps1", Size = Vector3.new(4, 1, 26), CFrame = CFrame.new(-42, 0.5, 128), Color = Color3.fromRGB(190, 194, 200), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "CourtSteps2", Size = Vector3.new(4, 2, 26), CFrame = CFrame.new(-46, 1.0, 128), Color = Color3.fromRGB(184, 188, 194), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "PlatformRail", Size = Vector3.new(0.5, 3, 26), CFrame = CFrame.new(-59.7, 4.5, 128), Color = Color3.fromRGB(235, 235, 235), Parent = parent })
+	-- extra bunting: two diagonal lines like the render
+	for _, spec in {
+		{ from = Vector3.new(-58, 18, 120), to = Vector3.new(58, 15, 150) },
+		{ from = Vector3.new(-58, 15, 178), to = Vector3.new(58, 18, 152) },
+	} do
+		local dirv = spec.to - spec.from
+		local lineMid = spec.from + dirv * 0.5
+		local lineCf = CFrame.lookAt(lineMid, spec.to)
+		part({ Name = "BuntingLineDiag", Size = Vector3.new(0.15, 0.15, dirv.Magnitude), CFrame = lineCf, Color = Color3.fromRGB(220, 220, 220), Parent = parent })
+		local flagColors2 = { Color3.fromRGB(232, 76, 76), Color3.fromRGB(255, 196, 60), Color3.fromRGB(74, 160, 90), Color3.fromRGB(64, 140, 226), Color3.fromRGB(168, 90, 220) }
+		for i = 1, 12 do
+			local alpha = i / 13
+			local pos = spec.from + dirv * alpha
+			part({ Name = "BuntingFlagDiag", Size = Vector3.new(1.2, 1.5, 0.14), CFrame = CFrame.new(pos - Vector3.new(0, 0.9, 0)), Color = flagColors2[(i % #flagColors2) + 1], Parent = parent })
 		end
 	end
 end
@@ -1450,13 +1530,13 @@ function MapService.Build(): Map
 	buildTerrain()
 
 	-- hallway (the conveyor) along the X axis
-	part({
+	tag(part({
 		Name = "HallwayFloor",
 		Size = Vector3.new(320, 1, 28),
 		CFrame = CFrame.new(0, -0.5, 0),
-		Color = Palette.Floor,
+		Color = Color3.fromRGB(196, 194, 188),
 		Parent = folder,
-	})
+	}), "TexFloorTile")
 	part({
 		Name = "HallwayStripe",
 		Size = Vector3.new(320, 0.2, 3),
@@ -1528,8 +1608,8 @@ function MapService.Build(): Map
 	buildZone(folder, "PrincipalsOffice", Vector3.new(-215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(214, 226, 235), "PRINCIPAL'S OFFICE\n(THE STORE)", Enum.Material.Marble)
 	buildZone(folder, "Gym", Vector3.new(215, 0, 60), Vector2.new(70, 70), Color3.fromRGB(210, 160, 110), "GYM — FIGHT ZONE", Enum.Material.WoodPlanks)
 	local trophyFloor = buildZone(folder, "TrophyHall", Vector3.new(215, 0, -60), Vector2.new(70, 70), Color3.fromRGB(228, 228, 228), "TROPHY HALL", Enum.Material.Marble)
-	buildZone(folder, "Courtyard", Vector3.new(0, 0, 150), Vector2.new(120, 70), Color3.fromRGB(148, 190, 128), "COURTYARD — CLIQUES")
-	buildZone(folder, "Classroom101", Vector3.new(0, 0, -150), Vector2.new(80, 60), Color3.fromRGB(199, 210, 232), "CLASSROOM 101\nPOP QUIZ", Enum.Material.Carpet)
+	tag(buildZone(folder, "Courtyard", Vector3.new(0, 0, 150), Vector2.new(120, 70), Color3.fromRGB(172, 174, 178), "COURTYARD — CLIQUES", Enum.Material.Concrete), "TexFloorTile")
+	tag(buildZone(folder, "Classroom101", Vector3.new(0, 0, -150), Vector2.new(80, 60), Color3.fromRGB(148, 118, 96), "CLASSROOM 101\nPOP QUIZ", Enum.Material.Carpet), "TexCarpet")
 
 	-- trophy hall boards
 	local trophyCashBoard = part({
@@ -1635,7 +1715,13 @@ function MapService.Build(): Map
 	buildPortico(folder, 60)
 	buildFrontYard(folder)
 	detailHallway(folder)
+	for _, zRow in { -8, 8 } do
+		for i = 0, 19 do
+			part({ Name = "CeilingDot", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 2.2, 2.2), CFrame = CFrame.new(-152 + i * 16, 26.0, zRow) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(255, 248, 230), Material = Enum.Material.Neon, Parent = folder })
+		end
+	end
 	detailCourtyard(folder)
+	buildCourtyardWings(folder)
 	furnishClassroom(folder)
 	furnishCafeteria(folder)
 	detailGym(folder)
