@@ -49,6 +49,7 @@ local BOOT: { { name: string, init: (typeof(map)) -> () } } = {
 	{ name = "CurfewService", init = function(m) (require(Services.CurfewService) :: any).Init(m) end },
 	{ name = "CosmeticsService", init = function() (require(Services.CosmeticsService) :: any).Init() end },
 	{ name = "ReputationService", init = function() (require(Services.ReputationService) :: any).Init() end },
+	{ name = "DodgeballService", init = function() (require(Services.DodgeballService) :: any).Init() end },
 	{ name = "EventDirector", init = function() (require(Services.EventDirector) :: any).Init() end },
 	{ name = "DiagnosticsService", init = function() (require(Services.DiagnosticsService) :: any).Init() end },
 }

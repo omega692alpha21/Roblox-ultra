@@ -20,6 +20,7 @@ local EVENTS = {
 	"OfflineEarnings", -- (amount: number, awaySeconds: number)
 	"CrewState", -- (crew: {{uid, id, mut, star}})
 	"Dialogue", -- (speaker: string, lines: {string})
+	"ScreenFx", -- (kind: "shake", intensity: number)
 	-- client -> server
 	"FuseStudent", -- (defId: string)
 	"DoRebirth",

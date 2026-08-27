@@ -10,6 +10,7 @@ local Cliques = require(ReplicatedStorage.Config.Cliques)
 local Remotes = require(ReplicatedStorage.Remotes)
 local StealService = require(script.Parent.StealService)
 local RivalService = require(script.Parent.RivalService)
+local DodgeballService = require(script.Parent.DodgeballService)
 local Signals = require(script.Parent.Parent.Signals)
 
 local FightService = {}
@@ -22,6 +23,11 @@ local function onPunch(player: Player)
 		return
 	end
 	lastPunch[player] = now
+
+	-- holding a dodgeball? the punch input throws it instead
+	if DodgeballService.TryThrow(player) then
+		return
+	end
 
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -82,6 +88,8 @@ local function onPunch(player: Player)
 
 	local direction = (targetRoot.Position - root.Position).Unit
 	targetRoot.AssemblyLinearVelocity = direction * knockback + Vector3.new(0, knockback * 0.5, 0)
+	Remotes.Get("ScreenFx"):FireClient(target, "shake", 1.1)
+	Remotes.Get("ScreenFx"):FireClient(player, "shake", 0.45)
 
 	if StealService.IsCarrying(target) then
 		Signals.ThiefHit:Fire(player, target)

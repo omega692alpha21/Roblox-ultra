@@ -10,6 +10,7 @@ local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Remotes)
 local ClassService = require(script.Parent.ClassService)
 local CoinService = require(script.Parent.CoinService)
+local DodgeballService = require(script.Parent.DodgeballService)
 local EconomyService = require(script.Parent.EconomyService)
 local Signals = require(script.Parent.Parent.Signals)
 
@@ -75,6 +76,15 @@ local EVENTS: { { id: string, run: () -> () } } = {
 			end
 			EconomyService.SetEventMult(1)
 			announce("Food fight's over. The janitor is NOT happy.")
+		end,
+	},
+	{
+		id = "dodgeball",
+		run = function()
+			announce("🔴 DODGEBALL TOURNAMENT IN THE GYM! Grab a ball, PUNCH to throw — every hit pays! 2 minutes!")
+			DodgeballService.StartRound(120)
+			task.wait(120)
+			announce("Dodgeball's over. Ice those bruises.")
 		end,
 	},
 	{
