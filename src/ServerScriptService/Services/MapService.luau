@@ -26,6 +26,7 @@ export type Plot = {
 
 export type Map = {
 	plots: { Plot },
+	trim: { TrimRun },
 	library: Vector3,
 	tennis: Vector3,
 	pool: Vector3,
@@ -1638,6 +1639,35 @@ end
 
 -- Clean interior partitions: navy wainscot + warm white upper, solid, with
 -- framed door gaps. (The window-band builder is for exterior facades only.)
+-- ===== mouldings =====
+--
+-- Every junction in the school used to be a raw 90 degree corner between two
+-- prisms. Nothing in the painterly references has one: real architecture runs
+-- a profile along every wall/floor, wall/ceiling and opening edge, and the
+-- highlight that profile catches is what makes a surface read as built rather
+-- than extruded.
+--
+-- The profiles are one-stud extrusions (see tools/make_trim.py), so they are
+-- only ever scaled along their run and the cross-section stays exactly as
+-- drawn at any length. A bevel baked into a cube would stretch into a wedge
+-- the moment the wall was forty studs long.
+-- MeshPart.MeshId cannot be assigned by a script, so the mouldings are not
+-- built here. MapService records where each run goes and TrimService places
+-- them afterwards from templates it loads through InsertService — the same
+-- route MeshService already uses for the flora.
+export type TrimRun = { kind: string, cframe: CFrame, length: number }
+
+local trimRuns: { TrimRun } = {}
+
+-- One run of moulding. `cf` puts the profile's origin corner where the wall
+-- face meets the surface, +X along the run and -Z into the room.
+local function moulding(cf: CFrame, kind: string, length: number)
+	if length < 0.6 then
+		return
+	end
+	table.insert(trimRuns, { kind = kind, cframe = cf, length = length })
+end
+
 local function buildInteriorWall(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } })
 	local dir = (to - from)
 	local length = dir.Magnitude
@@ -1668,6 +1698,15 @@ local function buildInteriorWall(parent: Instance, from: Vector3, to: Vector3, g
 		tag(part({ Name = "InnerWainscot", Size = Vector3.new(segLen, 4.6, 1.6), CFrame = cf * CFrame.new(0, 2.3, 0) , Color = Color3.fromRGB(94, 118, 158), Material = Enum.Material.SmoothPlastic, Parent = parent }), "TexWood")
 		part({ Name = "InnerWainscotCap", Size = Vector3.new(segLen, 0.5, 1.8), CFrame = cf * CFrame.new(0, 4.75, 0) , Color = Color3.fromRGB(226, 222, 210), Material = Enum.Material.SmoothPlastic, Parent = parent })
 		tag(part({ Name = "InnerWallUpper", Size = Vector3.new(segLen, 10.6, 1.4), CFrame = cf * CFrame.new(0, 10.3, 0) , Color = Color3.fromRGB(238, 234, 224), Material = Enum.Material.SmoothPlastic, Parent = parent }), "TexPlaster")
+
+		-- skirting, chair rail and cornice down both faces of the run
+		for _, face in { 1, -1 } do
+			local run = cf * CFrame.Angles(0, face > 0 and 0 or math.pi, 0)
+			local wallFace = run * CFrame.new(-segLen / 2, 0, -0.82)
+			moulding(wallFace * CFrame.new(0, 0.05, 0), "skirting", segLen)
+			moulding(wallFace * CFrame.new(0, 4.5, 0), "chairrail", segLen)
+			moulding(wallFace * CFrame.new(0, 14.0, 0), "cornice", segLen)
+		end
 	end
 	for _, gap in gaps do
 		local mid = from + unit * gap.at
@@ -1677,6 +1716,16 @@ local function buildInteriorWall(parent: Instance, from: Vector3, to: Vector3, g
 		end
 		part({ Name = "InnerDoorLintel", Size = Vector3.new(gap.width + 2.6, 1.6, 1.9), CFrame = cf * CFrame.new(0, 11.8, 0) , Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
 		part({ Name = "InnerDoorHeader", Size = Vector3.new(gap.width + 2.6, 3.9, 1.4), CFrame = cf * CFrame.new(0, 14.7, 0) , Color = Color3.fromRGB(238, 234, 224), Material = Enum.Material.SmoothPlastic, Parent = parent })
+
+		-- architrave: two jambs and a head, framing the opening on both faces
+		for _, face in { 1, -1 } do
+			local run = cf * CFrame.Angles(0, face > 0 and 0 or math.pi, 0)
+			local half = gap.width / 2 + 1.2
+			for _, side in { -1, 1 } do
+				moulding(run * CFrame.new(side * half, 0.1, -1.0) * CFrame.Angles(0, 0, math.rad(90)), "architrave", 12.4)
+			end
+			moulding(run * CFrame.new(-half, 12.5, -1.0), "architrave", half * 2)
+		end
 	end
 end
 
@@ -2690,6 +2739,8 @@ local function optimize(root: Instance)
 	end
 end
 
+	trimRuns = {}
+
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
 
@@ -3107,6 +3158,7 @@ end
 
 	return {
 		plots = plots,
+		trim = trimRuns,
 		library = LIBRARY,
 		tennis = TENNIS,
 		pool = POOL,
