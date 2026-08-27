@@ -45,7 +45,7 @@ function ToyController.Init(gui: ScreenGui)
 	-- ---- the action button ----
 	local action = Instance.new("TextButton")
 	action.Name = "ToyAction"
-	action.Size = Layout.Square(Layout.ToyButtonSize)
+	Layout.Square(action, 1)
 	action.LayoutOrder = Layout.Order.Toy
 	action.BackgroundColor3 = Color3.fromRGB(226, 74, 62)
 	action.Font = Enum.Font.FredokaOne
@@ -56,7 +56,7 @@ function ToyController.Init(gui: ScreenGui)
 	action.ZIndex = 30
 	action.Visible = false
 	action.Parent = Layout.ActionBar(gui)
-	Layout.FitText(action, 0.07)
+	Layout.FitText(action, 40)
 	local round = Instance.new("UICorner")
 	round.CornerRadius = UDim.new(1, 0)
 	round.Parent = action
@@ -76,9 +76,10 @@ function ToyController.Init(gui: ScreenGui)
 		local aim = AimController.Point() or (camera.CFrame.Position + camera.CFrame.LookVector * 80)
 		Remotes.Get("UseToy"):FireServer(selected, aim)
 		-- a quick squash so the tap feels answered
-		action.Size = UDim2.new(0, 0, Layout.ToyButtonSize * 0.9, 0)
+		-- the aspect constraint keeps it square; only the box changes
+		action.Size = UDim2.fromScale(1, 0.86)
 		task.delay(0.08, function()
-			action.Size = Layout.Square(Layout.ToyButtonSize)
+			action.Size = UDim2.fromScale(1, 1)
 		end)
 	end
 	action.Activated:Connect(fire)
@@ -90,13 +91,13 @@ function ToyController.Init(gui: ScreenGui)
 	end, false, Enum.KeyCode.F, Enum.KeyCode.ButtonR2)
 
 	-- ---- the tool rail, right edge ----
-	local rail = Layout.Rail(gui, "ToolRail", "right", #TOYS)
+	local rail = Layout.Rail(gui, "ToolRail", "right")
 
 	local chips: { [string]: TextButton } = {}
 	for index, toy in TOYS do
 		local chip = Instance.new("TextButton")
 		chip.Name = toy.id
-		chip.Size = Layout.Square(Layout.RailTile)
+		Layout.Square(chip, Layout.ToolTileH)
 		chip.LayoutOrder = index
 		chip.BackgroundColor3 = Color3.fromRGB(30, 34, 44)
 		chip.BackgroundTransparency = 0.15
@@ -107,9 +108,9 @@ function ToyController.Init(gui: ScreenGui)
 		chip.ZIndex = 29
 		chip.Visible = false
 		chip.Parent = rail
-		Layout.FitText(chip, 0.055)
+		Layout.FitText(chip, 30)
 		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, Layout.h(0.02))
+		c.CornerRadius = UDim.new(0.22, 0)
 		c.Parent = chip
 		local st = Instance.new("UIStroke")
 		st.Color = Color3.fromRGB(245, 197, 49)

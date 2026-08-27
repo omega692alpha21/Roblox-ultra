@@ -67,8 +67,8 @@ function MinimapController.Init(gui: ScreenGui)
 	-- map floating on top of every menu
 	local frame = Instance.new("Frame")
 	frame.Name = "Minimap"
-	frame.Position = UDim2.fromOffset(Layout.w(Layout.EdgeX), Layout.h(Layout.MinimapTop))
-	frame.Size = Layout.Square(Layout.MinimapSize)
+	frame.Position = UDim2.fromScale(Layout.EdgeX, Layout.MinimapY)
+	Layout.Square(frame, Layout.MinimapH)
 	frame.BackgroundColor3 = Color3.fromRGB(28, 34, 42)
 	frame.BackgroundTransparency = 0.08
 	frame.ClipsDescendants = true

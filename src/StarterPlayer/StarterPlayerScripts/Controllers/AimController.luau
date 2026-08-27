@@ -22,7 +22,7 @@ local player = Players.LocalPlayer
 -- The reticle sits above centre so it clears the avatar's head on a follow
 -- camera. The aim ray is cast through this exact point, so what you see is
 -- what you hit.
-local RETICLE_Y = 0.42
+local RETICLE_Y = 0.42 -- kept in step with Layout.ReticleY for the aim ray
 local MAX_RANGE = 400
 -- how far off the reticle a target can snap to it, as a fraction of screen height
 local ASSIST_FRACTION = 0.06
@@ -98,8 +98,8 @@ function AimController.Init(gui: ScreenGui)
 	local frame = Instance.new("Frame")
 	frame.Name = "Reticle"
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	frame.Position = UDim2.fromScale(0.5, RETICLE_Y)
-	frame.Size = Layout.Square(0.055)
+	frame.Position = UDim2.fromScale(0.5, Layout.ReticleY)
+	Layout.Square(frame, Layout.ReticleH)
 	frame.BackgroundTransparency = 1
 	frame.ZIndex = 25
 	frame.Visible = false
@@ -187,7 +187,7 @@ function AimController.Init(gui: ScreenGui)
 			end
 		end
 		-- the reticle tightens when it has something to lock onto
-		frame.Size = Layout.Square(best and 0.042 or 0.055)
+		frame.Size = UDim2.fromScale(1, best and Layout.ReticleH * 0.78 or Layout.ReticleH)
 	end)
 end
 

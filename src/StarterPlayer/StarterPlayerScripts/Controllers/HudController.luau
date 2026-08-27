@@ -49,11 +49,10 @@ local MORE = {
 	{ label = "CLASSES", panel = "Classes", icon = "📕", color = Palette.LockerBlue },
 }
 
--- one small top pill: an icon and a value, auto-width so it is never padded out
+-- one small top pill: an icon and a value, sized as a share of the pill row
 local function pill(parent: Instance, order: number, accent: Color3): (TextLabel, Frame)
 	local frame = UIBuilder.Frame({
-		Size = UDim2.fromOffset(0, Layout.h(Layout.PillHeight)),
-		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromScale(Layout.PillW, 1),
 		BackgroundColor3 = Palette.PanelBg,
 		BackgroundTransparency = 0.25,
 		LayoutOrder = order,
@@ -61,19 +60,13 @@ local function pill(parent: Instance, order: number, accent: Color3): (TextLabel
 	})
 	UIBuilder.Round(frame, 999)
 	UIBuilder.Stroke(frame, accent, 2)
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, Layout.h(0.018))
-	padding.PaddingRight = UDim.new(0, Layout.h(0.018))
-	padding.PaddingTop = UDim.new(0, Layout.h(0.008))
-	padding.PaddingBottom = UDim.new(0, Layout.h(0.008))
-	padding.Parent = frame
 	local label = UIBuilder.Label({
-		AutomaticSize = Enum.AutomaticSize.X,
-		Size = UDim2.fromOffset(0, Layout.h(Layout.PillHeight * 0.62)),
+		Position = UDim2.fromScale(0.06, 0.16),
+		Size = UDim2.fromScale(0.88, 0.68),
 		Text = "",
 		Parent = frame,
 	})
-	Layout.FitText(label, 0.034)
+	Layout.FitText(label, 24)
 	return label, frame
 end
 
@@ -82,17 +75,17 @@ function HudController.Init(gui: ScreenGui)
 	local top = UIBuilder.Frame({
 		Name = "StatusPills",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, Layout.h(Layout.PillTop)),
-		Size = UDim2.fromOffset(0, Layout.h(Layout.PillHeight)),
-		AutomaticSize = Enum.AutomaticSize.X,
+		Position = UDim2.fromScale(0.5, Layout.PillsY),
+		Size = UDim2.fromScale(Layout.PillsW, Layout.PillsH),
 		BackgroundTransparency = 1,
 		Parent = gui,
 	})
 	local topRow = Instance.new("UIListLayout")
 	topRow.FillDirection = Enum.FillDirection.Horizontal
+	topRow.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	topRow.VerticalAlignment = Enum.VerticalAlignment.Center
 	topRow.SortOrder = Enum.SortOrder.LayoutOrder
-	topRow.Padding = UDim.new(0, Layout.h(0.012))
+	topRow.Padding = UDim.new(Layout.PillGap, 0)
 	topRow.Parent = top
 
 	local cashLabel = pill(top, 1, Palette.CashGreen)
@@ -102,18 +95,18 @@ function HudController.Init(gui: ScreenGui)
 	lockPill.Visible = false
 
 	-- ---------------- left edge: the menu rail ----------------
-	local rail = Layout.Rail(gui, "MenuRail", "left", #RAIL + 1)
+	local rail = Layout.Rail(gui, "MenuRail", "left")
 
 	local function railTile(order: number, icon: string, color: Color3, onClick: () -> ())
 		local button = UIBuilder.Button({
-			Size = Layout.Square(Layout.RailTile),
 			Text = icon,
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.2,
 			LayoutOrder = order,
 		}, onClick)
-		Layout.FitText(button, 0.055)
-		UIBuilder.Round(button, Layout.h(0.02))
+		Layout.Square(button, Layout.MenuTileH)
+		Layout.FitText(button, 30)
+		UIBuilder.Round(button, 999)
 		UIBuilder.Stroke(button, color, 2)
 		button.Parent = rail
 		return button
@@ -131,8 +124,8 @@ function HudController.Init(gui: ScreenGui)
 	-- ---------------- the MORE hub ----------------
 	local _, menuContent = UIBuilder.Panel(gui, "Menu", "MENU")
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.new(1 / 3, -Layout.h(0.014), 0.3, -Layout.h(0.014))
-	grid.CellPadding = UDim2.fromOffset(Layout.h(0.014), Layout.h(0.014))
+	grid.CellSize = UDim2.fromScale(0.31, 0.29)
+	grid.CellPadding = UDim2.fromScale(0.02, 0.03)
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = menuContent
 	for i, item in MORE do
@@ -144,7 +137,7 @@ function HudController.Init(gui: ScreenGui)
 		}, function()
 			UIBuilder.Toggle(item.panel)
 		end)
-		UIBuilder.Round(tile, Layout.h(0.018))
+		UIBuilder.Round(tile, 10)
 		UIBuilder.Stroke(tile, item.color, 2)
 		tile.Parent = menuContent
 		UIBuilder.Label({
@@ -164,7 +157,7 @@ function HudController.Init(gui: ScreenGui)
 	local stamp = UIBuilder.Label({
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.fromScale(1, 1),
-		Size = UDim2.new(0.6, 0, 0, Layout.h(0.028)),
+		Size = UDim2.fromScale(0.6, 0.06),
 		Text = "",
 		TextColor3 = Color3.fromRGB(140, 150, 140),
 		TextXAlignment = Enum.TextXAlignment.Right,

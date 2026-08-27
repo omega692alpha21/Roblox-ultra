@@ -13,7 +13,6 @@ local TweenService = game:GetService("TweenService")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Remotes = require(ReplicatedStorage.Remotes)
-local Layout = require(script.Parent.Layout)
 local UIBuilder = require(script.Parent.UIBuilder)
 
 local ClassController = {}
@@ -46,68 +45,60 @@ function ClassController.Init(gui: ScreenGui)
 		Name = "ClassPanel",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(Layout.px(470), Layout.px(330)),
+		Size = UDim2.fromScale(0.5, 0.66),
 		BackgroundColor3 = Palette.PanelBg,
 		Visible = false,
 		ZIndex = 60,
 		Parent = gui,
 	})
-	UIBuilder.Round(panel, Layout.px(14))
+	UIBuilder.Round(panel, 14)
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Palette.BusYellow
 	stroke.Thickness = 3
 	stroke.Parent = panel
 
 	local heading = UIBuilder.Label({
-		Position = UDim2.fromOffset(Layout.px(14), Layout.px(8)),
-		Size = UDim2.new(1, -Layout.px(120), 0, Layout.px(24)),
+		Position = UDim2.fromScale(0.035, 0.03),
+		Size = UDim2.fromScale(0.68, 0.09),
 		Text = "",
-		TextScaled = false,
-		TextSize = Layout.px(19),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = Palette.BusYellow,
 		Parent = panel,
 	})
 	local clock = UIBuilder.Label({
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -Layout.px(14), 0, Layout.px(8)),
-		Size = UDim2.fromOffset(Layout.px(100), Layout.px(24)),
+		Position = UDim2.fromScale(0.965, 0.03),
+		Size = UDim2.fromScale(0.24, 0.09),
 		Text = "",
-		TextScaled = false,
-		TextSize = Layout.px(19),
 		TextXAlignment = Enum.TextXAlignment.Right,
 		TextColor3 = Palette.Chalk,
 		Parent = panel,
 	})
 	local prompt = UIBuilder.Label({
-		Position = UDim2.fromOffset(Layout.px(14), Layout.px(38)),
-		Size = UDim2.new(1, -Layout.px(28), 0, Layout.px(62)),
+		Position = UDim2.fromScale(0.035, 0.14),
+		Size = UDim2.fromScale(0.93, 0.2),
 		Text = "",
-		TextScaled = false,
-		TextSize = Layout.px(30),
 		TextWrapped = true,
 		Parent = panel,
 	})
 
 	local grid = UIBuilder.Frame({
-		Position = UDim2.fromOffset(Layout.px(14), Layout.px(108)),
-		Size = UDim2.new(1, -Layout.px(28), 0, Layout.px(150)),
+		Position = UDim2.fromScale(0.035, 0.36),
+		Size = UDim2.fromScale(0.93, 0.46),
 		BackgroundTransparency = 1,
 		Parent = panel,
 	})
 	local gridLayout = Instance.new("UIGridLayout")
-	gridLayout.CellSize = UDim2.new(0.5, -Layout.px(5), 0.5, -Layout.px(5))
-	gridLayout.CellPadding = UDim2.fromOffset(Layout.px(10), Layout.px(10))
+	gridLayout.CellSize = UDim2.fromScale(0.485, 0.47)
+	gridLayout.CellPadding = UDim2.fromScale(0.03, 0.06)
 	gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	gridLayout.Parent = grid
 
 	local footer = UIBuilder.Label({
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -Layout.px(10)),
-		Size = UDim2.new(1, -Layout.px(28), 0, Layout.px(24)),
+		Position = UDim2.fromScale(0.5, 0.98),
+		Size = UDim2.fromScale(0.93, 0.09),
 		Text = "",
-		TextScaled = false,
-		TextSize = Layout.px(16),
 		TextColor3 = Palette.Chalk,
 		Parent = panel,
 	})
@@ -119,8 +110,6 @@ function ClassController.Init(gui: ScreenGui)
 		local button = UIBuilder.Button({
 			Name = "Option" .. slot,
 			Text = "",
-			TextScaled = false,
-			TextSize = Layout.px(26),
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.05,
 			LayoutOrder = slot,
@@ -128,7 +117,7 @@ function ClassController.Init(gui: ScreenGui)
 		}, function()
 			onPress(slot)
 		end)
-		UIBuilder.Round(button, Layout.px(10))
+		UIBuilder.Round(button, 10)
 		UIBuilder.Stroke(button, Palette.Chalk, 2)
 		button.Parent = grid
 		buttons[slot] = button
@@ -162,7 +151,6 @@ function ClassController.Init(gui: ScreenGui)
 			button.BackgroundColor3 = color or Palette.PanelBg
 			button.TextColor3 = color and Color3.fromRGB(24, 26, 30) or Palette.White
 			-- emoji and reflex targets want to be big; words want to fit
-			button.TextSize = if mode == "emoji" or mode == "reflex" then Layout.px(40) else Layout.px(24)
 			local buttonStroke = button:FindFirstChildOfClass("UIStroke")
 			if buttonStroke then
 				buttonStroke.Color = color or Palette.Chalk
@@ -267,35 +255,31 @@ function ClassController.Init(gui: ScreenGui)
 			Name = "GradeCard",
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromScale(0.5, 0.42),
-			Size = UDim2.fromOffset(Layout.px(300), Layout.px(140)),
+			Size = UDim2.fromScale(0.32, 0.3),
 			BackgroundColor3 = Palette.PanelBg,
 			ZIndex = 62,
 			Parent = gui,
 		})
-		UIBuilder.Round(card, Layout.px(14))
+		UIBuilder.Round(card, 14)
 		local pass = typeof(letter) == "string" and letter ~= "F"
 		UIBuilder.Stroke(card, pass and Palette.CashGreen or Palette.DetentionRed, 3)
 		UIBuilder.Label({
-			Position = UDim2.fromOffset(0, Layout.px(10)),
-			Size = UDim2.new(1, 0, 0, Layout.px(56)),
+			Position = UDim2.fromScale(0, 0.06),
+			Size = UDim2.fromScale(1, 0.4),
 			Text = tostring(letter),
 			TextColor3 = pass and Palette.CashGreen or Palette.DetentionRed,
 			Parent = card,
 		})
 		UIBuilder.Label({
-			Position = UDim2.fromOffset(0, Layout.px(72)),
-			Size = UDim2.new(1, 0, 0, Layout.px(24)),
+			Position = UDim2.fromScale(0, 0.5),
+			Size = UDim2.fromScale(1, 0.2),
 			Text = ("%d / %d correct"):format(correct or 0, total or 0),
-			TextScaled = false,
-			TextSize = Layout.px(19),
 			Parent = card,
 		})
 		UIBuilder.Label({
-			Position = UDim2.fromOffset(0, Layout.px(100)),
-			Size = UDim2.new(1, 0, 0, Layout.px(24)),
+			Position = UDim2.fromScale(0, 0.72),
+			Size = UDim2.fromScale(1, 0.2),
 			Text = if (cash or 0) > 0 then ("+$%d"):format(cash) else "No credit this time",
-			TextScaled = false,
-			TextSize = Layout.px(17),
 			TextColor3 = Palette.BusYellow,
 			Parent = card,
 		})

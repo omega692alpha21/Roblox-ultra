@@ -65,7 +65,6 @@ function SprintController.Init(gui: ScreenGui)
 	if UserInputService.TouchEnabled then
 		local button = UIBuilder.Button({
 			Name = "SprintButton",
-			Size = Layout.Square(Layout.ButtonSize),
 			Text = "🏃",
 			BackgroundColor3 = Palette.LockerBlue,
 			BackgroundTransparency = 0.15,
@@ -73,7 +72,8 @@ function SprintController.Init(gui: ScreenGui)
 		}, function()
 			setSprint(not sprinting)
 		end)
-		Layout.FitText(button, 0.062)
+		Layout.Square(button, 0.86)
+		Layout.FitText(button, 34)
 		UIBuilder.Round(button, 999)
 		UIBuilder.Stroke(button, Palette.White, 3)
 		button.Parent = Layout.ActionBar(gui)

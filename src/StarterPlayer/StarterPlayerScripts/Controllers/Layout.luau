@@ -1,124 +1,91 @@
 --!strict
--- The HUD zone map.
+-- The HUD layout, in Scale only.
 --
--- Sizing has bitten three times now, each time from measuring the screen
--- wrong: the camera before it had a viewport (fell back to 1x), ViewportSize
--- on a high-density phone (device pixels, not GUI units), and a probe
--- ScreenGui that was disabled and so never laid out. The fix is to measure the
--- one thing that cannot be wrong — the AbsoluteSize of the very ScreenGui the
--- HUD is parented to — and to express everything after that in plain pixels.
+-- Sizing has been wrong four times, every time because I tried to convert a
+-- fraction of the screen into pixels and got the screen size wrong: the camera
+-- before it had a viewport, ViewportSize on a high-density phone, a probe
+-- ScreenGui that was disabled, and finally an AbsoluteSize that still did not
+-- match what rendered.
 --
--- No scale-inside-scale anywhere. A fraction is only unambiguous against a
--- parent whose size is already settled, and every time I nested one inside
--- another something collapsed to nothing or doubled.
+-- So there is no measurement any more. A UDim2 Scale is *defined* as a
+-- fraction of the parent's absolute size, whatever that turns out to be, so
+-- UDim2.fromScale(0.36, 0.05) is 36% by 5% of the screen on every device and
+-- there is nothing left for me to get wrong.
 --
--- Roblox reserves four corners of a phone screen before we place anything:
+-- Two rules that took four builds to learn:
 --
---   top-left      its menu / chat / mic pill      x .04-.30  y .02-.13
---   top-right     the player thumbnail            x .92-1.0  y .02-.16
---   bottom-left   the movement thumbstick         x  0 -.24  y .70-1.0
---   bottom-right  jump, and the emote button      x .80-1.0  y .66-1.0
+--   1. Scale is only unambiguous against a parent whose own size is settled.
+--      Every element here is either a direct child of the HUD ScreenGui, or a
+--      child of a container that is itself sized in screen Scale — and the
+--      composition is written out in the comments so it can be checked.
+--   2. A square is fromScale(1, f) plus an aspect constraint, never
+--      fromScale(0, f). AspectType.FitWithinMaxSize treats Size as a bounding
+--      box, so a width of 0 collapses the element to nothing. That is what
+--      made the minimap and the throw button disappear.
 --
--- That leaves two vertical bands down the edges and a strip along the top and
--- bottom centre. Our zones live in those and nowhere else:
+-- Roblox owns four corners of a phone screen before we place anything:
 --
---   left band     minimap                         y .14-.30
---   left band     menu rail, 4 tiles              y .32-.68
---   top centre    status pills                    y .02-.08
---   top centre    goal chip                       y .09-.15
---   right band    tool rail, 3 tiles              y .19-.46
---   bottom centre run / punch / throw             y .80-.95, x .58-.80
---   centre        the reticle, and nothing else
+--   top-left      menu / chat / mic pill      x .04-.30  y .02-.13
+--   top-right     player thumbnail            x .92-1.0  y .02-.16
+--   bottom-left   movement thumbstick         x  0 -.24  y .70-1.0
+--   bottom-right  jump and emote              x .80-1.0  y .66-1.0
 --
--- Anything new goes in one of those, or gets a new one carved out here.
-
-local Players = game:GetService("Players")
+-- Our zones live in the gaps and nowhere else. tools/hud_zonecheck.py reads
+-- the numbers below and fails if any two of them touch.
 
 local Layout = {}
 
-local VH = 720
-local VW = 1280
+-- ---------------- reserved: Roblox's own controls ----------------
+Layout.Reserved = {
+	topbar = { 0.04, 0.02, 0.30, 0.13 },
+	avatar = { 0.92, 0.02, 1.00, 0.16 },
+	thumbstick = { 0.00, 0.70, 0.24, 1.00 },
+	jump = { 0.80, 0.66, 1.00, 1.00 },
+}
 
--- Called once by the client bootstrap with the real HUD ScreenGui, before any
--- controller builds anything.
-function Layout.Attach(gui: ScreenGui)
-	for _ = 1, 150 do
-		if gui.AbsoluteSize.Y > 50 then
-			break
-		end
-		task.wait(0.03)
-	end
-	if gui.AbsoluteSize.Y > 50 then
-		VH = gui.AbsoluteSize.Y
-		VW = gui.AbsoluteSize.X
-	end
-	Layout.ViewportHeight = VH
-	Layout.ViewportWidth = VW
-end
+Layout.EdgeX = 0.014
 
-do
-	-- a fallback for anything that reads Layout before Attach runs
-	local playerGui = Players.LocalPlayer:FindFirstChild("PlayerGui")
-	local camera = workspace.CurrentCamera
-	if playerGui and camera and camera.ViewportSize.Y > 50 then
-		VH = camera.ViewportSize.Y
-		VW = camera.ViewportSize.X
-	end
-end
+-- ---------------- top centre ----------------
+-- below Roblox's topbar, not beside it: a centred row wide enough to read
+-- would otherwise run under the menu / chat pill
+Layout.PillsY = 0.15
+Layout.PillsW = 0.50
+Layout.PillsH = 0.05
+Layout.PillW = 0.23 -- of the pill row
+Layout.PillGap = 0.012 -- of the pill row
 
-Layout.ViewportHeight = VH
-Layout.ViewportWidth = VW
+Layout.GoalY = 0.215
+Layout.GoalW = 0.42
+Layout.GoalH = 0.048
 
--- Pixels from a fraction of screen height. Height, not width: a phone in
--- landscape is very wide and very short, and sizing off width makes everything
--- enormous on exactly the device with least room.
-function Layout.h(fraction: number): number
-	return math.max(1, math.floor(VH * fraction + 0.5))
-end
+-- ---------------- left band ----------------
+Layout.MinimapY = 0.15
+Layout.MinimapH = 0.17 -- square, so 0.17 of height
 
-function Layout.w(fraction: number): number
-	return math.max(1, math.floor(VW * fraction + 0.5))
-end
+Layout.MenuRailY = 0.35
+Layout.MenuRailW = 0.30 -- a generous max width; the squares are much narrower
+Layout.MenuRailH = 0.34
+Layout.MenuTiles = 4
+Layout.MenuTileH = 0.22 -- of the rail => 0.075 of the screen
+Layout.MenuTileGap = 0.04 -- of the rail
 
-function Layout.Square(fraction: number): UDim2
-	local side = Layout.h(fraction)
-	return UDim2.fromOffset(side, side)
-end
+-- ---------------- right band ----------------
+Layout.ToolRailY = 0.18
+Layout.ToolRailW = 0.30
+Layout.ToolRailH = 0.26
+Layout.ToolTiles = 3
+Layout.ToolTileH = 0.30 -- of the rail => 0.078 of the screen
+Layout.ToolTileGap = 0.05 -- of the rail
 
--- Text fits its box, with a ceiling so a big screen does not get a poster.
-function Layout.FitText(label: GuiObject, maxFraction: number)
-	local constraint = Instance.new("UITextSizeConstraint")
-	constraint.MaxTextSize = math.clamp(math.floor(VH * maxFraction + 0.5), 10, 40)
-	constraint.MinTextSize = 7
-	constraint.Parent = label
-end
+-- ---------------- bottom centre ----------------
+Layout.ActionRight = 0.78
+Layout.ActionBottom = 0.96
+Layout.ActionW = 0.34
+Layout.ActionH = 0.115
+Layout.ActionGap = 0.04 -- of the action row
 
--- ---- the zones ----
-Layout.EdgeX = 0.014 -- side margin, as a fraction of WIDTH
-Layout.Margin = 0 -- filled in below, in pixels
-
--- clear of Roblox's top bar, which owns the top-left corner
-Layout.MinimapTop = 0.14
-Layout.MinimapSize = 0.16
-
-Layout.PillTop = 0.02
-Layout.PillHeight = 0.055
-
-Layout.GoalTop = 0.09
-Layout.GoalHeight = 0.052
-
-Layout.RailTile = 0.08
-Layout.RailGap = 0.012
--- below the minimap, and stopping short of the movement thumbstick
-Layout.MenuRailTop = 0.32
--- below the player thumbnail, above the jump control
-Layout.ToolRailTop = 0.19
-
-Layout.ButtonSize = 0.13
-Layout.ToyButtonSize = 0.15
-Layout.ActionBottom = 0.05
--- how much of the right edge Roblox's jump and emote controls need, in WIDTH
-Layout.JumpClearance = 0.23
+Layout.ReticleY = 0.42
+Layout.ReticleH = 0.05
 
 Layout.Order = {
 	Sprint = 10,
@@ -126,54 +93,66 @@ Layout.Order = {
 	Toy = 30,
 }
 
-function Layout.Init()
-	Layout.Margin = Layout.w(Layout.EdgeX)
+-- A square whose side is `fraction` of the parent's HEIGHT.
+--
+-- fromScale(1, f) makes the bounding box the full parent width by f of its
+-- height; FitWithinMaxSize then fits the largest 1:1 square inside that, which
+-- is f of the height. Never pass 0 as the width.
+function Layout.Square(object: GuiObject, fraction: number)
+	object.Size = UDim2.fromScale(1, fraction)
+	local ratio = Instance.new("UIAspectRatioConstraint")
+	ratio.AspectRatio = 1
+	ratio.AspectType = Enum.AspectType.FitWithinMaxSize
+	ratio.DominantAxis = Enum.DominantAxis.Height
+	ratio.Parent = object
 end
 
--- A vertical column of square tiles pinned to one edge at a fixed top.
-function Layout.Rail(gui: Instance, name: string, side: string, tiles: number): Frame
+-- Text fills its box, with a ceiling so a desktop does not get a poster.
+function Layout.FitText(label: GuiObject, maxSize: number?)
+	(label :: any).TextScaled = true
+	local constraint = Instance.new("UITextSizeConstraint")
+	constraint.MaxTextSize = maxSize or 26
+	constraint.MinTextSize = 7
+	constraint.Parent = label
+end
+
+-- The vertical rails: a scale-sized column of square tiles pinned to an edge.
+function Layout.Rail(gui: Instance, name: string, side: string): Frame
 	local existing = gui:FindFirstChild(name)
 	if existing and existing:IsA("Frame") then
 		return existing
 	end
-	local tile = Layout.h(Layout.RailTile)
-	local gap = Layout.h(Layout.RailGap)
-	local top = side == "left" and Layout.MenuRailTop or Layout.ToolRailTop
-	local margin = Layout.w(Layout.EdgeX)
+	local left = side == "left"
 	local rail = Instance.new("Frame")
 	rail.Name = name
-	rail.AnchorPoint = Vector2.new(side == "left" and 0 or 1, 0)
-	rail.Position = UDim2.new(
-		side == "left" and 0 or 1,
-		side == "left" and margin or -margin,
-		0,
-		Layout.h(top)
+	rail.AnchorPoint = Vector2.new(left and 0 or 1, 0)
+	rail.Position = UDim2.fromScale(left and Layout.EdgeX or 1 - Layout.EdgeX, left and Layout.MenuRailY or Layout.ToolRailY)
+	rail.Size = UDim2.fromScale(
+		left and Layout.MenuRailW or Layout.ToolRailW,
+		left and Layout.MenuRailH or Layout.ToolRailH
 	)
-	rail.Size = UDim2.fromOffset(tile, tile * tiles + gap * math.max(0, tiles - 1))
 	rail.BackgroundTransparency = 1
 	rail.ZIndex = 28
 	rail.Parent = gui
 	local list = Instance.new("UIListLayout")
-	list.Padding = UDim.new(0, gap)
-	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.Padding = UDim.new(left and Layout.MenuTileGap or Layout.ToolTileGap, 0)
+	list.HorizontalAlignment = left and Enum.HorizontalAlignment.Left or Enum.HorizontalAlignment.Right
 	list.SortOrder = Enum.SortOrder.LayoutOrder
 	list.Parent = rail
 	return rail
 end
 
--- The thumb row: along the bottom, clear of Roblox's jump control.
+-- The thumb row: bottom centre-right, clear of the jump control.
 function Layout.ActionBar(gui: ScreenGui): Frame
 	local existing = gui:FindFirstChild("ActionBar")
 	if existing and existing:IsA("Frame") then
 		return existing
 	end
-	local height = Layout.h(Layout.ToyButtonSize)
-	local gap = Layout.h(0.03)
 	local row = Instance.new("Frame")
 	row.Name = "ActionBar"
 	row.AnchorPoint = Vector2.new(1, 1)
-	row.Position = UDim2.new(1, -Layout.w(Layout.JumpClearance), 1, -Layout.h(Layout.ActionBottom))
-	row.Size = UDim2.fromOffset(height * 3 + gap * 2, height)
+	row.Position = UDim2.fromScale(Layout.ActionRight, Layout.ActionBottom)
+	row.Size = UDim2.fromScale(Layout.ActionW, Layout.ActionH)
 	row.BackgroundTransparency = 1
 	row.ZIndex = 30
 	row.Parent = gui
@@ -182,22 +161,17 @@ function Layout.ActionBar(gui: ScreenGui): Frame
 	list.HorizontalAlignment = Enum.HorizontalAlignment.Right
 	list.VerticalAlignment = Enum.VerticalAlignment.Center
 	list.SortOrder = Enum.SortOrder.LayoutOrder
-	list.Padding = UDim.new(0, gap)
+	list.Padding = UDim.new(Layout.ActionGap, 0)
 	list.Parent = row
 	return row
 end
 
--- Legacy helper, still used by the modal panels.
+-- Kept only for the modal panels, which are centred and sized in scale too.
 function Layout.px(n: number): number
-	return math.max(1, math.floor(n / 900 * VH + 0.5))
+	return math.max(1, math.floor(n * 0.5))
 end
 
-function Layout.TextSize(fraction: number): number
-	return math.clamp(math.floor(VH * fraction + 0.5), 9, 34)
-end
-
-Layout.Init()
-Layout.Scale = VH / 900
-Layout.PanelWidth = Layout.w(0.2)
+function Layout.Attach(_gui: ScreenGui) end
+function Layout.Init() end
 
 return Layout

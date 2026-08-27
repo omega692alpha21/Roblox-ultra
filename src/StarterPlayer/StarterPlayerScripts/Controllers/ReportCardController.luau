@@ -9,7 +9,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Subjects = require(ReplicatedStorage.Config.Subjects)
 local Remotes = require(ReplicatedStorage.Remotes)
-local Layout = require(script.Parent.Layout)
 local UIBuilder = require(script.Parent.UIBuilder)
 
 local ReportCardController = {}
@@ -34,13 +33,13 @@ function ReportCardController.Init(gui: ScreenGui)
 	-- more so it is a choice and not a penalty
 	local picker = UIBuilder.Frame({
 		Name = "LevelPicker",
-		Size = UDim2.new(1, 0, 0, Layout.px(50)),
+		Size = UDim2.fromScale(1, 0.14),
 		BackgroundTransparency = 1,
 		Parent = content,
 	})
 	local pickerLayout = Instance.new("UIListLayout")
 	pickerLayout.FillDirection = Enum.FillDirection.Horizontal
-	pickerLayout.Padding = UDim.new(0, Layout.px(8))
+	pickerLayout.Padding = UDim.new(0.02, 0)
 	pickerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	pickerLayout.Parent = picker
 
@@ -48,35 +47,31 @@ function ReportCardController.Init(gui: ScreenGui)
 	for _, level in Subjects.Levels do
 		local button = UIBuilder.Button({
 			Name = "Level" .. level.id,
-			Size = UDim2.new(1 / #Subjects.Levels, -Layout.px(6), 1, 0),
+			Size = UDim2.fromScale(0.31, 1),
 			Text = level.name,
-			TextScaled = false,
-			TextSize = Layout.px(19),
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.1,
 			LayoutOrder = level.id,
 		}, function()
 			Remotes.Get("SetClassLevel"):FireServer(level.id)
 		end)
-		UIBuilder.Round(button, Layout.px(9))
+		UIBuilder.Round(button, 9)
 		UIBuilder.Stroke(button, level.color, 2)
 		button.Parent = picker
 		levelButtons[level.id] = button
 	end
 
 	local pickerNote = UIBuilder.Label({
-		Position = UDim2.fromOffset(0, Layout.px(52)),
-		Size = UDim2.new(1, 0, 0, Layout.px(20)),
+		Position = UDim2.fromScale(0, 0.155),
+		Size = UDim2.fromScale(1, 0.06),
 		Text = "",
-		TextScaled = false,
-		TextSize = Layout.px(15),
 		TextColor3 = Palette.Chalk,
 		Parent = content,
 	})
 
 	local listHolder = UIBuilder.Frame({
-		Position = UDim2.fromOffset(0, Layout.px(78)),
-		Size = UDim2.new(1, 0, 1, -Layout.px(104)),
+		Position = UDim2.fromScale(0, 0.23),
+		Size = UDim2.fromScale(1, 0.68),
 		BackgroundTransparency = 1,
 		Parent = content,
 	})
@@ -85,44 +80,38 @@ function ReportCardController.Init(gui: ScreenGui)
 	local rows: { { subject: Subjects.Subject, grade: TextLabel, note: TextLabel, stroke: UIStroke } } = {}
 	for index, subject in Subjects.List do
 		local row = UIBuilder.Frame({
-			Size = UDim2.new(1, -Layout.px(8), 0, Layout.px(60)),
+			Size = UDim2.new(1, -6, 0.24, 0),
 			BackgroundColor3 = Palette.PanelBg,
 			BackgroundTransparency = 0.3,
 			LayoutOrder = index,
 			Parent = list,
 		})
-		UIBuilder.Round(row, Layout.px(9))
+		UIBuilder.Round(row, 9)
 		local stroke = Instance.new("UIStroke")
 		stroke.Color = subject.color
 		stroke.Thickness = 2
 		stroke.Parent = row
 
 		UIBuilder.Label({
-			Position = UDim2.fromOffset(Layout.px(12), Layout.px(6)),
-			Size = UDim2.new(1, -Layout.px(110), 0, Layout.px(26)),
+			Position = UDim2.fromScale(0.03, 0.08),
+			Size = UDim2.fromScale(0.68, 0.4),
 			Text = ("%s %s"):format(subject.icon, subject.name),
-			TextScaled = false,
-			TextSize = Layout.px(20),
 			TextXAlignment = Enum.TextXAlignment.Left,
 			Parent = row,
 		})
 		local note = UIBuilder.Label({
-			Position = UDim2.fromOffset(Layout.px(12), Layout.px(32)),
-			Size = UDim2.new(1, -Layout.px(110), 0, Layout.px(22)),
+			Position = UDim2.fromScale(0.03, 0.52),
+			Size = UDim2.fromScale(0.68, 0.36),
 			Text = "",
-			TextScaled = false,
-			TextSize = Layout.px(15),
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextColor3 = Palette.Chalk,
 			Parent = row,
 		})
 		local grade = UIBuilder.Label({
 			AnchorPoint = Vector2.new(1, 0.5),
-			Position = UDim2.new(1, -Layout.px(14), 0.5, 0),
-			Size = UDim2.fromOffset(Layout.px(78), Layout.px(40)),
+			Position = UDim2.fromScale(0.97, 0.5),
+			Size = UDim2.fromScale(0.24, 0.6),
 			Text = "—",
-			TextScaled = false,
-			TextSize = Layout.px(32),
 			TextXAlignment = Enum.TextXAlignment.Right,
 			Parent = row,
 		})
@@ -132,10 +121,8 @@ function ReportCardController.Init(gui: ScreenGui)
 	local summary = UIBuilder.Label({
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, 0),
-		Size = UDim2.new(1, 0, 0, Layout.px(24)),
+		Size = UDim2.fromScale(1, 0.07),
 		Text = "",
-		TextScaled = false,
-		TextSize = Layout.px(17),
 		TextColor3 = Palette.BusYellow,
 		Parent = content,
 	})
