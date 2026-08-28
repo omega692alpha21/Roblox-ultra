@@ -6,6 +6,7 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
+local Kit = require(script.Parent.CollegiateKit)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local PropSizes = require(ReplicatedStorage.Config.PropSizes)
 
@@ -2003,6 +2004,13 @@ export type PropRequest = { kind: string, cframe: CFrame, scale: number?, hang: 
 
 local propRequests: { PropRequest } = {}
 
+-- The kit needs to make parts the way MapService does -- same defaults, same
+-- tagging -- so it is handed the two helpers rather than requiring MapService
+-- back and tying the two together in a knot.
+local function kitFor(parent: Instance): Kit.Ctx
+	return { parent = parent, part = part :: any, tag = tag :: any }
+end
+
 local function prop(kind: string, cf: CFrame, options: { scale: number?, hang: boolean?, fallback: Instance? }?)
 	table.insert(propRequests, {
 		kind = kind,
@@ -3241,6 +3249,24 @@ local function buildGrandFacade(parent: Instance)
 
 	pitchedRoof(-142, 100, 164, 48, 14, 38.0)
 	pitchedRoof(142, 100, 164, 48, 14, 38.0)
+	-- Dormers on the front slope. Every roof in the reference art is broken by
+	-- them, and a bare slate plane 164 studs long is the single largest blank
+	-- surface on the building. They sit on the front pitch, which runs from the
+	-- ridge at z = 100 down to the eaves at z = 124, so the roof surface at a
+	-- given z is baseY + rise * (1 - (z - ridge) / (d / 2)); at z = 112 that is
+	-- 38 + 14 * 0.5 = 45, and the dormer stands on it.
+	for _, wing in { -142, 142 } do
+		for i = -2, 2 do
+			Kit.dormer(kitFor(parent), {
+				x = wing + i * 32,
+				y = 44.6,
+				z = 112,
+				facing = 0,
+				width = 8,
+				height = 8,
+			})
+		end
+	end
 	dormers(-142, 100, 150, 5, 38.0, 1)
 	dormers(142, 100, 150, 5, 38.0, 1)
 	pitchedRoof(-142, -94, 164, 60, 15, 38.0)
@@ -3384,8 +3410,17 @@ local function buildGrandFacade(parent: Instance)
 	trimBand(0, 71.6, towerZ, 26, 26, 2.0)
 	part({ Name = "TowerClockBlock", Size = Vector3.new(25, 15, 25), CFrame = CFrame.new(0, 80, towerZ), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	trimBand(0, 88.2, towerZ, 27.5, 27.5, 2.0)
-	tag(part({ Name = "TowerCap", Size = Vector3.new(21, 6, 21), CFrame = CFrame.new(0, 91.8, towerZ), Color = SLATE, Material = Enum.Material.Slate, Parent = parent }), "TexSlateRoof")
-	part({ Name = "TowerSpire", Size = Vector3.new(1.5, 11, 1.5), CFrame = CFrame.new(0, 100.2, towerZ), Color = Color3.fromRGB(255, 196, 60), Material = Enum.Material.Metal, Parent = parent })
+	-- A flat lid with a gold pole on it is not a spire. The reference tower
+	-- ends in a steep stone one, and it is the single thing that reads against
+	-- the sky from anywhere on the grounds. Four corner wedges, apexes meeting
+	-- in the middle, forty studs tall over a cornice, with a pinnacle standing
+	-- on each corner of the parapet.
+	tag(part({ Name = "TowerCornice", Size = Vector3.new(26, 2.2, 26), CFrame = CFrame.new(0, 90.2, towerZ), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar")
+	tag(part({ Name = "TowerParapet", Size = Vector3.new(24.5, 3.4, 24.5), CFrame = CFrame.new(0, 93, towerZ), Color = Color3.fromRGB(138, 128, 114), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone")
+	Kit.spire(kitFor(parent), { x = 0, z = towerZ, base = 94.7, width = 22, height = 40 })
+	for _, corner in { Vector3.new(-11.4, 0, -11.4), Vector3.new(11.4, 0, -11.4), Vector3.new(-11.4, 0, 11.4), Vector3.new(11.4, 0, 11.4) } do
+		Kit.pinnacle(kitFor(parent), { x = corner.X, z = towerZ + corner.Z, base = 94.7, height = 15 })
+	end
 	for _, spec in {
 		{ z = towerZ + 12.6, n = Enum.NormalId.Front },
 		{ z = towerZ - 12.6, n = Enum.NormalId.Back },

@@ -216,7 +216,15 @@ InstMT.__index = function(self, k)
   end
   if k == "IsA" then
     return function(s, class)
-      if class == "BasePart" then return s.ClassName == "Part" or s.ClassName == "SpawnLocation" end
+      if class == "BasePart" then
+        -- A WedgePart IS a BasePart. While this said otherwise, every pass
+        -- that walks the map by IsA("BasePart") -- optimise, the window
+        -- lighting -- skipped every pitched roof in the school, and the
+        -- offline render behaved differently from the running game.
+        return s.ClassName == "Part" or s.ClassName == "SpawnLocation"
+          or s.ClassName == "WedgePart" or s.ClassName == "CornerWedgePart"
+          or s.ClassName == "MeshPart" or s.ClassName == "TrussPart"
+      end
       return s.ClassName == class
     end
   end
@@ -264,6 +272,7 @@ map_src = open(os.path.join(REPO, "src/ServerScriptService/Services/MapService.l
 map_src = map_src.replace("--!strict", "")
 map_src = map_src.replace('local ReplicatedStorage = game:GetService("ReplicatedStorage")', "")
 map_src = map_src.replace("local Palette = require(ReplicatedStorage.Shared.Palette)", "")
+map_src = map_src.replace("local Kit = require(script.Parent.CollegiateKit)", "local Kit = __Kit")
 map_src = map_src.replace("local GameConfig = require(ReplicatedStorage.Config.GameConfig)", "")
 map_src = map_src.replace("local PropSizes = require(ReplicatedStorage.Config.PropSizes)", "local PropSizes = __PropSizes")
 map_src = map_src.replace("local Cliques = require(ReplicatedStorage.Config.Cliques)", "local Cliques = __Cliques")
@@ -279,7 +288,9 @@ local out = {}
 local function esc(s) return (s:gsub('"', '\\"')) end
 local function walk(inst, parentName)
   for _, child in ipairs(inst:GetChildren()) do
-    if child.ClassName == "Part" or child.ClassName == "SpawnLocation" then
+    local cls = child.ClassName
+    if cls == "Part" or cls == "SpawnLocation" or cls == "WedgePart"
+      or cls == "CornerWedgePart" or cls == "MeshPart" or cls == "TrussPart" then
       local cf = child.CFrame or CFrame.new(0, 0, 0)
       local size = child.Size or Vector3.new(4, 1.2, 2)
       local color = child.Color or {R = 0.64, G = 0.64, B = 0.65}
@@ -301,11 +312,11 @@ local function walk(inst, parentName)
         end
       end
       table.insert(out, string.format(
-        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s,"par":"%s","gui":['.. table.concat(guiFaces, ",") ..'],"lit":'.. lit ..'}',
+        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cls":"%s","cc":%s,"par":"%s","gui":['.. table.concat(guiFaces, ",") ..'],"lit":'.. lit ..'}',
         esc(child.Name), size.X, size.Y, size.Z, cf.p[1], cf.p[2], cf.p[3],
         cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
         math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5),
-        material, child.Transparency or 0, shape,
+        material, child.Transparency or 0, shape, cls,
         tostring(child.CanCollide ~= false), esc(parentName or "")))
     end
     -- The name of the thing a part hangs off. A door that MOVES has to own
@@ -368,6 +379,7 @@ program = (
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/GameConfig.luau"), "GameConfig")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/Cliques.luau"), "__Cliques")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/PropSizes.luau"), "__PropSizes")
+    + load_module(os.path.join(REPO, "src/ServerScriptService/Services/CollegiateKit.luau"), "__Kit")
     + "local __MapService\n"
     + map_src
     + EXPORT
@@ -479,42 +491,76 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                     py + R[1][0]*local[0] + R[1][1]*local[1] + R[1][2]*local[2],
                     pz + R[2][0]*local[0] + R[2][1]*local[1] + R[2][2]*local[2])
         half = (sx, sy, sz)
-        for axis in range(3):
-            for sign in (-1, 1):
-                normal_local = [0, 0, 0]; normal_local[axis] = sign
-                nx = R[0][axis] * sign; ny = R[1][axis] * sign; nz = R[2][axis] * sign
-                center_local = [0, 0, 0]; center_local[axis] = sign * half[axis]
-                fcx, fcy, fcz = world(center_local)
-                view = (cam[0] - fcx, cam[1] - fcy, cam[2] - fcz)
-                if nx * view[0] + ny * view[1] + nz * view[2] <= 0:
-                    continue
-                u_axis, v_axis = [a for a in range(3) if a != axis]
-                ring = []
-                for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-                    local = [0, 0, 0]
-                    local[axis] = sign * half[axis]
-                    local[u_axis] = su * half[u_axis]
-                    local[v_axis] = sv * half[v_axis]
-                    ring.append(to_cam(world(local)))
-                ring = near_clip(ring)
-                if len(ring) < 3:
-                    continue
-                corners = [to_screen(c) for c in ring]
-                # Sort by the face's NEAREST corner, not its centre.
-                #
-                # A painter's algorithm keyed on centroids draws a 90-stud wall
-                # before anything at the sides of it, because the wall's middle
-                # is nearer the camera than a window ten studs off to the left
-                # -- so the wall paints over its own windows. Four of the staff
-                # lodge's six windows per row vanished that way, and I spent a
-                # while looking for a bug in the building. Nearest-corner keeps
-                # detail that stands proud of a big surface in front of it.
-                shade = 0.52 + 0.48 * max(0.0, nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2])
-                c = part["c"]
-                if part["m"] == "Neon":
-                    shade = 1.25
-                col = tuple(min(255, int(ch * shade)) for ch in c)
-                faces.append((corners, col))
+
+        # A box is six quads. A wedge is not, and while this loop only knew how
+        # to make boxes, every pitched roof in the school rendered as a solid
+        # block -- which is why the offline shots showed a flat-topped building
+        # that the game does not actually have. Faces are now built per shape,
+        # as (polygon in local coordinates, outward normal in local
+        # coordinates), and the box stays the common case.
+        cls = part.get("cls", "Part")
+        polys = []
+        if cls == "WedgePart":
+            # Roblox's wedge: full-height rectangle at -Z, sloping down to the
+            # bottom edge at +Z. Five faces, two of them triangles.
+            a = (-sx, -sy, -sz); b = (sx, -sy, -sz)
+            c = (sx, -sy, sz); d = (-sx, -sy, sz)
+            e = (-sx, sy, -sz); f = (sx, sy, -sz)
+            ny, nz = sz, sy
+            n = math.hypot(ny, nz) or 1.0
+            polys = [
+                ([a, b, c, d], (0, -1, 0)),      # bottom
+                ([a, e, f, b], (0, 0, -1)),      # the tall face
+                ([e, d, c, f], (0, ny / n, nz / n)),  # the slope
+                ([a, d, e], (-1, 0, 0)),         # triangular sides
+                ([b, f, c], (1, 0, 0)),
+            ]
+        elif cls == "CornerWedgePart":
+            # a pyramid whose apex stands over one corner of its base
+            a = (-sx, -sy, -sz); b = (sx, -sy, -sz)
+            c = (sx, -sy, sz); d = (-sx, -sy, sz)
+            apex = (-sx, sy, -sz)
+            polys = [
+                ([a, b, c, d], (0, -1, 0)),
+                ([a, apex, b], (0, 0, -1)),
+                ([a, d, apex], (-1, 0, 0)),
+                ([b, apex, c], (0.7, 0.7, 0)),
+                ([d, c, apex], (0, 0.7, 0.7)),
+            ]
+        else:
+            for axis in range(3):
+                for sign in (-1, 1):
+                    nl = [0, 0, 0]; nl[axis] = sign
+                    u_axis, v_axis = [ax for ax in range(3) if ax != axis]
+                    ring = []
+                    for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+                        local = [0, 0, 0]
+                        local[axis] = sign * half[axis]
+                        local[u_axis] = su * half[u_axis]
+                        local[v_axis] = sv * half[v_axis]
+                        ring.append(tuple(local))
+                    polys.append((ring, tuple(nl)))
+
+        for ring_local, nl in polys:
+            nx = R[0][0] * nl[0] + R[0][1] * nl[1] + R[0][2] * nl[2]
+            ny_ = R[1][0] * nl[0] + R[1][1] * nl[1] + R[1][2] * nl[2]
+            nz_ = R[2][0] * nl[0] + R[2][1] * nl[1] + R[2][2] * nl[2]
+            fcx = sum(world(v)[0] for v in ring_local) / len(ring_local)
+            fcy = sum(world(v)[1] for v in ring_local) / len(ring_local)
+            fcz = sum(world(v)[2] for v in ring_local) / len(ring_local)
+            view = (cam[0] - fcx, cam[1] - fcy, cam[2] - fcz)
+            if nx * view[0] + ny_ * view[1] + nz_ * view[2] <= 0:
+                continue
+            ring = near_clip([to_cam(world(v)) for v in ring_local])
+            if len(ring) < 3:
+                continue
+            corners = [to_screen(c) for c in ring]
+            shade = 0.52 + 0.48 * max(0.0, nx * LIGHT[0] + ny_ * LIGHT[1] + nz_ * LIGHT[2])
+            c = part["c"]
+            if part["m"] == "Neon":
+                shade = 1.25
+            col = tuple(min(255, int(ch * shade)) for ch in c)
+            faces.append((corners, col))
 
     # ---- a real depth buffer ----
     #
