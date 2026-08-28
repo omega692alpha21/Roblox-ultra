@@ -27,6 +27,8 @@ local player = Players.LocalPlayer
 
 -- Everything behind the MENU chip in the vitals block.
 local MORE = {
+	{ label = "STORY", panel = "Story", icon = "📖", color = Palette.BusYellow },
+	{ label = "HOUSES", panel = "Houses", icon = "🏆", color = Palette.CashGreen },
 	{ label = "REP", panel = "Rep", icon = "⭐", color = Palette.BusYellow },
 	{ label = "GRADES", panel = "Rebirth", icon = "🎓", color = Palette.LockerBlue },
 	{ label = "REWARDS", panel = "Rewards", icon = "🎁", color = Palette.BusYellow },

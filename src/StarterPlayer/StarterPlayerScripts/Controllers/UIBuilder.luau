@@ -89,11 +89,14 @@ function UIBuilder.Sheen(instance: Instance)
 	gradient.Parent = instance
 end
 
-function UIBuilder.Stroke(instance: Instance, color: Color3, thickness: number?)
+function UIBuilder.Stroke(instance: Instance, color: Color3, thickness: number?): UIStroke
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = color
 	stroke.Thickness = thickness or 2.5
 	stroke.Parent = instance
+	-- returned so a caller that recolours it later (the house chip) has a
+	-- handle; it used to return nothing and that read as nil at the call site
+	return stroke
 end
 
 function UIBuilder.Frame(props: { [string]: any }): Frame

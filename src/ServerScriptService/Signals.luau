@@ -40,4 +40,6 @@ return {
 	Locked = makeSignal(), -- (player) locked their own homeroom
 	ToyUsed = makeSignal(), -- (player, toyId) threw a toy
 	ClassAttended = makeSignal(), -- (player, subjectId) sat down in a lesson
+	ChapterDone = makeSignal(), -- (player, chapterNumber) closed a story chapter
+	FoundTheDoor = makeSignal(), -- (player) touched the bookshelf in the office
 }

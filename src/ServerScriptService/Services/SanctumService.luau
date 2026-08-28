@@ -17,6 +17,7 @@ local TweenService = game:GetService("TweenService")
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Remotes)
 local SanctumMap = require(script.Parent.SanctumMap)
+local Signals = require(script.Parent.Parent.Signals)
 
 local SanctumService = {}
 
@@ -93,6 +94,10 @@ function SanctumService.Init(map: { secretDoor: BasePart? })
 	prompt.Parent = door
 
 	prompt.Triggered:Connect(function(player)
+		-- everyone who pulls a book has found the door, which is the last
+		-- objective of the story's final chapter. Only the principal gets past
+		-- it; knowing it is there is the ending for everyone else.
+		Signals.FoundTheDoor:Fire(player)
 		if not isPrincipal(player) then
 			Remotes.Get("Notify"):FireClient(player, "Dust, and a copy of the school rules. Nothing else.", "info")
 			return

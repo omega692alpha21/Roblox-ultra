@@ -88,6 +88,8 @@ local ORDER = {
 	"VitalsController",
 	"SecretDoorController",
 	"ActionAnimController",
+	"StoryController",
+	"HouseController",
 }
 
 local results: { { name: string, ok: boolean, err: string? } } = {}

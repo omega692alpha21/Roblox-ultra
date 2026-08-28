@@ -41,6 +41,7 @@ export type Map = {
 	detentionSpot: Vector3,
 	infirmary: Vector3,
 	secretDoor: BasePart,
+	houseBoard: BasePart?,
 	sanctumSpawn: Vector3,
 	folder: Folder,
 }
@@ -4215,6 +4216,8 @@ local DOOR_SIGNS = {
 	{ label = "DETENTION", icon = "⛓️", at = Vector3.new(204, 0, 62), face = 1, color = Color3.fromRGB(226, 96, 88) },
 }
 
+local houseBoard: BasePart? = nil
+
 local function buildWayfinding(parent: Instance)
 	-- ---- the coloured lines on the floor ----
 	for index, route in ROUTES do
@@ -4269,6 +4272,13 @@ local function buildWayfinding(parent: Instance)
 		lamp.Color = door.color
 		lamp.Parent = sign
 	end
+
+	-- ---- the House Cup board, opposite the directory ----
+	local cupBack = part({ Name = "HouseBoardFrame", Size = Vector3.new(20, 22, 1), CFrame = CFrame.new(24, 12, 120.5), Color = Color3.fromRGB(58, 40, 30), Material = Enum.Material.WoodPlanks, Parent = parent })
+	cupBack.CanCollide = false
+	houseBoard = part({ Name = "HouseBoard", Size = Vector3.new(18, 20, 0.4), CFrame = CFrame.new(24, 12, 119.9), Color = Palette.Blackboard, Parent = parent })
+	houseBoard.CanCollide = false
+	signText(houseBoard, "THE HOUSE CUP", Palette.BusYellow, Enum.NormalId.Front)
 
 	-- ---- the directory, where you come in ----
 	local boardBack = part({ Name = "DirectoryBoard", Size = Vector3.new(20, 22, 1), CFrame = CFrame.new(-24, 12, 120.5), Color = Color3.fromRGB(58, 40, 30), Material = Enum.Material.WoodPlanks, Parent = parent })
@@ -4884,6 +4894,7 @@ end
 		detentionSpot = detentionCenter,
 		infirmary = Vector3.new(122, 17, -94),
 		secretDoor = secretDoor,
+		houseBoard = houseBoard,
 		sanctumSpawn = Vector3.new(-214, -166, -154),
 		folder = folder,
 	}

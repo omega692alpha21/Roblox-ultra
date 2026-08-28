@@ -58,6 +58,13 @@ Layout.GoalY = 0.215
 Layout.GoalW = 0.42
 Layout.GoalH = 0.048
 
+-- the House Cup chip, under the goal: your house, where it stands and how long
+-- is left in the term, on screen the whole time. A score only visible in a
+-- menu is a score nobody competes over.
+Layout.HouseY = 0.275
+Layout.HouseW = 0.26
+Layout.HouseH = 0.042
+
 -- ---------------- top right: the minimap ----------------
 -- Under Roblox's avatar chip, not beside it. The compass ticks ride on the
 -- top edge of the same square.

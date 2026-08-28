@@ -37,6 +37,7 @@ Z["compass"] = (1 - E - cw, cy, 1 - E, cy + ch)
 
 Z["pills"] = (0.5 - c("PillsW") / 2, c("PillsY"), 0.5 + c("PillsW") / 2, c("PillsY") + c("PillsH"))
 Z["goal chip"] = (0.5 - c("GoalW") / 2, c("GoalY"), 0.5 + c("GoalW") / 2, c("GoalY") + c("GoalH"))
+Z["house chip"] = (0.5 - c("HouseW") / 2, c("HouseY"), 0.5 + c("HouseW") / 2, c("HouseY") + c("HouseH"))
 
 vw, vh = c("VitalsW"), c("VitalsH")
 vx, vb = c("VitalsX"), c("VitalsBottom")

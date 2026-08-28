@@ -40,6 +40,8 @@ export type Profile = {
 	classLevel: number, -- chosen class difficulty, 1 remedial / 2 standard / 3 honors
 	tutorialDone: { [string]: boolean }, -- onboarding chain: which steps are behind you
 	outfit: string?, -- starter character: "boy" | "girl"
+	story: any?, -- THE CRUMBWORTH FILES: chapter, counters, chapters closed
+	house: string?, -- which of the four houses sorted you
 }
 
 local function template(): Profile
@@ -65,6 +67,8 @@ local function template(): Profile
 		grades = {},
 		classLevel = 2,
 		tutorialDone = {},
+		story = { chapter = 1, counts = {}, done = {}, told = {} },
+		house = nil,
 	}
 end
 

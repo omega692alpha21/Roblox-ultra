@@ -25,6 +25,8 @@ local EVENTS = {
 	"ScreenFx", -- (kind: "shake" | "hurt", intensity: number)
 	"HitMarker", -- (position: Vector3, amount: number, knockout: boolean)
 	"PlayAction", -- (character: Model, kind: "punch"|"throw"|"hurt"|"knockout"|"flex")
+	"StoryState", -- (state table for the Story panel)
+	"HouseState", -- (term standings for the House Cup)
 	"SecretKeypad", -- server -> client: open the bookshelf keypad
 	-- client -> server
 	"FuseStudent", -- (defId: string)
@@ -52,6 +54,7 @@ local EVENTS = {
 local FUNCTIONS = {
 	"GetRewardState", -- () -> state table
 	"GetCrew", -- () -> crew list
+	"GetStory", -- () -> pushes StoryState
 }
 
 local Remotes = {}
