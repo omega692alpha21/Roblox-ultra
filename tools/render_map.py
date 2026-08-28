@@ -658,6 +658,16 @@ shots = [
     ("dormfront",  (-176, 26, -140), (-176, 20, -230)),
     ("lodge",      (-300, 40, -60),  (-300, 30, -170)),
     ("library",    (-150, 30, -150), (-40, 10, -220)),
+    # A PLAYER'S eye, five studs up on the court looking at the school. Every
+    # other camera here is a director's shot from forty studs in the air; this
+    # is the one that matches what somebody standing in the game actually sees,
+    # and it is the one the complaints have always been about.
+    ("eyecourt",   (0, 5, 250),      (0, 24, 130)),
+    ("eyewalk",    (-90, 5, 200),    (10, 20, 130)),
+    ("eyegate",    (0, 5, 420),      (0, 30, 130)),
+    ("eyeback",    (0, 5, -170),     (0, 26, -60)),
+    ("dormerclose",(-110, 46, 190),  (-110, 46, 118)),
+    ("roofedge",   (-142, 44, 200),  (-142, 46, 100)),
 ]
 for name, cam, target in shots:
     render(cam, target, os.path.join(OUT, f"shot_{name}.png"))

@@ -3246,27 +3246,6 @@ local function buildGrandFacade(parent: Instance)
 		end
 	end
 
-	-- dormer windows punched into a pitched roof face
-	local function dormers(cx: number, cz: number, w: number, count: number, baseY: number, face: number)
-		for i = 1, count do
-			local x = cx - w / 2 + (i - 0.5) * (w / count)
-			local z = cz + face * 9
-			part({ Name = "DormerBody", Size = Vector3.new(7, 7, 8), CFrame = CFrame.new(x, baseY + 3.4, z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
-			local roof = Instance.new("WedgePart")
-			roof.Name = "DormerRoof"
-			roof.Anchored = true
-			roof.Size = Vector3.new(8.4, 3.4, 4.6)
-			roof.CFrame = CFrame.new(x, baseY + 8.6, z + face * 1.8) * CFrame.Angles(0, face > 0 and 0 or math.rad(180), 0)
-			roof.Color = SLATE
-			roof.Material = Enum.Material.Slate
-			roof.Parent = parent
-			local pane = part({ Name = "DormerWindow", Size = Vector3.new(4.4, 4.6, 0.5), CFrame = CFrame.new(x, baseY + 3.6, z + face * 4.1), Color = Color3.fromRGB(196, 224, 240), Material = Enum.Material.Glass, Transparency = 0.25, Parent = parent })
-			tag(pane, "TexWindow")
-			trimBand(x, baseY + 6.1, z + face * 4.2, 5.4, 0.7, 0.7)
-			trimBand(x, baseY + 1.1, z + face * 4.2, 5.4, 0.7, 0.7)
-		end
-	end
-
 	pitchedRoof(-142, 100, 164, 48, 14, 38.0)
 	pitchedRoof(142, 100, 164, 48, 14, 38.0)
 	-- Dormers on the front slope. Every roof in the reference art is broken by
@@ -3275,20 +3254,31 @@ local function buildGrandFacade(parent: Instance)
 	-- ridge at z = 100 down to the eaves at z = 124, so the roof surface at a
 	-- given z is baseY + rise * (1 - (z - ridge) / (d / 2)); at z = 112 that is
 	-- 38 + 14 * 0.5 = 45, and the dormer stands on it.
+	-- Set LOW on the slope. At z 112 and eight studs tall the dormers finished
+	-- above the ridge, so from a player's eye on the court there was sky behind
+	-- each one and five of them read as lanterns floating over the roof. The
+	-- pitch runs from the ridge at z 100, y 52 down to the eaves at z 124,
+	-- y 38, so the surface at z 116 is y 42.7 and a six-stud dormer with its
+	-- own little roof tops out just under the ridge, which is where a dormer
+	-- belongs.
 	for _, wing in { -142, 142 } do
 		for i = -2, 2 do
 			Kit.dormer(kitFor(parent), {
 				x = wing + i * 32,
-				y = 44.6,
-				z = 112,
+				y = 42.3,
+				z = 116,
 				facing = 0,
-				width = 8,
-				height = 8,
+				width = 7,
+				height = 6,
 			})
 		end
 	end
-	dormers(-142, 100, 150, 5, 38.0, 1)
-	dormers(142, 100, 150, 5, 38.0, 1)
+	-- The old `dormers` helper is gone from the front slope: CollegiateKit
+	-- already put five on each wing above, and these landed at the same x, four
+	-- studs lower and seven studs further back, so every dormer on the school
+	-- was two dormers inside each other with the older one's roof wedge poking
+	-- out sideways like a blade. Two builders, one patch of roof, neither aware
+	-- of the other -- the same fault as the shrubs and the planters.
 	pitchedRoof(-142, -94, 164, 60, 15, 38.0)
 	pitchedRoof(142, -94, 164, 60, 15, 38.0)
 	pitchedRoof(-198, 0, 52, 128, 12, 38.0)
@@ -3409,26 +3399,49 @@ local function buildGrandFacade(parent: Instance)
 	local OPENING = 26.0
 
 	Kit.pointedArch(kit, { x = 0, y = 19.4, z = FACE - 1.2, span = OPENING, rise = 19, depth = 3.8, ring = 2.8, segments = 10 })
-	-- a recessed panel inside the arch, so the head reads as depth rather than
-	-- as an outline drawn on a flat wall
-	tag(part({ Name = "ArchTympanum", Size = Vector3.new(OPENING - 5.5, 15, 1.0), CFrame = CFrame.new(0, 27.5, FACE - 0.2), Color = Color3.fromRGB(111, 103, 92), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone").CanCollide = false
-	-- Round, not square. An oculus is a circle; two lit squares in a gothic
-	-- arch read as a pair of light boxes, which is what they were. A cylinder
-	-- laid on its side against the face gives the disc, and a slightly larger
-	-- stone one behind it gives the surround.
-	for _, side in { -1, 1 } do
-		local lie = CFrame.Angles(0, math.rad(90), math.rad(90))
-		tag(part({ Name = "ArchOculusRing", Size = Vector3.new(1.0, 6.4, 6.4), CFrame = CFrame.new(side * 6, 28.5, FACE + 0.2) * lie, Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Shape = Enum.PartType.Cylinder, Parent = parent }), "TexAshlar").CanCollide = false
-		local glow = part({ Name = "ArchOculusGlass", Size = Vector3.new(0.6, 5.0, 5.0), CFrame = CFrame.new(side * 6, 28.5, FACE + 0.6) * lie, Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Shape = Enum.PartType.Cylinder, Parent = parent })
-		glow.CanCollide = false
-		glow.CastShadow = false
-		-- a quatrefoil bar across it, which is what stops a round window
-		-- reading as a hole
-		for _, spin in { 0, 90 } do
-			part({ Name = "OculusBar", Size = Vector3.new(0.4, 5.0, 0.4), CFrame = CFrame.new(side * 6, 28.5, FACE + 0.9) * CFrame.Angles(0, 0, math.rad(spin)), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-		end
+	-- The head of the arch is a WINDOW, not a wall.
+	--
+	-- From a player's eye on the court the arch read as a thin outline drawn
+	-- over a flat brown panel, and the two little round lights in it did not
+	-- register at all. In the reference the great arch over the doors is filled
+	-- with one tall traceried window, lit from inside, and that window is the
+	-- brightest thing on the whole elevation -- it is what makes the entrance
+	-- read as the entrance from the far end of the grounds.
+	--
+	-- Below the springing the opening stays clear: the doors are recessed at
+	-- z 116..127 and people walk through here.
+	local HEAD_LOW, HEAD_TOP = 20.6, 37.0
+	local headMid = (HEAD_LOW + HEAD_TOP) / 2
+	local headHeight = HEAD_TOP - HEAD_LOW
+	tag(part({ Name = "ArchReveal", Size = Vector3.new(OPENING - 1.0, headHeight + 2.4, 2.2), CFrame = CFrame.new(0, headMid, FACE - 1.6), Color = Color3.fromRGB(111, 103, 92), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone").CanCollide = false
+	local light = part({ Name = "ArchWindow", Size = Vector3.new(OPENING - 4.2, headHeight, 0.6), CFrame = CFrame.new(0, headMid, FACE - 0.5), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.3, Parent = parent })
+	light.CanCollide = false
+	light.CastShadow = false
+	local glow = Instance.new("PointLight")
+	glow.Color = Color3.fromRGB(255, 220, 160)
+	glow.Brightness = 1.4
+	glow.Range = 40
+	glow.Shadows = false
+	glow.Parent = light
+
+	-- tracery: two mullions, a transom, and a quatrefoil in the head. This is
+	-- the difference between a lit window and a lit rectangle.
+	for _, mx in { -7.2, 0, 7.2 } do
+		tag(part({ Name = "ArchMullion", Size = Vector3.new(1.1, headHeight + 0.4, 1.3), CFrame = CFrame.new(mx, headMid, FACE - 0.2), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
 	end
-	tag(part({ Name = "ArchMullion", Size = Vector3.new(0.8, 15, 1.2), CFrame = CFrame.new(0, 27.5, FACE + 0.3), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }), "TexAshlar").CanCollide = false
+	tag(part({ Name = "ArchTransom", Size = Vector3.new(OPENING - 4.0, 1.1, 1.3), CFrame = CFrame.new(0, HEAD_LOW + headHeight * 0.58, FACE - 0.2), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	local lie = CFrame.Angles(0, math.rad(90), math.rad(90))
+	tag(part({ Name = "ArchQuatrefoil", Size = Vector3.new(1.3, 6.2, 6.2), CFrame = CFrame.new(0, HEAD_TOP - 3.6, FACE - 0.1) * lie, Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Shape = Enum.PartType.Cylinder, Parent = parent }), "TexAshlar").CanCollide = false
+	local eye = part({ Name = "ArchQuatrefoilGlass", Size = Vector3.new(0.7, 4.8, 4.8), CFrame = CFrame.new(0, HEAD_TOP - 3.6, FACE + 0.3) * lie, Color = Color3.fromRGB(255, 214, 150), Material = Enum.Material.Neon, Transparency = 0.25, Shape = Enum.PartType.Cylinder, Parent = parent })
+	eye.CanCollide = false
+	eye.CastShadow = false
+
+	-- the jambs of the walk-through below, so the opening reads as cut through
+	-- thick stone rather than as a hole in a panel
+	for _, side in { -1, 1 } do
+		tag(part({ Name = "PortalJamb", Size = Vector3.new(2.6, HEAD_LOW, 3.2), CFrame = CFrame.new(side * (OPENING / 2 - 1.3), HEAD_LOW / 2, FACE - 1.2), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
+	tag(part({ Name = "PortalThreshold", Size = Vector3.new(OPENING + 3.0, 0.8, 5.0), CFrame = CFrame.new(0, 0.4, FACE - 1.5), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
 
 	-- buttresses at the bay's own corners, standing on the bay, not in front of
 	-- it: the bay is x -28..28 and z 122..136, so they centre at x +-31, z 129

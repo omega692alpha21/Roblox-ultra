@@ -155,21 +155,38 @@ function CollegiateKit.dormer(ctx: Ctx, o: { x: number, y: number, z: number, fa
 	light.Shadows = false
 	light.Parent = pane
 
-	-- its own gable, and the finial on the point
+	-- Its own gable, with the ridge running front to back.
+	--
+	-- This was 90 degrees out and it showed: a WedgePart's tall face is at its
+	-- local -Z, so under a yaw of 90 its LENGTH becomes the world Z extent and
+	-- its depth becomes the world X extent. Sized as though the length were
+	-- still across the front, the two halves splayed outward like wings with a
+	-- gap between them and the finial floating over the gap. Five of these sat
+	-- on the roof looking like lanterns hung in mid-air.
+	--
+	-- Under yaw 90 the local +Z axis maps to world +X, so that half slopes out
+	-- to +X with its tall face on the ridge at the centre; yaw 270 mirrors it.
+	local RISE = 3.4
+	local OVERHANG = 1.0
+	local halfSpan = w / 2 + OVERHANG
+	local roofDepth = 7.6
 	for _, side in { -1, 1 } do
 		local piece = Instance.new("WedgePart")
 		piece.Name = "DormerRoof"
 		piece.Anchored = true
 		piece.CanCollide = false
-		piece.Size = Vector3.new(w + 1.6, 3.4, 3.6)
-		piece.CFrame = at * CFrame.new(side * (w + 1.6) / 2, h + 1.7, 0.6)
+		piece.Size = Vector3.new(roofDepth, RISE, halfSpan)
+		piece.CFrame = at * CFrame.new(side * halfSpan / 2, h + RISE / 2, -0.2)
 			* CFrame.Angles(0, math.rad(if side > 0 then 90 else 270), 0)
 		piece.Color = CollegiateKit.SLATE
 		piece.Material = Enum.Material.Slate
 		piece.Parent = ctx.parent
 		ctx.tag(piece, "TexSlateRoof")
 	end
-	ctx.part({ Name = "DormerFinial", Size = Vector3.new(0.4, 2.2, 0.4), CFrame = at * CFrame.new(0, h + 4.5, 0.6), Color = CollegiateKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "DormerRidge", Size = Vector3.new(1.1, 0.8, roofDepth + 0.6), CFrame = at * CFrame.new(0, h + RISE + 0.3, -0.2), Color = CollegiateKit.RIDGE, Material = Enum.Material.Slate, Parent = ctx.parent }).CanCollide = false
+	-- the verge board on the gable end that faces the court
+	ctx.tag(ctx.part({ Name = "DormerVerge", Size = Vector3.new(w + 2.6, 1.0, 0.9), CFrame = at * CFrame.new(0, h + 0.4, 3.4), Color = CollegiateKit.ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+	ctx.part({ Name = "DormerFinial", Size = Vector3.new(0.4, 2.0, 0.4), CFrame = at * CFrame.new(0, h + RISE + 1.2, 2.9), Color = CollegiateKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
 end
 
 -- ---------------------------------------------------------------------------
