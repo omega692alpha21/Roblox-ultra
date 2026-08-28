@@ -762,6 +762,52 @@ return {
 	SmallPlasticTorch = Vector3.new(0.37, 0.20, 0.84),
 	SignalFlashlight = Vector3.new(0.26, 0.55, 0.16),
 	WineBarrel = Vector3.new(2.75, 3.22, 2.80),
+	QuartersBed = Vector3.new(2.92, 2.80, 7.51),
+	QuartersBedDouble = Vector3.new(4.21, 2.80, 7.51),
+	QuartersCloset = Vector3.new(3.25, 8.60, 1.80),
+	QuartersLocker = Vector3.new(2.90, 5.40, 2.28),
+	QuartersNightstand = Vector3.new(2.81, 2.80, 3.09),
+	QuartersDesk = Vector3.new(6.57, 3.60, 3.05),
+	HeadmasterChair = Vector3.new(2.94, 4.60, 3.29),
+	TallBookcase = Vector3.new(4.20, 8.60, 1.52),
+	StockedBookcase = Vector3.new(4.20, 8.60, 1.52),
+	LodgeSofa = Vector3.new(9.92, 3.60, 3.82),
+	LodgeSofaLong = Vector3.new(9.92, 3.60, 6.94),
+	LodgeArmchair = Vector3.new(4.34, 3.60, 3.81),
+	LoungeStool = Vector3.new(2.46, 2.80, 2.59),
+	RefectoryTable = Vector3.new(5.85, 3.40, 11.47),
+	RefectoryTable2 = Vector3.new(5.16, 3.00, 10.12),
+	PlainChair = Vector3.new(2.00, 4.20, 2.49),
+	CeilingLampBox = Vector3.new(1.18, 2.20, 1.17),
+	CeilingLampDisc = Vector3.new(1.58, 2.00, 1.58),
+	PendantLamp = Vector3.new(1.88, 3.40, 1.97),
+	GrandChandelier = Vector3.new(8.46, 5.40, 8.46),
+	Houseplant = Vector3.new(5.79, 5.40, 5.23),
+	Houseplant2 = Vector3.new(1.78, 4.40, 1.76),
+	Houseplant3 = Vector3.new(7.49, 6.20, 7.73),
+	Houseplant4 = Vector3.new(6.35, 4.80, 6.64),
+	BunkBed = Vector3.new(6.44, 9.00, 11.87),
+	Nightstand2 = Vector3.new(2.82, 2.80, 2.82),
+	Fridge = Vector3.new(3.29, 8.40, 3.31),
+	Oven = Vector3.new(3.68, 5.00, 3.36),
+	KitchenSink = Vector3.new(2.63, 5.00, 2.91),
+	KitchenCabinet = Vector3.new(3.23, 5.00, 3.42),
+	KitchenDrawers = Vector3.new(3.11, 5.00, 3.45),
+	BinLarge = Vector3.new(3.05, 4.60, 3.05),
+	BinSmall = Vector3.new(1.98, 2.80, 1.20),
+	Toilet = Vector3.new(2.14, 3.40, 3.03),
+	Washbasin = Vector3.new(3.07, 3.20, 1.80),
+	WashroomMirror = Vector3.new(2.79, 4.00, 0.44),
+	WideShelf = Vector3.new(6.09, 8.00, 1.36),
+	DiningChair = Vector3.new(1.89, 4.20, 2.08),
+	RoundTable = Vector3.new(11.26, 3.40, 5.89),
+	RoundTableSmall = Vector3.new(4.74, 2.80, 4.74),
+	PaddedStool = Vector3.new(2.46, 2.80, 2.59),
+	LoungeCouch = Vector3.new(8.84, 3.60, 4.15),
+	ChestOfDrawers = Vector3.new(12.11, 4.60, 3.90),
+	Rug = Vector3.new(25.31, 0.30, 26.04),
+	RoundRug = Vector3.new(47.52, 0.30, 48.26),
+	LodgeFireplace = Vector3.new(10.15, 8.00, 3.62),
 }
 
 end)()
@@ -1127,6 +1173,12 @@ local function buildCampusPath(parent: Instance, from: Vector3, to: Vector3, wid
 	tag(path, "TexPlaza")
 end
 
+-- Where the secret bookshelf sits in the library's west wall. The wall is
+-- built eight hundred lines before the door is, so the one number both of them
+-- need lives up here: LIB_SHAFT.Z below is the same value, and
+-- tools/doorway_check.py proves the opening and the shelf still line up.
+local LIBRARY_DOOR_Z = -222
+
 local function buildLibrary(parent: Instance, center: Vector3)
 	local W, D, H = 92, 68, 26
 	local halfW, halfD = W / 2, D / 2
@@ -1139,10 +1191,31 @@ local function buildLibrary(parent: Instance, center: Vector3)
 		Parent = parent,
 	}), "TexWood")
 
-	-- stone shell, open in the middle of the south face for the doors
+	-- Stone shell, open in the middle of the south face for the doors -- and
+	-- open in the WEST face for the secret bookshelf, which is the whole point
+	-- of this building. The west wall used to run unbroken from corner to
+	-- corner: the shelf slid aside on the right four digits and left you
+	-- looking at twenty-six studs of solid sandstone.
+	--
+	-- The opening is cut to the shelf: fourteen wide on z, fourteen high,
+	-- centred on the shaft's z so the shelf covers it exactly when shut.
+	local doorZ = LIBRARY_DOOR_Z - center.Z
+	local doorHalf, doorH = 7, 14
 	local walls = {
 		{ size = Vector3.new(W, H, 2), offset = Vector3.new(0, H / 2, -halfD) },
-		{ size = Vector3.new(2, H, D), offset = Vector3.new(-halfW, H / 2, 0) },
+		-- west wall, in three pieces round the secret door
+		{
+			size = Vector3.new(2, H, (doorZ - doorHalf) + halfD),
+			offset = Vector3.new(-halfW, H / 2, (-halfD + doorZ - doorHalf) / 2),
+		},
+		{
+			size = Vector3.new(2, H, halfD - (doorZ + doorHalf)),
+			offset = Vector3.new(-halfW, H / 2, (doorZ + doorHalf + halfD) / 2),
+		},
+		{
+			size = Vector3.new(2, H - doorH, doorHalf * 2),
+			offset = Vector3.new(-halfW, doorH + (H - doorH) / 2, doorZ),
+		},
 		{ size = Vector3.new(2, H, D), offset = Vector3.new(halfW, H / 2, 0) },
 		{ size = Vector3.new(halfW - 8, H, 2), offset = Vector3.new(-(halfW / 2 + 4), H / 2, halfD) },
 		{ size = Vector3.new(halfW - 8, H, 2), offset = Vector3.new(halfW / 2 + 4, H / 2, halfD) },
@@ -1430,12 +1503,16 @@ local function buildPool(parent: Instance, center: Vector3)
 		})
 	end
 
-	-- real terrain water, so this is a pool you swim in and not a blue floor
-	local waterCenter = center + Vector3.new(0, -DEPTH / 2 - 0.5, 0)
+	-- Real terrain water, so this is a pool you swim in and not a blue floor.
+	-- Filled to just under the deck rather than a stud below it: a pool whose
+	-- surface sits a stud down reads as an empty tank from the deck, and the
+	-- step in was a drop.
+	local top, bottom = -0.6, -DEPTH + 1
+	local waterCenter = center + Vector3.new(0, (top + bottom) / 2, 0)
 	pcall(function()
 		workspace.Terrain:FillBlock(
 			CFrame.new(waterCenter),
-			Vector3.new(W - 1, DEPTH - 1, D - 1),
+			Vector3.new(W - 1, top - bottom, D - 1),
 			Enum.Material.Water
 		)
 	end)
@@ -1606,8 +1683,15 @@ local function buildBenches(parent: Instance)
 	end
 end
 
-local function buildCafeteriaTables(parent: Instance, center: Vector3)
-	for _, offset in { Vector3.new(-18, 0, -18), Vector3.new(18, 0, -18), Vector3.new(-18, 0, 14), Vector3.new(18, 0, 14) } do
+-- Superseded by the prop dining set in furnishProps: four cylinder tables and
+-- the sixteen prop chairs, benches and refectory tables all stood in the same
+-- forty studs of floor, which is six of the "props sticking out of each other"
+-- reports on its own.
+local function _buildCafeteriaTables(parent: Instance, center: Vector3)
+	-- Fourteen studs out, not eighteen: the east pair used to reach x = -183,
+	-- which is the west edge of the wing stair, and the table's rim stood in
+	-- the flight.
+	for _, offset in { Vector3.new(-14, 0, -18), Vector3.new(14, 0, -18), Vector3.new(-14, 0, 14), Vector3.new(14, 0, 14) } do
 		local pos = center + offset
 		local top = part({
 			Name = "TableTop",
@@ -2258,13 +2342,41 @@ local function buildProps(parent: Instance)
 end
 
 -- Dense treeline just inside the perimeter walls, so the horizon reads as woods.
+-- Footprints the treeline is not allowed to grow in. The ring runs at a
+-- radius of roughly 300 to 370 studs, which is exactly where the outbuildings
+-- are: a grove was growing up through the staff lodge, and one of its trunks
+-- stood in the middle of the stair to the studies. A tree inside a building is
+-- not a decoration, it is a wall.
+local NO_TREES = {
+	{ -350, -210, -250, -130 },  -- the staff lodge and its turret
+	{ -265, -202, -232, -170 },
+	{ -215, -245, -138, -180 },  -- boys dorm
+	{ 138, -245, 215, -180 },    -- girls dorm
+	{ -55, -272, 55, -192 },     -- the library
+	{ -230, -130, 230, 130 },    -- the school itself
+	{ 290, -70, 400, 70 },       -- the tennis stadium
+	{ -400, -70, -290, 70 },     -- the pool
+}
+
 local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, number) -> ())
 	local rng = Random.new(2026)
 	for i = 1, 190 do
 		local angle = (i / 190) * math.pi * 2 + rng:NextNumber(-0.02, 0.02)
 		local dist = rng:NextNumber(292, 372)
 		local pos = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
-		treeFn(parent, pos, rng:NextNumber(1.1, 2.3))
+		local scale = rng:NextNumber(1.1, 2.3)
+		local blocked = false
+		for _, rect in NO_TREES do
+			-- pad by the canopy, not the trunk: leaves poking through a wall
+			-- read exactly as badly as a trunk standing in a corridor
+			if pos.X > rect[1] - 8 and pos.X < rect[3] + 8 and pos.Z > rect[2] - 8 and pos.Z < rect[4] + 8 then
+				blocked = true
+				break
+			end
+		end
+		if not blocked then
+			treeFn(parent, pos, scale)
+		end
 	end
 end
 
@@ -2324,6 +2436,11 @@ local function buildTerrain()
 		-- the library's passage west under the field, and its shaft
 		{ cf = CFrame.new(-73, -2.3, -222), size = Vector3.new(58, 5, 20) },
 		{ cf = CFrame.new(-100, -2.3, -222), size = Vector3.new(26, 5, 26) },
+		-- The swimming pool. The grass slab is four studs thick and the pool's
+		-- water is filled from y = -13 up to -1, so the basin was capped with a
+		-- lid of turf and the pool simply was not there: you walked out to the
+		-- deck and found lawn where the water should be.
+		{ cf = CFrame.new(-340, -2.3, -20), size = Vector3.new(80, 6, 48) },
 	} do
 		terrain:FillBlock(region.cf, region.size, Enum.Material.Air)
 	end
@@ -2707,7 +2824,10 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 	for row = 0, 1 do
 		for col = 0, 2 do
 			local bx = center.X - 22 + col * 22
-			local bz = center.Z - 14 + row * 28
+			-- Rows at -16 and +10 of centre, not -14 and +14: the north row
+			-- used to sit three studs off the washroom partition, with its
+			-- footlocker inside it.
+			local bz = center.Z - 16 + row * 26
 			part({ Name = "BedFrame", Size = Vector3.new(7, 1.6, 12), CFrame = CFrame.new(bx, 0.8, bz), Color = Color3.fromRGB(105, 76, 48), Material = Enum.Material.Wood, Parent = parent })
 			local shade = 0.85 + col * 0.12
 			local mattress = part({ Name = "DormBed", Size = Vector3.new(6.4, 1, 11), CFrame = CFrame.new(bx, 1.9, bz), Color = Color3.new(math.min(1, accent.R * shade), math.min(1, accent.G * shade), math.min(1, accent.B * shade)), Material = Enum.Material.Fabric, Parent = parent })
@@ -2758,9 +2878,9 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 		prop("Washbasin", CFrame.new(sx + 9, 0, wz + 1) * CFrame.Angles(0, math.pi, 0))
 		prop("WashroomMirror", CFrame.new(sx + 9, 7, wz + 3.6) * CFrame.Angles(0, math.pi, 0))
 	end
-	prop("BinSmall", CFrame.new(center.X + 28, 0, wz + 1))
+	prop("BinSmall", CFrame.new(center.X + 24, 0, wz + 4))
 	-- and a bunk in the corner, because six beds in a room this size is thin
-	prop("BunkBed", CFrame.new(center.X - 29, 0, center.Z) * CFrame.Angles(0, math.rad(90), 0))
+	prop("BunkBed", CFrame.new(center.X - 25, 0, center.Z) * CFrame.Angles(0, math.rad(90), 0))
 end
 
 -- ===== 1:1 reference-art detail pass =========================================
@@ -3071,17 +3191,23 @@ local function furnishProps()
 	prop("ArmChair", CFrame.new(31, 0, 106))
 	prop("ArmChair", CFrame.new(31, 0, 118) * CFrame.Angles(0, math.pi, 0))
 	prop("GrandfatherClock", CFrame.new(56, 0, 119) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("WhaleStatue", CFrame.new(-34, 0, 108), { scale = 2.0 })
-	prop("RayStatue", CFrame.new(-56, 0, 112), { scale = 2.0 })
+	-- The two statues used to stand at twice size in the WEST bay, one of them
+	-- four studs from the stair foot: between them they took nine metres of the
+	-- room a player crosses on the way in, and the hall read as a junk shop.
+	-- One to each side wall now, at a size a school could afford.
+	prop("WhaleStatue", CFrame.new(-56, 0, 130) * CFrame.Angles(0, math.pi, 0), { scale = 1.2 })
+	prop("RayStatue", CFrame.new(56, 0, 130) * CFrame.Angles(0, math.pi, 0), { scale = 1.2 })
 	prop("Vase1", CFrame.new(-38, 3.8, 92))
 	prop("Vase2", CFrame.new(-22, 3.8, 92))
 	row("PlanterPot", 0, 0, { { -56, 86 }, { 54.5, 80 }, { -56, 118 } })
 	-- greenery where people wait, which is every school lobby ever built
-	row("Houseplant", 0, 0, { { -40, 120 }, { 40, 120 } })
+	-- in the corners, not either side of the way in
+	row("Houseplant", 0, 0, { { -54, 118 }, { 54, 118 } })
 	row("Houseplant2", 0, 0, { { -20, 84 }, { 20, 84 } })
 	row("Houseplant4", 0, 0, { { -34, 30 }, { 34, 30 } })
 	row("PottedPlant", 0, 0, { { -56, 100 }, { 54.5, 93 } })
-	prop("Clock", CFrame.new(-40, 12, 102.8))
+	-- on the west wall. At x = -40 it hung one stud off the west flight.
+	prop("Clock", CFrame.new(-60.5, 12, 102) * CFrame.Angles(0, math.rad(90), 0))
 
 	-- ---------------- atrium ----------------
 	row("PlanterBox", 0, 0, { { -28, -20 }, { 28, -20 }, { -28, 32 }, { 28, 32 } })
@@ -3130,15 +3256,17 @@ local function furnishProps()
 	-- to be here laid four dining tables out at z 36..52, which is the middle
 	-- of the principal's office.
 	for _, cx in { -212, -198 } do
-		for _, cz in { -40, -24 } do
+		for _, cz in { -39, -27 } do
 			prop("DiningTable", CFrame.new(cx, 0, cz))
 			prop("Bench", CFrame.new(cx, 0, cz - 4.4))
 			prop("Bench", CFrame.new(cx, 0, cz + 4.4) * CFrame.Angles(0, math.pi, 0))
 		end
 	end
 	-- two more rows, so a room forty by fifty-eight does not seat sixteen
+	-- Twelve studs apart, not eight: a refectory table is eleven and a half
+	-- long, so a row every eight studs was a row of tables inside each other.
 	for _, cx in { -212, -198 } do
-		for _, cz in { -8, 0 } do
+		for _, cz in { -16, -4 } do
 			prop("RefectoryTable", CFrame.new(cx, 0, cz))
 			for _, sx in { -4.6, 4.6 } do
 				prop("LoungeStool", CFrame.new(cx + sx, 0, cz))
@@ -3146,17 +3274,17 @@ local function furnishProps()
 		end
 	end
 	-- the servery: a kitchen behind the counter rather than a painted wall
-	prop("Fridge", CFrame.new(-220, 0, 2) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("Oven", CFrame.new(-211, 0, 3) * CFrame.Angles(0, math.pi, 0))
-	prop("KitchenSink", CFrame.new(-204, 0, 3) * CFrame.Angles(0, math.pi, 0))
-	prop("KitchenCabinet", CFrame.new(-197, 0, 3) * CFrame.Angles(0, math.pi, 0))
-	prop("KitchenDrawers", CFrame.new(-191, 0, 3) * CFrame.Angles(0, math.pi, 0))
-	prop("BinLarge", CFrame.new(-189, 0, -4))
+	prop("Fridge", CFrame.new(-220, 0, 4) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("Oven", CFrame.new(-211, 0, 5) * CFrame.Angles(0, math.pi, 0))
+	prop("KitchenSink", CFrame.new(-204, 0, 5) * CFrame.Angles(0, math.pi, 0))
+	prop("KitchenCabinet", CFrame.new(-197, 0, 5) * CFrame.Angles(0, math.pi, 0))
+	prop("KitchenDrawers", CFrame.new(-191, 0, 5) * CFrame.Angles(0, math.pi, 0))
+	prop("BinLarge", CFrame.new(-186, 0, -4))
 	prop("Stool", CFrame.new(-221, 0, -32))
 	prop("Stool", CFrame.new(-189, 0, -32))
 	prop("Bin", CFrame.new(-221, 0, -48))
 	prop("Extinguisher", CFrame.new(-189, 0, -48))
-	row("PottedPlant", 0, 0, { { -221, 2 }, { -186, 2 } })
+	row("PottedPlant", 0, 0, { { -220, -10 }, { -188, -14 } })
 
 	-- ---------------- the principal's office ----------------
 	-- Everything here stays clear of x -222..-206, z 16..40: that is the
@@ -3168,9 +3296,12 @@ local function furnishProps()
 	prop("ArmChair", CFrame.new(-196, 0, 52) * CFrame.Angles(0, math.pi, 0))
 	prop("SchoolChair", CFrame.new(-200, 0, 40))
 	prop("SchoolChair", CFrame.new(-192, 0, 40))
-	prop("Cabinet", CFrame.new(-187, 0, 56) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("SteelShelves2", CFrame.new(-187, 0, 46) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("GrandfatherClock", CFrame.new(-187, 0, 12) * CFrame.Angles(0, math.rad(-90), 0))
+	-- Hard against the east wall at x = -190, not -187: the corridor's south
+	-- walking lane runs at z = 56 and a filing cabinet three studs proud of
+	-- the wall stood in the middle of it.
+	prop("Cabinet", CFrame.new(-190, 0, 30) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("SteelShelves2", CFrame.new(-190, 0, 46) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("GrandfatherClock", CFrame.new(-190, 0, 12) * CFrame.Angles(0, math.rad(-90), 0))
 	prop("Sofa", CFrame.new(-214, 0, 10) * CFrame.Angles(0, math.rad(90), 0))
 	prop("CoffeeTable", CFrame.new(-208, 0, 10))
 	prop("PottedPlant", CFrame.new(-189, 0, 60))
@@ -3188,13 +3319,12 @@ local function furnishProps()
 	-- ---------------- dorms ----------------
 	for _, sx in { -1, 1 } do
 		local cx = sx * 176
-		prop("DayBed", CFrame.new(cx - sx * 16, 0, -226) * CFrame.Angles(0, math.rad(sx * 90), 0))
-		prop("Nightstand", CFrame.new(cx - sx * 16, 0, -218) * CFrame.Angles(0, math.rad(sx * 90), 0))
-		prop("Drawer", CFrame.new(cx + sx * 16, 0, -226) * CFrame.Angles(0, math.rad(-sx * 90), 0))
-		prop("Cabinet", CFrame.new(cx + sx * 16, 0, -216) * CFrame.Angles(0, math.rad(-sx * 90), 0))
-		prop("Pillows", CFrame.new(cx - sx * 16, 1.9, -226))
-		prop("Television", CFrame.new(cx + sx * 16, 3.3, -226) * CFrame.Angles(0, math.rad(-sx * 90), 0))
-		prop("Boombox", CFrame.new(cx + sx * 16, 3.3, -216) * CFrame.Angles(0, math.rad(-sx * 90), 0))
+		-- A day bed, a chest of drawers, a nightstand, a cabinet, a television
+		-- and a boombox used to stand in the same floor as the six bunks and
+		-- their footlockers, four of them inside each other. A dormitory is
+		-- beds; the lounge is the south end of the room.
+		prop("Cabinet", CFrame.new(cx + sx * 24, 0, -204) * CFrame.Angles(0, math.rad(-sx * 90), 0))
+		prop("Television", CFrame.new(cx + sx * 24, 3.3, -204) * CFrame.Angles(0, math.rad(-sx * 90), 0))
 		prop("LoungeChair", CFrame.new(cx, 0, -204) * CFrame.Angles(0, math.pi, 0))
 		prop("ModernCoffeeTable", CFrame.new(cx, 0, -198))
 		prop("PottedPlant", CFrame.new(cx - sx * 22, 0, -200))
@@ -3219,10 +3349,14 @@ local function furnishProps()
 
 	-- ---------------- second dressing pass ----------------
 	-- the pieces that turn a furnished room into an inhabited one
-	prop("Ottoman", CFrame.new(23, 0, 106))
 	prop("GreenChair", CFrame.new(-56, 0, 96) * CFrame.Angles(0, math.rad(90), 0))
-	prop("FramedPicture", CFrame.new(-44, 9, 102.8))
-	prop("FramedPicture", CFrame.new(38, 9, 102.8))
+	-- Both of these hung at x = -44 and x = 38, which is INSIDE the west lobby
+	-- flight and three studs off the east one, at chest height over the
+	-- seventh tread. This is the "the stairs are blocked by something" bug:
+	-- you climbed six steps and walked into a picture frame. They are on the
+	-- side walls now, where a picture goes.
+	prop("FramedPicture", CFrame.new(-60.5, 9, 96) * CFrame.Angles(0, math.rad(90), 0))
+	prop("FramedPicture", CFrame.new(60.5, 9, 96) * CFrame.Angles(0, math.rad(-90), 0))
 	prop("Table2", CFrame.new(0, 0, -216))
 	prop("Chair", CFrame.new(0, 0, -220) * CFrame.Angles(0, math.pi, 0))
 	prop("Fern", CFrame.new(-35, 0, -209))
@@ -4666,21 +4800,32 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	end
 	tag(part({ Name = "QuartersFloor", Size = Vector3.new(W, 1, D), CFrame = at(0, 2.5, 0), Color = Color3.fromRGB(150, 110, 78), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
 	-- the upper deck, with a well over the common room so the fire is visible
-	-- from the landing
+	-- from the landing -- and a SECOND well over the east bay, because that is
+	-- where the stair is. The deck used to run straight over the top of the
+	-- flight: you climbed four treads and hit the underside of the floor you
+	-- were climbing to, which is why nobody could get upstairs here.
 	for _, rect in {
 		{ -halfW, -halfD, halfW, -14 },
-		{ -halfW, 14, halfW, halfD },
 		{ -halfW, -14, -16, 14 },
-		{ 16, -14, halfW, 14 },
+		{ 16, -14, 24, 14 },
+		{ 38, -14, halfW, 14 },
+		{ 24, -14, 38, -6 },
+		{ 24, 10, 38, 14 },
+		{ -halfW, 14, 24, halfD },
+		{ 38, 14, halfW, halfD },
+		{ 24, 14, 38, halfD },
 	} do
 		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
 		tag(part({ Name = "QuartersUpperFloor", Size = Vector3.new(x1 - x0, 1, z1 - z0), CFrame = at((x0 + x1) / 2, GROUND + 2.5, (z0 + z1) / 2), Color = Color3.fromRGB(150, 110, 78), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
 		tag(part({ Name = "QuartersSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, GROUND + 1.7, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
 	end
-	-- railing round the well
+	-- railing round both wells -- the light well over the fire, and the
+	-- stairwell. The stairwell is left open on its south edge, which is where
+	-- the top tread lands.
 	for _, rail in {
 		{ -16, -14, 16, -14 }, { -16, 14, 16, 14 },
 		{ -16, -14, -16, 14 }, { 16, -14, 16, 14 },
+		{ 24, -6, 24, 10 }, { 38, -6, 38, 10 }, { 24, 10, 38, 10 },
 	} do
 		buildRailing(parent, center + Vector3.new(rail[1], GROUND + 3, rail[2]), center + Vector3.new(rail[3], GROUND + 3, rail[4]))
 	end
@@ -4775,7 +4920,10 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	prop("VintageMicrowave", CFrame.new(center + Vector3.new(28, 6.8, -halfD + 4)))
 
 	-- ---- the stair up, in the east bay ----
-	buildStair(parent, CFrame.lookAt(center + Vector3.new(30, 3, 24), center + Vector3.new(30, 3, -4)), 14, 1, 1.9, 9)
+	-- Sixteen treads, not fourteen: the floor of the ground storey is at y = 3
+	-- and the deck above it at 19, so a fourteen-tread flight stopped two
+	-- studs short of the floor it was meant to arrive at.
+	buildStair(parent, CFrame.lookAt(center + Vector3.new(30, 3, 24), center + Vector3.new(30, 3, -4)), 16, 1, 1.9, 9)
 
 	-- ---- five studies upstairs ----
 	for index, teacher in TEACHERS do
@@ -4803,16 +4951,21 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		part({ Name = "StudyMattress", Size = Vector3.new(6.4, 1.2, 11), CFrame = at(-halfW + 8, GROUND + 6.2, sz - 6), Color = teacher.color, Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
 		prop("QuartersDesk", CFrame.new(center + Vector3.new(-halfW + 22, GROUND + 3, sz - 6)) * CFrame.Angles(0, math.rad(-90), 0))
 		prop("PlainChair", CFrame.new(center + Vector3.new(-halfW + 28, GROUND + 3, sz - 6)) * CFrame.Angles(0, math.rad(90), 0))
-		prop("QuartersCloset", CFrame.new(center + Vector3.new(-halfW + 14, GROUND + 3, sz - 10)) * CFrame.Angles(0, math.rad(180), 0))
+		prop("QuartersCloset", CFrame.new(center + Vector3.new(-halfW + 14, GROUND + 3, sz - 7.5)) * CFrame.Angles(0, math.rad(180), 0))
 		prop("QuartersNightstand", CFrame.new(center + Vector3.new(-halfW + 13, GROUND + 3, sz - 1)))
 	end
 	-- and a landing worth standing on
-	prop("Sofa2", CFrame.new(center + Vector3.new(28, GROUND + 3, 22)) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("SideTable", CFrame.new(center + Vector3.new(22, GROUND + 3, 22)))
+	prop("Sofa2", CFrame.new(center + Vector3.new(18, GROUND + 3, 26)) * CFrame.Angles(0, math.rad(180), 0))
+	prop("SideTable", CFrame.new(center + Vector3.new(11, GROUND + 3, 26)))
 	prop("PottedPlant", CFrame.new(center + Vector3.new(30, GROUND + 3, -26)))
 
 	-- ---- the second flight, up to the headmaster ----
-	buildStair(parent, CFrame.lookAt(center + Vector3.new(30, GROUND + 3, -24), center + Vector3.new(30, GROUND + 3, 4)), 16, 1, 1.9, 9)
+	-- Stacked over the first and running the other way, from the north end of
+	-- the east bay back south. It used to start at z = -24 and climb north,
+	-- which put its well straight through the east wall at z = -16 -- the wall
+	-- the turret and the secret bookshelf are in. The headmaster's own door
+	-- opened onto a stairwell void.
+	buildStair(parent, CFrame.lookAt(center + Vector3.new(30, GROUND + 3, 30), center + Vector3.new(30, GROUND + 3, 0)), 16, 1, 1.9, 9)
 
 	-- ================= THE HEADMASTER'S OFFICE =================
 	-- The whole top floor, one room, and the grandest on the campus. It has to
@@ -4827,9 +4980,12 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	-- the floor, and the well railed off so the fire is visible from up here
 	for _, rect in {
 		{ -halfW, -halfD, halfW, -14 },
+		{ -halfW, -14, -16, 0 },
+		{ 16, -14, halfW, 0 },
+		{ -halfW, 0, -16, 14 },
+		{ 16, 0, 24, 14 },
+		{ 38, 0, halfW, 14 },
 		{ -halfW, 14, halfW, halfD },
-		{ -halfW, -14, -16, 14 },
-		{ 16, -14, halfW, 14 },
 	} do
 		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
 		tag(part({ Name = "OfficeFloor", Size = Vector3.new(x1 - x0, 1, z1 - z0), CFrame = at((x0 + x1) / 2, OFFICE_FLOOR - 0.5, (z0 + z1) / 2), Color = Color3.fromRGB(92, 60, 40), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
@@ -4838,6 +4994,7 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	for _, rail in {
 		{ -16, -14, 16, -14 }, { -16, 14, 16, 14 },
 		{ -16, -14, -16, 14 }, { 16, -14, 16, 14 },
+		{ 24, 0, 24, 14 }, { 38, 0, 38, 14 }, { 24, 14, 38, 14 },
 	} do
 		buildRailing(parent, center + Vector3.new(rail[1], OFFICE_FLOOR, rail[2]), center + Vector3.new(rail[3], OFFICE_FLOOR, rail[4]))
 	end
@@ -4866,7 +5023,7 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		part({ Name = "HeadDeskPed", Size = Vector3.new(7, 4.4, 4), CFrame = at(-halfW + 18, OFFICE_FLOOR + 3.7, dz), Color = OAK, Material = Enum.Material.WoodPlanks, Parent = parent })
 	end
 	part({ Name = "HeadDeskInlay", Size = Vector3.new(6, 0.2, 18), CFrame = at(-halfW + 18, OFFICE_FLOOR + 6.95, 0), Color = Color3.fromRGB(64, 34, 30), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
-	prop("HeadmasterChair", CFrame.new(center + Vector3.new(-halfW + 12, OFFICE_FLOOR + 1.6, 0)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("HeadmasterChair", CFrame.new(center + Vector3.new(-halfW + 17, OFFICE_FLOOR + 1.6, 0)) * CFrame.Angles(0, math.rad(-90), 0))
 	prop("PlainChair", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, -6)) * CFrame.Angles(0, math.rad(90), 0))
 	prop("PlainChair", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, 6)) * CFrame.Angles(0, math.rad(90), 0))
 	-- a pair flanking the crest, so the wall behind the desk is not bare brick
@@ -4875,7 +5032,7 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	end
 	prop("LodgeArmchair", CFrame.new(center + Vector3.new(-14, OFFICE_FLOOR, -22)) * CFrame.Angles(0, math.rad(20), 0))
 	prop("LodgeArmchair", CFrame.new(center + Vector3.new(2, OFFICE_FLOOR, -22)) * CFrame.Angles(0, math.rad(-20), 0))
-	prop("Rug", CFrame.new(center + Vector3.new(-halfW + 24, OFFICE_FLOOR + 1.6, 0)))
+	prop("Rug", CFrame.new(center + Vector3.new(-halfW + 30, OFFICE_FLOOR + 1.6, 0)))
 	prop("Houseplant3", CFrame.new(center + Vector3.new(-halfW + 8, OFFICE_FLOOR, 26)))
 	prop("Houseplant", CFrame.new(center + Vector3.new(-halfW + 8, OFFICE_FLOOR, -26)))
 	prop("Globe", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, 16)))
@@ -5431,13 +5588,19 @@ local function ceilingFixture(parent: Instance, at: Vector3, warm: boolean?, lam
 end
 
 local function buildInteriorLights(parent: Instance)
+	-- Cell CENTRES, not grid nodes. Spanning the room corner to corner put a
+	-- fixture exactly on every boundary: nine of the library's chandeliers hung
+	-- half inside its walls, the office pendants hung inside a partition, and
+	-- one of the staff-room pendants hung inside the chimney. Half a cell of
+	-- inset costs nothing and no fixture can reach a wall.
 	for _, room in LIT_ROOMS do
 		local cols = math.max(1, math.floor(room.hx * 2 / room.step))
 		local rows = math.max(1, math.floor(room.hz * 2 / room.step))
-		for i = 0, cols do
-			for j = 0, rows do
-				local x = room.x - room.hx + (if cols > 0 then i * (room.hx * 2 / cols) else room.hx)
-				local z = room.z - room.hz + (if rows > 0 then j * (room.hz * 2 / rows) else room.hz)
+		local cellX, cellZ = room.hx * 2 / cols, room.hz * 2 / rows
+		for i = 0, cols - 1 do
+			for j = 0, rows - 1 do
+				local x = room.x - room.hx + (i + 0.5) * cellX
+				local z = room.z - room.hz + (j + 0.5) * cellZ
 				ceilingFixture(parent, Vector3.new(x, room.y, z), room.warm, room.lamp)
 			end
 		end
@@ -6124,7 +6287,6 @@ end
 
 	-- ---------------- signature interiors ----------------
 	buildFountain(folder, Vector3.new(0, 0, 6)) -- atrium centerpiece
-	buildCafeteriaTables(folder, Vector3.new(-204, 0, -23))
 	buildGymMarkings(folder, Vector3.new(0, 0, -105))
 	buildHoops(folder, Vector3.new(0, 0, -105))
 	-- gym stage at the north end

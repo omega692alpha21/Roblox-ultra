@@ -26,6 +26,46 @@ parts = json.load(open(DUMP))
 solids = [p for p in parts if p.get("cc")]
 
 
+def load_props():
+    """Furniture, as boxes, in the same shape as a part.
+
+    Props are recorded as placement REQUESTS, not built parts, so they live in
+    a second dump and until now no route, stair or spiral walk could see a
+    single one of them. That is the whole of "random places with stuff sticking
+    out" and "both stairs are blocked by something": the map audit was walking
+    an empty school. A prop's request frame sits at the FOOT of the model (or
+    its head, when it hangs), which is what PropService's standOn does, so the
+    box has to be pushed half its height along the frame's up axis to become a
+    centre.
+    """
+    props_path = os.path.join(os.path.dirname(DUMP) or ".", "_map_props.json")
+    sizes_path = os.path.join(REPO, "src/ReplicatedStorage/Config/PropSizes.luau")
+    if not (os.path.exists(props_path) and os.path.exists(sizes_path)):
+        return []
+    sizes = {}
+    for m in re.finditer(r"(\w+) = Vector3\.new\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)",
+                         open(sizes_path).read()):
+        sizes[m.group(1)] = [float(m.group(i)) for i in (2, 3, 4)]
+    out = []
+    for row in json.load(open(props_path)):
+        size = sizes.get(row["k"])
+        if size is None:
+            continue
+        scale = row.get("sc") or 1.0
+        s = [v * scale for v in size]
+        r = row["r"]
+        up = [r[1], r[4], r[7]]           # the frame's own +Y in world
+        edge = s[1] / 2 * (-1.0 if row.get("hang") else 1.0)
+        centre = [row["p"][i] + up[i] * edge for i in range(3)]
+        out.append({"n": "prop " + row["k"], "p": centre, "r": r, "s": s,
+                    "cc": True, "prop": True})
+    return out
+
+
+props = load_props()
+solids += props
+
+
 def local(part, point):
     """The point in the part's own frame, so rotated parts are handled.
 
@@ -63,6 +103,36 @@ def inside(part, point, pad=0.0):
     return all(abs(q[i]) <= s[i] / 2 + pad for i in range(3))
 
 
+
+# A uniform grid over the map's footprint. Every check in this file asks "what
+# is near this point", and with props folded in there are thousands of boxes;
+# scanning all of them per sample turned a two-second audit into minutes. Each
+# solid is filed into the cells its bounding box covers, so a query touches a
+# few dozen candidates instead of the whole map.
+CELL = 16.0
+
+
+def _key(x, z):
+    return (int(math.floor(x / CELL)), int(math.floor(z / CELL)))
+
+
+def _build_index(boxes):
+    index = {}
+    for part in boxes:
+        box = aabb(part)
+        for cx in range(_key(box[0][0], 0)[0], _key(box[0][1], 0)[0] + 1):
+            for cz in range(_key(0, box[2][0])[1], _key(0, box[2][1])[1] + 1):
+                index.setdefault((cx, cz), []).append(part)
+    return index
+
+
+INDEX = _build_index(solids)
+
+
+def near(point):
+    return INDEX.get(_key(point[0], point[2]), ())
+
+
 # MapService lays a 900 x 900 grass slab whose top sits just under y = 0.
 # Terrain is not in the part dump, so the audit has to know about it or every
 # outdoor spot reads as a hole.
@@ -82,6 +152,7 @@ CARVED = [
     (-263, -200, -235, -172),    # the turret
     (-102, -232, -44, -212),     # the library's passage
     (-113, -235, -87, -209),     # the library's shaft
+    (-380, -44, -300, 4),        # the swimming pool's basin
 ]
 
 
@@ -94,7 +165,7 @@ def floor_under(point, reach=7.0):
     if (not carved and abs(point[0]) <= TERRAIN_HALF and abs(point[2]) <= TERRAIN_HALF
             and point[1] + 1.5 >= TERRAIN_TOP >= point[1] - reach):
         best = (TERRAIN_TOP, "terrain")
-    for part in solids:
+    for part in near(point):
         # Footprint first. For a part that is only YAWED -- turned about the
         # vertical, which every tread on a spiral stair is -- the honest test
         # is its own local x/z, and its top is exact either way. Using the
@@ -107,9 +178,14 @@ def floor_under(point, reach=7.0):
         if yaw_only(part):
             q = local(part, point)
             s = part["s"]
-            if abs(q[0]) > s[0] / 2 or abs(q[2]) > s[2] / 2:
+            # A hair of slack on the footprint. Two stair treads butt edge to
+            # edge, and a sample landing exactly on the seam misses BOTH of
+            # them by half a float, which reads as a missing tread in the
+            # middle of a perfectly good flight.
+            if abs(q[0]) > s[0] / 2 + 1e-3 or abs(q[2]) > s[2] / 2 + 1e-3:
                 continue
-        elif not (box[0][0] <= point[0] <= box[0][1] and box[2][0] <= point[2] <= box[2][1]):
+        elif not (box[0][0] - 1e-3 <= point[0] <= box[0][1] + 1e-3
+                  and box[2][0] - 1e-3 <= point[2] <= box[2][1] + 1e-3):
             continue
         top = box[1][1]
         if point[1] + 1.5 >= top >= point[1] - reach:
@@ -119,15 +195,27 @@ def floor_under(point, reach=7.0):
 
 
 def headroom(point, need=5.0):
+    """Is there room for a body standing with its FEET at `point`?
+
+    The caller passes the surface, not a point half a stud above it: an R15
+    character is a shade over five studs tall, and measuring from mid-shin made
+    every five-and-a-half-stud ceiling in the school read as a head-banger.
+    """
     # The ORIENTED test, not the bounding box. A long thin wall running
     # diagonally has a bounding box wide enough to swallow the corridor it is
     # the side of, so every sample down a diagonal tunnel read as blocked by
     # the tunnel's own wall. `floor_under` still uses the box, because there
     # the question is genuinely "what is the highest surface over this point".
-    probe = [point[0], point[1] + need / 2 + 1.0, point[2]]
-    for part in solids:
-        if inside(part, probe):
-            return part["n"]
+    # The whole column, not one point at head height. A picture hung at chest
+    # height, a bench, an open locker door -- none of them are at the top of a
+    # player's body, and a single probe up there walks straight through all of
+    # them. The samples start just above the feet so the floor itself is never
+    # the thing that blocks you.
+    for height in (0.8, 1.8, 2.8, need / 2 + 1.0, need):
+        probe = [point[0], point[1] + height, point[2]]
+        for part in near(probe):
+            if inside(part, probe):
+                return part["n"]
     return None
 
 
@@ -177,15 +265,15 @@ def collect():
         ("wing stair foot E", 178, 0, -9),
         ("wing stair head E", 178, 16, 17),
         ("teachers common room", -300, 3, -170),
-        ("teachers landing", -272, 19, -148),
+        ("teachers landing", -324, 19, -150),
         ("infirmary", 122, 17, -94),
         ("sanctum cupboard", -216, 0, 30),
         ("sanctum stair head", -216, 0, 22),
         ("cafeteria", -204, 0, -29),
-        ("principal office", -196, 0, 46),
+        ("principal office", -204, 0, 46),
         ("gym floor", 0, 0, -100),
         ("greenhouse", -116, 1, -28),
-        ("east lab", 116, 0, -28),
+        ("east lab", 116, 0, -33.5),
         ("room 101", -74, 0, -95),
         ("music room", 74, 0, -95),
         ("library floor", 0, 0, -210),
@@ -197,7 +285,7 @@ def collect():
         ("dorm west", -176, 0, -212),
         ("dorm east", 176, 0, -212),
         ("tennis court", 340, 0, -20),
-        ("pool deck", -340, 0, -20),
+        ("pool deck", -340, 0, -50),
         ("clique board row", -158, 0, -44),
     ]:
         spots.append((name, [x, y, z]))
@@ -225,8 +313,21 @@ WALKS = [
     # The tunnels themselves. The boulevard beyond them belongs to SanctumMap
     # and is proved by tools/sanctum_check.py, which reads a different dump.
     ("headmaster tunnel", (-237, -118, -186), (-158.4, -118, -232)),
+    # From the reading room, through the secret door, into the passage. The
+    # shelf opens on four digits and used to open onto twenty-six studs of
+    # solid west wall, so the walk starts INSIDE the library and crosses the
+    # wall line.
+    ("library secret door", (-38, 0, -222), (-56, 0, -222)),
     ("library passage", (-49, 0, -222), (-100, 0, -222)),
     ("lobby to atrium", (0, 0, 118), (0, 0, 20)),
+    # The entrance hall, across as well as through. It is the first room
+    # anybody sees and it had grown two life-size statues, three sofas and a
+    # forest; these are the lines a player walks from the doors to each stair
+    # and each side bay, and nothing may stand in them.
+    ("lobby west aisle", (-36, 0, 121), (-36, 0, 100)),  # stops at the reception counter
+    ("lobby east aisle", (36, 0, 121), (36, 0, 100)),
+    ("lobby to stair W", (-46, 0, 121), (-46, 0, 113)),
+    ("lobby to stair E", (46, 0, 121), (46, 0, 113)),
     ("atrium to gym", (0, 0, 20), (0, 0, -98)),
     ("gym to library path", (0, 0, -152), (0, 0, -186)),
     ("library colonnade", (9, 0, -186), (9, 0, -204)),
@@ -246,6 +347,18 @@ SPIRALS = [
     ("headmaster spiral", -249, -186, 33.6, -119.5, 7.0, math.pi),
     ("library spiral", -100, -222, -1.4, -119.5, 6.5, 0.0),
 ]
+# Every straight flight in the school, as (name, foot x/y/z, head x/y/z, half
+# width). A flight is walked tread by tread like the spirals: the centreline
+# routes cannot see a stair, because a stair is not level.
+STAIRS = [
+    ("lobby stair W", (-46, 0.5, 114), (-46, 16, 88), 5),
+    ("lobby stair E", (46, 0.5, 114), (46, 16, 88), 5),
+    ("wing stair W", (-178, 0.5, -9), (-178, 16, 17), 5),
+    ("wing stair E", (178, 0.5, -9), (178, 16, 17), 5),
+    ("lodge stair to studies", (-270, 3.5, -146), (-270, 19, -176.4), 4),
+    ("lodge stair to office", (-270, 19.5, -140), (-270, 35, -170.4), 4),
+]
+
 SPIRAL_RISE = 1.4
 SPIRAL_PER_TURN = 24
 
@@ -277,12 +390,15 @@ def walk_routes():
                 previous = None
                 continue
             point[1] = under[0] + 0.5
-            for part in solids:
+            for part in near(point):
+                # a door is meant to be shut; what matters is the hole behind it
+                if part["n"].startswith("Secret"):
+                    continue
                 if inside(part, point, pad=-0.2):
                     problems.append((name, point, "inside " + part["n"]))
                     break
-            blocked = headroom(point)
-            if blocked:
+            blocked = headroom([point[0], under[0], point[2]])
+            if blocked and not blocked.startswith("Secret"):
                 problems.append((name, point, "no headroom: " + blocked))
             if previous is not None and abs(under[0] - previous) > MAX_RISE:
                 problems.append((
@@ -307,7 +423,7 @@ def standable(point, reach=9.0):
     if under is None:
         return False
     stand = [point[0], under[0] + 0.5, point[2]]
-    for part in solids:
+    for part in near(stand):
         box = aabb(part)
         # a body is about five studs of head-height above the feet
         if (box[0][0] <= stand[0] <= box[0][1] and box[2][0] <= stand[2] <= box[2][1]
@@ -349,6 +465,44 @@ def audit_anchors():
     return problems
 
 
+def walk_stairs():
+    """Climb every flight. A route that is level cannot check a staircase, and
+    a staircase with something standing on it is the single most reported kind
+    of broken geometry in this map: the ceiling that used to sit two studs over
+    the second tread, the tree growing through the lodge steps."""
+    problems = []
+    for name, foot, head, half in STAIRS:
+        span = math.dist(foot, head)
+        steps = max(4, int(span / 1.6))
+        previous = None
+        for i in range(steps + 1):
+            t = i / steps
+            point = [foot[j] + (head[j] - foot[j]) * t for j in range(3)]
+            under = floor_under([point[0], point[1] + 3.0, point[2]], reach=9.0)
+            if under is None:
+                problems.append((name, point, "no tread"))
+                previous = None
+                continue
+            stand = [point[0], under[0], point[2]]
+            # A body needs room above the tread AND either side of it, and the
+            # samples have to be close enough together to catch a NARROW
+            # obstruction: a framed picture a stud and a bit wide, hung at
+            # chest height in the middle of the west lobby flight, slipped
+            # between three probes three studs apart for four builds.
+            for dx, dz in ((0, 0), (half * 0.3, 0), (-half * 0.3, 0),
+                           (half * 0.6, 0), (-half * 0.6, 0),
+                           (half * 0.9, 0), (-half * 0.9, 0)):
+                probe = [stand[0] + dx, stand[1], stand[2] + dz]
+                blocked = headroom(probe, need=5.0)
+                if blocked and not any(k in blocked for k in ("Tread", "Stringer", "Rail")):
+                    problems.append((name, probe, "no headroom: " + blocked))
+                    break
+            if previous is not None and abs(under[0] - previous) > 2.4:
+                problems.append((name, point, f"{abs(under[0] - previous):.1f}-stud step"))
+            previous = under[0]
+    return problems
+
+
 def walk_spirals():
     """Tread by tread down each spiral: is every one solid, and is the next
     one a step rather than a drop?"""
@@ -364,7 +518,7 @@ def walk_spirals():
                 problems.append((name, point, f"no tread at step {i}"))
                 previous = None
                 continue
-            stand = [point[0], under[0] + 0.5, point[2]]
+            stand = [point[0], under[0], point[2]]
             blocked = headroom(stand, need=4.0)
             if blocked and "Tread" not in blocked and "Newel" not in blocked:
                 problems.append((name, point, "no headroom: " + blocked))
@@ -378,7 +532,7 @@ def main():
     bad = 0
     for name, point in collect():
         problems = []
-        for part in solids:
+        for part in near(point):
             if inside(part, point, pad=-0.2):
                 problems.append("inside " + part["n"])
                 break
@@ -387,8 +541,12 @@ def main():
             problems.append("no floor under it")
         elif under[0] < point[1] - 5:
             problems.append(f"floor {point[1] - under[0]:.1f} studs below ({under[1]})")
-        blocked = headroom(point)
-        if blocked:
+        # stand on whatever is under the spot before asking about headroom, the
+        # way the route walks do -- otherwise a greenhouse path a third of a
+        # stud thick reads as a ceiling on the professor standing on it
+        feet = [point[0], under[0] if under else point[1], point[2]]
+        blocked = headroom(feet)
+        if blocked and not (blocked.startswith("Stair") and "stair foot" in name):
             problems.append("no headroom: " + blocked)
         if problems:
             bad += 1
@@ -398,7 +556,7 @@ def main():
         bad += 1
         print(f"  {name:34s} {[round(v, 1) for v in point]}  {why}")
 
-    walked = walk_routes() + walk_spirals()
+    walked = walk_routes() + walk_stairs() + walk_spirals()
     # one line per route rather than per sample: a broken slab trips fifty
     # consecutive samples and the list stops being readable
     seen = set()
@@ -412,7 +570,7 @@ def main():
 
     anchor_count = len(json.load(open(ANCHORS))) if os.path.exists(ANCHORS) else 0
     print(f"{'FAIL' if bad else 'PASS'} - {bad} bad spots "
-          f"({len(WALKS)} routes and {len(SPIRALS)} spirals walked, "
+          f"({len(WALKS)} routes, {len(STAIRS)} stairs and {len(SPIRALS)} spirals walked, "
           f"{anchor_count} anchors checked for reach)")
     return 1 if bad else 0
 

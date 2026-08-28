@@ -168,7 +168,7 @@ SEED_HEAD = (-46, 88)  # the one flight the upper flood is allowed to start from
 # The staff lodge's second flight, and what has to be reachable once you are up
 # it: the desk on its dais, the fire, the long table, and the bookshelf that is
 # a door. A grand room you cannot cross is not grand.
-OFFICE_HEAD = (-270, -166)
+OFFICE_HEAD = (-270, -172)
 OFFICE_SPOTS = [
     ("office desk", -278, -170),
     ("office fire", -306, -200),

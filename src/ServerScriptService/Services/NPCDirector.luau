@@ -20,8 +20,11 @@ local POIS = {
 	Vector3.new(-74, 0, -94), -- classroom 101
 	Vector3.new(204, 0, -29), -- trophy hall
 	Vector3.new(0, 0, 22), -- atrium, beside the fountain
-	Vector3.new(-176, 0, -186), -- boys dorm porch
-	Vector3.new(176, 0, -186), -- girls dorm porch
+	-- OUTSIDE the doors, on the path. These used to sit at z = -186, which is
+	-- a stud from the washroom's first toilet: every student sent to the porch
+	-- walked into a lavatory and stood there.
+	Vector3.new(-176, 0, -180), -- boys dorm porch
+	Vector3.new(176, 0, -180), -- girls dorm porch
 }
 
 local AMBIENT_IDS = {

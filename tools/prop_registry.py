@@ -6,6 +6,15 @@ Luau file never carries a hand-typed id.
 """
 import os, re, sys
 
+# Where the downloaded FBX packs live. They are not in the repo (they are
+# thirty megabytes of CC0 source art) but they are what the footprints are
+# measured from, so the path is named here rather than guessed at.
+SCRATCH = os.environ.get(
+    "RBX_SCRATCH",
+    "/tmp/claude-0/-home-user-Roblox-ultra/c9243cd0-6f22-5b01-98dd-c5d04d82a899/scratchpad",
+)
+FBX_DIRS = [os.path.join(SCRATCH, "q", "furniture"), os.path.join(SCRATCH, "q", "interior")]
+
 # Height in studs, where the source model's own scale is not what the school
 # needs. Poly Haven's "steel_frame_shelves_01" is a 21 m warehouse rack and its
 # "WoodenTable_02" is 40 cm tall; both are correct and neither is a classroom.
@@ -368,16 +377,31 @@ def sizes(ids: dict, glb_dir: str, out_path: str) -> int:
     game never carries a guessed size.
     """
     from prop_check import extent
+    from fbx_extent import extent as fbx_extent
 
     lines = []
     for kind, slug, _collide, _shadow in REGISTRY:
         if slug not in ids:
             continue
+        span = None
         path = os.path.join(glb_dir, slug + ".glb")
-        if not os.path.exists(path):
+        if os.path.exists(path):
+            lo, hi = extent(path)
+            span = [hi[i] - lo[i] for i in range(3)]
+        else:
+            # An FBX prop. Roblox's importer takes those directly so nothing
+            # repacked them and nothing measured them, which left fifty props
+            # with no footprint -- and a prop with no footprint is a prop no
+            # check can test. FBX is Z-up, so its Y and Z swap into Roblox's.
+            for directory in FBX_DIRS:
+                fbx = os.path.join(directory, slug[3:] + ".fbx")
+                if os.path.exists(fbx):
+                    lo, hi = fbx_extent(fbx)
+                    raw = [hi[i] - lo[i] for i in range(3)]
+                    span = [raw[0], raw[2], raw[1]]
+                    break
+        if span is None:
             continue
-        lo, hi = extent(path)
-        span = [hi[i] - lo[i] for i in range(3)]
         if kind in HEIGHT and span[1] > 0.01:
             k = HEIGHT[kind] / span[1]
             span = [v * k for v in span]
