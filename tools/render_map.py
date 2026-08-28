@@ -271,8 +271,16 @@ local function walk(inst)
       local color = child.Color or {R = 0.64, G = 0.64, B = 0.65}
       local material = child.Material and child.Material.Name or "Plastic"
       local shape = child.Shape and child.Shape.Name or "Block"
+      -- does this part carry a light? the audit counts lit floor area, and a
+      -- roofed room with no fixture in it is a cave under Future lighting
+      local lit = 0
+      for _, sub in ipairs(child:GetChildren()) do
+        if sub.ClassName == "PointLight" or sub.ClassName == "SpotLight" or sub.ClassName == "SurfaceLight" then
+          lit = math.max(lit, sub.Range or 16)
+        end
+      end
       table.insert(out, string.format(
-        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s}',
+        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s,"lit":'.. lit ..'}',
         esc(child.Name), size.X, size.Y, size.Z, cf.p[1], cf.p[2], cf.p[3],
         cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
         math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5),

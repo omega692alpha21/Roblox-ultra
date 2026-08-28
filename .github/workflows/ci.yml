@@ -53,6 +53,7 @@ jobs:
           pip install --quiet numpy pillow
           LUAU_BIN="$HOME/tools/luau" python3 tools/render_map.py
           python3 tools/reach_check.py
+          python3 tools/light_check.py
           cd tools && python3 world_audit.py && python3 doorway_check.py && python3 prop_check.py
 
       - name: Sanctum
