@@ -6,7 +6,7 @@ reads the placements the harness dumped (tools/render_map.py) and the real
 bounding box of each uploaded .glb, and reports every prop whose box overlaps
 something solid.
 """
-import json, os, struct, sys
+import json, re, os, struct, sys
 
 REPO = sys.argv[1] if len(sys.argv) > 1 else "/home/user/Roblox-ultra"
 EXPORT = sys.argv[2] if len(sys.argv) > 2 else "."
@@ -98,6 +98,21 @@ def main():
         path = os.path.join(GLB, slug + ".glb")
         if os.path.exists(path):
             boxes[kind] = extent(path)
+
+    # Kinds whose source is an FBX rather than a glTF have no local mesh to
+    # measure -- Roblox's importer takes FBX directly, so nothing was ever
+    # repacked. Their footprints come from the generated PropSizes table
+    # instead, which is what the game itself scatters by, so an unmeasurable
+    # prop is still a checked prop.
+    sizes_path = os.path.join(REPO, "src/ReplicatedStorage/Config/PropSizes.luau")
+    if os.path.exists(sizes_path):
+        for kind, x, y, z in re.findall(
+            r"(\w+) = Vector3\.new\(([\d.]+), ([\d.]+), ([\d.]+)\)", open(sizes_path).read()
+        ):
+            # PropSizes stores a size; the rest of this file works in a
+            # local-space min/max pair, so centre it on the origin
+            half = (float(x) / 2, float(y) / 2, float(z) / 2)
+            boxes.setdefault(kind, ([-half[0], -half[1], -half[2]], list(half)))
 
     # only solid vertical structure can be clipped into; floors are meant to
     # be touched and a bin standing on one is not a fault

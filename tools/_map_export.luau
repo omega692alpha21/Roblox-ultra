@@ -2802,6 +2802,10 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 			local shade = 0.85 + col * 0.12
 			local mattress = part({ Name = "DormBed", Size = Vector3.new(6.4, 1, 11), CFrame = CFrame.new(bx, 1.9, bz), Color = Color3.new(math.min(1, accent.R * shade), math.min(1, accent.G * shade), math.min(1, accent.B * shade)), Material = Enum.Material.Fabric, Parent = parent })
 			part({ Name = "Pillow", Size = Vector3.new(4.5, 0.8, 2.6), CFrame = CFrame.new(bx, 2.6, bz - 3.8), Color = Color3.fromRGB(240, 240, 232), Material = Enum.Material.Fabric, Parent = parent })
+			-- somewhere to put your things. The bed itself stays a part: it is
+			-- what DormService touches to know you went to sleep.
+			prop("QuartersNightstand", CFrame.new(bx + 5.4, 0, bz - 4))
+			prop("QuartersLocker", CFrame.new(bx + 5.4, 0, bz + 4) * CFrame.Angles(0, math.rad(-90), 0))
 			table.insert(beds, mattress)
 		end
 	end
@@ -3119,8 +3123,8 @@ local function furnishProps()
 	prop("RayStatue", CFrame.new(-56, 0, 112), { scale = 2.0 })
 	prop("Vase1", CFrame.new(-38, 3.8, 92))
 	prop("Vase2", CFrame.new(-22, 3.8, 92))
-	row("PlanterPot", 0, 0, { { -56, 86 }, { 56, 86 }, { -56, 118 } })
-	row("PottedPlant", 0, 0, { { -56, 100 }, { 56, 96 } })
+	row("PlanterPot", 0, 0, { { -56, 86 }, { 54.5, 80 }, { -56, 118 } })
+	row("PottedPlant", 0, 0, { { -56, 100 }, { 54.5, 93 } })
 	prop("Clock", CFrame.new(-40, 12, 102.8))
 
 	-- ---------------- atrium ----------------
@@ -3174,6 +3178,15 @@ local function furnishProps()
 			prop("DiningTable", CFrame.new(cx, 0, cz))
 			prop("Bench", CFrame.new(cx, 0, cz - 4.4))
 			prop("Bench", CFrame.new(cx, 0, cz + 4.4) * CFrame.Angles(0, math.pi, 0))
+		end
+	end
+	-- two more rows, so a room forty by fifty-eight does not seat sixteen
+	for _, cx in { -212, -198 } do
+		for _, cz in { -8, 0 } do
+			prop("RefectoryTable", CFrame.new(cx, 0, cz))
+			for _, sx in { -4.6, 4.6 } do
+				prop("LoungeStool", CFrame.new(cx + sx, 0, cz))
+			end
 		end
 	end
 	prop("Stool", CFrame.new(-221, 0, -32))
@@ -3302,8 +3315,8 @@ local function furnishProps()
 		-- the servery end of the cafeteria
 		{ min = Vector2.new(-221, 49), max = Vector2.new(-208, 58), y = 0, pool = KITCHEN, count = 10, seed = 3103 },
 		-- the back of the two homerooms flanking each wing corridor
-		{ min = Vector2.new(-150, -120), max = Vector2.new(-140, -100), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3104 },
-		{ min = Vector2.new(140, -120), max = Vector2.new(150, -100), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3105 },
+		{ min = Vector2.new(-150, -112), max = Vector2.new(-140, -100), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3104 },
+		{ min = Vector2.new(140, -112), max = Vector2.new(150, -100), y = 0, pool = CLASSROOM_CLUTTER, count = 6, seed = 3105 },
 		-- the courtyard edges, left and right of the way through
 		{ min = Vector2.new(-40, 34), max = Vector2.new(-30, 66), y = 0, pool = GARDEN, count = 8, seed = 3106 },
 		{ min = Vector2.new(30, 34), max = Vector2.new(40, 66), y = 0, pool = GARDEN, count = 8, seed = 3107 },
@@ -4820,9 +4833,10 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		-- a bed, a desk and a lamp: a study is a room somebody lives in
 		part({ Name = "StudyBed", Size = Vector3.new(7, 2.6, 12), CFrame = at(-halfW + 8, GROUND + 4.3, sz - 6), Color = Color3.fromRGB(128, 92, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
 		part({ Name = "StudyMattress", Size = Vector3.new(6.4, 1.2, 11), CFrame = at(-halfW + 8, GROUND + 6.2, sz - 6), Color = teacher.color, Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
-		prop("OfficeDesk", CFrame.new(center + Vector3.new(-halfW + 22, GROUND + 3, sz - 6)) * CFrame.Angles(0, math.rad(-90), 0))
-		prop("SchoolChair", CFrame.new(center + Vector3.new(-halfW + 28, GROUND + 3, sz - 6)) * CFrame.Angles(0, math.rad(90), 0))
-		prop("SteelShelves2", CFrame.new(center + Vector3.new(-halfW + 16, GROUND + 3, sz - 9)))
+		prop("QuartersDesk", CFrame.new(center + Vector3.new(-halfW + 22, GROUND + 3, sz - 6)) * CFrame.Angles(0, math.rad(-90), 0))
+		prop("PlainChair", CFrame.new(center + Vector3.new(-halfW + 28, GROUND + 3, sz - 6)) * CFrame.Angles(0, math.rad(90), 0))
+		prop("QuartersCloset", CFrame.new(center + Vector3.new(-halfW + 14, GROUND + 3, sz - 10)) * CFrame.Angles(0, math.rad(180), 0))
+		prop("QuartersNightstand", CFrame.new(center + Vector3.new(-halfW + 13, GROUND + 3, sz - 1)))
 	end
 	-- and a landing worth standing on
 	prop("Sofa2", CFrame.new(center + Vector3.new(28, GROUND + 3, 22)) * CFrame.Angles(0, math.rad(-90), 0))
@@ -4884,9 +4898,15 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		part({ Name = "HeadDeskPed", Size = Vector3.new(7, 4.4, 4), CFrame = at(-halfW + 18, OFFICE_FLOOR + 3.7, dz), Color = OAK, Material = Enum.Material.WoodPlanks, Parent = parent })
 	end
 	part({ Name = "HeadDeskInlay", Size = Vector3.new(6, 0.2, 18), CFrame = at(-halfW + 18, OFFICE_FLOOR + 6.95, 0), Color = Color3.fromRGB(64, 34, 30), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
-	prop("OfficeChair", CFrame.new(center + Vector3.new(-halfW + 12, OFFICE_FLOOR + 1.6, 0)) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("SchoolChair", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, -6)) * CFrame.Angles(0, math.rad(90), 0))
-	prop("SchoolChair", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, 6)) * CFrame.Angles(0, math.rad(90), 0))
+	prop("HeadmasterChair", CFrame.new(center + Vector3.new(-halfW + 12, OFFICE_FLOOR + 1.6, 0)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("PlainChair", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, -6)) * CFrame.Angles(0, math.rad(90), 0))
+	prop("PlainChair", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, 6)) * CFrame.Angles(0, math.rad(90), 0))
+	-- a pair flanking the crest, so the wall behind the desk is not bare brick
+	for _, cz in { -13, 13 } do
+		prop("TallBookcase", CFrame.new(center + Vector3.new(-halfW + 6, OFFICE_FLOOR, cz)) * CFrame.Angles(0, math.rad(90), 0))
+	end
+	prop("LodgeArmchair", CFrame.new(center + Vector3.new(-14, OFFICE_FLOOR, -22)) * CFrame.Angles(0, math.rad(20), 0))
+	prop("LodgeArmchair", CFrame.new(center + Vector3.new(2, OFFICE_FLOOR, -22)) * CFrame.Angles(0, math.rad(-20), 0))
 	prop("Globe", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, 16)))
 	prop("DeskLamp", CFrame.new(center + Vector3.new(-halfW + 18, OFFICE_FLOOR + 6.9, -8)))
 
@@ -4920,9 +4940,9 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	-- bookshelves down the south wall, which is what makes one more bookshelf
 	-- on the east wall unremarkable
 	for i = 0, 4 do
-		prop("Bookshelf", CFrame.new(center + Vector3.new(-26 + i * 13, OFFICE_FLOOR, halfD - 5)) * CFrame.Angles(0, math.pi, 0))
+		prop("StockedBookcase", CFrame.new(center + Vector3.new(-26 + i * 13, OFFICE_FLOOR, halfD - 5)) * CFrame.Angles(0, math.pi, 0))
 	end
-	prop("Bookshelf", CFrame.new(center + Vector3.new(halfW - 5, OFFICE_FLOOR, -18)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("StockedBookcase", CFrame.new(center + Vector3.new(halfW - 5, OFFICE_FLOOR, -18)) * CFrame.Angles(0, math.rad(-90), 0))
 	prop("GrandfatherClock", CFrame.new(center + Vector3.new(halfW - 5, OFFICE_FLOOR, 18)) * CFrame.Angles(0, math.rad(-90), 0))
 	prop("PottedPlant", CFrame.new(center + Vector3.new(halfW - 6, OFFICE_FLOOR, 26)))
 

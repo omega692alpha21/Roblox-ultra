@@ -240,6 +240,22 @@ local KINDS: { [string]: Spec } = {
 	SmallPlasticTorch         = { id = 79977435727486 }, -- small_plastic_torch
 	SignalFlashlight          = { id = 100347980077890 }, -- signal_flashlight
 	WineBarrel                = { id = 93648510641155, collide = true, shadow = true }, -- wine_barrel_01
+	QuartersBed               = { id = 120785312594483, collide = true, shadow = true, height = 2.8 }, -- qt_BedTwin
+	QuartersBedDouble         = { id = 90185366108167, collide = true, shadow = true, height = 2.8 }, -- qt_BedDouble
+	QuartersCloset            = { id = 100207578009665, collide = true, shadow = true, height = 8.6 }, -- qt_Closet
+	QuartersLocker            = { id = 93583583564587, collide = true, shadow = true, height = 5.4 }, -- qt_ShortCloset
+	QuartersNightstand        = { id = 108131155108039, collide = true, shadow = true, height = 2.8 }, -- qt_NightStand
+	QuartersDesk              = { id = 94038763165250, collide = true, shadow = true, height = 3.6 }, -- qt_Desk
+	HeadmasterChair           = { id = 98919296988680, collide = true, shadow = true, height = 4.6 }, -- qt_OfficeChair
+	TallBookcase              = { id = 112513205303975, collide = true, shadow = true, height = 8.6 }, -- qt_Bookcase
+	StockedBookcase           = { id = 124345025509903, collide = true, shadow = true, height = 8.6 }, -- qt_Bookcase_Books
+	LodgeSofa                 = { id = 127725539416222, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa2
+	LodgeSofaLong             = { id = 115288639285099, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa3
+	LodgeArmchair             = { id = 123264730568631, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa_individual
+	LoungeStool               = { id = 137011939546237, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
+	RefectoryTable            = { id = 84911854162743, collide = true, shadow = true, height = 3.4 }, -- qt_Table
+	RefectoryTable2           = { id = 139344400848486, collide = true, shadow = true, height = 3.0 }, -- qt_Table2
+	PlainChair                = { id = 92355465659938, collide = true, shadow = true, height = 4.2 }, -- qt_Chair
 }
 
 local templates: { [string]: Model } = {}

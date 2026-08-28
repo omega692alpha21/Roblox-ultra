@@ -23,6 +23,25 @@ HEIGHT = {
     "BunsenBurner": 1.6,
     "Baseball": 0.6,
     "Fern": 2.4,
+    # Quaternius models are built at metre scale, so a chair imports about a
+    # stud tall next to a five-stud student. Every one of them needs telling
+    # how big a school thinks it is.
+    "QuartersBed": 2.8,
+    "QuartersBedDouble": 2.8,
+    "QuartersCloset": 8.6,
+    "QuartersLocker": 5.4,
+    "QuartersNightstand": 2.8,
+    "QuartersDesk": 3.6,
+    "HeadmasterChair": 4.6,
+    "TallBookcase": 8.6,
+    "StockedBookcase": 8.6,
+    "LodgeSofa": 3.6,
+    "LodgeSofaLong": 3.6,
+    "LodgeArmchair": 3.6,
+    "LoungeStool": 2.8,
+    "RefectoryTable": 3.4,
+    "RefectoryTable2": 3.0,
+    "PlainChair": 4.2,
 }
 
 # kind -> (poly haven slug, collides with players, casts a shadow)
@@ -250,7 +269,32 @@ WAVE2 = [
 ]
 
 
-REGISTRY = REGISTRY + [(k, s, c, sh) for k, s, c, sh in WAVE2]
+# ---------------------------------------------------------------------------
+# Quaternius, CC0 1.0 Universal (https://quaternius.com). Low-poly, flat-shaded
+# and hand-made, where Poly Haven's are photoscans -- so these are used for the
+# things a school needs that a scan library does not have: dormitory beds,
+# closets, a headmaster's desk. Uploaded straight as FBX, which Roblox's
+# importer takes without any repacking, so their "slug" is just the file stem.
+QUATERNIUS = [
+    ("QuartersBed",       "qt_BedTwin",         True,  True),
+    ("QuartersBedDouble", "qt_BedDouble",       True,  True),
+    ("QuartersCloset",    "qt_Closet",          True,  True),
+    ("QuartersLocker",    "qt_ShortCloset",     True,  True),
+    ("QuartersNightstand","qt_NightStand",      True,  True),
+    ("QuartersDesk",      "qt_Desk",            True,  True),
+    ("HeadmasterChair",   "qt_OfficeChair",     True,  True),
+    ("TallBookcase",      "qt_Bookcase",        True,  True),
+    ("StockedBookcase",   "qt_Bookcase_Books",  True,  True),
+    ("LodgeSofa",         "qt_Sofa2",           True,  True),
+    ("LodgeSofaLong",     "qt_Sofa3",           True,  True),
+    ("LodgeArmchair",     "qt_Sofa_individual", True,  True),
+    ("LoungeStool",       "qt_Stool",           True,  True),
+    ("RefectoryTable",    "qt_Table",           True,  True),
+    ("RefectoryTable2",   "qt_Table2",          True,  True),
+    ("PlainChair",        "qt_Chair",           True,  True),
+]
+
+REGISTRY = REGISTRY + [(k, s, c, sh) for k, s, c, sh in WAVE2] + QUATERNIUS
 
 
 def sizes(ids: dict, glb_dir: str, out_path: str) -> int:
