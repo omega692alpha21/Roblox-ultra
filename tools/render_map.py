@@ -413,14 +413,40 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
     up = [right[1] * fwd[2] - right[2] * fwd[1], right[2] * fwd[0] - right[0] * fwd[2], right[0] * fwd[1] - right[1] * fwd[0]]
     focal = (width / 2) / math.tan(math.radians(fov) / 2)
 
-    def project(w):
+    NEAR = 0.6
+
+    def to_cam(w):
         rel = [w[i] - cam[i] for i in range(3)]
-        z = sum(rel[i] * fwd[i] for i in range(3))
-        if z < 0.6:
-            return None
-        x = sum(rel[i] * right[i] for i in range(3))
-        y = sum(rel[i] * up[i] for i in range(3))
-        return (width / 2 + x * focal / z, height / 2 - y * focal / z, z)
+        return (sum(rel[i] * right[i] for i in range(3)),
+                sum(rel[i] * up[i] for i in range(3)),
+                sum(rel[i] * fwd[i] for i in range(3)))
+
+    def to_screen(c):
+        return (width / 2 + c[0] * focal / c[2], height / 2 - c[1] * focal / c[2], c[2])
+
+    def project(w):
+        c = to_cam(w)
+        return to_screen(c) if c[2] >= NEAR else None
+
+    def near_clip(poly):
+        """Sutherland-Hodgman against the near plane.
+
+        Dropping a face because ONE of its corners is behind the camera is why
+        the corridors looked open to the sky. The ceiling over the main hallway
+        is a single part four hundred and forty-eight studs long: stand
+        anywhere under it and two of its corners are behind you, so the whole
+        surface was discarded and the render showed daylight through a solid
+        floor. Clip it instead."""
+        out = []
+        for i, a in enumerate(poly):
+            b = poly[(i + 1) % len(poly)]
+            a_in, b_in = a[2] >= NEAR, b[2] >= NEAR
+            if a_in:
+                out.append(a)
+            if a_in != b_in:
+                t = (NEAR - a[2]) / (b[2] - a[2])
+                out.append(tuple(a[k] + (b[k] - a[k]) * t for k in range(3)))
+        return out
 
     # ground plane (grass) — draw as a huge quad
     ground = [(-600, 0, -600), (600, 0, -600), (600, 0, 600), (-600, 0, 600)]
@@ -456,20 +482,17 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                 if nx * view[0] + ny * view[1] + nz * view[2] <= 0:
                     continue
                 u_axis, v_axis = [a for a in range(3) if a != axis]
-                corners = []
-                behind = False
+                ring = []
                 for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
                     local = [0, 0, 0]
                     local[axis] = sign * half[axis]
                     local[u_axis] = su * half[u_axis]
                     local[v_axis] = sv * half[v_axis]
-                    pr = project(world(local))
-                    if pr is None:
-                        behind = True
-                        break
-                    corners.append(pr)
-                if behind or len(corners) < 4:
+                    ring.append(to_cam(world(local)))
+                ring = near_clip(ring)
+                if len(ring) < 3:
                     continue
+                corners = [to_screen(c) for c in ring]
                 # Sort by the face's NEAREST corner, not its centre.
                 #
                 # A painter's algorithm keyed on centroids draws a 90-stud wall
@@ -501,8 +524,8 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
     canvas = np.asarray(img, dtype=np.uint8).copy()
     depth = np.full((height, width), np.inf, dtype=np.float32)
     for corners, col in faces:
-        for tri in ((0, 1, 2), (0, 2, 3)):
-            pts = [corners[i] for i in tri]
+        for k in range(1, len(corners) - 1):
+            pts = [corners[0], corners[k], corners[k + 1]]
             xs = [p[0] for p in pts]
             ys = [p[1] for p in pts]
             x0 = max(int(math.floor(min(xs))), 0)

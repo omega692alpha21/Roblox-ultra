@@ -974,7 +974,11 @@ local function buildPlot(index: number, cf: CFrame, parent: Instance): Plot
 	local model = Instance.new("Model")
 	model.Name = "Plot" .. index
 
-	local width, depth = 62, 48 -- x, z in plot-local space (+Z local = front/hallway)
+	-- 44 deep, not 48. The front row's plots run from the corridor at z = 79
+	-- and the school's facade is at 124, so at 48 they ran three studs THROUGH
+	-- the front wall -- which put four ten-stud blue locker walls on the
+	-- outside of the building, in a band right across the front of the school.
+	local width, depth = 62, 44 -- x, z in plot-local space (+Z local = front/hallway)
 
 	local floor = part({
 		Name = "Floor",
@@ -2585,6 +2589,8 @@ local NO_TREES = {
 	{ 290, -70, 400, 70 },       -- the tennis stadium
 	{ -400, -70, -290, 70 },     -- the pool
 	{ -180, -470, 180, -320 },   -- the running track and playing field
+	{ -334, -274, -266, -226 },  -- the two courts, behind the school
+	{ 266, -274, 334, -226 },
 	{ -392, -258, -356, -166 },  -- the groundsman's yard
 }
 
@@ -3954,18 +3960,39 @@ local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gap
 			local winW = math.min(7.5, pitch * 0.5)
 			for m = 0, bays - 1 do
 				local wx = -segLen / 2 + (m + 0.5) * pitch
-				part({ Name = "FacadeWinFrame", Size = Vector3.new(winW + 2.0, 8.4, 2.6), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
-				local pane = part({ Name = "FacadeWindow", Size = Vector3.new(winW, 6.6, 2.9), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = Color3.fromRGB(96, 138, 170), Material = Enum.Material.SmoothPlastic, Reflectance = 0.3, Parent = parent })
+				-- A window is LAYERS, each one proud of the last. The frame,
+				-- the pane and both muntins used to be concentric boxes on the
+				-- same centre -- 2.6, 2.9 and 3.0 deep through a 2.2 brick wall
+				-- -- so every window on every storey of the school was four
+				-- solids fighting for the same pixels, and the frame, being
+				-- the shallowest, was inside the glass and invisible. That is
+				-- most of what "messy everywhere" looked like from inside.
+				--
+				-- Brick 2.2, glass 2.4, frame bars 3.0, muntins 3.2, sill and
+				-- shutters 3.4: nothing shares a face with anything.
+				-- Set down to 5.6 in the storey, not 6.2. At 6.2 the window's
+				-- head, its keystone and the string course between storeys all
+				-- wanted the same three studs of an eleven-and-a-half stud
+				-- floor, and all three got them.
+				local pane = part({ Name = "FacadeWindow", Size = Vector3.new(winW, 6.6, 2.4), CFrame = cf * CFrame.new(wx, y0 + 5.6, 0) , Color = Color3.fromRGB(96, 138, 170), Material = Enum.Material.SmoothPlastic, Reflectance = 0.3, Parent = parent })
 				tag(pane, "TexWindow")
+				-- the frame, as four bars round the opening
+				local jamb = 1.0
+				for _, bar in {
+					{ winW + 2.0, jamb, 0, 3.8 }, { winW + 2.0, jamb, 0, -3.8 },
+					{ jamb, 8.4, -(winW / 2 + 0.5), 0 }, { jamb, 8.4, winW / 2 + 0.5, 0 },
+				} do
+					part({ Name = "FacadeWinFrame", Size = Vector3.new(bar[1], bar[2], 3.0), CFrame = cf * CFrame.new(wx + bar[3], y0 + 5.6 + bar[4], 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				end
 				-- muntin cross
-				part({ Name = "Muntin", Size = Vector3.new(0.45, 6.6, 3.0), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
-				part({ Name = "Muntin", Size = Vector3.new(winW, 0.45, 3.0), CFrame = cf * CFrame.new(wx, y0 + 6.2, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+				part({ Name = "Muntin", Size = Vector3.new(0.45, 6.6, 3.2), CFrame = cf * CFrame.new(wx, y0 + 5.6, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				part({ Name = "Muntin", Size = Vector3.new(winW, 0.45, 3.2), CFrame = cf * CFrame.new(wx, y0 + 5.6, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				-- sill under each window
-				part({ Name = "FacadeSill", Size = Vector3.new(winW + 2.6, 0.6, 2.5), CFrame = cf * CFrame.new(wx, y0 + 1.7, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+				part({ Name = "FacadeSill", Size = Vector3.new(winW + 2.6, 0.6, 3.4), CFrame = cf * CFrame.new(wx, y0 + 0.95, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				-- keystone above and shutters either side: relief, not flat color
-				part({ Name = "Keystone", Size = Vector3.new(2.0, 2.2, 2.8), CFrame = cf * CFrame.new(wx, y0 + 10.6, 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+				part({ Name = "Keystone", Size = Vector3.new(2.0, 1.2, 3.4), CFrame = cf * CFrame.new(wx, y0 + 10.3, 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				for _, sh in { -1, 1 } do
-					part({ Name = "Shutter", Size = Vector3.new(2.4, 7.0, 2.7), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 2.2), y0 + 6.2, 0), Color = Color3.fromRGB(46, 74, 60), Material = Enum.Material.WoodPlanks, Parent = parent })
+					part({ Name = "Shutter", Size = Vector3.new(2.4, 7.0, 3.4), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 2.4), y0 + 5.6, 0), Color = Color3.fromRGB(46, 74, 60), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
 				end
 			end
 			-- slim string course between storeys only
@@ -4368,11 +4395,24 @@ local function buildFrontGrounds(parent: Instance)
 	local plaque = part({ Name = "StatuePlaque", Size = Vector3.new(6, 2.2, 0.4), CFrame = CFrame.new(sx, 6.4, sz - 4.7), Color = Color3.fromRGB(96, 74, 44), Material = Enum.Material.Metal, Parent = parent })
 	signText(plaque, "CRUMBWORTH", Color3.fromRGB(238, 226, 196), Enum.NormalId.Front)
 
-	-- clipped hedge borders around the lawns
+	-- Clipped hedge borders round the lawns.
+	--
+	-- Both runs were laid out with the block turned ACROSS the direction it
+	-- travels -- twelve studs wide stepping seven along, four deep stepping
+	-- six -- so instead of a hedge you got a comb of slabs sticking out
+	-- sideways. And the side run stepped by `i * 0`, so all eight of its
+	-- blocks stood in the same place. From the drive that is a row of green
+	-- boxes across the front of the school.
+	--
+	-- A hedge is long in the direction it runs and stepped by its own length.
 	for _, sgn in { -1, 1 } do
-		for i = 0, 7 do
-			part({ Name = "BorderHedge", Size = Vector3.new(12, 3.6, 4.4), CFrame = CFrame.new(sgn * (74 + i * 0), 1.8, Z + 22 + i * 7), Color = Color3.fromRGB(54, 104, 52), Material = Enum.Material.Grass, Parent = parent })
-			part({ Name = "BorderHedge", Size = Vector3.new(4.4, 3.6, 12), CFrame = CFrame.new(sgn * (34 + i * 6), 1.8, Z + 66), Color = Color3.fromRGB(54, 104, 52), Material = Enum.Material.Grass, Parent = parent })
+		for i = 0, 6 do
+			-- up each side of the lawn
+			part({ Name = "BorderHedge", Size = Vector3.new(4.4, 3.6, 12), CFrame = CFrame.new(sgn * 74, 1.8, Z + 24 + i * 12), Color = Color3.fromRGB(54, 104, 52), Material = Enum.Material.Grass, Parent = parent })
+		end
+		for i = 0, 3 do
+			-- and across the far end, stopping clear of the drive
+			part({ Name = "BorderHedge", Size = Vector3.new(12, 3.6, 4.4), CFrame = CFrame.new(sgn * (26 + i * 12), 1.8, Z + 102), Color = Color3.fromRGB(54, 104, 52), Material = Enum.Material.Grass, Parent = parent })
 		end
 	end
 
@@ -6437,12 +6477,15 @@ local function buildCourtyards(parent: Instance)
 	-- inside one reads as an indoor gymnasium with the roof forgotten, which
 	-- is exactly what it was being read as. Out here they have sky over them
 	-- and the whole north lawn around them, which is what a court wants.
-	buildCourt(parent, Vector3.new(-102, 0, 168), "Basketball", Color3.fromRGB(58, 104, 190), Color3.fromRGB(196, 86, 128))
-	buildCourt(parent, Vector3.new(102, 0, 168), "Volleyball", Color3.fromRGB(176, 74, 116), Color3.fromRGB(58, 104, 190))
+	-- BEHIND the school, beside the boarding houses -- not on the north lawn.
+	-- North is the FRONT: the doors, the drive, the clock tower and the whole
+	-- ceremonial approach face that way, and a painted sports court with three
+	-- runs of bunting over it sat squarely across it.
+	buildCourt(parent, Vector3.new(-300, 0, -250), "Basketball", Color3.fromRGB(58, 104, 190), Color3.fromRGB(196, 86, 128))
+	buildCourt(parent, Vector3.new(300, 0, -250), "Volleyball", Color3.fromRGB(176, 74, 116), Color3.fromRGB(58, 104, 190))
 
-	-- bunting over both, strung across the field
-	for _, cx in { -102, 102 } do
-		for _, bz in { 150, 168, 186 } do
+	for _, cx in { -300, 300 } do
+		for _, bz in { -268, -250, -232 } do
 			bunting(parent, Vector3.new(cx - 52, 21, bz), Vector3.new(cx + 52, 21, bz), 5)
 		end
 	end
@@ -6903,19 +6946,19 @@ end
 	-- brick wall. Nothing in the game complained, because nothing in the game
 	-- ever needed to walk in.
 	for i, x in { -190, -122 } do
-		local c = Vector3.new(x, 0, 103)
+		local c = Vector3.new(x, 0, 101)
 		table.insert(plots, buildPlot(i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
 	end
 	for i, x in { 122, 190 } do
-		local c = Vector3.new(x, 0, 103)
+		local c = Vector3.new(x, 0, 101)
 		table.insert(plots, buildPlot(2 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
 	end
 	for i, x in { -190, -122 } do
-		local c = Vector3.new(x, 0, -94)
+		local c = Vector3.new(x, 0, -92)
 		table.insert(plots, buildPlot(4 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
 	end
 	for i, x in { 122, 190 } do
-		local c = Vector3.new(x, 0, -94)
+		local c = Vector3.new(x, 0, -92)
 		table.insert(plots, buildPlot(6 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
 	end
 
