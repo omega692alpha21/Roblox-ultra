@@ -108,6 +108,17 @@ function QuestService.Init()
 		pushState(player)
 	end)
 
+	-- and again a few seconds later: the panels connect their handlers as the
+	-- client boots, which can land after the first push, and a journal that
+	-- opens empty until the next quest tick reads as broken
+	Signals.ProfileLoaded:Connect(function(player)
+		task.delay(4, function()
+			if player.Parent then
+				pushState(player)
+			end
+		end)
+	end)
+
 	Signals.Recruited:Connect(function(player)
 		bump(player, "recruit", 1)
 	end)

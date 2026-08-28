@@ -1,11 +1,16 @@
 --!strict
--- THE CRUMBWORTH FILES panel: where you are in the story and what closes the
--- current chapter.
+-- The journal: everything the school currently wants from you, in one place.
 --
--- Every chapter is listed, including the ones you cannot reach yet, with the
--- school year that opens them. Knowing what is coming is most of the reason
--- anyone graduates; a story that only shows you the step you are on is a quest
--- log, not a story.
+-- TODAY is the three daily quests, with their claim buttons. THE CRUMBWORTH
+-- FILES is the story -- every chapter listed, including the ones you cannot
+-- reach yet, with the school year that opens them. Knowing what is coming is
+-- most of the reason anyone graduates; a story that only shows the step you
+-- are on is a quest log, not a story.
+--
+-- This is where a conversation lands. Principal Crumb tells you three things
+-- to do and the last button in the dialogue says ADD TO JOURNAL, because a
+-- character who hands you objectives and then vanishes has told you nothing
+-- you can act on afterwards.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +20,7 @@ local Rebirths = require(ReplicatedStorage.Config.Rebirths)
 local Remotes = require(ReplicatedStorage.Remotes)
 local UIBuilder = require(script.Parent.UIBuilder)
 
-local StoryController = {}
+local JournalController = {}
 
 local player = Players.LocalPlayer
 
@@ -26,15 +31,101 @@ local STATE_COLOR = {
 	locked = Color3.fromRGB(96, 100, 112),
 }
 
-function StoryController.Init(gui: ScreenGui)
-	local _, content = UIBuilder.Panel(gui, "Story", "THE CRUMBWORTH FILES")
+function JournalController.Init(gui: ScreenGui)
+	local _, content = UIBuilder.Panel(gui, "Journal", "JOURNAL")
 	local list = UIBuilder.List(content)
 
-	local function render(state: any)
+	local questRows: { any } = {}
+	local storyState: any = nil
+
+	local function heading(text: string, order: number)
+		local label = UIBuilder.Label({
+			Size = UDim2.new(1, -8, 0, 26),
+			Text = text,
+			TextColor3 = Color3.fromRGB(150, 162, 178),
+			TextScaled = false,
+			TextSize = 15,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			LayoutOrder = order,
+			Parent = list,
+		})
+		return label
+	end
+
+	local function renderQuests()
+		for index, quest in questRows do
+			local card = UIBuilder.Frame({
+				Size = UDim2.new(1, -8, 0, 46),
+				BackgroundColor3 = Palette.PanelBg,
+				BackgroundTransparency = 0.3,
+				LayoutOrder = 1 + index,
+				Parent = list,
+			})
+			UIBuilder.Round(card, 10)
+			local complete = quest.progress >= quest.goal
+			UIBuilder.Stroke(card, complete and STATE_COLOR.done or STATE_COLOR.waiting, 2)
+			UIBuilder.Label({
+				Position = UDim2.fromOffset(12, 4),
+				Size = UDim2.new(1, -130, 0, 22),
+				Text = quest.label,
+				TextColor3 = Palette.Chalk,
+				TextScaled = false,
+				TextSize = 15,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				Parent = card,
+			})
+			UIBuilder.Label({
+				Position = UDim2.fromOffset(12, 24),
+				Size = UDim2.new(1, -130, 0, 18),
+				Text = ("%d / %d"):format(math.min(quest.progress, quest.goal), quest.goal),
+				TextColor3 = Color3.fromRGB(150, 162, 178),
+				TextScaled = false,
+				TextSize = 13,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				Parent = card,
+			})
+			if quest.claimed then
+				UIBuilder.Label({
+					AnchorPoint = Vector2.new(1, 0.5),
+					Position = UDim2.new(1, -12, 0.5, 0),
+					Size = UDim2.fromOffset(100, 24),
+					Text = "CLAIMED",
+					TextColor3 = STATE_COLOR.done,
+					TextScaled = false,
+					TextSize = 14,
+					TextXAlignment = Enum.TextXAlignment.Right,
+					Parent = card,
+				})
+			elseif complete then
+				local claim = UIBuilder.Button({
+					AnchorPoint = Vector2.new(1, 0.5),
+					Position = UDim2.new(1, -12, 0.5, 0),
+					Size = UDim2.fromOffset(100, 30),
+					Text = "CLAIM",
+					BackgroundColor3 = Palette.CashGreen,
+				}, function()
+					Remotes.Get("ClaimQuest"):FireServer(index)
+				end)
+				UIBuilder.Round(claim, 999)
+				claim.Parent = card
+			end
+		end
+	end
+
+	local function render()
+		local state = storyState
 		for _, child in list:GetChildren() do
 			if child:IsA("GuiObject") then
 				child:Destroy()
 			end
+		end
+		if #questRows > 0 then
+			heading("TODAY", 0)
+			renderQuests()
+		end
+		heading("THE CRUMBWORTH FILES", 20)
+		if not state then
+			return
 		end
 		for _, chapter in state.chapters do
 			local accent = STATE_COLOR[chapter.state] or STATE_COLOR.locked
@@ -44,7 +135,7 @@ function StoryController.Init(gui: ScreenGui)
 				Size = UDim2.new(1, -8, 0, height),
 				BackgroundColor3 = Palette.PanelBg,
 				BackgroundTransparency = chapter.state == "locked" and 0.6 or 0.25,
-				LayoutOrder = chapter.number,
+				LayoutOrder = 20 + chapter.number,
 				Parent = list,
 			})
 			UIBuilder.Round(card, 10)
@@ -119,7 +210,14 @@ function StoryController.Init(gui: ScreenGui)
 		end
 	end
 
-	Remotes.Get("StoryState").OnClientEvent:Connect(render)
+	Remotes.Get("StoryState").OnClientEvent:Connect(function(state)
+		storyState = state
+		render()
+	end)
+	Remotes.Get("QuestState").OnClientEvent:Connect(function(rows)
+		questRows = typeof(rows) == "table" and rows or {}
+		render()
+	end)
 	task.spawn(function()
 		for _ = 1, 60 do
 			if player:GetAttribute("DataLoaded") == true then
@@ -133,4 +231,4 @@ function StoryController.Init(gui: ScreenGui)
 	end)
 end
 
-return StoryController
+return JournalController

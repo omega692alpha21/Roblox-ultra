@@ -88,7 +88,7 @@ local ORDER = {
 	"VitalsController",
 	"SecretDoorController",
 	"ActionAnimController",
-	"StoryController",
+	"JournalController",
 	"HouseController",
 }
 
