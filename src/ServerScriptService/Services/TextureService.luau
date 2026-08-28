@@ -84,6 +84,11 @@ function TextureService.Init()
 		TexPlaster = Materials.SchoolPlaster,
 		TexWood = Materials.SchoolWood,
 		TexPlaza = Materials.SchoolStone,
+		TexCoursedStone = Materials.SchoolCoursedStone,
+		TexAshlar = Materials.SchoolAshlar,
+		TexSlateRoof = Materials.SchoolSlateRoof,
+		TexCourtPaving = Materials.SchoolCourtPaving,
+		TexTarmac = Materials.SchoolTarmac,
 	}
 
 	local dressed = 0

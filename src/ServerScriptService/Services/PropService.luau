@@ -83,6 +83,10 @@ local KINDS: { [string]: Spec } = {
 	MonoblocChair             = { id = 86571827154400, collide = true, shadow = true }, -- plastic_monobloc_chair_01
 	DiningTable               = { id = 94741391255177, collide = true, shadow = true }, -- dining_table
 	Bench                     = { id = 86648726154092, collide = true, shadow = true }, -- painted_wooden_bench
+	StreetLamp                = { id = 98402879565132, collide = true, shadow = true, height = 26.0 }, -- street_lamp_01
+	StreetLampShort           = { id = 82781906590344, collide = true, shadow = true, height = 20.0 }, -- street_lamp_02
+	WallLantern               = { id = 115954676903453, shadow = true, height = 3.6 }, -- Lantern_01
+	DeskLamp                  = { id = 100856850355548, shadow = true, height = 2.4 }, -- industrial_pipe_lamp
 	Stool                     = { id = 74494801771360, collide = true }, -- painted_wooden_stool
 	PicnicTable               = { id = 97016302613378, collide = true, shadow = true }, -- wooden_picnic_table
 	Football                  = { id = 105621271624992 }, -- football
@@ -252,7 +256,7 @@ local KINDS: { [string]: Spec } = {
 	LodgeSofa                 = { id = 127725539416222, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa2
 	LodgeSofaLong             = { id = 115288639285099, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa3
 	LodgeArmchair             = { id = 123264730568631, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa_individual
-	LoungeStool               = { id = 137011939546237, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
+	LoungeStool               = { id = 123290378028877, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
 	RefectoryTable            = { id = 84911854162743, collide = true, shadow = true, height = 3.4 }, -- qt_Table
 	RefectoryTable2           = { id = 139344400848486, collide = true, shadow = true, height = 3.0 }, -- qt_Table2
 	PlainChair                = { id = 92355465659938, collide = true, shadow = true, height = 4.2 }, -- qt_Chair
@@ -280,7 +284,7 @@ local KINDS: { [string]: Spec } = {
 	DiningChair               = { id = 112220312010726, collide = true, shadow = true, height = 4.2 }, -- qt_Chair_3
 	RoundTable                = { id = 99087364840474, collide = true, shadow = true, height = 3.4 }, -- qt_Table_RoundLarge
 	RoundTableSmall           = { id = 79348850644788, collide = true, shadow = true, height = 2.8 }, -- qt_Table_RoundSmall
-	PaddedStool               = { id = 137011939546237, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
+	PaddedStool               = { id = 123290378028877, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
 	LoungeCouch               = { id = 122543864904209, collide = true, shadow = true, height = 3.6 }, -- qt_Couch_Medium1
 	ChestOfDrawers            = { id = 134877556225571, collide = true, shadow = true, height = 4.6 }, -- qt_Drawer_3
 	Rug                       = { id = 121504473848590, height = 0.3 }, -- qt_Carpet_2

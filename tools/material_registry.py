@@ -25,6 +25,16 @@ MATERIALS = [
     ("SchoolLocker",  "Metal",        "blue_metal_plate",  2.5),
     ("SchoolShingle", "Cobblestone",  "roof_slates_02",    3.0),
     ("SchoolLawn",    "Grass",        "leafy_grass",       2.0),
+    # ---- the collegiate set --------------------------------------------
+    # The references are a stone school with a slate roof standing on paving,
+    # not a brick one. Every size below is the real-world size Poly Haven
+    # recorded for the scan, so the courses and the slates land at the height
+    # a person expects rather than at whatever looked right in a screenshot.
+    ("SchoolCoursedStone", "Slate",    "castle_wall_slates",  2.5),
+    ("SchoolAshlar",       "Concrete", "sandstone_blocks_04", 3.0),
+    ("SchoolSlateRoof",    "Slate",    "roof_slates_03",      3.0),
+    ("SchoolCourtPaving",  "Slate",    "medieval_blocks_05",  2.0),
+    ("SchoolTarmac",       "Asphalt",  "asphalt_02",          3.0),
 ]
 
 SLOTS = [("ColorMap", "color"), ("NormalMap", "normal"),

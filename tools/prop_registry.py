@@ -19,6 +19,10 @@ FBX_DIRS = [os.path.join(SCRATCH, "q", "furniture"), os.path.join(SCRATCH, "q", 
 # needs. Poly Haven's "steel_frame_shelves_01" is a 21 m warehouse rack and its
 # "WoodenTable_02" is 40 cm tall; both are correct and neither is a classroom.
 HEIGHT = {
+    "StreetLamp": 26.0,
+    "StreetLampShort": 20.0,
+    "WallLantern": 3.6,
+    "DeskLamp": 2.4,
     "SteelShelves": 7.6,
     "Table2": 2.6,
     "Shrub": 2.4,
@@ -157,6 +161,14 @@ REGISTRY = [
     ("MonoblocChair",     "plastic_monobloc_chair_01",     True,  True),
     ("DiningTable",       "dining_table",                  True,  True),
     ("Bench",             "painted_wooden_bench",          True,  True),
+    # The cast-iron lamp post is the single most repeated object in all four
+    # reference images -- down every path, round the court, along the fence --
+    # and the campus had none. A scanned one beats anything assembled from a
+    # cylinder and a cube, which is what every lamp here has been so far.
+    ("StreetLamp",        "street_lamp_01",                True,  True),
+    ("StreetLampShort",   "street_lamp_02",                True,  True),
+    ("WallLantern",       "Lantern_01",                    False, True),
+    ("DeskLamp",          "industrial_pipe_lamp",          False, True),
     ("Stool",             "painted_wooden_stool",          True,  False),
     ("PicnicTable",       "wooden_picnic_table",           True,  True),
     ("Football",          "football",                      False, False),

@@ -31,6 +31,14 @@ local Materials: { [string]: Surface } = {
 	SchoolShingle = { variant = "SchoolShingle", material = Enum.Material.Cobblestone, ownsColour = true },
 	SchoolLawn = { variant = "SchoolLawn", material = Enum.Material.Grass, ownsColour = true },
 	SchoolGlass = { variant = "SchoolGlass", material = Enum.Material.Glass },
+	-- The collegiate set. The references are a stone school under a slate roof
+	-- standing on paving, and none of the surfaces above could carry that: the
+	-- brick is brick, and the one "stone" is polished marble meant for a floor.
+	SchoolCoursedStone = { variant = "SchoolCoursedStone", material = Enum.Material.Slate, ownsColour = true },
+	SchoolAshlar = { variant = "SchoolAshlar", material = Enum.Material.Concrete, ownsColour = true },
+	SchoolSlateRoof = { variant = "SchoolSlateRoof", material = Enum.Material.Slate, ownsColour = true },
+	SchoolCourtPaving = { variant = "SchoolCourtPaving", material = Enum.Material.Slate, ownsColour = true },
+	SchoolTarmac = { variant = "SchoolTarmac", material = Enum.Material.Asphalt, ownsColour = true },
 }
 
 return Materials
