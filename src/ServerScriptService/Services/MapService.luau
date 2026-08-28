@@ -1585,6 +1585,12 @@ local function buildTerrain()
 		{ cf = CFrame.new(-176, -2.3, -212), size = Vector3.new(64, 5, 54) }, -- boys dorm
 		{ cf = CFrame.new(176, -2.3, -212), size = Vector3.new(64, 5, 54) }, -- girls dorm
 		{ cf = CFrame.new(0, -2.3, -232), size = Vector3.new(96, 5, 72) }, -- library
+		-- the staff lodge, and the turret with the headmaster's spiral in it
+		{ cf = CFrame.new(-300, -2.3, -170), size = Vector3.new(96, 5, 76) },
+		{ cf = CFrame.new(-249, -2.3, -186), size = Vector3.new(28, 5, 28) },
+		-- the library's passage west under the field, and its shaft
+		{ cf = CFrame.new(-73, -2.3, -222), size = Vector3.new(58, 5, 20) },
+		{ cf = CFrame.new(-100, -2.3, -222), size = Vector3.new(26, 5, 26) },
 	} do
 		terrain:FillBlock(region.cf, region.size, Enum.Material.Air)
 	end
@@ -3842,7 +3848,18 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	end
 
 	-- ---- ground, plinth, floors ----
-	tag(part({ Name = "QuartersPlinth", Size = Vector3.new(W + 8, 2, D + 8), CFrame = at(0, 1, 0), Color = STONE, Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
+	-- The plinth, with a notch cut in its east edge for the turret. It used to
+	-- run the full 92 studs and the spiral inside the turret was driven
+	-- straight through it: two solid studs of stone across the descent, six
+	-- studs down from the top.
+	for _, rect in {
+		{ -(W + 8) / 2, -(D + 8) / 2, (W + 8) / 2, -29 },
+		{ -(W + 8) / 2, -3, (W + 8) / 2, (D + 8) / 2 },
+		{ -(W + 8) / 2, -29, 38, -3 },
+	} do
+		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
+		tag(part({ Name = "QuartersPlinth", Size = Vector3.new(x1 - x0, 2, z1 - z0), CFrame = at((x0 + x1) / 2, 1, (z0 + z1) / 2), Color = STONE, Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
+	end
 	tag(part({ Name = "QuartersFloor", Size = Vector3.new(W, 1, D), CFrame = at(0, 2.5, 0), Color = Color3.fromRGB(150, 110, 78), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
 	-- the upper deck, with a well over the common room so the fire is visible
 	-- from the landing
@@ -4218,28 +4235,32 @@ end
 -- The stone tube around a spiral. Built as four walls with a square bore, so
 -- the shaft reads as cut through rock rather than hanging in it.
 --
--- `openTowards` names the wall that gets a doorway at the bottom -- the way
--- OUT. Without one the shaft is a well: you walk down a hundred and twenty
--- studs of spiral and arrive in a sealed stone tube.
-local DOORWAY_H, DOORWAY_W = 14, 16
+-- `openings` are the doorways: which wall, and between which two heights.
+-- Every shaft needs at least the one at the bottom -- the way OUT. Without it
+-- you walk down a hundred and twenty studs of spiral and arrive in a sealed
+-- stone tube. The library's needs a second one at the top as well, where its
+-- passage comes in from under the field.
+export type ShaftOpening = { dir: Vector3, y0: number, y1: number }
+
+local DOORWAY_W = 16
 local function buildShaft(
 	parent: Instance,
 	centre: Vector3,
 	topY: number,
 	bottomY: number,
 	half: number,
-	openTowards: Vector3?
+	openings: { ShaftOpening }?
 )
-	local height = topY - bottomY + 6
-	local midY = (topY + bottomY) / 2
 	local wide = half * 2 + 4
+	local jamb = (wide - DOORWAY_W) / 2
+	local lo, hi = bottomY - 3, topY + 3
 	for _, side in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
-		local isDoor = openTowards ~= nil
-			and side[1] == math.sign((openTowards :: Vector3).X)
-			and side[2] == math.sign((openTowards :: Vector3).Z)
 		local x = centre.X + side[1] * (half + 1)
 		local z = centre.Z + side[2] * (half + 1)
 		local function slab(h: number, y: number, w: number, offset: number)
+			if h <= 0.05 or w <= 0.05 then
+				return
+			end
 			part({
 				Name = "SanctumShaftWall",
 				Size = if side[1] ~= 0 then Vector3.new(2, h, w) else Vector3.new(w, h, 2),
@@ -4253,16 +4274,28 @@ local function buildShaft(
 				Parent = parent,
 			})
 		end
-		if isDoor then
-			local doorTop = bottomY + DOORWAY_H
-			slab(topY + 3 - doorTop, (doorTop + topY + 3) / 2, wide, 0)
-			local jamb = (wide - DOORWAY_W) / 2
-			for _, dir in { -1, 1 } do
-				slab(DOORWAY_H, bottomY + DOORWAY_H / 2, jamb, dir * (DOORWAY_W / 2 + jamb / 2))
+
+		-- the doorways on THIS wall, bottom to top
+		local mine: { ShaftOpening } = {}
+		for _, opening in openings or {} :: { ShaftOpening } do
+			if side[1] == math.sign(opening.dir.X) and side[2] == math.sign(opening.dir.Z) then
+				table.insert(mine, opening)
 			end
-		else
-			slab(height, midY, wide, 0)
 		end
+		table.sort(mine, function(a, b)
+			return a.y0 < b.y0
+		end)
+
+		-- solid bands between them, jambs beside them
+		local y = lo
+		for _, opening in mine do
+			slab(math.max(opening.y0 - y, 0), (y + opening.y0) / 2, wide, 0)
+			for _, dir in { -1, 1 } do
+				slab(opening.y1 - opening.y0, (opening.y0 + opening.y1) / 2, jamb, dir * (DOORWAY_W / 2 + jamb / 2))
+			end
+			y = opening.y1
+		end
+		slab(math.max(hi - y, 0), (y + hi) / 2, wide, 0)
 	end
 end
 
@@ -4413,16 +4446,20 @@ local function buildSanctum(parent: Instance): { BasePart }
 	tag(part({ Name = "TurretWall", Size = Vector3.new(2, TURRET_TOP - headY, 14), CFrame = CFrame.new(TURRET.X - turretHalf - 1, (headY + TURRET_TOP) / 2, TURRET.Z), Color = Color3.fromRGB(138, 78, 62), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
 	tag(part({ Name = "TurretWall", Size = Vector3.new(2, OFFICE_Y, 14), CFrame = CFrame.new(TURRET.X - turretHalf - 1, OFFICE_Y / 2, TURRET.Z), Color = Color3.fromRGB(138, 78, 62), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
 	part({ Name = "TurretCap", Size = Vector3.new(turretHalf * 2 + 8, 2, turretHalf * 2 + 8), CFrame = CFrame.new(TURRET.X, TURRET_TOP + 1, TURRET.Z), Color = Color3.fromRGB(96, 90, 84), Material = Enum.Material.Slate, Parent = parent })
-	-- the landing you step onto, level with the office floor
-	part({ Name = "TurretLanding", Size = Vector3.new(turretHalf * 2, 1.2, turretHalf * 2), CFrame = CFrame.new(TURRET.X, OFFICE_Y - 0.6, TURRET.Z), Color = Color3.fromRGB(150, 142, 128), Material = Enum.Material.Slate, Parent = parent })
-
-	buildSpiral(parent, TURRET, OFFICE_Y - 1.4, SANCTUM_FLOOR_Y, 7, 0)
+	-- No landing slab. One used to cover the whole turret at office level,
+	-- which put a stone lid two studs above the second tread: you stepped
+	-- through the shelf and could not stand up. The spiral's own top tread is
+	-- the landing, and it starts at the doorway (facing = pi, the west side)
+	-- rather than eighteen studs across the shaft from it.
+	buildSpiral(parent, TURRET, OFFICE_Y - 1.4, SANCTUM_FLOOR_Y, 7, math.pi)
 	-- the way out at the bottom faces the tunnel
 	local outward = SANCTUM_ENTRANCE - TURRET
 	local axis = if math.abs(outward.X) >= math.abs(outward.Z)
 		then Vector3.new(math.sign(outward.X), 0, 0)
 		else Vector3.new(0, 0, math.sign(outward.Z))
-	buildShaft(parent, TURRET, -2, SANCTUM_FLOOR_Y, turretHalf, axis)
+	buildShaft(parent, TURRET, -2, SANCTUM_FLOOR_Y, turretHalf, {
+		{ dir = axis, y0 = SANCTUM_FLOOR_Y, y1 = SANCTUM_FLOOR_Y + 14 },
+	})
 	table.insert(shelves, buildSecretBookshelf(
 		parent,
 		CFrame.new(TURRET.X - turretHalf, OFFICE_Y + 7, TURRET.Z) * CFrame.Angles(0, math.rad(90), 0),
@@ -4436,11 +4473,18 @@ local function buildSanctum(parent: Instance): { BasePart }
 	-- a passage west under the field, then a shorter spiral
 	local libHalf = 10
 	part({ Name = "LibraryPassageLanding", Size = Vector3.new(10, 1.2, 14), CFrame = CFrame.new(LIB_DOOR_X - 5, -0.6, LIB_SHAFT.Z), Color = Color3.fromRGB(150, 142, 128), Material = Enum.Material.Slate, Parent = parent })
-	buildTunnel(parent, Vector3.new(LIB_DOOR_X - 4, 0, LIB_SHAFT.Z), Vector3.new(LIB_SHAFT.X, 0, LIB_SHAFT.Z), 6, 12)
-	buildSpiral(parent, LIB_SHAFT, -1.4, SANCTUM_FLOOR_Y, 6.5, math.pi)
+	-- ends at the shaft's east wall, not at its middle: run it to the centre
+	-- and its own floor becomes a lid four studs over the second tread
+	buildTunnel(parent, Vector3.new(LIB_DOOR_X - 4, 0, LIB_SHAFT.Z), Vector3.new(LIB_SHAFT.X + libHalf + 2, 0, LIB_SHAFT.Z), 6, 12)
+	-- facing 0: the top tread is on the east side, where the passage from
+	-- the library arrives, not across the shaft from it
+	buildSpiral(parent, LIB_SHAFT, -1.4, SANCTUM_FLOOR_Y, 6.5, 0)
 	-- this one comes down ON the boulevard, so its doorway opens straight onto
 	-- it, facing the pyramid
-	buildShaft(parent, LIB_SHAFT, 12, SANCTUM_FLOOR_Y, libHalf, Vector3.new(1, 0, 0))
+	buildShaft(parent, LIB_SHAFT, 12, SANCTUM_FLOOR_Y, libHalf, {
+		{ dir = Vector3.new(1, 0, 0), y0 = SANCTUM_FLOOR_Y, y1 = SANCTUM_FLOOR_Y + 14 },
+		{ dir = Vector3.new(1, 0, 0), y0 = -1.6, y1 = 11 },
+	})
 	part({ Name = "SanctumShaftLid", Size = Vector3.new(libHalf * 2 + 4, 2, libHalf * 2 + 4), CFrame = CFrame.new(LIB_SHAFT.X, 13, LIB_SHAFT.Z), Color = Color3.fromRGB(88, 82, 76), Material = Enum.Material.Slate, Parent = parent })
 	table.insert(shelves, buildSecretBookshelf(
 		parent,

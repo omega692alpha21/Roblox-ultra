@@ -41,6 +41,12 @@ def local(part, point):
     return [sum(r[row * 3 + col] * d[row] for row in range(3)) for col in range(3)]
 
 
+def yaw_only(part):
+    """True if the part is turned only about the vertical axis."""
+    r = part["r"]
+    return abs(r[1]) < 1e-6 and abs(r[4] - 1.0) < 1e-6 and abs(r[7]) < 1e-6
+
+
 def aabb(part):
     """World-space bounding box: half-extents of a rotated box on each axis."""
     r, s = part["r"], part["s"]
@@ -63,18 +69,47 @@ def inside(part, point, pad=0.0):
 TERRAIN_HALF = 450
 TERRAIN_TOP = -0.1
 
+# Where MapService carves the terrain back to air. A shaft driven through solid
+# terrain is invisible in the part dump and impassable in the game, so the
+# audit has to know about the holes as well as the slab.
+CARVED = [
+    (-226, -126, 226, 126),      # main building
+    (-52, -148, 52, -122),       # gym protrusion
+    (-208, -239, -144, -185),    # boys dorm
+    (144, -239, 208, -185),      # girls dorm
+    (-48, -268, 48, -196),       # library
+    (-348, -208, -252, -132),    # staff lodge
+    (-263, -200, -235, -172),    # the turret
+    (-102, -232, -44, -212),     # the library's passage
+    (-113, -235, -87, -209),     # the library's shaft
+]
+
 
 def floor_under(point, reach=7.0):
     """Highest solid surface within `reach` below the point."""
     best = None
-    if (abs(point[0]) <= TERRAIN_HALF and abs(point[2]) <= TERRAIN_HALF
+    carved = any(
+        x0 <= point[0] <= x1 and z0 <= point[2] <= z1 for x0, z0, x1, z1 in CARVED
+    )
+    if (not carved and abs(point[0]) <= TERRAIN_HALF and abs(point[2]) <= TERRAIN_HALF
             and point[1] + 1.5 >= TERRAIN_TOP >= point[1] - reach):
         best = (TERRAIN_TOP, "terrain")
     for part in solids:
-        # a floor is whatever you would land on, so this is the world box --
-        # local half-sizes say nothing useful about a part stood on its end
+        # Footprint first. For a part that is only YAWED -- turned about the
+        # vertical, which every tread on a spiral stair is -- the honest test
+        # is its own local x/z, and its top is exact either way. Using the
+        # world bounding box for those turns a ten-stud tread lying at forty
+        # degrees into a fourteen-stud square, so a sample on one tread found
+        # the tread two steps above it and the descent read as a staircase
+        # full of drops. Anything stood on its end still uses the box, because
+        # there the local half-sizes say nothing useful.
         box = aabb(part)
-        if not (box[0][0] <= point[0] <= box[0][1] and box[2][0] <= point[2] <= box[2][1]):
+        if yaw_only(part):
+            q = local(part, point)
+            s = part["s"]
+            if abs(q[0]) > s[0] / 2 or abs(q[2]) > s[2] / 2:
+                continue
+        elif not (box[0][0] <= point[0] <= box[0][1] and box[2][0] <= point[2] <= box[2][1]):
             continue
         top = box[1][1]
         if point[1] + 1.5 >= top >= point[1] - reach:
@@ -200,6 +235,17 @@ WALKS = [
     ("wing stair E", (178, 0.5, -9), (178, 16, 17)),
 ]
 
+# The two spiral descents, as (name, centre x, z, top y, bottom y, radius,
+# start angle) -- the same numbers MapService builds them from. A helix cannot
+# be sampled as a straight line, and these are now the only way down to the
+# estate, so they get walked tread by tread.
+SPIRALS = [
+    ("headmaster spiral", -249, -186, 33.6, -119.5, 7.0, math.pi),
+    ("library spiral", -100, -222, -1.4, -119.5, 6.5, 0.0),
+]
+SPIRAL_RISE = 1.4
+SPIRAL_PER_TURN = 24
+
 STEP = 4.0        # sample spacing, studs
 MAX_RISE = 3.0    # a Humanoid steps 2.0 by default; 3 is generous
 
@@ -300,6 +346,31 @@ def audit_anchors():
     return problems
 
 
+def walk_spirals():
+    """Tread by tread down each spiral: is every one solid, and is the next
+    one a step rather than a drop?"""
+    problems = []
+    for name, cx, cz, top, bottom, radius, facing in SPIRALS:
+        steps = max(4, int((top - bottom) / SPIRAL_RISE))
+        previous = None
+        for i in range(steps + 1):
+            angle = facing + i * (math.pi * 2 / SPIRAL_PER_TURN)
+            point = [cx + math.cos(angle) * radius, top - i * SPIRAL_RISE, cz + math.sin(angle) * radius]
+            under = floor_under([point[0], point[1] + 2.0, point[2]], reach=6.0)
+            if under is None:
+                problems.append((name, point, f"no tread at step {i}"))
+                previous = None
+                continue
+            stand = [point[0], under[0] + 0.5, point[2]]
+            blocked = headroom(stand, need=4.0)
+            if blocked and "Tread" not in blocked and "Newel" not in blocked:
+                problems.append((name, point, "no headroom: " + blocked))
+            if previous is not None and abs(under[0] - previous) > 2.2:
+                problems.append((name, point, f"{abs(under[0] - previous):.1f}-stud drop to the next tread"))
+            previous = under[0]
+    return problems
+
+
 def main():
     bad = 0
     for name, point in collect():
@@ -324,7 +395,7 @@ def main():
         bad += 1
         print(f"  {name:34s} {[round(v, 1) for v in point]}  {why}")
 
-    walked = walk_routes()
+    walked = walk_routes() + walk_spirals()
     # one line per route rather than per sample: a broken slab trips fifty
     # consecutive samples and the list stops being readable
     seen = set()
@@ -338,7 +409,7 @@ def main():
 
     anchor_count = len(json.load(open(ANCHORS))) if os.path.exists(ANCHORS) else 0
     print(f"{'FAIL' if bad else 'PASS'} - {bad} bad spots "
-          f"({len(WALKS)} routes walked at {STEP:.0f}-stud spacing, "
+          f"({len(WALKS)} routes and {len(SPIRALS)} spirals walked, "
           f"{anchor_count} anchors checked for reach)")
     return 1 if bad else 0
 
