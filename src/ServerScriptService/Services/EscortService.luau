@@ -44,6 +44,7 @@ type Escort = {
 	swingUntil: number,
 	target: BasePart?,
 	targetUntil: number,
+	moving: boolean,
 }
 
 local escorts: { [Player]: { Escort } } = {}
@@ -63,6 +64,22 @@ function EscortService.Guard(player: Player): number
 end
 
 local EMPTY: { Escort } = {}
+
+-- Feet-on-the-floor raycasts ignore every character in the game: an escort
+-- must not stand on its own owner's head, or on another escort.
+local groundParams = RaycastParams.new()
+groundParams.FilterType = Enum.RaycastFilterType.Exclude
+groundParams.IgnoreWater = true
+
+local function refreshGroundFilter()
+	local ignore: { Instance } = {}
+	for _, model in workspace:GetChildren() do
+		if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
+			table.insert(ignore, model)
+		end
+	end
+	groundParams.FilterDescendantsInstances = ignore
+end
 
 local function clear(player: Player)
 	for _, escort in escorts[player] or EMPTY do
@@ -129,6 +146,7 @@ local function spawnFor(player: Player)
 					position = behind,
 					swingUntil = 0,
 					targetUntil = 0,
+					moving = false,
 				})
 			else
 				model:Destroy()
@@ -214,6 +232,16 @@ function EscortService.Init()
 		end
 	end)
 
+	refreshGroundFilter()
+	-- characters come and go; the exclude list is cheap to rebuild and very
+	-- expensive to get wrong (an escort standing on your head)
+	task.spawn(function()
+		while true do
+			task.wait(3)
+			refreshGroundFilter()
+		end
+	end)
+
 	RunService.Heartbeat:Connect(function(dt: number)
 		local now = os.clock()
 		for player, list in escorts do
@@ -272,10 +300,35 @@ function EscortService.Init()
 					end
 				end
 
-				escort.position = goal
-				local look = Vector3.new(facing.X, goal.Y, facing.Z)
-				if (look - goal).Magnitude > 0.1 then
-					escort.root.CFrame = CFrame.lookAt(goal + Vector3.new(0, 2.6, 0), look + Vector3.new(0, 2.6, 0))
+				-- Put their feet on whatever is under them.
+				--
+				-- They used to keep the Y they spawned at forever, which is
+				-- why a crew read as floating: follow a player up a staircase
+				-- and they trail along at ground level through the treads,
+				-- follow them downstairs and they hover. The root is placed a
+				-- fixed height above the surface below instead.
+				local hit = workspace:Raycast(
+					Vector3.new(goal.X, escort.position.Y + 6, goal.Z),
+					Vector3.new(0, -40, 0),
+					groundParams
+				)
+				local groundY = if hit then hit.Position.Y else goal.Y - 2.6
+				local moved = (Vector3.new(goal.X, 0, goal.Z) - Vector3.new(escort.position.X, 0, escort.position.Z)).Magnitude
+				escort.position = Vector3.new(goal.X, groundY + 2.6, goal.Z)
+
+				-- And play the animation that matches what they are doing.
+				-- They were spawned into "idle" and never taken out of it, so
+				-- a crew slid along the corridor standing perfectly still.
+				local moving = moved > dt * 2
+				if moving ~= escort.moving then
+					escort.moving = moving
+					StudentGen.PlayAnim(escort.model, if moving then "walk" else "idle")
+				end
+
+				local at = escort.position
+				local look = Vector3.new(facing.X, at.Y, facing.Z)
+				if (look - at).Magnitude > 0.1 then
+					escort.root.CFrame = CFrame.lookAt(at, look)
 				end
 			end
 		end

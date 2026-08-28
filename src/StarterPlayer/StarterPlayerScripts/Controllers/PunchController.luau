@@ -3,9 +3,11 @@
 -- (the server enforces the real one).
 
 local ContextActionService = game:GetService("ContextActionService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
+local ActionPoses = require(ReplicatedStorage.Shared.ActionPoses)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Remotes = require(ReplicatedStorage.Remotes)
@@ -22,6 +24,13 @@ local function punch()
 		return
 	end
 	lastPunch = now
+	-- Swing here and now rather than waiting for the server to tell us we
+	-- swung: a round trip is a fifth of a second on a phone, which is longer
+	-- than the punch, so the animation used to land after the hit.
+	local character = Players.LocalPlayer.Character
+	if character then
+		ActionPoses.Play(character, "punch")
+	end
 	Remotes.Get("Punch"):FireServer()
 end
 

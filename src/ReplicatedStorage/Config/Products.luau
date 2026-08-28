@@ -16,10 +16,10 @@ local Products = {
 
 		-- Cosmetic-only passes: zero gameplay effect, pure flex. This is where
 		-- the top-grossing Roblox games actually make their money.
-		GoldenHalo = { id = 0, name = "Golden Halo", price = 129, desc = "A glowing halo that follows you everywhere" },
-		CashCrown = { id = 0, name = "Cash Crown", price = 149, desc = "A sparkling crown — you ARE the bounty" },
-		AuraRing = { id = 0, name = "Aura Ring", price = 99, desc = "A swirling particle ring around your feet" },
-		LegendCape = { id = 0, name = "Legend Cape", price = 179, desc = "A billowing cape for certified legends" },
+		GoldenHalo = { id = 1963818558, name = "Golden Halo", price = 129, desc = "A glowing halo that follows you everywhere" },
+		CashCrown = { id = 1965726324, name = "Cash Crown", price = 149, desc = "A sparkling crown — you ARE the bounty" },
+		AuraRing = { id = 1962102540, name = "Aura Ring", price = 99, desc = "A swirling particle ring around your feet" },
+		LegendCape = { id = 1962366531, name = "Legend Cape", price = 179, desc = "A billowing cape for certified legends" },
 	},
 
 	-- Developer products (repeatable purchases).
