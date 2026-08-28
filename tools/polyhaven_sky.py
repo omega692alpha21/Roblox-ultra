@@ -15,7 +15,7 @@ Face axes follow the usual cubemap convention, with Roblox's -Z as front.
 import argparse, os, subprocess
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 API = "https://api.polyhaven.com"
 
@@ -77,12 +77,54 @@ def faces(equirect: Image.Image, size: int) -> dict:
     return out
 
 
+def paint(image: Image.Image) -> Image.Image:
+    """Push a photographed sky towards the painted ones in the reference art.
+
+    A tonemapped HDRI is honest and pale: the blue sits around 60% saturation
+    and the cloud edges are soft, because that is what a camera records. The
+    reference skies are the opposite -- a deep, almost cyan blue, clouds that
+    are near-white with a readable edge, and no photographic mid-tone mush in
+    between. Three moves get most of the way there and none of them invent
+    detail: an S-curve on value, a strong saturation lift that leaves
+    near-neutrals alone, and an unsharp mask on luminance only, so the cloud
+    edges harden without the colours fringing.
+    """
+    rgb = np.asarray(image.convert("RGB"), dtype=np.float32) / 255.0
+
+    # value: S-curve about mid grey, so clouds go bright and sky goes deep
+    rgb = np.clip(0.5 + (rgb - 0.5) * 1.34, 0.0, 1.0)
+
+    lum = rgb @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
+    # saturation, hue-preserving. Clouds are near-neutral and barely move.
+    rgb = np.clip(lum[..., None] + (rgb - lum[..., None]) * 1.9, 0.0, 1.0)
+
+    # and the blue itself: the reference sky is cooler than any real one, so
+    # the sky half (which is everything that is not near-white) gets pushed
+    sky = np.clip(1.0 - lum, 0.0, 1.0)[..., None]
+    tint = np.array([0.90, 0.98, 1.10], dtype=np.float32)
+    rgb = np.clip(rgb * (1.0 - sky) + rgb * tint * sky, 0.0, 1.0)
+
+    # unsharp on luminance: hard cloud edges, no colour fringing
+    blurred = np.asarray(
+        Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8))
+        .convert("L")
+        .filter(ImageFilter.GaussianBlur(3.0)),
+        dtype=np.float32,
+    ) / 255.0
+    lum2 = rgb @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
+    rgb = np.clip(rgb + (lum2 - blurred)[..., None] * 0.85, 0.0, 1.0)
+
+    return Image.fromarray((rgb * 255).astype(np.uint8))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("slug")
     ap.add_argument("--cache", default="ph_sky")
     ap.add_argument("--out", default="ph_sky_faces")
     ap.add_argument("--size", type=int, default=1024)
+    ap.add_argument("--paint", action="store_true",
+                    help="grade the faces towards painted rather than photographed")
     args = ap.parse_args()
 
     import json
@@ -96,7 +138,7 @@ def main() -> None:
     os.makedirs(args.out, exist_ok=True)
     for name, image in faces(equirect, args.size).items():
         path = os.path.join(args.out, f"sky_{name}.png")
-        image.save(path)
+        (paint(image) if args.paint else image).save(path)
         print(path)
 
 

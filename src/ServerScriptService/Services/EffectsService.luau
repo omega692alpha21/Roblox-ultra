@@ -122,75 +122,99 @@ end
 
 -- Warm afternoon lighting + post effects, all from code.
 local function setupLighting()
-	-- Tuned for the PBR materials rather than for flat plastic. With real
-	-- normal and roughness maps the surfaces carry their own shading, so the
-	-- scene wants less brightness and far less saturation than it did — the
-	-- painterly references read as desaturated with strong value contrast, not
-	-- as bright colour.
-	Lighting.ClockTime = 14.4
-	Lighting.Brightness = 2.1
+	-- The grade the references actually have. The last pass read them as
+	-- "desaturated with strong value contrast" and pulled saturation down to
+	-- almost nothing. That is what a photograph of an overcast day looks like;
+	-- the reference art is the opposite -- a hard blue sky, grass at a green
+	-- no lawn has ever been, and shadows that go COOL rather than grey. Value
+	-- contrast comes from the cool shadow and the warm sun, not from draining
+	-- the colour out of everything.
+	Lighting.ClockTime = 14.9
+	Lighting.Brightness = 2.6
 	Lighting.EnvironmentDiffuseScale = 1
-	Lighting.EnvironmentSpecularScale = 1
+	Lighting.EnvironmentSpecularScale = 0.85
 	Lighting.GlobalShadows = true
-	Lighting.ShadowSoftness = 0.32
-	Lighting.ExposureCompensation = 0.08
-	Lighting.Ambient = Color3.fromRGB(118, 116, 112)
-	Lighting.OutdoorAmbient = Color3.fromRGB(132, 138, 138)
+	-- crisper than 0.32: the reference shadows have a readable edge, which is
+	-- most of what makes the light feel like sunlight
+	Lighting.ShadowSoftness = 0.16
+	Lighting.ExposureCompensation = 0.12
+	-- shadow fill is BLUE, not grey. This one value does more for the painterly
+	-- read than every post effect underneath it.
+	Lighting.Ambient = Color3.fromRGB(92, 104, 132)
+	Lighting.OutdoorAmbient = Color3.fromRGB(104, 124, 158)
 
 	local atmosphere = Instance.new("Atmosphere")
-	atmosphere.Density = 0.36
-	atmosphere.Offset = 0.28
-	atmosphere.Color = Color3.fromRGB(202, 204, 196)
-	atmosphere.Decay = Color3.fromRGB(98, 112, 128)
-	atmosphere.Glare = 0.16
-	atmosphere.Haze = 1.2
+	-- thinner and much less hazy: the reference horizon is CLEAR, with distant
+	-- rock still reading as rock. At density 0.36 and haze 1.2 the far ridge
+	-- dissolved into flat grey before you could see its shape.
+	atmosphere.Density = 0.26
+	atmosphere.Offset = 0.15
+	atmosphere.Color = Color3.fromRGB(206, 222, 240)
+	atmosphere.Decay = Color3.fromRGB(84, 122, 172)
+	atmosphere.Glare = 0.3
+	atmosphere.Haze = 0.55
 	atmosphere.Parent = Lighting
 
 	-- Effect order matters: colour first to set the mood, then bloom, then
 	-- depth of field, then sun rays last.
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.34
-	bloom.Size = 24
-	bloom.Threshold = 1.6
+	bloom.Intensity = 0.5
+	bloom.Size = 28
+	bloom.Threshold = 1.45
 	bloom.Parent = Lighting
 
 	local color = Instance.new("ColorCorrectionEffect")
-	color.Saturation = 0.09
-	color.Contrast = 0.17
-	color.TintColor = Color3.fromRGB(255, 250, 240)
+	color.Saturation = 0.32
+	color.Contrast = 0.12
+	color.TintColor = Color3.fromRGB(255, 250, 242)
 	color.Parent = Lighting
 
 	local dof = Instance.new("DepthOfFieldEffect")
-	dof.FarIntensity = 0.26
-	dof.FocusDistance = 62
-	dof.InFocusRadius = 120
+	-- Far intensity is nearly off. The reference art keeps the distant ridge
+	-- SHARP -- that is what makes it read as illustration rather than as a
+	-- photograph -- and blurring the horizon threw away the silhouette the rocks
+	-- are there to provide.
+	dof.FarIntensity = 0.07
+	dof.FocusDistance = 90
+	dof.InFocusRadius = 220
 	dof.NearIntensity = 0
 	dof.Parent = Lighting
 
 	local rays = Instance.new("SunRaysEffect")
-	rays.Intensity = 0.11
-	rays.Spread = 0.55
+	rays.Intensity = 0.16
+	rays.Spread = 0.72
 	rays.Parent = Lighting
 
-	-- A captured sky, not a painted one: a Poly Haven CC0 HDRI reprojected into
-	-- six cube faces (tools/polyhaven_sky.py). Future lighting reads the skybox
-	-- for ambient and for the environment map, so this is not only what you see
-	-- overhead -- it is the colour sitting on every surface in the school.
+	-- A captured sky, GRADED until it is a painted one: a Poly Haven CC0 HDRI
+	-- (kloofendal 48d partly cloudy) reprojected into six cube faces and then
+	-- pushed through tools/polyhaven_sky.py --paint. The honest photograph was
+	-- pale, and pale is the one thing the reference skies are not: they are a
+	-- deep near-cyan blue with hard-edged cumulus piled on it. The grade is an
+	-- S-curve on value, a strong hue-preserving saturation lift, a cool tint on
+	-- the sky half, and an unsharp mask on luminance so the cloud edges harden
+	-- without the colours fringing.
+	--
+	-- This is not only what you see overhead. Future lighting reads the skybox
+	-- for ambient and for the environment map, so it is also the colour sitting
+	-- on every surface in the school.
 	local sky = Instance.new("Sky")
-	sky.SkyboxFt = "rbxassetid://120276557662327"
-	sky.SkyboxBk = "rbxassetid://93911848305148"
-	sky.SkyboxLf = "rbxassetid://77390308876893"
-	sky.SkyboxRt = "rbxassetid://115842450552163"
-	sky.SkyboxUp = "rbxassetid://85530750632071"
-	sky.SkyboxDn = "rbxassetid://98844884754635"
-	sky.SunAngularSize = 11
+	sky.SkyboxFt = "rbxassetid://135895560098567"
+	sky.SkyboxBk = "rbxassetid://120660575156931"
+	sky.SkyboxLf = "rbxassetid://73978198707631"
+	sky.SkyboxRt = "rbxassetid://128286468637605"
+	sky.SkyboxUp = "rbxassetid://129589306570732"
+	sky.SkyboxDn = "rbxassetid://87490931555372"
+	sky.SunAngularSize = 13
 	sky.Parent = Lighting
 
 	-- soft dynamic clouds drift in front of the painted ones
+	-- Big ones. The reference skies are half cumulus, piled up and bright
+	-- against a hard blue; at 0.18 cover and 0.12 density they were a haze you
+	-- had to look for.
 	local clouds = Instance.new("Clouds")
-	clouds.Cover = 0.18
-	clouds.Density = 0.12
-	clouds.Color = Color3.fromRGB(255, 252, 245)
+	clouds.Cover = 0.62
+	clouds.Density = 0.05
+	clouds.Color = Color3.fromRGB(255, 253, 248)
 	clouds.Parent = workspace.Terrain
 end
 

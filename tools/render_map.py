@@ -56,10 +56,22 @@ v2mt.__mul = function(a, b)
 end
 Vector2 = { new = function(x, y) return setmetatable({X=x or 0, Y=y or 0}, v2mt) end }
 
+local C3MT = {}
+C3MT.__index = function(c, k)
+  -- Color3:Lerp is how the tree canopies and the rock faces mix their two
+  -- tones, so the shim has to answer it or the map cannot be exported at all.
+  if k == "Lerp" then
+    return function(a, b, t)
+      return setmetatable({R=a.R+(b.R-a.R)*t, G=a.G+(b.G-a.G)*t, B=a.B+(b.B-a.B)*t}, C3MT)
+    end
+  end
+  return nil
+end
+local function c3(r, g, b) return setmetatable({R=r or 0, G=g or 0, B=b or 0}, C3MT) end
 Color3 = {
-  new = function(r, g, b) return {R=r or 0, G=g or 0, B=b or 0} end,
-  fromRGB = function(r, g, b) return {R=(r or 0)/255, G=(g or 0)/255, B=(b or 0)/255} end,
-  fromHSV = function(h, s, v) return {R=v, G=v, B=v} end,
+  new = c3,
+  fromRGB = function(r, g, b) return c3((r or 0)/255, (g or 0)/255, (b or 0)/255) end,
+  fromHSV = function(h, s, v) return c3(v, v, v) end,
 }
 
 UDim = { new = function(s, o) return {Scale=s, Offset=o} end }

@@ -897,25 +897,143 @@ local function _buildCafeteriaTables(parent: Instance, center: Vector3)
 	end
 end
 
+-- A stylised tree, in the manner of the painterly reference art: a leaning
+-- tapered trunk, two branch stubs, and a canopy built as a CLUSTER of faceted
+-- lobes rather than one ball.
+--
+-- The old one was a box and three spheres of nearly the same green. From ten
+-- studs it read as a lollipop, and a hundred and ninety lollipops around the
+-- horizon is what a placeholder looks like. What makes the reference canopies
+-- read is that they are lumpy and two-toned: a dark mass with a few lighter
+-- lobes catching the sun on the upper side. Same part budget, different shape.
+local CANOPY_DARK = Color3.fromRGB(46, 104, 48)
+local CANOPY_LIT = Color3.fromRGB(96, 168, 74)
+
 local function buildTree(parent: Instance, pos: Vector3, scale: number)
-	part({
+	-- a seed from the position, so the same tree comes out of every server
+	local rng = Random.new(math.floor(pos.X * 7 + pos.Z * 13))
+	local lean = CFrame.Angles(rng:NextNumber(-0.05, 0.05), rng:NextNumber(0, 6.28), rng:NextNumber(-0.05, 0.05))
+	local trunkH = 8 * scale
+
+	local trunk = part({
 		Name = "TreeTrunk",
-		Size = Vector3.new(1.8 * scale, 7 * scale, 1.8 * scale),
-		CFrame = CFrame.new(pos + Vector3.new(0, 3.5 * scale, 0)),
-		Color = Color3.fromRGB(105, 76, 48),
+		Size = Vector3.new(1.9 * scale, trunkH, 1.9 * scale),
+		CFrame = CFrame.new(pos + Vector3.new(0, trunkH / 2, 0)) * lean,
+		Color = Color3.fromRGB(96, 68, 44),
 		Material = Enum.Material.Wood,
 		Parent = parent,
 	})
-	for i, offset in { Vector3.new(0, 8 * scale, 0), Vector3.new(1.6 * scale, 6.6 * scale, 1.2 * scale), Vector3.new(-1.5 * scale, 6.9 * scale, -1 * scale) } do
+	-- a flare at the base, which is the whole difference between a trunk and a
+	-- pole where it meets the ground
+	part({
+		Name = "TreeRoot",
+		Size = Vector3.new(3.1 * scale, 1.4 * scale, 3.1 * scale),
+		CFrame = CFrame.new(pos + Vector3.new(0, 0.7 * scale, 0)),
+		Color = Color3.fromRGB(84, 60, 40),
+		Material = Enum.Material.Wood,
+		Parent = parent,
+	}).CanCollide = false
+	for _, side in { -1, 1 } do
+		part({
+			Name = "TreeBranch",
+			Size = Vector3.new(0.9 * scale, 3.4 * scale, 0.9 * scale),
+			CFrame = trunk.CFrame
+				* CFrame.new(side * 1.1 * scale, trunkH * 0.22, 0)
+				* CFrame.Angles(0, 0, math.rad(-side * 38)),
+			Color = Color3.fromRGB(96, 68, 44),
+			Material = Enum.Material.Wood,
+			Parent = parent,
+		}).CanCollide = false
+	end
+
+	-- the canopy: one wide dark mass, then lighter lobes above and around it
+	local lobes = {
+		{ r = 5.2, at = Vector3.new(0, 9.6, 0), lit = 0.15, flat = 0.72 },
+		{ r = 4.0, at = Vector3.new(2.6, 8.6, 1.7), lit = 0.0, flat = 0.85 },
+		{ r = 3.7, at = Vector3.new(-2.4, 8.9, -1.9), lit = 0.0, flat = 0.85 },
+		{ r = 3.9, at = Vector3.new(0.9, 11.6, -1.2), lit = 1.0, flat = 0.9 },
+		{ r = 3.2, at = Vector3.new(-1.8, 11.2, 1.5), lit = 0.7, flat = 0.9 },
+		{ r = 2.6, at = Vector3.new(0.2, 13.2, 0.4), lit = 1.0, flat = 0.95 },
+	}
+	for index, lobe in lobes do
+		local tint = CANOPY_DARK:Lerp(CANOPY_LIT, lobe.lit)
 		local leaves = part({
 			Name = "TreeLeaves",
-			Size = Vector3.one * (4.6 - i * 0.5) * scale,
-			CFrame = CFrame.new(pos + offset),
-			Color = Color3.fromRGB(88 + i * 10, 160 + i * 8, 78),
+			-- flattened, not spherical: a canopy is wider than it is tall, and
+			-- the flattening is what gives the silhouette its layers
+			Size = Vector3.new(lobe.r * 2, lobe.r * 2 * lobe.flat, lobe.r * 2) * scale,
+			CFrame = CFrame.new(pos + lobe.at * scale)
+				* CFrame.Angles(0, index * 0.9, 0),
+			Color = tint,
 			Material = Enum.Material.Grass,
 			Parent = parent,
 		})
 		leaves.Shape = Enum.PartType.Ball
+		leaves.CanCollide = false
+	end
+end
+
+-- ================= ROCK OUTCROPS =================
+-- The reference landscape is not grass and trees, it is grass and trees and
+-- BLOCKS OF STONE: flat-topped, hard-edged, cool blue-grey, standing in
+-- clusters with smaller boulders piled at their feet. They are what gives that
+-- art its scale and its silhouette, and the campus had none of it -- a treeline
+-- on a flat lawn and nothing else out to the wall.
+--
+-- Each outcrop is a few tall slabs turned to different angles, and a handful of
+-- boulders around the base. Hard edges on purpose: no spheres, no smoothing.
+local ROCK_PALE = Color3.fromRGB(178, 188, 202)
+local ROCK_DEEP = Color3.fromRGB(120, 134, 154)
+
+local function buildRockOutcrop(parent: Instance, pos: Vector3, scale: number, seed: number)
+	local rng = Random.new(seed)
+	local slabs = rng:NextInteger(2, 4)
+	for i = 1, slabs do
+		local h = rng:NextNumber(9, 22) * scale
+		local w = rng:NextNumber(6, 13) * scale
+		local d = rng:NextNumber(6, 12) * scale
+		local away = rng:NextNumber(0, math.pi * 2)
+		local out = rng:NextNumber(0, 7) * scale
+		local slab = part({
+			Name = "RockSlab",
+			Size = Vector3.new(w, h, d),
+			CFrame = CFrame.new(pos + Vector3.new(math.cos(away) * out, h / 2 - 1.5, math.sin(away) * out))
+				* CFrame.Angles(
+					math.rad(rng:NextNumber(-7, 7)),
+					rng:NextNumber(0, math.pi * 2),
+					math.rad(rng:NextNumber(-7, 7))
+				),
+			Color = ROCK_DEEP:Lerp(ROCK_PALE, rng:NextNumber(0.2, 1)),
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		})
+		-- a cap a shade paler, so the top face reads as catching the sky
+		part({
+			Name = "RockCap",
+			Size = Vector3.new(w * 0.86, 1.6 * scale, d * 0.86),
+			CFrame = slab.CFrame * CFrame.new(0, h / 2, 0),
+			Color = ROCK_PALE,
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	for i = 1, rng:NextInteger(2, 4) do
+		local r = rng:NextNumber(2.2, 4.6) * scale
+		local away = rng:NextNumber(0, math.pi * 2)
+		local out = rng:NextNumber(7, 13) * scale
+		part({
+			Name = "RockBoulder",
+			Size = Vector3.new(r * 2, r * 1.5, r * 1.8),
+			CFrame = CFrame.new(pos + Vector3.new(math.cos(away) * out, r * 0.55, math.sin(away) * out))
+				* CFrame.Angles(
+					math.rad(rng:NextNumber(-14, 14)),
+					rng:NextNumber(0, math.pi * 2),
+					math.rad(rng:NextNumber(-14, 14))
+				),
+			Color = ROCK_DEEP:Lerp(ROCK_PALE, rng:NextNumber(0, 0.7)),
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		})
 	end
 end
 
@@ -1566,6 +1684,46 @@ local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, numbe
 	end
 end
 
+-- The stone ridge the treeline stands in front of. Two rings: a far one out
+-- past the wall that closes the horizon in every direction you can look, and a
+-- near one of low outcrops inside the grounds, so the lawn has something in it
+-- other than lawn. Both skip the building footprints for the same reason the
+-- trees do.
+local function buildRocks(parent: Instance)
+	local rng = Random.new(511)
+	local function clear(pos: Vector3, pad: number): boolean
+		for _, rect in NO_TREES do
+			if pos.X > rect[1] - pad and pos.X < rect[3] + pad
+				and pos.Z > rect[2] - pad and pos.Z < rect[4] + pad then
+				return false
+			end
+		end
+		return true
+	end
+
+	-- the far ridge: big, out past the treeline, closing the horizon
+	for i = 1, 46 do
+		local angle = (i / 46) * math.pi * 2 + rng:NextNumber(-0.05, 0.05)
+		local dist = rng:NextNumber(316, 404)
+		local pos = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
+		if clear(pos, 26) then
+			buildRockOutcrop(parent, pos, rng:NextNumber(1.0, 2.1), 900 + i)
+		end
+	end
+	-- low outcrops on the lawns, well clear of anything anybody walks through
+	for _, spot in {
+		Vector3.new(-250, 0, 118), Vector3.new(250, 0, 118),
+		Vector3.new(-256, 0, -78), Vector3.new(256, 0, -78),
+		Vector3.new(-118, 0, 196), Vector3.new(118, 0, 196),
+		Vector3.new(-262, 0, -252), Vector3.new(262, 0, -252),
+		Vector3.new(0, 0, -300), Vector3.new(-92, 0, -296), Vector3.new(92, 0, -296),
+	} do
+		if clear(spot, 18) then
+			buildRockOutcrop(parent, spot, rng:NextNumber(0.6, 0.95), 700 + math.floor(spot.X))
+		end
+	end
+end
+
 local function buildPerimeter(parent: Instance)
 	for _, spec in {
 		{ size = Vector3.new(560, 6, 2), cf = CFrame.new(0, 3, -279) },
@@ -1590,10 +1748,18 @@ local function buildTerrain()
 	-- painterly terrain palette: warm grass, pale stone, so the horizon reads
 	-- as painted hills instead of default grey rock
 	pcall(function()
-		terrain:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(104, 158, 70))
-		terrain:SetMaterialColor(Enum.Material.Rock, Color3.fromRGB(150, 152, 148))
-		terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(140, 108, 72))
-		terrain:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(88, 146, 62))
+		-- Grass blades. This is the one property that separates the reference
+		-- landscape from ours: with Decoration off, terrain grass is a flat
+		-- green surface, and every stud of the campus that is not a building is
+		-- terrain grass. With it on the same surface grows the blades the
+		-- reference art is more than half made of, and it costs nothing to
+		-- author -- the engine renders it.
+		terrain.Decoration = true
+		terrain:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(116, 186, 72))
+		terrain:SetMaterialColor(Enum.Material.Rock, Color3.fromRGB(158, 168, 184))
+		terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(150, 116, 76))
+		terrain:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(92, 162, 60))
+		terrain:SetMaterialColor(Enum.Material.Water, Color3.fromRGB(38, 158, 200))
 	end)
 	-- 900, not 680. The old block stopped at x = 340, and the tennis stadium
 	-- runs to 390 and the pool to -400: both stood with one edge over the void,
@@ -5643,6 +5809,7 @@ end
 	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(130, 0, 192), 8)
 	buildFlagpole(folder)
 	buildTreeline(folder, buildTree)
+	buildRocks(folder)
 	for _, pos in {
 		Vector3.new(-58, 0, 136), Vector3.new(58, 0, 136),
 		Vector3.new(-92, 0, 136), Vector3.new(92, 0, 136),
