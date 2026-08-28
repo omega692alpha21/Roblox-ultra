@@ -41,3 +41,6 @@ jobs:
 
       - name: Wiring
         run: python3 tools/wiring_check.py
+
+      - name: Per-player state
+        run: python3 tools/leak_check.py

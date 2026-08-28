@@ -3082,16 +3082,23 @@ local UPPER_SLABS = {
 	{ 52, 81, 224, 124 },
 	-- the upper hall, straight across over the main hallway
 	{ -224, 49, 224, 81 },
-	-- west wing, around its stair well
-	{ -224, -64, -202, 49 },
-	{ -202, -64, -190, -22 },
-	{ -202, 6, -190, 49 },
-	{ -190, -64, -172, 49 },
+	-- West wing, around its stair well.
+	--
+	-- The well used to be cut at x -202..-190, z -22..6, which is where the
+	-- flight used to be before it was moved out of the principal's office to
+	-- x = -178. Nothing moved the hole with it, so the stairs climbed
+	-- straight into the underside of this slab -- an unclimbable flight and,
+	-- next to it, an unreachable hole. It is cut to the flight now:
+	-- 12 wide over x -184..-172, opening at z = 4 (where the treads first get
+	-- within head height of the deck) and ending at z = 17.6, the far edge of
+	-- the sixteenth tread, so you step off the top onto solid floor.
+	{ -224, -64, -184, 49 },
+	{ -184, -64, -172, 4 },
+	{ -184, 17.6, -172, 49 },
 	-- east wing, mirrored
-	{ 172, -64, 190, 49 },
-	{ 190, -64, 202, -22 },
-	{ 190, 6, 202, 49 },
-	{ 202, -64, 224, 49 },
+	{ 184, -64, 224, 49 },
+	{ 172, -64, 184, 4 },
+	{ 172, 17.6, 184, 49 },
 	-- north band, open over the gym
 	{ -224, -124, -50, -64 },
 	{ 50, -124, 224, -64 },
@@ -3109,6 +3116,10 @@ local UPPER_RAILS = {
 	{ -34, 118, 34, 118 },
 	{ -34, 88, -34, 118 },
 	{ 34, 88, 34, 118 },
+	{ -184, 4, -172, 4 }, -- the wing stair wells: the lip you walk up to
+	{ -184, 4, -184, 17.6 },
+	{ 172, 4, 184, 4 },
+	{ 184, 4, 184, 17.6 },
 }
 
 -- The rooms upstairs. The five timetabled subjects stay on the ground floor
@@ -4742,13 +4753,32 @@ end
 	part({ Name = "LobbyDeskTop", Size = Vector3.new(19.4, 0.4, 5), CFrame = CFrame.new(-30, 3.6, 92), Color = Color3.fromRGB(196, 158, 118), Material = Enum.Material.WoodPlanks, Parent = folder })
 	part({ Name = "LobbyDeskBack", Size = Vector3.new(18, 8, 0.8), CFrame = CFrame.new(-30, 4, 96), Color = Color3.fromRGB(150, 112, 82), Material = Enum.Material.WoodPlanks, Parent = folder })
 
-	-- trophy cases down the east wall
+	-- Trophy cases down the east wall.
+	--
+	-- The trophies used to stand at x = 45.6, which is the middle of the east
+	-- lobby staircase: buried inside the treads, and in the way of the climb.
+	-- The case is built as a case now -- back panel, two uprights, a shelf and
+	-- glass in front -- so there is somewhere for them to actually be.
 	for i = 0, 2 do
 		local cz = 86 + i * 13
-		part({ Name = "LobbyCaseFrame", Size = Vector3.new(1.6, 11, 11), CFrame = CFrame.new(58.6, 5.5, cz), Color = Color3.fromRGB(96, 68, 48), Material = Enum.Material.WoodPlanks, Parent = folder })
-		part({ Name = "LobbyCaseGlass", Size = Vector3.new(0.5, 9, 9.4), CFrame = CFrame.new(57.7, 5.6, cz), Color = Color3.fromRGB(186, 214, 226), Material = Enum.Material.Glass, Transparency = 0.55, Parent = folder })
+		part({ Name = "LobbyCaseFrame", Size = Vector3.new(0.8, 11, 11), CFrame = CFrame.new(59.0, 5.5, cz), Color = Color3.fromRGB(96, 68, 48), Material = Enum.Material.WoodPlanks, Parent = folder })
+		for _, side in { -1, 1 } do
+			part({ Name = "LobbyCasePost", Size = Vector3.new(2.2, 11, 0.8), CFrame = CFrame.new(57.9, 5.5, cz + side * 5.1), Color = Color3.fromRGB(96, 68, 48), Material = Enum.Material.WoodPlanks, Parent = folder })
+		end
+		part({ Name = "LobbyCaseShelf", Size = Vector3.new(2.2, 0.4, 10.2), CFrame = CFrame.new(57.9, 5.4, cz), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = folder })
+		part({ Name = "LobbyCaseGlass", Size = Vector3.new(0.4, 9, 9.4), CFrame = CFrame.new(57.0, 5.6, cz), Color = Color3.fromRGB(186, 214, 226), Material = Enum.Material.Glass, Transparency = 0.55, Parent = folder })
 		for j = 0, 1 do
-			part({ Name = "LobbyTrophy", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2.4, 1.5, 1.5), CFrame = CFrame.new(45.6, 3 + j * 4, cz - 2.6 + j * 5) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(226, 186, 92), Material = Enum.Material.Metal, Parent = folder })
+			part({
+				Name = "LobbyTrophy",
+				Shape = Enum.PartType.Cylinder,
+				Size = Vector3.new(2.4, 1.5, 1.5),
+				-- inside the case: behind the glass at x = 57.2, in front of
+				-- the back panel at x = 58.6, one trophy per shelf
+				CFrame = CFrame.new(57.9, 3 + j * 4.4, cz - 2.6 + j * 5) * CFrame.Angles(0, 0, math.rad(90)),
+				Color = Color3.fromRGB(226, 186, 92),
+				Material = Enum.Material.Metal,
+				Parent = folder,
+			})
 		end
 	end
 

@@ -2,6 +2,7 @@
 -- Grades (rebirth): pay the cost, lose cash + crew, gain a permanent multiplier,
 -- an extra desk, and longer locks.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
@@ -22,7 +23,14 @@ function RebirthService.Init()
 		if debounce[player] then
 			return
 		end
+		-- released on a timer rather than after the work: an error anywhere
+		-- below used to leave the flag set forever, which locked that player
+		-- out of graduating for the rest of the session and held a reference
+		-- to them after they left
 		debounce[player] = true
+		task.delay(0.5, function()
+			debounce[player] = nil
+		end)
 		local profile = DataService.Get(player)
 		if profile then
 			local cost = Rebirths.CostFor(profile.grade + 1)
@@ -49,7 +57,9 @@ function RebirthService.Init()
 				)
 			end
 		end
-		task.wait(0.5)
+	end)
+
+	Players.PlayerRemoving:Connect(function(player)
 		debounce[player] = nil
 	end)
 end

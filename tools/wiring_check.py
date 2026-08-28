@@ -80,6 +80,31 @@ def main():
         elif not receivers:
             bad.append(f"remote {name}: fired from {'/'.join(sorted(senders))} but nothing listens")
 
+    # --- every module that should be started, is ---
+    # Libraries other services require rather than boot in their own right.
+    LIBRARIES = {"ClassGames", "SanctumMap", "StudentGen"}
+    # Booted by name before the named list, in a fixed order the map needs.
+    EARLY = {"DataService", "MapService", "PlotService", "EconomyService"}
+    services = {n[:-5] for n in os.listdir(os.path.join(ROOT, "ServerScriptService", "Services"))
+                if n.endswith(".luau")}
+    boot = open(os.path.join(ROOT, "ServerScriptService", "Server.server.luau")).read()
+    booted = set(re.findall(r'name = "([A-Za-z0-9_]+)"', boot)) | EARLY
+    for name in sorted(services - booted - LIBRARIES):
+        bad.append(f"service {name}: exists but is never started")
+    for name in sorted(booted - services - EARLY):
+        bad.append(f"service {name}: started but has no module")
+
+    controllers_dir = os.path.join(ROOT, "StarterPlayer", "StarterPlayerScripts", "Controllers")
+    controllers = {n[:-5] for n in os.listdir(controllers_dir) if n.endswith(".luau")}
+    client = open(os.path.join(ROOT, "StarterPlayer", "StarterPlayerScripts", "Client.client.luau")).read()
+    ordered = set(re.findall(r'^\t"([A-Za-z0-9_]+)",', client, re.M))
+    # Layout and UIBuilder are required directly; Diagnostics reports on the rest
+    CLIENT_LIBRARIES = {"Layout", "UIBuilder", "Diagnostics"}
+    for name in sorted(controllers - ordered - CLIENT_LIBRARIES):
+        bad.append(f"controller {name}: exists but is never in the boot order")
+    for name in sorted(ordered - controllers):
+        bad.append(f"controller {name}: in the boot order but has no module")
+
     declared_signals = set(re.findall(r'^\t([A-Za-z0-9_]+) = ', open(
         os.path.join(ROOT, "ServerScriptService", "Signals.luau")).read(), re.M))
     for name in sorted(declared_signals):
@@ -92,7 +117,8 @@ def main():
 
     for line in bad:
         print("  " + line)
-    print(f"{len(declared_events | declared_funcs)} remotes, {len(declared_signals)} signals — "
+    print(f"{len(declared_events | declared_funcs)} remotes, {len(declared_signals)} signals, "
+          f"{len(services)} services, {len(controllers)} controllers — "
           + (f"{len(bad)} orphaned" if bad else "everything is wired at both ends"))
     return 1 if bad else 0
 

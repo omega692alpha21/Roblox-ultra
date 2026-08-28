@@ -16,6 +16,7 @@ questions of the exported part dump:
     python3 tools/render_map.py .            # regenerates the dump
     python3 tools/world_audit.py <dump>
 """
+import math
 import json, math, os, re, sys
 
 DUMP = sys.argv[1] if len(sys.argv) > 1 else "_map_export.json"
@@ -26,10 +27,28 @@ solids = [p for p in parts if p.get("cc")]
 
 
 def local(part, point):
-    """The point in the part's own frame, so rotated parts are handled."""
+    """The point in the part's own frame, so rotated parts are handled.
+
+    The export writes the rotation row-major as R, where a local offset maps
+    to the world as R * v. Going the other way is R-transpose, so the local
+    coordinate along axis `col` is column `col` dotted with the delta. This
+    used to dot the ROWS, which is the inverse rotation applied backwards: for
+    anything turned 90 degrees the axes came out swapped, and a trophy case
+    forty studs away could read as the floor under your feet.
+    """
     r = part["r"]
     d = [point[i] - part["p"][i] for i in range(3)]
-    return [sum(r[row * 3 + i] * d[i] for i in range(3)) for row in range(3)]
+    return [sum(r[row * 3 + col] * d[row] for row in range(3)) for col in range(3)]
+
+
+def aabb(part):
+    """World-space bounding box: half-extents of a rotated box on each axis."""
+    r, s = part["r"], part["s"]
+    half = [
+        0.5 * sum(abs(r[row * 3 + col]) * s[col] for col in range(3))
+        for row in range(3)
+    ]
+    return [(part["p"][i] - half[i], part["p"][i] + half[i]) for i in range(3)]
 
 
 def inside(part, point, pad=0.0):
@@ -52,11 +71,12 @@ def floor_under(point, reach=7.0):
             and point[1] + 1.5 >= TERRAIN_TOP >= point[1] - reach):
         best = (TERRAIN_TOP, "terrain")
     for part in solids:
-        q = local(part, point)
-        s = part["s"]
-        if abs(q[0]) > s[0] / 2 or abs(q[2]) > s[2] / 2:
+        # a floor is whatever you would land on, so this is the world box --
+        # local half-sizes say nothing useful about a part stood on its end
+        box = aabb(part)
+        if not (box[0][0] <= point[0] <= box[0][1] and box[2][0] <= point[2] <= box[2][1]):
             continue
-        top = part["p"][1] + s[1] / 2  # axis-aligned enough for floors
+        top = box[1][1]
         if point[1] + 1.5 >= top >= point[1] - reach:
             if best is None or top > best[0]:
                 best = (top, part["n"])
@@ -64,10 +84,10 @@ def floor_under(point, reach=7.0):
 
 
 def headroom(point, need=5.0):
+    probe = [point[0], point[1] + need / 2 + 1.0, point[2]]
     for part in solids:
-        q = local(part, [point[0], point[1] + need / 2 + 1.0, point[2]])
-        s = part["s"]
-        if all(abs(q[i]) <= s[i] / 2 for i in range(3)):
+        box = aabb(part)
+        if all(box[i][0] <= probe[i] <= box[i][1] for i in range(3)):
             return part["n"]
     return None
 
@@ -138,7 +158,7 @@ def collect():
         ("dorm west", -176, 0, -212),
         ("dorm east", 176, 0, -212),
         ("tennis court", 340, 0, -20),
-        ("pool deck", -340, 0, 10),
+        ("pool deck", -340, 0, -20),
         ("clique board row", -158, 0, -44),
     ]:
         spots.append((name, [x, y, z]))
@@ -147,6 +167,72 @@ def collect():
         spots.append((f"homeroom south {i + 1}", [x, 0, 103]))
         spots.append((f"homeroom north {i + 1}", [x, 0, -94]))
     return spots
+
+
+# Routes a player actually walks, sampled end to end. The "can't go upstairs"
+# glitch was a 0.2-stud gap between the deck and the roof slabs -- invisible to
+# a handful of spot checks, obvious the moment you sample the whole corridor.
+WALKS = [
+    # Corridor centrelines, not arbitrary lines: each one is the middle of a
+    # floor slab that exists, so anything this reports is a real obstruction.
+    ("main hallway", (-215, 0, 65), (215, 0, 65)),
+    ("upper corridor", (-215, 16, 65), (215, 16, 65)),
+    ("upper west wing", (-213, 16, -60), (-213, 16, 45)),
+    ("upper east wing", (213, 16, -60), (213, 16, 45)),
+    ("lobby to atrium", (0, 0, 118), (0, 0, 20)),
+    ("atrium to gym", (0, 0, 20), (0, 0, -98)),
+    ("gym to library path", (0, 0, -152), (0, 0, -186)),
+    ("library colonnade", (9, 0, -186), (9, 0, -204)),
+    # The stairs, sampled as ramps. This is the check that would have caught
+    # the gap between the upper deck and the roof slabs the first time.
+    ("lobby stair W", (-46, 0.5, 114), (-46, 16, 88)),
+    ("lobby stair E", (46, 0.5, 114), (46, 16, 88)),
+    ("wing stair W", (-178, 0.5, -9), (-178, 16, 17)),
+    ("wing stair E", (178, 0.5, -9), (178, 16, 17)),
+]
+
+STEP = 4.0        # sample spacing, studs
+MAX_RISE = 3.0    # a Humanoid steps 2.0 by default; 3 is generous
+
+
+def walk_routes():
+    """Sample every route end to end and report holes, steps and low ceilings.
+
+    A route is a line, and a staircase is not: sampling every four studs the
+    straight line lags the treads by up to a couple of studs either way. So
+    each sample looks for the floor in a window around its nominal height and
+    then STANDS ON IT before the clearance checks, which is what a player
+    does. Without that every flight reads as a hole and a wall of its own
+    treads, and the real problems are lost in the noise.
+    """
+    problems = []
+    for name, a, b in WALKS:
+        span = math.dist(a, b)
+        steps = max(2, int(span / STEP) + 1)
+        previous = None
+        for i in range(steps):
+            t = i / (steps - 1)
+            point = [a[j] + (b[j] - a[j]) * t for j in range(3)]
+            under = floor_under([point[0], point[1] + 3.0, point[2]], reach=12.0)
+            if under is None:
+                problems.append((name, point, "no floor"))
+                previous = None
+                continue
+            point[1] = under[0] + 0.5
+            for part in solids:
+                if inside(part, point, pad=-0.2):
+                    problems.append((name, point, "inside " + part["n"]))
+                    break
+            blocked = headroom(point)
+            if blocked:
+                problems.append((name, point, "no headroom: " + blocked))
+            if previous is not None and abs(under[0] - previous) > MAX_RISE:
+                problems.append((
+                    name, point,
+                    f"{abs(under[0] - previous):.1f}-stud step onto {under[1]}",
+                ))
+            previous = under[0]
+    return problems
 
 
 def main():
@@ -169,7 +255,20 @@ def main():
             bad += 1
             print(f"  {name:26s} {[round(v, 1) for v in point]}  {'; '.join(problems)}")
 
-    print(f"{'FAIL' if bad else 'PASS'} - {bad} bad spots")
+    walked = walk_routes()
+    # one line per route rather than per sample: a broken slab trips fifty
+    # consecutive samples and the list stops being readable
+    seen = set()
+    for name, point, why in walked:
+        key = (name, why.split(" onto ")[0])
+        if key in seen:
+            continue
+        seen.add(key)
+        bad += 1
+        print(f"  {name:26s} {[round(v, 1) for v in point]}  {why}")
+
+    print(f"{'FAIL' if bad else 'PASS'} - {bad} bad spots "
+          f"({len(WALKS)} routes walked at {STEP:.0f}-stud spacing)")
     return 1 if bad else 0
 
 
