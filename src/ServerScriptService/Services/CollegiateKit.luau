@@ -197,4 +197,97 @@ function CollegiateKit.pinnacle(ctx: Ctx, o: { x: number, z: number, base: numbe
 	CollegiateKit.spire(ctx, { x = o.x, z = o.z, base = o.base + 1.2 + h * 0.55 + 0.7, width = 3.0, height = h * 0.42, colour = CollegiateKit.ASHLAR })
 end
 
+-- ---------------------------------------------------------------------------
+-- POINTED ARCH
+-- ---------------------------------------------------------------------------
+-- A real two-centred gothic arch, cut into voussoirs, because the alternative
+-- everywhere in this repo so far has been a rectangle with a triangle on top.
+--
+-- Each half is a circular arc springing horizontally and meeting its twin at a
+-- point. For a span S and a rise R the centre sits c = (R^2 - S^2/4) / S to the
+-- FAR side of the springing, which gives radius S/2 + c and puts the apex
+-- exactly on both arcs. Set c to zero and you get a semicircle -- a Roman arch,
+-- the wrong century.
+function CollegiateKit.pointedArch(ctx: Ctx, o: { x: number, y: number, z: number, span: number, rise: number, depth: number, ring: number?, segments: number?, colour: Color3?, tagName: string? })
+	local ring = o.ring or 2.2
+	local n = o.segments or 9
+	local colour = o.colour or CollegiateKit.ASHLAR
+	local tagName = o.tagName or "TexAshlar"
+	local halfSpan = o.span / 2
+	local c = (o.rise * o.rise - halfSpan * halfSpan) / o.span
+	local radius = halfSpan + c
+	local sweep = math.atan2(o.rise, c)
+
+	for _, side in { -1, 1 } do
+		local cx = o.x - side * c
+		for i = 0, n - 1 do
+			local a0 = sweep * (i / n)
+			local a1 = sweep * ((i + 1) / n)
+			local mid = (a0 + a1) / 2
+			local segLen = radius * (a1 - a0) * 1.08
+			local px = cx + side * radius * math.cos(mid)
+			local py = o.y + radius * math.sin(mid)
+			local block = ctx.part({
+				Name = "ArchVoussoir",
+				Size = Vector3.new(ring, segLen, o.depth),
+				CFrame = CFrame.new(px, py, o.z) * CFrame.Angles(0, 0, side * mid),
+				Color = colour,
+				Material = Enum.Material.Concrete,
+				Parent = ctx.parent,
+			})
+			block.CanCollide = false
+			ctx.tag(block, tagName)
+		end
+	end
+	-- the springer each side and the apex block, which are the pieces that make
+	-- an arch look built rather than drawn
+	for _, side in { -1, 1 } do
+		ctx.tag(ctx.part({ Name = "ArchSpringer", Size = Vector3.new(ring + 1.4, 1.6, o.depth + 0.6), CFrame = CFrame.new(o.x + side * halfSpan, o.y - 0.4, o.z), Color = colour, Material = Enum.Material.Concrete, Parent = ctx.parent }), tagName).CanCollide = false
+	end
+	ctx.tag(ctx.part({ Name = "ArchApex", Size = Vector3.new(2.6, 3.0, o.depth + 0.6), CFrame = CFrame.new(o.x, o.y + o.rise + 0.6, o.z), Color = colour, Material = Enum.Material.Concrete, Parent = ctx.parent }), tagName).CanCollide = false
+end
+
+-- ---------------------------------------------------------------------------
+-- BUTTRESS
+-- ---------------------------------------------------------------------------
+-- A stepped pier standing off a wall, narrowing at each set-off and finished
+-- with a weathering slope. This is what carries a gothic elevation; round
+-- classical columns say a different building entirely.
+function CollegiateKit.buttress(ctx: Ctx, o: { x: number, z: number, base: number, height: number, width: number?, depth: number?, stages: number? })
+	local w = o.width or 6
+	local d = o.depth or 7
+	local stages = o.stages or 3
+	local each = o.height / stages
+	for i = 0, stages - 1 do
+		local shrink = i * 0.9
+		ctx.tag(ctx.part({
+			Name = "ButtressStage",
+			Size = Vector3.new(w - shrink, each, d - shrink),
+			CFrame = CFrame.new(o.x, o.base + each * (i + 0.5), o.z),
+			Color = CollegiateKit.STONE,
+			Material = Enum.Material.Slate,
+			Parent = ctx.parent,
+		}), "TexCoursedStone")
+		ctx.tag(ctx.part({
+			Name = "ButtressSetOff",
+			Size = Vector3.new(w - shrink + 1.0, 0.8, d - shrink + 1.0),
+			CFrame = CFrame.new(o.x, o.base + each * (i + 1) - 0.4, o.z),
+			Color = CollegiateKit.ASHLAR,
+			Material = Enum.Material.Concrete,
+			Parent = ctx.parent,
+		}), "TexAshlar").CanCollide = false
+	end
+	-- the weathering: a wedge shedding water back to the wall
+	local cap = Instance.new("WedgePart")
+	cap.Name = "ButtressWeathering"
+	cap.Anchored = true
+	cap.CanCollide = false
+	cap.Size = Vector3.new(w - (stages - 1) * 0.9 + 1.0, 3.4, d - (stages - 1) * 0.9 + 1.0)
+	cap.CFrame = CFrame.new(o.x, o.base + o.height + 1.7, o.z) * CFrame.Angles(0, math.rad(180), 0)
+	cap.Color = CollegiateKit.ASHLAR
+	cap.Material = Enum.Material.Concrete
+	cap.Parent = ctx.parent
+	ctx.tag(cap, "TexAshlar")
+end
+
 return CollegiateKit

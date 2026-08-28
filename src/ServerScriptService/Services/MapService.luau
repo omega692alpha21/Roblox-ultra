@@ -2918,16 +2918,21 @@ local function furnishProps()
 		{ -110, 130 }, { -100, 143 }, { 100, 143 }, { 110, 130 },
 		{ -130, 96 }, { 130, 96 }, { -150, 40 }, { 150, 40 },
 	})
+	-- The inner pair moved out from x +-36 to +-42: the entrance bay now has a
+	-- buttress standing at +-31 that runs out to x = 35, and they were planted
+	-- a stud inside it.
 	row("Flowers", 0, 0, {
-		{ -52, 132 }, { -36, 132 }, { 36, 132 }, { 52, 132 },
+		{ -48, 142 }, { -42, 138 }, { 42, 138 }, { 48, 142 },
 		{ -120, 112 }, { 120, 112 },
 	})
 	row("SecurityLight", 9, 0, { { -62, 126.5 }, { 62, 126.5 } })
-	row("IndustrialLamp", 9, 180, { { -30, 126.5 }, { 30, 126.5 } })
+	-- The industrial lamps that used to hang here at x +-30 are gone: the
+	-- entrance now carries a pair of scanned wall lanterns either side of
+	-- the arch, and these stood inside the new buttresses.
 	-- clear of both the court lamp posts at (+-30, 132) and the planter
 	-- boxes at (+-44, 138)
-	prop("Bin", CFrame.new(-38, 0, 128))
-	prop("Bin", CFrame.new(38, 0, 128))
+	prop("Bin", CFrame.new(-48, 0, 128))
+	prop("Bin", CFrame.new(48, 0, 128))
 
 	-- ---------------- second dressing pass ----------------
 	-- the pieces that turn a furnished room into an inhabited one
@@ -3383,33 +3388,68 @@ local function buildGrandFacade(parent: Instance)
 	end
 
 	trimBand(0, 46.4, Z + 5, 60, 16, 2.2)
-	-- pediment over the bay
-	local ped = Instance.new("WedgePart")
-	ped.Name = "Pediment"
-	ped.Anchored = true
-	ped.Size = Vector3.new(56, 8, 7)
-	ped.CFrame = CFrame.new(0, 51.6, Z + 8.5) * CFrame.Angles(0, 0, 0)
-	ped.Color = TRIM
-	ped.Material = Enum.Material.Concrete
-	ped.Parent = parent
-	local ped2 = Instance.new("WedgePart")
-	ped2.Name = "Pediment"
-	ped2.Anchored = true
-	ped2.Size = Vector3.new(56, 8, 7)
-	ped2.CFrame = CFrame.new(0, 51.6, Z + 1.5) * CFrame.Angles(0, math.rad(180), 0)
-	ped2.Color = TRIM
-	ped2.Material = Enum.Material.Concrete
-	ped2.Parent = parent
 
-	-- portico columns
-	for i = -2, 2 do
-		if i ~= 0 then
-			part({ Name = "PorticoColumn", Shape = Enum.PartType.Cylinder, Size = Vector3.new(34, 3.4, 3.4), CFrame = CFrame.new(i * 11, 17, Z + 13) * CFrame.Angles(0, 0, math.rad(90)), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
-			part({ Name = "ColumnCap", Size = Vector3.new(4.6, 1.2, 4.6), CFrame = CFrame.new(i * 11, 34.3, Z + 13), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
-			part({ Name = "ColumnBase", Size = Vector3.new(4.6, 1.2, 4.6), CFrame = CFrame.new(i * 11, 0.6, Z + 13), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
-		end
+	-- ---- the entrance, in the right century ----
+	-- What stood here was four round columns under a flat roof with a
+	-- triangular pediment on it: Greek Revival, from a different building and a
+	-- different two thousand years. The reference entrance is a projecting
+	-- gabled bay with a pointed stone arch over timber doors, buttresses either
+	-- side, lanterns on the wall and a name board over the head.
+	--
+	-- Every number below is measured off what is already standing rather than
+	-- guessed from the facade line, because the first attempt at this put the
+	-- arch at z = 121 -- INSIDE the bay, behind fourteen studs of solid header,
+	-- where nobody would ever see it. The bay runs z 122 to 136; its front face
+	-- is 136. The opening between the piers is x +-13 with its head at y = 20.
+	local kit = kitFor(parent)
+	local FACE = 136.0
+	local OPENING = 26.0
+
+	Kit.pointedArch(kit, { x = 0, y = 19.4, z = FACE - 1.2, span = OPENING, rise = 19, depth = 3.8, ring = 2.8, segments = 10 })
+	-- a recessed panel inside the arch, so the head reads as depth rather than
+	-- as an outline drawn on a flat wall
+	tag(part({ Name = "ArchTympanum", Size = Vector3.new(OPENING - 5.5, 15, 1.0), CFrame = CFrame.new(0, 27.5, FACE - 0.2), Color = Color3.fromRGB(111, 103, 92), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone").CanCollide = false
+	for _, side in { -1, 1 } do
+		local glow = part({ Name = "ArchOculusGlass", Size = Vector3.new(5.0, 5.0, 0.5), CFrame = CFrame.new(side * 6, 28.5, FACE + 0.5), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Parent = parent })
+		glow.CanCollide = false
+		glow.CastShadow = false
 	end
-	part({ Name = "PorticoRoof", Size = Vector3.new(78, 2.6, 18), CFrame = CFrame.new(0, 34.6, Z + 12), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	tag(part({ Name = "ArchMullion", Size = Vector3.new(0.8, 15, 1.2), CFrame = CFrame.new(0, 27.5, FACE + 0.3), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }), "TexAshlar").CanCollide = false
+
+	-- buttresses at the bay's own corners, standing on the bay, not in front of
+	-- it: the bay is x -28..28 and z 122..136, so they centre at x +-31, z 129
+	for _, side in { -1, 1 } do
+		Kit.buttress(kit, { x = side * 31, z = 129, base = 0, height = 42, width = 8, depth = 9, stages = 3 })
+		Kit.pinnacle(kit, { x = side * 31, z = 129, base = 45.4, height = 14 })
+	end
+
+	-- a steep gable over the bay instead of a classical pediment. The header
+	-- tops out at 46, so the eaves sit just above it and the ridge runs across
+	-- the bay's depth.
+	Kit.gableRoof(kit, { x = 0, z = 129, width = 62, depth = 18, eaves = 47.0, rise = 19 })
+	tag(part({ Name = "BayGableWall", Size = Vector3.new(60, 17, 1.6), CFrame = CFrame.new(0, 55.5, FACE + 0.4), Color = Color3.fromRGB(138, 128, 114), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone").CanCollide = false
+
+	-- the name board on the face, between the arch head and the eaves
+	local board = part({ Name = "AcademyNameBoard", Size = Vector3.new(34, 6.0, 0.9), CFrame = CFrame.new(0, 42.0, FACE + 0.5), Color = Color3.fromRGB(22, 35, 63), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	-- Back, not Front: NormalId.Front is the -Z face, and this board sits on
+	-- the +Z side of the building, so Front would read straight into the
+	-- header behind it.
+	signText(board, "DETENTION ACADEMY", Color3.fromRGB(217, 180, 92), Enum.NormalId.Back)
+	tag(part({ Name = "NameBoardFrame", Size = Vector3.new(35.8, 7.6, 0.5), CFrame = CFrame.new(0, 42.0, FACE + 0.1), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+
+	-- wall lanterns either side of the doors -- a scanned one, not a glowing box
+	for _, side in { -1, 1 } do
+		prop("WallLantern", CFrame.new(side * 17.5, 13.5, FACE + 1.9))
+		local glow = part({ Name = "PorchGlow", Size = Vector3.new(1.1, 1.1, 1.1), CFrame = CFrame.new(side * 17.5, 13.5, FACE + 1.9), Color = Color3.fromRGB(255, 220, 160), Material = Enum.Material.Neon, Transparency = 0.4, Parent = parent })
+		glow.CanCollide = false
+		glow.CastShadow = false
+		local lamp = Instance.new("PointLight")
+		lamp.Color = Color3.fromRGB(255, 220, 160)
+		lamp.Brightness = 1.1
+		lamp.Range = 26
+		lamp.Shadows = false
+		lamp.Parent = glow
+	end
 
 	-- grand steps
 	for i = 0, 4 do
@@ -3419,6 +3459,31 @@ local function buildGrandFacade(parent: Instance)
 	-- clock tower rising behind the portico
 	local towerZ = Z - 6
 	tag(part({ Name = "ClockTower", Size = Vector3.new(24, 54, 24), CFrame = CFrame.new(0, 44, towerZ), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexCoursedStone")
+	-- The shaft was 54 studs of blank stone -- the largest unbroken surface in
+	-- the whole school, standing where the eye goes first. A tower is
+	-- articulated: pilasters up the corners, string courses dividing it into
+	-- stages, and a tall lit lancet on each face of each stage.
+	for _, corner in { Vector3.new(-11, 0, -11), Vector3.new(11, 0, -11), Vector3.new(-11, 0, 11), Vector3.new(11, 0, 11) } do
+		tag(part({ Name = "TowerPilaster", Size = Vector3.new(4.4, 54, 4.4), CFrame = CFrame.new(corner.X, 44, towerZ + corner.Z), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
+	for _, stage in { 31, 48, 64 } do
+		tag(part({ Name = "TowerStringCourse", Size = Vector3.new(25.6, 1.2, 25.6), CFrame = CFrame.new(0, stage, towerZ), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
+	for _, face in {
+		{ dx = 0, dz = 12.2, ax = 1 },
+		{ dx = 0, dz = -12.2, ax = 1 },
+		{ dx = 12.2, dz = 0, ax = 0 },
+		{ dx = -12.2, dz = 0, ax = 0 },
+	} do
+		for _, mid in { 39.5, 56 } do
+			local w = if face.ax == 1 then Vector3.new(5.6, 13, 0.9) else Vector3.new(0.9, 13, 5.6)
+			local reveal = if face.ax == 1 then Vector3.new(8.0, 15.4, 0.7) else Vector3.new(0.7, 15.4, 8.0)
+			tag(part({ Name = "TowerLancetSurround", Size = reveal, CFrame = CFrame.new(face.dx * 1.02, mid, towerZ + face.dz * 1.02), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+			local pane = part({ Name = "TowerLancetGlass", Size = w, CFrame = CFrame.new(face.dx * 1.06, mid, towerZ + face.dz * 1.06), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Parent = parent })
+			pane.CanCollide = false
+			pane.CastShadow = false
+		end
+	end
 	trimBand(0, 71.6, towerZ, 26, 26, 2.0)
 	part({ Name = "TowerClockBlock", Size = Vector3.new(25, 15, 25), CFrame = CFrame.new(0, 80, towerZ), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	trimBand(0, 88.2, towerZ, 27.5, 27.5, 2.0)
@@ -3637,7 +3702,9 @@ local function buildGreatCourt(parent: Instance)
 
 	-- ---- lamps: at every junction, down both flanks ----
 	for _, at in {
-		{ -30, -34 }, { 30, -34 }, { -30, 34 }, { 30, 34 },
+		-- the inner pair moved out from x +-30: the entrance bay's buttresses
+		-- now stand at +-31 and these were planted inside them
+		{ -46, -34 }, { 46, -34 }, { -30, 34 }, { 30, 34 },
 		{ -78, -34 }, { 78, -34 }, { -78, 34 }, { 78, 34 },
 		{ -114, -20 }, { 114, -20 }, { -114, 20 }, { 114, 20 },
 		{ -78, 0 }, { 78, 0 }, { -132, 0 }, { 132, 0 },
