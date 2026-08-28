@@ -7,8 +7,14 @@
 -- characters and is told yes or no, so there is nothing to read out of the
 -- place file or off the wire.
 --
--- Opening it swings the shelf aside for a few seconds and then closes it
--- again, so the passage is not left standing open behind you.
+-- Opening it swings the shelf aside and then closes it again, so the passage
+-- is not left standing open behind you -- but it will not close ON you, and it
+-- will not close while you are still walking towards it. Eight seconds and a
+-- blind re-collide is what "the door opens with the code but it is blocked, I
+-- cannot get in" turns out to be: you type four digits on a phone, the keypad
+-- dismisses, you take two steps, and an anchored fourteen-stud shelf becomes
+-- solid again in the doorway you are standing in and shoves you back into the
+-- reading room.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -22,7 +28,11 @@ local Signals = require(script.Parent.Parent.Signals)
 local SanctumService = {}
 
 local PIN = "0713"
-local OPEN_SECONDS = 8
+-- Long enough to type a code on a phone, put the keypad away, and walk ten
+-- studs. It was eight, which is not.
+local OPEN_SECONDS = 30
+-- and it will not shut while somebody is standing this close to the doorway
+local DOORWAY_RADIUS = 16
 
 -- Two doors now: the headmaster's, in his office at the top of the staff
 -- lodge, and the library's, behind the stacks on its west wall. Both open on
@@ -33,17 +43,44 @@ local doors: { Door } = {}
 local attempts: { [Player]: number } = {}
 -- which shelf they pulled, so the code opens that one and not the other
 local pendingDoor: { [Player]: Door } = {}
+-- who has already entered the code this session
+local knowsCode: { [Player]: boolean } = {}
 
 local function isPrincipal(player: Player): boolean
 	return player.UserId == GameConfig.OwnerUserId
 end
 
+-- Is anybody standing in the doorway, or close enough to be walking into it?
+local function occupied(door: Door): boolean
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root and (root.Position - door.home.Position).Magnitude < DOORWAY_RADIUS then
+			return true
+		end
+	end
+	return false
+end
+
 local function close(door: Door)
+	-- Somebody is in it. Wait rather than shutting a fourteen-stud slab of oak
+	-- through them: an anchored part that becomes solid inside a character does
+	-- not push the part, it pushes the player, and the player is standing in
+	-- the doorway precisely because they are trying to use it.
+	if occupied(door) then
+		door.openUntil = os.clock() + 6
+		task.delay(6, function()
+			if door.openUntil <= os.clock() then
+				close(door)
+			end
+		end)
+		return
+	end
 	TweenService:Create(door.shelf, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
 		CFrame = door.home,
 	}):Play()
 	task.delay(0.85, function()
-		if door.openUntil <= os.clock() then
+		if door.openUntil <= os.clock() and not occupied(door) then
 			door.shelf.CanCollide = true
 		end
 	end)
@@ -152,6 +189,9 @@ function SanctumService.Init(map: { secretDoors: { BasePart }? })
 		prompt.RequiresLineOfSight = false
 		prompt.Parent = shelf
 
+		-- The prompt has to keep working while the door stands open, or a
+		-- player who mistimed the walk is locked out for the whole cooldown
+		-- staring at an open doorway.
 		prompt.Triggered:Connect(function(player)
 			-- everyone who pulls a book has found the door, which is the last
 			-- objective of the story's final chapter. Only the principal gets
@@ -161,7 +201,7 @@ function SanctumService.Init(map: { secretDoors: { BasePart }? })
 				Remotes.Get("Notify"):FireClient(player, "Dust, and a copy of the school rules. Nothing else.", "info")
 				return
 			end
-			if door.openUntil > os.clock() then
+			if door.openUntil > os.clock() or knowsCode[player] then
 				open(player, door)
 				return
 			end
@@ -182,6 +222,9 @@ function SanctumService.Init(map: { secretDoors: { BasePart }? })
 		attempts[player] = now
 		local door = pendingDoor[player]
 		if code == PIN and door then
+			-- they know the code; remember it, so from here on the shelf opens
+			-- on the prompt alone and a mistimed walk costs one tap
+			knowsCode[player] = true
 			open(player, door)
 		else
 			Remotes.Get("Notify"):FireClient(player, "Nothing happens.", "bad")
@@ -191,6 +234,7 @@ function SanctumService.Init(map: { secretDoors: { BasePart }? })
 	Players.PlayerRemoving:Connect(function(player)
 		attempts[player] = nil
 		pendingDoor[player] = nil
+		knowsCode[player] = nil
 	end)
 end
 
