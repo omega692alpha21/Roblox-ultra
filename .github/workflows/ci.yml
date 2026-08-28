@@ -35,3 +35,9 @@ jobs:
 
       - name: Unit tests
         run: LUAU="$HOME/tools/luau" tests/run.sh
+
+      - name: HUD zones
+        run: python3 tools/hud_zonecheck.py
+
+      - name: Wiring
+        run: python3 tools/wiring_check.py

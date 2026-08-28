@@ -49,14 +49,31 @@ local function renderStrip()
 		return
 	end
 
-	local header = UIBuilder.Label({
+	local header = UIBuilder.Frame({
 		Size = UDim2.fromScale(1, 0.14),
+		BackgroundTransparency = 1,
+		LayoutOrder = 0,
+		Parent = strip,
+	})
+	UIBuilder.Label({
+		Size = UDim2.fromScale(0.7, 1),
 		Text = ("CREW  %d"):format(#rows),
 		TextColor3 = Palette.BusYellow,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Parent = strip,
+		Parent = header,
 	})
-	header.LayoutOrder = 0
+	-- a crew you cannot leave is a trap, not a crew
+	local quit = UIBuilder.Button({
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.fromScale(1, 0.5),
+		Size = UDim2.fromScale(0.26, 0.86),
+		Text = "LEAVE",
+		BackgroundColor3 = Palette.DetentionRed,
+	}, function()
+		Remotes.Get("LeaveCrew"):FireServer()
+	end)
+	UIBuilder.Round(quit, 6)
+	quit.Parent = header
 
 	for index, row in rows do
 		local frame = UIBuilder.Frame({
@@ -250,6 +267,24 @@ function SquadController.Init(gui: ScreenGui)
 	end)
 	UIBuilder.Round(no, 10)
 	no.Parent = card
+
+	-- The invite prompt is parented to every player's root, your own
+	-- included, and Roblox shows you a prompt on your own character. Disabled
+	-- locally: the server never sees it, and you stop being offered a crew
+	-- with yourself every time you stand still.
+	local function muteOwnPrompt(character: Model)
+		task.spawn(function()
+			local root = character:WaitForChild("HumanoidRootPart", 10)
+			local prompt = root and root:WaitForChild("CrewInvitePrompt", 10)
+			if prompt and prompt:IsA("ProximityPrompt") then
+				prompt.Enabled = false
+			end
+		end)
+	end
+	if player.Character then
+		muteOwnPrompt(player.Character)
+	end
+	player.CharacterAdded:Connect(muteOwnPrompt)
 
 	Remotes.Get("CrewInvite").OnClientEvent:Connect(function(invite)
 		if typeof(invite) == "table" then

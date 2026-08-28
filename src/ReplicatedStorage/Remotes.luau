@@ -11,8 +11,6 @@ local EVENTS = {
 	-- server -> client
 	"Notify", -- (message: string, kind: "info"|"good"|"bad"|"aura")
 	"StealAlert", -- (thiefName: string, studentName: string)
-	"QuizStart", -- (questions: {{q, answers}}, deadline: number)
-	"QuizResult", -- (correctCount: number, reward: number, aura: number)
 	"ClassStart", -- (session: {subject, name, icon, professor, mode, rounds, seconds})
 	"ClassResult", -- (correct, total, cash, aura, letter: string, level: number)
 	"RewardState", -- (state table for the Rewards panel)
@@ -26,7 +24,6 @@ local EVENTS = {
 	"HitMarker", -- (position: Vector3, amount: number, knockout: boolean)
 	"PlayAction", -- (character: Model, kind: "punch"|"throw"|"hurt"|"knockout"|"flex")
 	"StoryState", -- (state table for the Story panel)
-	"HouseState", -- (term standings for the House Cup)
 	"CrewInvite", -- (invite: {name, userId, clique, color, friend, seconds})
 	"SquadState", -- (rows: {{name, userId, clique, color}})
 	"SecretKeypad", -- server -> client: open the bookshelf keypad
@@ -38,9 +35,7 @@ local EVENTS = {
 	"ClaimQuest", -- (index: number)
 	"ClaimSocial", -- (kind: "group")
 	"JoinClique", -- (cliqueId: string)
-	"QuizAnswer", -- (questionIndex: number, answerIndex: number)
 	"ClassAnswer", -- (roundIndex: number, answer: number | {number})
-	"AttendClass", -- (subjectId: string) ask the professor to let you sit in
 	"SetClassLevel", -- (level: number) 1 remedial / 2 standard / 3 honors
 	"Punch",
 	"Sprint", -- (on: boolean)
@@ -49,7 +44,6 @@ local EVENTS = {
 	"JailState", -- server -> client (secondsLeft: number, canSkip: boolean)
 	"RequestJailSkip", -- client -> server: use the pass, or get the purchase prompt
 	"UseToy", -- client -> server (toyId: string, direction: Vector3)
-	"BuyToy", -- client -> server (toyId: string)
 	"SecretPin", -- client -> server (code: string)
 	"CrewInviteAnswer", -- client -> server (accept: boolean)
 	"LeaveCrew", -- client -> server

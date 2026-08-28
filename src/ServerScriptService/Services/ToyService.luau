@@ -533,12 +533,10 @@ function ToyService.Init()
 		end)
 	end)
 
-	-- the toy cart: buy with lunch money, no Robux anywhere near it
-	Remotes.Get("BuyToy").OnServerEvent:Connect(function(player, toyId)
-		if typeof(toyId) == "string" then
-			ToyService.Buy(player, toyId)
-		end
-	end)
+	-- Buying is the cart's ProximityPrompt and nothing else. There used to be
+	-- a BuyToy remote here as well, fired by no client and reachable by any
+	-- exploiter: a way to buy from across the map, which is exactly the walk
+	-- the cart exists to make you take.
 
 	buildCart(workspace:FindFirstChild("CrumbworthHigh") or workspace)
 	initRestore()

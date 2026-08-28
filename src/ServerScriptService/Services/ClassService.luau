@@ -349,11 +349,9 @@ function ClassService.Init()
 		)
 	end)
 
-	Remotes.Get("AttendClass").OnServerEvent:Connect(function(player, subjectId)
-		if typeof(subjectId) == "string" then
-			ClassService.Attend(player, subjectId)
-		end
-	end)
+	-- Attending is the classroom door's ProximityPrompt. The AttendClass
+	-- remote that used to sit here was fired by nothing and would have let a
+	-- client sit any lesson from the car park.
 
 	Remotes.Get("ClassAnswer").OnServerEvent:Connect(function(player, roundIndex, answer)
 		local session = sessions[player]

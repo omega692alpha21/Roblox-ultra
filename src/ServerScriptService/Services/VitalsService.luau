@@ -26,6 +26,8 @@ local Cliques = require(ReplicatedStorage.Config.Cliques)
 local Signals = require(script.Parent.Parent.Signals)
 local Remotes = require(ReplicatedStorage.Remotes)
 local ActionAnim = require(script.Parent.ActionAnim)
+local DataService = require(script.Parent.DataService)
+local EconomyService = require(script.Parent.EconomyService)
 
 local VitalsService = {}
 
@@ -66,16 +68,16 @@ local function knockOut(player: Player, from: Player?)
 		character:PivotTo(CFrame.new(infirmary + Vector3.new(math.random(-4, 4), 0, math.random(-4, 4))))
 	end
 
-	-- a real cost, but never enough to wipe someone out
-	local cash = player:GetAttribute("Cash")
-	if typeof(cash) == "number" and cash > 0 then
-		local fee = math.floor(math.min(cash * 0.06, 250))
-		if fee > 0 then
-			player:SetAttribute("Cash", cash - fee)
-			Remotes.Get("Notify"):FireClient(player, ("🏥 Sent to the nurse. $%d for the ice pack."):format(fee), "warn")
-		else
-			Remotes.Get("Notify"):FireClient(player, "🏥 Sent to the nurse.", "warn")
-		end
+	-- a real cost, but never enough to wipe someone out.
+	--
+	-- Through TrySpend, not by writing the Cash attribute: the attribute is a
+	-- mirror of the profile, and the next refresh puts it back. This fee was
+	-- being silently refunded a second later.
+	local profile = DataService.Get(player)
+	local cash = profile and profile.cash or 0
+	local fee = cash > 0 and math.floor(math.min(cash * 0.06, 250)) or 0
+	if fee > 0 and EconomyService.TrySpend(player, fee) then
+		Remotes.Get("Notify"):FireClient(player, ("🏥 Sent to the nurse. $%d for the ice pack."):format(fee), "warn")
 	else
 		Remotes.Get("Notify"):FireClient(player, "🏥 Sent to the nurse.", "warn")
 	end
