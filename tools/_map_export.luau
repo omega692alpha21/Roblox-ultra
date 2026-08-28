@@ -4199,21 +4199,30 @@ local function furnishSubjectRooms(parent: Instance)
 	-- ---------------- the East Lab: Chemistry ----------------
 	do
 		local cx, cz = 116, -28
-		-- three benches with black tops, a sink and a tap in each
+		-- Three benches with black tops, a sink and a tap in each.
+		--
+		-- Thirteen wide, not twenty-six. The pavilion this room is built from
+		-- already runs a bench down each side wall (x 100.5-105.5 and
+		-- 126.5-131.5), so full-width cross benches met them at both ends and
+		-- the three of them together sealed the middle of the lab into a pen
+		-- with Dr. Fizzle inside it. Chemistry was a lesson you could not
+		-- attend. Now there is a four-stud aisle down each side of the
+		-- benches, which is what a lab looks like anyway.
+		local BENCH_W = 13
 		for row = 0, 2 do
 			local bz = cz - 10 + row * 9
-			part({ Name = "LabBench", Size = Vector3.new(26, 3, 4), CFrame = CFrame.new(cx, 1.5, bz), Color = Color3.fromRGB(206, 202, 194), Material = Enum.Material.SmoothPlastic, Parent = parent })
-			part({ Name = "LabBenchTop", Size = Vector3.new(27, 0.5, 5), CFrame = CFrame.new(cx, 3.2, bz), Color = Color3.fromRGB(34, 36, 42), Material = Enum.Material.Slate, Parent = parent })
-			part({ Name = "LabSink", Size = Vector3.new(3.4, 0.4, 2.6), CFrame = CFrame.new(cx + 10, 3.3, bz), Color = Color3.fromRGB(180, 186, 192), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-			part({ Name = "LabTap", Size = Vector3.new(0.3, 2.2, 0.3), CFrame = CFrame.new(cx + 10, 4.5, bz - 1.4), Color = Color3.fromRGB(200, 206, 212), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-			prop("BunsenBurner", CFrame.new(cx - 8, 3.5, bz))
-			prop("BunsenBurner", CFrame.new(cx - 2, 3.5, bz))
+			part({ Name = "LabBench", Size = Vector3.new(BENCH_W, 3, 4), CFrame = CFrame.new(cx, 1.5, bz), Color = Color3.fromRGB(206, 202, 194), Material = Enum.Material.SmoothPlastic, Parent = parent })
+			part({ Name = "LabBenchTop", Size = Vector3.new(BENCH_W + 1, 0.5, 5), CFrame = CFrame.new(cx, 3.2, bz), Color = Color3.fromRGB(34, 36, 42), Material = Enum.Material.Slate, Parent = parent })
+			part({ Name = "LabSink", Size = Vector3.new(3.4, 0.4, 2.6), CFrame = CFrame.new(cx + 4.6, 3.3, bz), Color = Color3.fromRGB(180, 186, 192), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "LabTap", Size = Vector3.new(0.3, 2.2, 0.3), CFrame = CFrame.new(cx + 4.6, 4.5, bz - 1.4), Color = Color3.fromRGB(200, 206, 212), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			prop("BunsenBurner", CFrame.new(cx - 4.6, 3.5, bz))
+			prop("BunsenBurner", CFrame.new(cx - 1.6, 3.5, bz))
 			-- glassware: a flask and two beakers per bench
-			local flask = part({ Name = "LabFlask", Shape = Enum.PartType.Ball, Size = Vector3.new(2.2, 2.2, 2.2), CFrame = CFrame.new(cx + 3, 4.4, bz), Color = Color3.fromRGB(196, 232, 240), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+			local flask = part({ Name = "LabFlask", Shape = Enum.PartType.Ball, Size = Vector3.new(2.2, 2.2, 2.2), CFrame = CFrame.new(cx + 1, 4.4, bz), Color = Color3.fromRGB(196, 232, 240), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
 			flask.CanCollide = false
-			part({ Name = "LabFlaskNeck", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.8, 0.7, 0.7), CFrame = CFrame.new(cx + 3, 6, bz) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(196, 232, 240), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }).CanCollide = false
+			part({ Name = "LabFlaskNeck", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.8, 0.7, 0.7), CFrame = CFrame.new(cx + 1, 6, bz) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(196, 232, 240), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent }).CanCollide = false
 			for i, tint in { Color3.fromRGB(120, 230, 160), Color3.fromRGB(230, 140, 200) } do
-				local beaker = part({ Name = "LabBeaker", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 1.5, 1.5), CFrame = CFrame.new(cx + 5.5 + i * 2, 4.4, bz) * CFrame.Angles(0, 0, math.rad(90)), Color = tint, Material = Enum.Material.Glass, Transparency = 0.3, Parent = parent })
+				local beaker = part({ Name = "LabBeaker", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 1.5, 1.5), CFrame = CFrame.new(cx + 1.4 + i * 1.6, 4.4, bz) * CFrame.Angles(0, 0, math.rad(90)), Color = tint, Material = Enum.Material.Glass, Transparency = 0.3, Parent = parent })
 				beaker.CanCollide = false
 			end
 		end
