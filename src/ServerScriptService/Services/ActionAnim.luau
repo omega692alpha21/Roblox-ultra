@@ -25,6 +25,14 @@ function ActionAnim.Play(character: Model?, kind: string)
 	Remotes.Get("PlayAction"):FireAllClients(character, kind)
 end
 
+-- Let go of a held pose (the guard). Same dispatch, opposite meaning.
+function ActionAnim.Release(character: Model?, kind: string)
+	if not character or not character.Parent then
+		return
+	end
+	Remotes.Get("PlayAction"):FireAllClients(character, kind, true)
+end
+
 function ActionAnim.Punch(character: Model)
 	ActionAnim.Play(character, "punch")
 end

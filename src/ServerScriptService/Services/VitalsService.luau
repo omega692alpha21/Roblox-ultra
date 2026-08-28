@@ -102,6 +102,14 @@ function VitalsService.Damage(player: Player, amount: number, from: Player?)
 		end
 		amount *= Cliques.For(from).damageMult
 	end
+	-- Guard up. Not a wall: it halves what lands and it costs energy to hold,
+	-- so blocking is a decision rather than a state you sit in.
+	if player:GetAttribute("Blocking") == true then
+		amount *= 0.4
+		local energy = VitalsService.Energy(player)
+		player:SetAttribute("Energy", math.max(0, energy - 12))
+		Remotes.Get("ScreenFx"):FireClient(player, "shake", 0.25)
+	end
 	-- your crew gets in the way: five percent off per student walking with you
 	local guard = player:GetAttribute("EscortCount")
 	if typeof(guard) == "number" and guard > 0 then
@@ -194,6 +202,31 @@ function VitalsService.Init(map: any?)
 	Players.PlayerRemoving:Connect(function(player)
 		lastHit[player] = nil
 		knockedOut[player] = nil
+	end)
+
+	-- the guard: an attribute the damage path reads, and a pose everyone sees
+	Remotes.Get("Block").OnServerEvent:Connect(function(player, down)
+		local up = down == true
+		if VitalsService.IsKnockedOut(player) or VitalsService.Energy(player) <= 5 then
+			up = false
+		end
+		if (player:GetAttribute("Blocking") == true) == up then
+			return
+		end
+		player:SetAttribute("Blocking", up)
+		local character = player.Character
+		if character then
+			if up then
+				ActionAnim.Play(character, "block")
+			else
+				ActionAnim.Release(character, "block")
+			end
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		if player:GetAttribute("Blocking") then
+			player:SetAttribute("Blocking", false)
+		end
 	end)
 
 	RunService.Heartbeat:Connect(function(dt)

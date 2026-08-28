@@ -38,6 +38,8 @@ local EVENTS = {
 	"ClassAnswer", -- (roundIndex: number, answer: number | {number})
 	"SetClassLevel", -- (level: number) 1 remedial / 2 standard / 3 honors
 	"Punch",
+	"Emote", -- (id: string) client -> server, broadcast to everyone
+	"Block", -- (down: boolean) client -> server, guard up or down
 	"Sprint", -- (on: boolean)
 	"ClientDiagnostic", -- (failures: {string}) UI self-check report
 	"ChooseCharacter", -- (outfit: "boy" | "girl")

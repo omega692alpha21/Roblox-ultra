@@ -105,6 +105,25 @@ def main():
     for name in sorted(ordered - controllers):
         bad.append(f"controller {name}: in the boot order but has no module")
 
+    # --- every pose the game asks for is a pose that exists ---
+    # ActionAnim dispatches by string. A typo, or an emote whose id does not
+    # match a pose, fails completely silently: the remote fires, every client
+    # looks the kind up, finds nothing, and returns.
+    poses_src = open(os.path.join(ROOT, "ReplicatedStorage", "Shared", "ActionPoses.luau")).read()
+    body = poses_src[poses_src.index("local ACTIONS"):]
+    poses = set(re.findall(r"^\t(\w+) = \{$", body, re.M))
+    asked = set()
+    for rel, src in files():
+        if rel.endswith(os.path.join("Shared", "ActionPoses.luau")):
+            continue
+        asked |= set(re.findall(r'ActionAnim\.(?:Play|Release)\([^,]+,\s*"(\w+)"', src))
+        asked |= set(re.findall(r'ActionPoses\.(?:Play|Stop)\([^,]+,\s*"(\w+)"', src))
+    emotes_path = os.path.join(ROOT, "ReplicatedStorage", "Config", "Emotes.luau")
+    if os.path.exists(emotes_path):
+        asked |= set(re.findall(r'\{ id = "(\w+)"', open(emotes_path).read()))
+    for name in sorted(asked - poses):
+        bad.append(f"pose '{name}' is played somewhere but no such action exists")
+
     declared_signals = set(re.findall(r'^\t([A-Za-z0-9_]+) = ', open(
         os.path.join(ROOT, "ServerScriptService", "Signals.luau")).read(), re.M))
     for name in sorted(declared_signals):
@@ -118,7 +137,7 @@ def main():
     for line in bad:
         print("  " + line)
     print(f"{len(declared_events | declared_funcs)} remotes, {len(declared_signals)} signals, "
-          f"{len(services)} services, {len(controllers)} controllers — "
+          f"{len(services)} services, {len(controllers)} controllers, {len(poses)} poses — "
           + (f"{len(bad)} orphaned" if bad else "everything is wired at both ends"))
     return 1 if bad else 0
 

@@ -26,6 +26,10 @@ local ActionPoses = {}
 
 export type Key = { offset: CFrame, time: number, style: Enum.EasingStyle? }
 
+-- Actions whose last keyframe STAYS until it is let go, rather than running to
+-- the end and releasing. A guard is up for as long as the button is down.
+local HELD: { [string]: boolean } = { block = true, carry = true, winded = true }
+
 -- Joint lookup: R15 part and motor first, then the R6 fallback.
 local JOINTS: { [string]: { string } } = {
 	rightArm = { "RightUpperArm", "RightShoulder", "Torso", "Right Shoulder" },
@@ -151,6 +155,310 @@ local ACTIONS: { [string]: { [string]: { Key } } } = {
 			{ offset = CFrame.new(), time = 0.34 },
 		},
 	},
+	-- ---------------- the rest of the chain ----------------
+	-- A jab on its own is a poke. Three beats with different shapes is a
+	-- fight: lead hand, back hand, then a boot. FightService only lets the
+	-- second and third land if you keep the rhythm.
+	cross = {
+		leftArm = {
+			{ offset = deg(-40, 0, -18), time = 0.07 },
+			{ offset = deg(122, 0, 24), time = 0.06, style = Enum.EasingStyle.Back },
+			{ offset = deg(108, 0, 18), time = 0.07 },
+			{ offset = CFrame.new(), time = 0.18 },
+		},
+		leftElbow = {
+			{ offset = deg(-72, 0, 0), time = 0.07 },
+			{ offset = deg(10, 0, 0), time = 0.06 },
+			{ offset = CFrame.new(), time = 0.25 },
+		},
+		rightArm = {
+			{ offset = deg(34, 0, 20), time = 0.07 },
+			{ offset = deg(16, 0, 12), time = 0.13 },
+			{ offset = CFrame.new(), time = 0.18 },
+		},
+		torso = {
+			{ offset = deg(0, -26, 0), time = 0.07 },
+			{ offset = deg(0, 32, 0), time = 0.06 },
+			{ offset = CFrame.new(), time = 0.25 },
+		},
+		head = {
+			{ offset = deg(0, -16, 0), time = 0.07 },
+			{ offset = deg(0, 18, 0), time = 0.06 },
+			{ offset = CFrame.new(), time = 0.25 },
+		},
+	},
+	-- the finisher: chamber the knee, snap the leg, land square
+	kick = {
+		rightLeg = {
+			{ offset = deg(-52, 0, 0), time = 0.09 },
+			{ offset = deg(-96, 0, 0), time = 0.07, style = Enum.EasingStyle.Back },
+			{ offset = deg(-70, 0, 0), time = 0.08 },
+			{ offset = CFrame.new(), time = 0.2 },
+		},
+		leftLeg = {
+			{ offset = deg(8, 0, 0), time = 0.09 },
+			{ offset = deg(14, 0, 0), time = 0.15 },
+			{ offset = CFrame.new(), time = 0.2 },
+		},
+		torso = {
+			{ offset = deg(16, 0, 0), time = 0.09 },
+			{ offset = deg(-14, 0, 0), time = 0.07 },
+			{ offset = CFrame.new(), time = 0.28 },
+		},
+		rightArm = {
+			{ offset = deg(-24, 0, 34), time = 0.09 },
+			{ offset = deg(-14, 0, 26), time = 0.07 },
+			{ offset = CFrame.new(), time = 0.28 },
+		},
+		leftArm = {
+			{ offset = deg(-30, 0, -40), time = 0.09 },
+			{ offset = deg(-20, 0, -30), time = 0.07 },
+			{ offset = CFrame.new(), time = 0.28 },
+		},
+	},
+	-- guard up. Held: the last frame stays until the button is let go.
+	block = {
+		rightArm = {
+			{ offset = deg(-72, 0, 22), time = 0.1 },
+			{ offset = deg(-76, 0, 24), time = 0.1 },
+		},
+		rightElbow = {
+			{ offset = deg(-96, 0, 0), time = 0.1 },
+			{ offset = deg(-100, 0, 0), time = 0.1 },
+		},
+		leftArm = {
+			{ offset = deg(-72, 0, -22), time = 0.1 },
+			{ offset = deg(-76, 0, -24), time = 0.1 },
+		},
+		leftElbow = {
+			{ offset = deg(-96, 0, 0), time = 0.1 },
+			{ offset = deg(-100, 0, 0), time = 0.1 },
+		},
+		torso = {
+			{ offset = deg(10, 0, 0), time = 0.1 },
+			{ offset = deg(12, 0, 0), time = 0.1 },
+		},
+		head = {
+			{ offset = deg(12, 0, 0), time = 0.1 },
+			{ offset = deg(14, 0, 0), time = 0.1 },
+		},
+	},
+	-- out of energy: hands on knees, and it reads across a corridor
+	winded = {
+		torso = {
+			{ offset = deg(32, 0, 0), time = 0.3 },
+			{ offset = deg(34, 0, 0), time = 0.3 },
+		},
+		head = {
+			{ offset = deg(-22, 0, 0), time = 0.3 },
+			{ offset = deg(-20, 0, 0), time = 0.3 },
+		},
+		rightArm = {
+			{ offset = deg(-52, 0, 18), time = 0.3 },
+			{ offset = deg(-50, 0, 16), time = 0.3 },
+		},
+		leftArm = {
+			{ offset = deg(-52, 0, -18), time = 0.3 },
+			{ offset = deg(-50, 0, -16), time = 0.3 },
+		},
+	},
+	-- back on your feet after the nurse
+	getup = {
+		torso = {
+			{ offset = deg(46, 0, 0), time = 0.1 },
+			{ offset = deg(-6, 0, 0), time = 0.4, style = Enum.EasingStyle.Back },
+			{ offset = CFrame.new(), time = 0.25 },
+		},
+		head = {
+			{ offset = deg(-30, 0, 0), time = 0.1 },
+			{ offset = deg(6, 0, 0), time = 0.4 },
+			{ offset = CFrame.new(), time = 0.25 },
+		},
+		rightArm = {
+			{ offset = deg(-70, 0, 26), time = 0.1 },
+			{ offset = deg(10, 0, 8), time = 0.4 },
+			{ offset = CFrame.new(), time = 0.25 },
+		},
+		leftArm = {
+			{ offset = deg(-70, 0, -26), time = 0.1 },
+			{ offset = deg(10, 0, -8), time = 0.4 },
+			{ offset = CFrame.new(), time = 0.25 },
+		},
+	},
+	-- carrying somebody else's student home. Held while you have them.
+	carry = {
+		rightArm = {
+			{ offset = deg(-96, 0, 16), time = 0.2 },
+			{ offset = deg(-100, 0, 18), time = 0.2 },
+		},
+		leftArm = {
+			{ offset = deg(-96, 0, -16), time = 0.2 },
+			{ offset = deg(-100, 0, -18), time = 0.2 },
+		},
+		torso = {
+			{ offset = deg(-10, 0, 0), time = 0.2 },
+			{ offset = deg(-12, 0, 0), time = 0.2 },
+		},
+	},
+
+	-- ---------------- emotes ----------------
+	-- Eight of them, on a wheel. This is not decoration: in a school game the
+	-- thing players do most is stand near each other, and standing near each
+	-- other is only worth doing if you can do something while you do it.
+	wave = {
+		rightArm = {
+			{ offset = deg(-142, 0, 30), time = 0.18 },
+			{ offset = deg(-142, 0, 54), time = 0.16 },
+			{ offset = deg(-142, 0, 26), time = 0.16 },
+			{ offset = deg(-142, 0, 54), time = 0.16 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+		head = {
+			{ offset = deg(0, 12, 6), time = 0.18 },
+			{ offset = deg(0, 12, 6), time = 0.48 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+	},
+	cheer = {
+		rightArm = {
+			{ offset = deg(-166, 0, 20), time = 0.14 },
+			{ offset = deg(-150, 0, 20), time = 0.16 },
+			{ offset = deg(-166, 0, 20), time = 0.16 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+		leftArm = {
+			{ offset = deg(-166, 0, -20), time = 0.14 },
+			{ offset = deg(-150, 0, -20), time = 0.16 },
+			{ offset = deg(-166, 0, -20), time = 0.16 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+		torso = {
+			{ offset = deg(-12, 0, 0), time = 0.14 },
+			{ offset = deg(-4, 0, 0), time = 0.32 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+		head = {
+			{ offset = deg(-20, 0, 0), time = 0.14 },
+			{ offset = deg(-16, 0, 0), time = 0.32 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+	},
+	dance = {
+		torso = {
+			{ offset = deg(0, 22, 8), time = 0.22 },
+			{ offset = deg(0, -22, -8), time = 0.22 },
+			{ offset = deg(0, 22, 8), time = 0.22 },
+			{ offset = deg(0, -22, -8), time = 0.22 },
+			{ offset = CFrame.new(), time = 0.2 },
+		},
+		rightArm = {
+			{ offset = deg(-120, 0, 40), time = 0.22 },
+			{ offset = deg(-40, 0, 20), time = 0.22 },
+			{ offset = deg(-120, 0, 40), time = 0.22 },
+			{ offset = deg(-40, 0, 20), time = 0.22 },
+			{ offset = CFrame.new(), time = 0.2 },
+		},
+		leftArm = {
+			{ offset = deg(-40, 0, -20), time = 0.22 },
+			{ offset = deg(-120, 0, -40), time = 0.22 },
+			{ offset = deg(-40, 0, -20), time = 0.22 },
+			{ offset = deg(-120, 0, -40), time = 0.22 },
+			{ offset = CFrame.new(), time = 0.2 },
+		},
+		head = {
+			{ offset = deg(0, 18, 0), time = 0.22 },
+			{ offset = deg(0, -18, 0), time = 0.22 },
+			{ offset = deg(0, 18, 0), time = 0.22 },
+			{ offset = deg(0, -18, 0), time = 0.22 },
+			{ offset = CFrame.new(), time = 0.2 },
+		},
+	},
+	point = {
+		rightArm = {
+			{ offset = deg(-88, 0, 6), time = 0.14 },
+			{ offset = deg(-90, 0, 6), time = 0.7 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+		torso = {
+			{ offset = deg(0, -10, 0), time = 0.14 },
+			{ offset = deg(0, -10, 0), time = 0.7 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+	},
+	taunt = {
+		rightArm = {
+			{ offset = deg(-104, 0, 40), time = 0.16 },
+			{ offset = deg(-84, 0, 52), time = 0.18 },
+			{ offset = deg(-104, 0, 40), time = 0.18 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+		torso = {
+			{ offset = deg(-14, 0, 0), time = 0.16 },
+			{ offset = deg(-6, 0, 0), time = 0.36 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+		head = {
+			{ offset = deg(-18, 0, 0), time = 0.16 },
+			{ offset = deg(-14, 0, 0), time = 0.36 },
+			{ offset = CFrame.new(), time = 0.24 },
+		},
+	},
+	clap = {
+		rightArm = {
+			{ offset = deg(-84, 0, 46), time = 0.14 },
+			{ offset = deg(-84, 0, 16), time = 0.12 },
+			{ offset = deg(-84, 0, 46), time = 0.12 },
+			{ offset = deg(-84, 0, 16), time = 0.12 },
+			{ offset = CFrame.new(), time = 0.22 },
+		},
+		leftArm = {
+			{ offset = deg(-84, 0, -46), time = 0.14 },
+			{ offset = deg(-84, 0, -16), time = 0.12 },
+			{ offset = deg(-84, 0, -46), time = 0.12 },
+			{ offset = deg(-84, 0, -16), time = 0.12 },
+			{ offset = CFrame.new(), time = 0.22 },
+		},
+	},
+	shrug = {
+		rightArm = {
+			{ offset = deg(-20, 0, 46), time = 0.2 },
+			{ offset = deg(-20, 0, 46), time = 0.4 },
+			{ offset = CFrame.new(), time = 0.26 },
+		},
+		leftArm = {
+			{ offset = deg(-20, 0, -46), time = 0.2 },
+			{ offset = deg(-20, 0, -46), time = 0.4 },
+			{ offset = CFrame.new(), time = 0.26 },
+		},
+		head = {
+			{ offset = deg(-8, 0, 14), time = 0.2 },
+			{ offset = deg(-8, 0, 14), time = 0.4 },
+			{ offset = CFrame.new(), time = 0.26 },
+		},
+	},
+	facepalm = {
+		rightArm = {
+			{ offset = deg(-128, 0, 12), time = 0.18 },
+			{ offset = deg(-130, 0, 12), time = 0.6 },
+			{ offset = CFrame.new(), time = 0.26 },
+		},
+		rightElbow = {
+			{ offset = deg(-104, 0, 0), time = 0.18 },
+			{ offset = deg(-106, 0, 0), time = 0.6 },
+			{ offset = CFrame.new(), time = 0.26 },
+		},
+		head = {
+			{ offset = deg(24, 0, 0), time = 0.18 },
+			{ offset = deg(26, 0, 0), time = 0.6 },
+			{ offset = CFrame.new(), time = 0.26 },
+		},
+		torso = {
+			{ offset = deg(12, 0, 0), time = 0.18 },
+			{ offset = deg(14, 0, 0), time = 0.6 },
+			{ offset = CFrame.new(), time = 0.26 },
+		},
+	},
+
 	-- landed one: a short celebration, so a knockout has a punctuation mark
 	flex = {
 		rightArm = {
@@ -182,10 +490,12 @@ local ACTIONS: { [string]: { [string]: { Key } } } = {
 
 type Active = {
 	character: Model,
+	kind: string,
 	motors: { [string]: Motor6D },
 	keys: { [string]: { Key } },
 	started: number,
 	length: number,
+	held: boolean,
 }
 
 local active: { Active } = {}
@@ -224,9 +534,17 @@ local function step()
 	for i = #active, 1, -1 do
 		local pose = active[i]
 		local elapsed = now - pose.started
-		if elapsed >= pose.length or not pose.character.Parent then
+		if not pose.character.Parent then
 			table.remove(active, i)
 			continue
+		end
+		if elapsed >= pose.length then
+			if not pose.held then
+				table.remove(active, i)
+				continue
+			end
+			-- a held pose sits on its last frame until it is stopped
+			elapsed = pose.length - 0.0001
 		end
 		for jointName, motor in pose.motors do
 			if not motor.Parent then
@@ -275,10 +593,12 @@ function ActionPoses.Play(character: Model, kind: string): boolean
 	end
 	table.insert(active, {
 		character = character,
+		kind = kind,
 		motors = motors,
 		keys = keys,
 		started = os.clock(),
 		length = length,
+		held = HELD[kind] == true,
 	})
 
 	if not bound and RunService:IsClient() then
@@ -291,6 +611,20 @@ function ActionPoses.Play(character: Model, kind: string): boolean
 		)
 	end
 	return true
+end
+
+-- Let go of a held pose. Naming a kind stops only that one, so releasing the
+-- guard cannot cancel a punch that started after it.
+function ActionPoses.Stop(character: Model, kind: string?)
+	for i = #active, 1, -1 do
+		if active[i].character == character and (kind == nil or active[i].kind == kind) then
+			table.remove(active, i)
+		end
+	end
+end
+
+function ActionPoses.Has(kind: string): boolean
+	return ACTIONS[kind] ~= nil
 end
 
 ActionPoses.Actions = ACTIONS

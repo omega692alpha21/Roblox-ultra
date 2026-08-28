@@ -17,19 +17,27 @@ local UIBuilder = require(script.Parent.UIBuilder)
 local PunchController = {}
 
 local lastPunch = 0
+local comboStep = 0
+-- must match FightService's chain
+local COMBO_WINDOW = 1.15
+local CHAIN = { "punch", "cross", "kick" }
 
 local function punch()
 	local now = os.clock()
 	if now - lastPunch < GameConfig.PunchCooldownSeconds then
 		return
 	end
+	-- Which beat of the chain this is. The same rule the server runs, so the
+	-- pose that plays here is the pose that lands there.
+	local step = if now - lastPunch <= COMBO_WINDOW then comboStep % #CHAIN + 1 else 1
+	comboStep = step
 	lastPunch = now
 	-- Swing here and now rather than waiting for the server to tell us we
 	-- swung: a round trip is a fifth of a second on a phone, which is longer
 	-- than the punch, so the animation used to land after the hit.
 	local character = Players.LocalPlayer.Character
 	if character then
-		ActionPoses.Play(character, "punch")
+		ActionPoses.Play(character, CHAIN[step])
 	end
 	Remotes.Get("Punch"):FireServer()
 end

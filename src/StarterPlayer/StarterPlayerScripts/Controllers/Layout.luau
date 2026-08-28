@@ -117,6 +117,10 @@ Layout.Actions = {
 	Punch = { x = 0.745, y = 0.855, size = 0.130 },
 	Sprint = { x = 0.745, y = 0.702, size = 0.098 },
 	Toy = { x = 0.641, y = 0.700, size = 0.098 },
+	-- the guard, under the toy chip and left of the thumb's arc
+	Block = { x = 0.641, y = 0.556, size = 0.090 },
+	-- the emote wheel's button, furthest from the fight buttons on purpose
+	Emote = { x = 0.745, y = 0.556, size = 0.090 },
 }
 
 Layout.ReticleY = 0.42
@@ -126,6 +130,8 @@ Layout.Order = {
 	Sprint = 10,
 	Punch = 20,
 	Toy = 30,
+	Block = 40,
+	Emote = 50,
 }
 
 -- A square whose side is `fraction` of the parent's HEIGHT.

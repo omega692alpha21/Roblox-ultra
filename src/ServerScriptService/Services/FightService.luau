@@ -33,6 +33,30 @@ local FightService = {}
 
 local lastPunch: { [Player]: number } = {}
 
+-- The chain. A jab on its own is a poke; three beats with different shapes is
+-- a fight. Keep the rhythm -- another swing within COMBO_WINDOW of the last --
+-- and you move up the chain, hit harder, and knock further. Miss the window
+-- and you are back to a jab.
+local COMBO_WINDOW = 1.15
+local CHAIN: { { kind: string, damage: number, knock: number } } = {
+	{ kind = "punch", damage = 1.0, knock = 1.0 },
+	{ kind = "cross", damage = 1.2, knock = 1.15 },
+	{ kind = "kick", damage = 1.6, knock = 1.6 },
+}
+local comboStep: { [Player]: number } = {}
+
+-- Which beat this swing is. Shared with the client, which runs the same rule
+-- so it can play the right pose the instant the button goes down instead of
+-- waiting a round trip to be told which one it was.
+function FightService.StepFor(player: Player, now: number): number
+	local since = now - (lastPunch[player] or -math.huge)
+	local step = if since <= COMBO_WINDOW then (comboStep[player] or 0) % #CHAIN + 1 else 1
+	return step
+end
+
+FightService.ComboWindow = COMBO_WINDOW
+FightService.ChainLength = #CHAIN
+
 type Target = {
 	root: BasePart,
 	humanoid: Humanoid?,
@@ -131,7 +155,10 @@ local function onPunch(player: Player)
 	if now - (lastPunch[player] or 0) < GameConfig.PunchCooldownSeconds then
 		return
 	end
+	local step = FightService.StepFor(player, now)
+	comboStep[player] = step
 	lastPunch[player] = now
+	local beat = CHAIN[step]
 
 	if VitalsService.IsKnockedOut(player) then
 		return
@@ -149,7 +176,7 @@ local function onPunch(player: Player)
 	end
 	-- swing on every punch, hit or miss: a punch that connects invisibly is
 	-- what made the action read as broken
-	ActionAnim.Punch(character)
+	ActionAnim.Play(character, beat.kind)
 	EffectsService.PlaySound(root, "Punch")
 
 	-- best thing in front of us: mostly facing, partly close
@@ -187,7 +214,7 @@ local function onPunch(player: Player)
 
 	local knockback = GameConfig.PunchKnockback
 	local role = Cliques.For(player)
-	knockback *= role.knockbackMult
+	knockback *= role.knockbackMult * beat.knock
 
 	local direction = (target.root.Position - root.Position).Unit
 	local impact = target.root.Position + direction * -1.2 + Vector3.new(0, 0.6, 0)
@@ -199,7 +226,7 @@ local function onPunch(player: Player)
 		target.root.AssemblyLinearVelocity = direction * knockback + Vector3.new(0, knockback * 0.5, 0)
 		Remotes.Get("ScreenFx"):FireClient(player, "shake", 0.55)
 		local before = target.humanoid and target.humanoid.Health or 0
-		VitalsService.Damage(hit, GameConfig.PunchDamage, player)
+		VitalsService.Damage(hit, GameConfig.PunchDamage * beat.damage, player)
 		local after = target.humanoid and target.humanoid.Health or 0
 		Remotes.Get("HitMarker"):FireClient(player, impact, math.max(1, math.floor(before - after + 0.5)), after <= 0)
 		if StealService.IsCarrying(hit) then
@@ -217,6 +244,7 @@ function FightService.Init()
 	Remotes.Get("Punch").OnServerEvent:Connect(onPunch)
 	Players.PlayerRemoving:Connect(function(player)
 		lastPunch[player] = nil
+		comboStep[player] = nil
 	end)
 end
 
