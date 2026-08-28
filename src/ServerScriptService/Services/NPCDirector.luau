@@ -12,16 +12,16 @@ local NPCDirector = {}
 local POIS = {
 	Vector3.new(-150, 0, 70), -- main corridor west
 	Vector3.new(150, 0, 70), -- main corridor east
-	Vector3.new(20, 0, 152), -- bus stop / spawn
+	Vector3.new(28, 0, 162), -- bus stop / spawn
 	Vector3.new(-204, 0, -29), -- cafeteria
 	Vector3.new(0, 0, -100), -- gym
 	Vector3.new(-116, 0, 0), -- west courtyard (cliques)
 	Vector3.new(116, 0, 0), -- east courtyard (courts)
 	Vector3.new(-74, 0, -94), -- classroom 101
 	Vector3.new(204, 0, -29), -- trophy hall
-	Vector3.new(0, 0, 6), -- atrium fountain
-	Vector3.new(-136, 0, 196), -- boys dorm porch
-	Vector3.new(136, 0, 196), -- girls dorm porch
+	Vector3.new(0, 0, 22), -- atrium, beside the fountain
+	Vector3.new(-176, 0, -186), -- boys dorm porch
+	Vector3.new(176, 0, -186), -- girls dorm porch
 }
 
 local AMBIENT_IDS = {

@@ -24,6 +24,7 @@ local EVENTS = {
 	"Dialogue", -- (speaker: string, lines: {string})
 	"ScreenFx", -- (kind: "shake" | "hurt", intensity: number)
 	"HitMarker", -- (position: Vector3, amount: number, knockout: boolean)
+	"PlayAction", -- (character: Model, kind: "punch"|"throw"|"hurt"|"knockout"|"flex")
 	"SecretKeypad", -- server -> client: open the bookshelf keypad
 	-- client -> server
 	"FuseStudent", -- (defId: string)

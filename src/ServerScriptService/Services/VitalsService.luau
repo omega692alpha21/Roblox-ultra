@@ -24,6 +24,7 @@ local RunService = game:GetService("RunService")
 
 local Cliques = require(ReplicatedStorage.Config.Cliques)
 local Remotes = require(ReplicatedStorage.Remotes)
+local ActionAnim = require(script.Parent.ActionAnim)
 
 local VitalsService = {}
 
@@ -77,8 +78,10 @@ local function knockOut(player: Player, from: Player?)
 	else
 		Remotes.Get("Notify"):FireClient(player, "🏥 Sent to the nurse.", "warn")
 	end
+	ActionAnim.KnockOut(character)
 	Remotes.Get("ScreenFx"):FireClient(player, "shake", 1)
 	if from then
+		ActionAnim.Flex(from.Character)
 		Remotes.Get("Notify"):FireClient(from, ("🥊 You knocked out %s."):format(player.DisplayName), "good")
 	end
 end
@@ -100,6 +103,9 @@ function VitalsService.Damage(player: Player, amount: number, from: Player?)
 	lastHit[player] = os.clock()
 	humanoid.Health = math.max(0, humanoid.Health - amount)
 	Remotes.Get("ScreenFx"):FireClient(player, "hurt", math.clamp(amount / 30, 0.3, 1))
+	if humanoid.Health > 0 then
+		ActionAnim.Hurt(player.Character)
+	end
 	if humanoid.Health <= 0 then
 		knockOut(player, from)
 	end

@@ -1563,7 +1563,10 @@ local function buildTerrain()
 		terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(140, 108, 72))
 		terrain:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(88, 146, 62))
 	end)
-	terrain:FillBlock(CFrame.new(0, -2.1, 0), Vector3.new(680, 4, 680), Enum.Material.Grass)
+	-- 900, not 680. The old block stopped at x = 340, and the tennis stadium
+	-- runs to 390 and the pool to -400: both stood with one edge over the void,
+	-- and the aisle between the two courts had no ground under it at all.
+	terrain:FillBlock(CFrame.new(0, -2.1, 0), Vector3.new(900, 4, 900), Enum.Material.Grass)
 	local rng = Random.new(7)
 	for i = 1, 26 do
 		local angle = (i / 26) * math.pi * 2
@@ -1572,7 +1575,7 @@ local function buildTerrain()
 		terrain:FillBall(pos, rng:NextNumber(28, 64), Enum.Material.Grass)
 	end
 	-- hard rule: nothing rises above ground level anywhere inside the walls
-	terrain:FillBlock(CFrame.new(0, 34, 0), Vector3.new(640, 64, 640), Enum.Material.Air)
+	terrain:FillBlock(CFrame.new(0, 34, 0), Vector3.new(900, 64, 900), Enum.Material.Air)
 
 	-- no terrain under any interior floor (air-carved, so no grass blades either)
 	for _, region in {
@@ -3222,14 +3225,8 @@ local function buildUpperFloor(parent: Instance)
 			Color = Color3.fromRGB(238, 234, 224),
 			Parent = parent,
 		}), "TexCeiling")
-		-- and a ceiling over the upper floor itself
-		tag(part({
-			Name = "UpperCeiling" .. index,
-			Size = Vector3.new(x1 - x0, 0.8, z1 - z0),
-			CFrame = CFrame.new((x0 + x1) / 2, UPPER_CEIL, (z0 + z1) / 2),
-			Color = Color3.fromRGB(240, 236, 226),
-			Parent = parent,
-		}), "TexCeiling")
+		-- no ceiling here: the school's roof slabs cap the upper storey at
+		-- 32.6, which is a stud above the upper walls
 	end
 
 	-- ---- the edges you can fall off ----
@@ -3380,23 +3377,26 @@ local function furnishSubjectRooms(parent: Instance)
 	-- ---------------- the Music Room ----------------
 	do
 		local cx = 74
+		-- the piano sits east of centre: Maestro Quill stands at (74, -108),
+		-- and the case used to close over him
+		local px = cx + 7
 		-- a grand piano: case, lid on its stick, keyboard, three legs, bench
-		local case = part({ Name = "PianoCase", Size = Vector3.new(11, 3.2, 15), CFrame = CFrame.new(cx, 4.2, -112), Color = Color3.fromRGB(22, 22, 26), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		local case = part({ Name = "PianoCase", Size = Vector3.new(11, 3.2, 15), CFrame = CFrame.new(px, 4.2, -112), Color = Color3.fromRGB(22, 22, 26), Material = Enum.Material.SmoothPlastic, Parent = parent })
 		local _ = case
-		part({ Name = "PianoLid", Size = Vector3.new(11, 0.5, 15), CFrame = CFrame.new(cx - 1.8, 7.4, -112) * CFrame.Angles(0, 0, math.rad(-22)), Color = Color3.fromRGB(28, 28, 34), Material = Enum.Material.SmoothPlastic, Parent = parent })
-		part({ Name = "PianoStick", Size = Vector3.new(0.3, 4.4, 0.3), CFrame = CFrame.new(cx + 4.6, 7.6, -108) * CFrame.Angles(math.rad(8), 0, 0), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.Wood, Parent = parent })
+		part({ Name = "PianoLid", Size = Vector3.new(11, 0.5, 15), CFrame = CFrame.new(px - 1.8, 7.4, -112) * CFrame.Angles(0, 0, math.rad(-22)), Color = Color3.fromRGB(28, 28, 34), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		part({ Name = "PianoStick", Size = Vector3.new(0.3, 4.4, 0.3), CFrame = CFrame.new(px + 4.6, 7.6, -108) * CFrame.Angles(math.rad(8), 0, 0), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.Wood, Parent = parent })
 		for i = 0, 21 do
-			part({ Name = "PianoKeyWhite", Size = Vector3.new(0.5, 0.4, 3.4), CFrame = CFrame.new(cx - 5.4 + i * 0.52, 5.9, -104.4), Color = Color3.fromRGB(248, 246, 240), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+			part({ Name = "PianoKeyWhite", Size = Vector3.new(0.5, 0.4, 3.4), CFrame = CFrame.new(px - 5.4 + i * 0.52, 5.9, -104.4), Color = Color3.fromRGB(248, 246, 240), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
 			if i % 7 ~= 2 and i % 7 ~= 6 then
-				part({ Name = "PianoKeyBlack", Size = Vector3.new(0.3, 0.5, 2.1), CFrame = CFrame.new(cx - 5.15 + i * 0.52, 6.2, -105.1), Color = Color3.fromRGB(18, 18, 22), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+				part({ Name = "PianoKeyBlack", Size = Vector3.new(0.3, 0.5, 2.1), CFrame = CFrame.new(px - 5.15 + i * 0.52, 6.2, -105.1), Color = Color3.fromRGB(18, 18, 22), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
 			end
 		end
 		for _, leg in { { -4.4, -118 }, { 4.4, -118 }, { 0, -105 } } do
-			part({ Name = "PianoLeg", Size = Vector3.new(0.9, 2.6, 0.9), CFrame = CFrame.new(cx + leg[1], 1.3, leg[2]), Color = Color3.fromRGB(22, 22, 26), Material = Enum.Material.SmoothPlastic, Parent = parent })
+			part({ Name = "PianoLeg", Size = Vector3.new(0.9, 2.6, 0.9), CFrame = CFrame.new(px + leg[1], 1.3, leg[2]), Color = Color3.fromRGB(22, 22, 26), Material = Enum.Material.SmoothPlastic, Parent = parent })
 		end
-		part({ Name = "PianoBench", Size = Vector3.new(5, 0.6, 2), CFrame = CFrame.new(cx, 2.6, -101), Color = Color3.fromRGB(60, 40, 34), Material = Enum.Material.Fabric, Parent = parent })
+		part({ Name = "PianoBench", Size = Vector3.new(5, 0.6, 2), CFrame = CFrame.new(px, 2.6, -101), Color = Color3.fromRGB(60, 40, 34), Material = Enum.Material.Fabric, Parent = parent })
 		for _, bx in { -2, 2 } do
-			part({ Name = "PianoBenchLeg", Size = Vector3.new(0.4, 2.3, 1.6), CFrame = CFrame.new(cx + bx, 1.15, -101), Color = Color3.fromRGB(22, 22, 26), Parent = parent })
+			part({ Name = "PianoBenchLeg", Size = Vector3.new(0.4, 2.3, 1.6), CFrame = CFrame.new(px + bx, 1.15, -101), Color = Color3.fromRGB(22, 22, 26), Parent = parent })
 		end
 
 		-- risers, so a choir has somewhere to stand
@@ -3976,7 +3976,11 @@ end
 -- the hole was cut in the open, the bookshelf stood beside it rather than in
 -- front of it, and you walked into the principal's office and saw a staircase.
 local SANCTUM_CLOSET = { x0 = -224, z0 = 14, x1 = -208, z1 = 42 }
-local SANCTUM_HOLE = { x0 = -222, z0 = 16, x1 = -210, z1 = 40 }
+-- The hole is at the far end of the cupboard, not under its doorway: you step
+-- through the bookshelf onto solid floor and walk to the head of the stair.
+-- Cut under the door and the first thing the passage does is drop you nine
+-- studs onto a tread.
+local SANCTUM_HOLE = { x0 = -222, z0 = 14, x1 = -210, z1 = 22 }
 local SANCTUM_FLOOR = -80
 local SANCTUM_CENTRE = Vector3.new(-214, SANCTUM_FLOOR, -34)
 
@@ -4054,6 +4058,7 @@ local function buildSanctum(parent: Instance): BasePart
 	-- ---- masonry around the shaft head, so the cut edge is not raw ground ----
 	for _, wall in {
 		{ Vector3.new(HOLE.x1 - HOLE.x0 + 4, 34, 2), Vector3.new(shaftX, -17, HOLE.z1 + 1) },
+		{ Vector3.new(HOLE.x1 - HOLE.x0 + 4, 34, 2), Vector3.new(shaftX, -17, HOLE.z0 - 1) },
 		{ Vector3.new(2, 34, HOLE.z1 - HOLE.z0 + 4), Vector3.new(HOLE.x0 - 1, -17, (HOLE.z0 + HOLE.z1) / 2) },
 		{ Vector3.new(2, 34, HOLE.z1 - HOLE.z0 + 4), Vector3.new(HOLE.x1 + 1, -17, (HOLE.z0 + HOLE.z1) / 2) },
 	} do
@@ -4089,7 +4094,7 @@ local function buildSanctum(parent: Instance): BasePart
 	-- at the north end of the boulevard. It is a long walk on purpose: the
 	-- estate underneath is the reward for it.
 	local STEPS, RISE, RUN = 110, 1.53, 1.6
-	local topZ = 38
+	local topZ = 22
 	local bottomY = -RISE * STEPS
 	local bottomZ = topZ - RUN * STEPS
 	for i = 0, STEPS - 1 do
@@ -4159,7 +4164,7 @@ local function buildSanctum(parent: Instance): BasePart
 	-- around the whole estate, with a gap in its north wall exactly where the
 	-- tunnel comes through.
 	local CX0, CX1 = -378, -50
-	local CZ0, CZ1 = -402, -74
+	local CZ0, CZ1 = -416, -96
 	local CY0, CY1 = -178, -66
 	local function shell(name: string, size: Vector3, at: Vector3)
 		part({ Name = name, Size = size, CFrame = CFrame.new(at), Color = Color3.fromRGB(46, 42, 40), Material = Enum.Material.Slate, Parent = parent })
@@ -4584,11 +4589,17 @@ end
 	end
 
 	-- ---------------- roofs (flat slabs; courtyards stay open) ----------------
+	-- These used to sit at y = 16.2. The upper floor's deck is at 16, so the
+	-- roof was resting flush on the first floor's carpet: you climbed the
+	-- stairs and arrived in a two-tenths-of-a-stud gap between deck and slab,
+	-- which is what "can't go upstairs, it's glitching" was. The roof is above
+	-- the upper storey now, at the height the upper walls actually reach.
+	local ROOF_Y = 32.6
 	local function roofSlab(cx: number, cz: number, sx: number, sz: number, y: number?)
 		tag(part({
 			Name = "RoofSlab",
 			Size = Vector3.new(sx, 1.2, sz),
-			CFrame = CFrame.new(cx, y or 16.2, cz),
+			CFrame = CFrame.new(cx, y or ROOF_Y, cz),
 			Color = Color3.fromRGB(228, 226, 220),
 			Material = Enum.Material.SmoothPlastic,
 			Parent = folder,
@@ -4607,14 +4618,14 @@ end
 	roofSlab(142, -94, 168, 62) -- east north rooms
 	roofSlab(-198, 0, 54, 130) -- west outer column
 	roofSlab(198, 0, 54, 130) -- east outer column
-	roofSlab(0, -105, 106, 88, 26.2) -- gym: double height
+	roofSlab(0, -105, 106, 88, 40) -- gym: open to its full height
 	roofSlab(-55, -94, 10, 60) -- west flank
 	roofSlab(55, -94, 10, 60) -- east flank
 	-- atrium skylight
 	part({
 		Name = "Skylight",
 		Size = Vector3.new(44, 0.6, 44),
-		CFrame = CFrame.new(0, 16.4, 6),
+		CFrame = CFrame.new(0, 32.8, 6),
 		Color = Color3.fromRGB(170, 215, 240),
 		Material = Enum.Material.Glass,
 		Transparency = 0.45,
@@ -4723,8 +4734,8 @@ end
 	-- trophy cases down the east wall
 	for i = 0, 2 do
 		local cz = 86 + i * 13
-		part({ Name = "LobbyCaseFrame", Size = Vector3.new(1.6, 11, 11), CFrame = CFrame.new(46, 5.5, cz), Color = Color3.fromRGB(96, 68, 48), Material = Enum.Material.WoodPlanks, Parent = folder })
-		part({ Name = "LobbyCaseGlass", Size = Vector3.new(0.5, 9, 9.4), CFrame = CFrame.new(45.1, 5.6, cz), Color = Color3.fromRGB(186, 214, 226), Material = Enum.Material.Glass, Transparency = 0.55, Parent = folder })
+		part({ Name = "LobbyCaseFrame", Size = Vector3.new(1.6, 11, 11), CFrame = CFrame.new(58.6, 5.5, cz), Color = Color3.fromRGB(96, 68, 48), Material = Enum.Material.WoodPlanks, Parent = folder })
+		part({ Name = "LobbyCaseGlass", Size = Vector3.new(0.5, 9, 9.4), CFrame = CFrame.new(57.7, 5.6, cz), Color = Color3.fromRGB(186, 214, 226), Material = Enum.Material.Glass, Transparency = 0.55, Parent = folder })
 		for j = 0, 1 do
 			part({ Name = "LobbyTrophy", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2.4, 1.5, 1.5), CFrame = CFrame.new(45.6, 3 + j * 4, cz - 2.6 + j * 5) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(226, 186, 92), Material = Enum.Material.Metal, Parent = folder })
 		end
@@ -4873,7 +4884,7 @@ end
 		detentionSpot = detentionCenter,
 		infirmary = Vector3.new(122, 17, -94),
 		secretDoor = secretDoor,
-		sanctumSpawn = Vector3.new(-214, -166, -140),
+		sanctumSpawn = Vector3.new(-214, -166, -154),
 		folder = folder,
 	}
 end

@@ -26,7 +26,7 @@ local SanctumMap = {}
 -- the capstone clears the school's foundations and the boulevard's north end
 -- lands at the foot of the stair.
 local SCALE = 0.6
-local ORIGIN = Vector3.new(-214, -170, -250)
+local ORIGIN = Vector3.new(-214, -170, -264)
 
 -- Where the stair has to arrive: the far end of the boulevard, in world space.
 SanctumMap.Entrance = ORIGIN + Vector3.new(0, 2, 184 * SCALE)
