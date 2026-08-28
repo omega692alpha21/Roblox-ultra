@@ -23,7 +23,7 @@ export type Profile = {
 	aura: number,
 	grade: number,
 	clique: string?,
-	crew: { { uid: string, id: string, mut: string?, star: boolean? } },
+	crew: { { uid: string, id: string, mut: string?, star: boolean?, role: string? } },
 	purchaseIds: { string },
 	loginStreak: number,
 	hallPasses: number,

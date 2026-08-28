@@ -23,6 +23,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Cliques = require(ReplicatedStorage.Config.Cliques)
+local Signals = require(script.Parent.Parent.Signals)
 local Remotes = require(ReplicatedStorage.Remotes)
 local ActionAnim = require(script.Parent.ActionAnim)
 
@@ -93,6 +94,11 @@ function VitalsService.Damage(player: Player, amount: number, from: Player?)
 	if from then
 		amount *= Cliques.For(from).damageMult
 	end
+	-- your crew gets in the way: five percent off per student walking with you
+	local guard = player:GetAttribute("EscortCount")
+	if typeof(guard) == "number" and guard > 0 then
+		amount *= 1 - math.min(guard, 5) * 0.05
+	end
 	if amount <= 0 or (knockedOut[player] or 0) > os.clock() then
 		return
 	end
@@ -102,6 +108,7 @@ function VitalsService.Damage(player: Player, amount: number, from: Player?)
 	end
 	lastHit[player] = os.clock()
 	humanoid.Health = math.max(0, humanoid.Health - amount)
+	Signals.Damaged:Fire(player, from)
 	Remotes.Get("ScreenFx"):FireClient(player, "hurt", math.clamp(amount / 30, 0.3, 1))
 	if humanoid.Health > 0 then
 		ActionAnim.Hurt(player.Character)

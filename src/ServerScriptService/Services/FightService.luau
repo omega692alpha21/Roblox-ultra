@@ -107,6 +107,7 @@ local function onPunch(player: Player)
 	local impact = target.root.Position + direction * -1.2 + Vector3.new(0, 0.6, 0)
 	EffectsService.Hit(impact, Color3.fromRGB(255, 214, 120), "PunchHit", 18)
 
+	Signals.Punched:Fire(player, target.model)
 	if target.player then
 		local hit = target.player :: Player
 		target.root.AssemblyLinearVelocity = direction * knockback + Vector3.new(0, knockback * 0.5, 0)

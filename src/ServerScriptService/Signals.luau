@@ -42,4 +42,6 @@ return {
 	ClassAttended = makeSignal(), -- (player, subjectId) sat down in a lesson
 	ChapterDone = makeSignal(), -- (player, chapterNumber) closed a story chapter
 	FoundTheDoor = makeSignal(), -- (player) touched the bookshelf in the office
+	Punched = makeSignal(), -- (player, targetModel) a punch landed on something
+	Damaged = makeSignal(), -- (player, from) took health off, and who from
 }

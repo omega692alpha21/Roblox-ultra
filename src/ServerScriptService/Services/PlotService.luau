@@ -56,7 +56,7 @@ function PlotService.CrewCount(player: Player): number
 	return profile and #profile.crew or 0
 end
 
-type CrewMember = { uid: string, id: string, mut: string?, star: boolean? }
+type CrewMember = { uid: string, id: string, mut: string?, star: boolean?, role: string? }
 
 local function pushCrew(player: Player)
 	local profile = DataService.Get(player)
@@ -132,7 +132,7 @@ end
 
 -- Add a student to the player's crew (validates a free slot). Returns the uid.
 -- skipModel defers the desk model (the recruit is walking over from the hallway).
-function PlotService.AddStudent(player: Player, defId: string, mut: string?, star: boolean?, skipModel: boolean?): string?
+function PlotService.AddStudent(player: Player, defId: string, mut: string?, star: boolean?, skipModel: boolean?, role: string?): string?
 	local profile = DataService.Get(player)
 	if not profile or not playerPlot[player] then
 		return nil
@@ -143,7 +143,7 @@ function PlotService.AddStudent(player: Player, defId: string, mut: string?, sta
 	if not Students.Get(defId) then
 		return nil
 	end
-	local member: CrewMember = { uid = HttpService:GenerateGUID(false), id = defId, mut = mut, star = star }
+	local member: CrewMember = { uid = HttpService:GenerateGUID(false), id = defId, mut = mut, star = star, role = role }
 	table.insert(profile.crew, member)
 	if not skipModel then
 		spawnStudentModel(player, member, #profile.crew)

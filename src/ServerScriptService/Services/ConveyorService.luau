@@ -1,6 +1,16 @@
 --!strict
--- Spawns students that walk the main hallway; players buy them with a ProximityPrompt.
--- Server-authoritative: prices come from config, the client only triggers the prompt.
+-- Spawns students that walk the main hallway; players buy them with a
+-- ProximityPrompt. Server-authoritative: prices come from config, the client
+-- only triggers the prompt.
+--
+-- Every walker belongs to a clique, and you can only recruit your own. That is
+-- what makes the role you picked on your first day mean something after the
+-- first day: a Bully's homeroom fills with bullies, and the crew that walks
+-- around behind you is recognisably yours.
+--
+-- Walkers are weighted toward the cliques actually present on the server -- a
+-- flat roll would leave four in five walkers useless to any given player and
+-- turn the corridor into a queue.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,6 +18,7 @@ local RunService = game:GetService("RunService")
 
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local Students = require(ReplicatedStorage.Config.Students)
+local Cliques = require(ReplicatedStorage.Config.Cliques)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local Remotes = require(ReplicatedStorage.Remotes)
 local StudentGen = require(script.Parent.StudentGen)
@@ -21,6 +32,7 @@ local ConveyorService = {}
 type Walker = {
 	model: Model,
 	defId: string,
+	role: string,
 	startedAt: number,
 	bought: boolean,
 	recruitOwner: Player?,
@@ -42,6 +54,23 @@ local function serverLuck(): number
 		luck *= GameConfig.SecretRushLuckMult
 	end
 	return luck
+end
+
+-- Which clique this walker belongs to. Seven times in ten it is somebody's
+-- who is here right now; the rest of the time it is anyone's, so the corridor
+-- still has strangers in it.
+local function rollRole(): string
+	local present = {}
+	for _, player in Players:GetPlayers() do
+		local id = player:GetAttribute("Clique")
+		if typeof(id) == "string" and Cliques.Get(id) then
+			table.insert(present, id)
+		end
+	end
+	if #present > 0 and rng:NextNumber() < 0.7 then
+		return present[rng:NextInteger(1, #present)]
+	end
+	return Cliques.List[rng:NextInteger(1, #Cliques.List)].id
 end
 
 local function spawnWalker()
@@ -72,9 +101,34 @@ local function spawnWalker()
 	model.Name = "Walker_" .. def.id
 	StudentGen.Decorate(model, def.id, mut, false)
 
+	local role = rollRole()
+	local clique = Cliques.Get(role)
+	model:SetAttribute("Clique", role)
+	-- a ring in the clique's colour, so you can tell across the hall whether a
+	-- walker is one of yours before you have walked over to them
+	local marker = Instance.new("Part")
+	marker.Name = "CliqueRing"
+	marker.Shape = Enum.PartType.Cylinder
+	marker.Size = Vector3.new(0.25, 6, 6)
+	marker.Color = clique and clique.color or Color3.fromRGB(200, 200, 200)
+	marker.Material = Enum.Material.Neon
+	marker.Transparency = 0.35
+	marker.Anchored = false
+	marker.CanCollide = false
+	marker.CanQuery = false
+	marker.CanTouch = false
+	marker.Massless = true
+	marker.CFrame = CFrame.new(0, 0, 0)
+	marker.Parent = model
+
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Recruit"
-	prompt.ObjectText = (mutation and mutation.name .. " " or "") .. def.name .. "  $" .. NumberFormat.Abbreviate(cost)
+	prompt.ObjectText = ("%s%s  ·  %s  ·  $%s"):format(
+		mutation and mutation.name .. " " or "",
+		def.name,
+		clique and clique.name or role,
+		NumberFormat.Abbreviate(cost)
+	)
 	prompt.HoldDuration = 0.35
 	prompt.MaxActivationDistance = 14
 	prompt.RequiresLineOfSight = false
@@ -85,7 +139,7 @@ local function spawnWalker()
 	end
 	prompt.Parent = root
 
-	local walker: Walker = { model = model, defId = def.id, startedAt = os.clock(), bought = false }
+	local walker: Walker = { model = model, defId = def.id, role = role, startedAt = os.clock(), bought = false }
 
 	prompt.Triggered:Connect(function(player)
 		if walker.bought then
@@ -93,6 +147,20 @@ local function spawnWalker()
 		end
 		if not DataService.IsLoaded(player) then
 			Remotes.Get("Notify"):FireClient(player, "Your data hasn't loaded yet!", "bad")
+			return
+		end
+		local mine = player:GetAttribute("Clique")
+		if mine ~= role then
+			local yours = Cliques.Get(typeof(mine) == "string" and mine or nil)
+			Remotes.Get("Notify"):FireClient(
+				player,
+				("%s won't join you — they're %s and you're %s. Recruit your own."):format(
+					def.name,
+					clique and clique.name or role,
+					yours and yours.name or "unsorted"
+				),
+				"bad"
+			)
 			return
 		end
 		if not PlotService.HasPlot(player) then
@@ -109,7 +177,7 @@ local function spawnWalker()
 		end
 		walker.bought = true
 		prompt:Destroy()
-		local uid = PlotService.AddStudent(player, def.id, mut, false, true) -- model deferred: they walk home
+		local uid = PlotService.AddStudent(player, def.id, mut, false, true, role) -- model deferred: they walk home
 		walker.recruitOwner = player
 		walker.recruitUid = uid
 		walker.position = walker.model:GetPivot().Position
