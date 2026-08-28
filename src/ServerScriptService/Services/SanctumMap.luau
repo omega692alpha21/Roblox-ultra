@@ -22,14 +22,17 @@ local InsertService = game:GetService("InsertService")
 
 local SanctumMap = {}
 
--- 0.6 of the original, dropped a hundred and seventy studs down and back, so
--- the capstone clears the school's foundations and the boulevard's north end
--- lands at the foot of the stair.
+-- 0.6 of the original, turned a quarter turn and buried under the LIBRARY: the
+-- pyramid's centre sits directly beneath the reading room, its capstone thirty
+-- studs under the floorboards, and the boulevard runs away west under the
+-- north field. The quarter turn is what puts the boulevard on the west side,
+-- where the tunnel from the headmaster's office comes in.
 local SCALE = 0.6
-local ORIGIN = Vector3.new(-214, -170, -264)
-
--- Where the stair has to arrive: the far end of the boulevard, in world space.
-SanctumMap.Entrance = ORIGIN + Vector3.new(0, 2, 184 * SCALE)
+local ORIGIN = Vector3.new(-48, -120, -232)
+-- Turned so the estate's own +Z (the boulevard, running away from the pyramid)
+-- points along world -X.
+local YAW = -math.pi / 2
+local ROT = CFrame.Angles(0, YAW, 0)
 
 -- A point in the estate's own coordinates, in world space. Everything BUILT
 -- here goes through place() below, but the landing points handed back to the
@@ -37,8 +40,16 @@ SanctumMap.Entrance = ORIGIN + Vector3.new(0, 2, 184 * SCALE)
 -- as world coordinates is fifty-five studs above the school courtyard. Any
 -- code that teleported to one would have thrown the player into the sky.
 function SanctumMap.ToWorld(v: Vector3): Vector3
-	return ORIGIN + v * SCALE
+	return ORIGIN + ROT * (v * SCALE)
 end
+
+-- Where a tunnel has to arrive: the far end of the boulevard, in world space.
+SanctumMap.Entrance = SanctumMap.ToWorld(Vector3.new(0, 0, 184)) + Vector3.new(0, 2, 0)
+
+-- Where the second way in arrives: partway along the boulevard, facing the
+-- pyramid. The library stair comes down here; the headmaster's tunnel arrives
+-- at the far west end, so the two doors do not open onto the same paving slab.
+SanctumMap.Landing = SanctumMap.ToWorld(Vector3.new(17, 0, 87)) + Vector3.new(0, 1.5, 0)
 SanctumMap.Scale = SCALE
 SanctumMap.Origin = ORIGIN
 
@@ -89,7 +100,7 @@ local HALL_H = 38
 -- scaled, position is scaled and then offset, and rotation is left alone.
 local function place(cf: CFrame): CFrame
 	local rotation = cf - cf.Position
-	return CFrame.new(ORIGIN + cf.Position * SCALE) * rotation
+	return CFrame.new(SanctumMap.ToWorld(cf.Position)) * ROT * rotation
 end
 
 local function part(props: { [string]: any }): Part

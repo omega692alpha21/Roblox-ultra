@@ -24,47 +24,42 @@ local SanctumService = {}
 local PIN = "0713"
 local OPEN_SECONDS = 8
 
-local shelf: BasePart? = nil
-local closedCFrame: CFrame? = nil
-local openUntil = 0
+-- Two doors now: the headmaster's, in his office at the top of the staff
+-- lodge, and the library's, behind the stacks on its west wall. Both open on
+-- the same four digits, and opening either opens only itself.
+type Door = { shelf: BasePart, home: CFrame, openUntil: number }
+
+local doors: { Door } = {}
 local attempts: { [Player]: number } = {}
+-- which shelf they pulled, so the code opens that one and not the other
+local pendingDoor: { [Player]: Door } = {}
 
 local function isPrincipal(player: Player): boolean
 	return player.UserId == GameConfig.OwnerUserId
 end
 
-local function close()
-	local door = shelf
-	local home = closedCFrame
-	if not door or not home then
-		return
-	end
-	TweenService:Create(door, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-		CFrame = home,
+local function close(door: Door)
+	TweenService:Create(door.shelf, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+		CFrame = door.home,
 	}):Play()
 	task.delay(0.85, function()
-		if shelf and openUntil <= os.clock() then
-			shelf.CanCollide = true
+		if door.openUntil <= os.clock() then
+			door.shelf.CanCollide = true
 		end
 	end)
 end
 
-local function open(player: Player)
-	local door = shelf
-	local home = closedCFrame
-	if not door or not home then
-		return
-	end
-	openUntil = os.clock() + OPEN_SECONDS
-	door.CanCollide = false
+local function open(player: Player, door: Door)
+	door.openUntil = os.clock() + OPEN_SECONDS
+	door.shelf.CanCollide = false
 	-- slides back into the wall and along it, the way a real one would
-	TweenService:Create(door, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		CFrame = home * CFrame.new(0, 0, -15),
+	TweenService:Create(door.shelf, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		CFrame = door.home * CFrame.new(0, 0, -15),
 	}):Play()
 	Remotes.Get("Notify"):FireClient(player, "The shelf swings aside. Mind the steps.", "aura")
 	task.delay(OPEN_SECONDS, function()
-		if openUntil <= os.clock() then
-			close()
+		if door.openUntil <= os.clock() then
+			close(door)
 		end
 	end)
 end
@@ -127,7 +122,7 @@ local function wireEstate(estate: SanctumMap.Map)
 	end
 end
 
-function SanctumService.Init(map: { secretDoor: BasePart? })
+function SanctumService.Init(map: { secretDoors: { BasePart }? })
 	-- the estate itself, built once and left alone
 	task.spawn(function()
 		local ok, result = pcall(SanctumMap.Build)
@@ -141,36 +136,39 @@ function SanctumService.Init(map: { secretDoor: BasePart? })
 		end
 	end)
 
-	shelf = map.secretDoor
-	local door = shelf
-	if not door then
-		return
+	-- bound to a typed local: `for ... in map.secretDoors or NO_DOORS` types as
+	-- the union {BasePart} | {BasePart}, which generalised iteration refuses
+	local NO_DOORS: { BasePart } = {}
+	local shelves: { BasePart } = map.secretDoors or NO_DOORS
+	for _, shelf in shelves do
+		local door: Door = { shelf = shelf, home = shelf.CFrame, openUntil = 0 }
+		table.insert(doors, door)
+
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Pull a book"
+		prompt.ObjectText = "Bookshelf"
+		prompt.HoldDuration = 0.4
+		prompt.MaxActivationDistance = 10
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = shelf
+
+		prompt.Triggered:Connect(function(player)
+			-- everyone who pulls a book has found the door, which is the last
+			-- objective of the story's final chapter. Only the principal gets
+			-- past it; knowing it is there is the ending for everyone else.
+			Signals.FoundTheDoor:Fire(player)
+			if not isPrincipal(player) then
+				Remotes.Get("Notify"):FireClient(player, "Dust, and a copy of the school rules. Nothing else.", "info")
+				return
+			end
+			if door.openUntil > os.clock() then
+				open(player, door)
+				return
+			end
+			pendingDoor[player] = door
+			Remotes.Get("SecretKeypad"):FireClient(player)
+		end)
 	end
-	closedCFrame = door.CFrame
-
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Pull a book"
-	prompt.ObjectText = "Bookshelf"
-	prompt.HoldDuration = 0.4
-	prompt.MaxActivationDistance = 10
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = door
-
-	prompt.Triggered:Connect(function(player)
-		-- everyone who pulls a book has found the door, which is the last
-		-- objective of the story's final chapter. Only the principal gets past
-		-- it; knowing it is there is the ending for everyone else.
-		Signals.FoundTheDoor:Fire(player)
-		if not isPrincipal(player) then
-			Remotes.Get("Notify"):FireClient(player, "Dust, and a copy of the school rules. Nothing else.", "info")
-			return
-		end
-		if openUntil > os.clock() then
-			open(player)
-			return
-		end
-		Remotes.Get("SecretKeypad"):FireClient(player)
-	end)
 
 	Remotes.Get("SecretPin").OnServerEvent:Connect(function(player, code)
 		if not isPrincipal(player) or typeof(code) ~= "string" then
@@ -182,8 +180,9 @@ function SanctumService.Init(map: { secretDoor: BasePart? })
 			return
 		end
 		attempts[player] = now
-		if code == PIN then
-			open(player)
+		local door = pendingDoor[player]
+		if code == PIN and door then
+			open(player, door)
 		else
 			Remotes.Get("Notify"):FireClient(player, "Nothing happens.", "bad")
 		end
@@ -191,6 +190,7 @@ function SanctumService.Init(map: { secretDoor: BasePart? })
 
 	Players.PlayerRemoving:Connect(function(player)
 		attempts[player] = nil
+		pendingDoor[player] = nil
 	end)
 end
 

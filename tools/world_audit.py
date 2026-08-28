@@ -84,10 +84,14 @@ def floor_under(point, reach=7.0):
 
 
 def headroom(point, need=5.0):
+    # The ORIENTED test, not the bounding box. A long thin wall running
+    # diagonally has a bounding box wide enough to swallow the corridor it is
+    # the side of, so every sample down a diagonal tunnel read as blocked by
+    # the tunnel's own wall. `floor_under` still uses the box, because there
+    # the question is genuinely "what is the highest surface over this point".
     probe = [point[0], point[1] + need / 2 + 1.0, point[2]]
     for part in solids:
-        box = aabb(part)
-        if all(box[i][0] <= probe[i] <= box[i][1] for i in range(3)):
+        if inside(part, probe):
             return part["n"]
     return None
 
@@ -179,6 +183,11 @@ WALKS = [
     ("upper corridor", (-215, 16, 65), (215, 16, 65)),
     ("upper west wing", (-213, 16, -60), (-213, 16, 45)),
     ("upper east wing", (213, 16, -60), (213, 16, 45)),
+    # the two ways down to the estate under the library
+    # The tunnels themselves. The boulevard beyond them belongs to SanctumMap
+    # and is proved by tools/sanctum_check.py, which reads a different dump.
+    ("headmaster tunnel", (-237, -118, -186), (-158.4, -118, -232)),
+    ("library passage", (-49, 0, -222), (-100, 0, -222)),
     ("lobby to atrium", (0, 0, 118), (0, 0, 20)),
     ("atrium to gym", (0, 0, 20), (0, 0, -98)),
     ("gym to library path", (0, 0, -152), (0, 0, -186)),

@@ -101,6 +101,50 @@ def main():
             if values != sorted(values):
                 bad.append(f"a giver's '{stat}' missions go {values} — a later one is easier than an earlier one")
 
+    # ---- 5. the two halves of the sanctum agree on where it is ----
+    # MapService digs the tunnels; SanctumMap places the estate. They are
+    # separate modules with separate coordinate systems, and the only thing
+    # keeping the tunnel mouth on the boulevard is that two sets of numbers
+    # match. Nothing in the game would report it if they stopped: you would
+    # walk down a hundred and twenty studs of spiral and out into the void.
+    sanctum = read("ServerScriptService", "Services", "SanctumMap.luau")
+    origin = re.search(r"local ORIGIN = Vector3\.new\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)", sanctum)
+    scale = re.search(r"local SCALE = ([\d.]+)", sanctum)
+    yaw = re.search(r"local YAW = (-?)math\.pi / 2", sanctum)
+    entrance_m = re.search(
+        r"SANCTUM_ENTRANCE = Vector3\.new\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)", mission_src)
+    map_src = read("ServerScriptService", "Services", "MapService.luau")
+    entrance_m = re.search(
+        r"SANCTUM_ENTRANCE = Vector3\.new\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)", map_src)
+    floor_m = re.search(r"SANCTUM_FLOOR_Y = ([-\d.]+)", map_src)
+    if not (origin and scale and yaw and entrance_m and floor_m):
+        bad.append("could not read the sanctum's position out of both modules")
+    else:
+        ox, oy, oz = (float(origin.group(i)) for i in (1, 2, 3))
+        sc = float(scale.group(1))
+        sign = -1.0 if yaw.group(1) == "-" else 1.0
+        # Entrance = ToWorld(0, 0, 184) + (0, 2, 0); a yaw of -90 degrees maps
+        # the estate's local (x, y, z) to world (-z, y, x).
+        local = (0.0, 0.0, 184.0 * sc)
+        if sign < 0:
+            world = (ox - local[2], oy + local[1] + 2.0, oz + local[0])
+        else:
+            world = (ox + local[2], oy + local[1] + 2.0, oz - local[0])
+        want = tuple(float(entrance_m.group(i)) for i in (1, 2, 3))
+        if max(abs(world[i] - want[i]) for i in range(3)) > 0.6:
+            bad.append(
+                "MapService digs its tunnel to "
+                + str([round(v, 1) for v in want])
+                + " but SanctumMap puts the boulevard's end at "
+                + str([round(v, 1) for v in world])
+            )
+        floor_y = float(floor_m.group(1))
+        # the tunnel floor has to be within a step of the estate's own paving
+        if abs(floor_y - (oy + 0.5)) > 2.5:
+            bad.append(
+                f"the tunnel floor is at y={floor_y} but the estate paves at y={oy + 0.5}"
+            )
+
     for line in bad:
         print("  " + line)
     print(

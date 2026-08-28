@@ -103,6 +103,13 @@ CFMT.__add = function(a, v)
   return cfnew(a.p[1] + v.X, a.p[2] + v.Y, a.p[3] + v.Z, a.m)
 end
 CFMT.__mul = function(a, b)
+  -- CFrame * Vector3 rotates and translates the point, and returns a Vector3;
+  -- CFrame * CFrame composes. The sanctum needs the first to place a whole
+  -- estate through one transform.
+  if b.p == nil then
+    local rp = rotvec(a.m, { b.X, b.Y, b.Z })
+    return Vector3.new(a.p[1] + rp[1], a.p[2] + rp[2], a.p[3] + rp[3])
+  end
   local rp = rotvec(a.m, b.p)
   return cfnew(a.p[1] + rp[1], a.p[2] + rp[2], a.p[3] + rp[3], matmul(a.m, b.m))
 end
@@ -475,6 +482,11 @@ shots = [
     ("dorms",      (-176, 8, -160),  (-176, 8, -212)),
     ("northquad",  (0, 40, -120),    (0, 10, -220)),
     ("office",     (-190, 6, 34),    (-214, 6, 26)),
+    # the headmaster's office on the lodge's top floor, and the way down
+    ("head",       (-266, 41, -170),  (-320, 39, -170)),
+    ("headdesk",   (-330, 42, -170),  (-280, 40, -170)),
+    ("turret",     (-249, 40, -170),  (-249, 34, -190)),
+    ("libshaft",   (-60, 6, -222),    (-104, 2, -222)),
     ("officewide", (-190, 8, 55),    (-212, 5, 20)),
     ("upperhall",  (-180, 22, 65),   (0, 22, 65)),
     ("upperbalc",  (-100, 24, 60),   (0, 20, -20)),

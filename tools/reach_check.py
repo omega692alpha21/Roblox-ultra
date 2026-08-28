@@ -165,6 +165,17 @@ STAIR_FEET = [("lobby west", -46, 114), ("lobby east", 46, 114),
 UPPER_HEADS = [("lobby east", 46, 88), ("wing west", -178, 17), ("wing east", 178, 17)]
 SEED_HEAD = (-46, 88)  # the one flight the upper flood is allowed to start from
 
+# The staff lodge's second flight, and what has to be reachable once you are up
+# it: the desk on its dais, the fire, the long table, and the bookshelf that is
+# a door. A grand room you cannot cross is not grand.
+OFFICE_HEAD = (-270, -166)
+OFFICE_SPOTS = [
+    ("office desk", -278, -170),
+    ("office fire", -306, -200),
+    ("office table", -283, -170),
+    ("office bookshelf wall", -262, -186),
+]
+
 
 def extra_targets():
     """Everywhere else the game asks a player or an NPC to be.
@@ -217,7 +228,7 @@ def main():
     spots = extra_targets()
 
     levels = {}
-    for level in (0.0, 16.0):
+    for level in (0.0, 16.0, 35.0):
         walkable, floor = build_level(parts, level)
         levels[level] = (walkable, floor)
 
@@ -249,6 +260,29 @@ def main():
     if not upper_starts:
         bad.append(("upper landing", list(SEED_HEAD), "the stair arrives nowhere standable"))
     upper_seen = flood(upper_walkable, upper_floor, upper_starts)
+
+    # The headmaster's office: the whole top floor of the staff lodge, reached
+    # by a second flight off the studies landing. Its own storey, so it needs
+    # its own grid and its own seed at the head of that flight.
+    office_walkable, office_floor = levels[35.0]
+    office_starts = []
+    ox, oz = grid_index(OFFICE_HEAD[0]), grid_index(OFFICE_HEAD[1])
+    for dx in range(-6, 7):
+        for dz in range(-6, 7):
+            x, z = ox + dx, oz + dz
+            if 0 <= x < N and 0 <= z < N and office_walkable[x, z]:
+                office_starts.append((x, z))
+    if not office_starts:
+        bad.append(("headmaster's stair", list(OFFICE_HEAD), "arrives nowhere standable"))
+    office_seen = flood(office_walkable, office_floor, office_starts)
+    for name, px, pz in OFFICE_SPOTS:
+        gx, gz = grid_index(px), grid_index(pz)
+        if not any(
+            0 <= gx + dx < N and 0 <= gz + dz < N and office_seen[gx + dx, gz + dz]
+            for dx in range(-6, 7)
+            for dz in range(-6, 7)
+        ):
+            bad.append((name, [px, 35, pz], "cut off inside the headmaster's office"))
 
     # and the other three heads have to be reachable across the upper floor
     for name, hx, hz in UPPER_HEADS:

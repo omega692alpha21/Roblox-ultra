@@ -31,7 +31,7 @@ STEP = 2.2
 
 # The floors of the estate, in world Y. Boulevard and Grand Hall share one;
 # the four chambers ascend inside the pyramid.
-LEVELS = [-170.0, -139.1, -123.5, -110.3, -99.5]
+LEVELS = [-119.9, -88.8, -73.2, -60.0, -49.2]
 
 LANDMARKS = ("GrandFloor", "GoldFloor", "PlatinumFloor", "BlackFloor",
              "CrownFloor", "AtriumFloor", "BoulevardSlab", "RegistryWall",

@@ -97,8 +97,8 @@ Story.Chapters = {
 		},
 		reveal = {
 			"He talked. Took about four goes, but he talked.",
-			"He's being paid in cash, in envelopes, left in the principal's office.",
-			"Which is a problem, because that's the one room nobody else has a key to.",
+			"He's being paid in cash, in envelopes, left in the headmaster's office.",
+			"Top floor of the staff lodge. The one room in this school nobody else has a key to.",
 		},
 		objectives = {
 			{ id = "foil", label = "Take Rico's loot off him 5 times", stat = "foil", goal = 5 },
@@ -151,7 +151,7 @@ Story.Chapters = {
 			"One key. One person. And it isn't going to be a student.",
 		},
 		objectives = {
-			{ id = "find", label = "Find the door in the principal's office", stat = "founddoor", goal = 1 },
+			{ id = "find", label = "Find the door behind a bookshelf", stat = "founddoor", goal = 1 },
 			{ id = "aura", label = "Reach 6,000 aura", stat = "aura", goal = 6000, kind = "reach" },
 		},
 		cash = 2000000,
