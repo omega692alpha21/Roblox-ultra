@@ -2723,14 +2723,27 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 	-- The washroom bay along the back wall. A boarding school with no
 	-- lavatory in it is the sort of thing nobody notices until they do.
 	local wz = center.Z + d2 / 2 - 6
+	-- A screen, not a wall. The first version was nine studs tall and
+	-- fifty-eight wide, which cut the dormitory in half and made the room read
+	-- as two corridors. Six studs, and a doorway in the middle of it.
+	for _, side in { -1, 1 } do
+		part({
+			Name = "WashroomPartition",
+			Size = Vector3.new((w - 12 - 14) / 2, 6, 1),
+			CFrame = CFrame.new(center.X + side * ((w - 12) / 4 + 3.5), 3, wz - 7),
+			Color = Color3.fromRGB(224, 224, 218),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		})
+	end
 	part({
-		Name = "WashroomPartition",
-		Size = Vector3.new(w - 12, 9, 1),
-		CFrame = CFrame.new(center.X, 4.5, wz - 7),
+		Name = "WashroomLintel",
+		Size = Vector3.new(14, 1.2, 1),
+		CFrame = CFrame.new(center.X, 5.4, wz - 7),
 		Color = Color3.fromRGB(224, 224, 218),
 		Material = Enum.Material.SmoothPlastic,
 		Parent = parent,
-	})
+	}).CanCollide = false
 	part({
 		Name = "WashroomFloor",
 		Size = Vector3.new(w - 12, 0.4, 12),
