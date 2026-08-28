@@ -4224,10 +4224,22 @@ local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gap
 				part({ Name = "Muntin", Size = Vector3.new(winW, 0.45, 3.2), CFrame = cf * CFrame.new(wx, y0 + 5.6, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				-- sill under each window
 				part({ Name = "FacadeSill", Size = Vector3.new(winW + 2.6, 0.6, 3.4), CFrame = cf * CFrame.new(wx, y0 + 0.95, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
-				-- keystone above and shutters either side: relief, not flat color
-				part({ Name = "Keystone", Size = Vector3.new(2.0, 1.2, 3.4), CFrame = cf * CFrame.new(wx, y0 + 10.3, 0), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				-- Ashlar jambs and a hood mould, not green timber shutters.
+				-- Shutters read colonial cottage; the reference school is
+				-- collegiate gothic, where a window is a hole cut in stone with
+				-- dressed stone round it. Same pieces in the same places -- a
+				-- vertical either side, a horizontal over the top -- but they
+				-- are stone, and the hood steps out over the head with a
+				-- keystone at its middle, which is what makes the wall read as
+				-- masonry rather than as a painted rectangle.
+				local ASHLAR = Color3.fromRGB(201, 191, 169)
 				for _, sh in { -1, 1 } do
-					part({ Name = "Shutter", Size = Vector3.new(2.4, 7.0, 3.4), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 2.4), y0 + 5.6, 0), Color = Color3.fromRGB(46, 74, 60), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
+					tag(part({ Name = "WindowJamb", Size = Vector3.new(2.4, 9.4, 3.4), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 1.2), y0 + 5.6, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+				end
+				tag(part({ Name = "WindowHood", Size = Vector3.new(winW + 6.2, 1.3, 3.8), CFrame = cf * CFrame.new(wx, y0 + 10.6, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+				part({ Name = "Keystone", Size = Vector3.new(2.2, 2.4, 4.0), CFrame = cf * CFrame.new(wx, y0 + 10.4, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				for _, sh in { -1, 1 } do
+					part({ Name = "HoodStop", Size = Vector3.new(1.4, 1.9, 3.9), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 2.8), y0 + 9.9, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				end
 			end
 			-- slim string course between storeys only
