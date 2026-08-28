@@ -151,7 +151,8 @@ local function spawnWalker()
 		end
 		local mine = player:GetAttribute("Clique")
 		if mine ~= role then
-			local yours = Cliques.Get(typeof(mine) == "string" and mine or nil)
+			local mineId: string? = if typeof(mine) == "string" then mine else nil
+			local yours = if mineId then Cliques.Get(mineId) else nil
 			Remotes.Get("Notify"):FireClient(
 				player,
 				("%s won't join you — they're %s and you're %s. Recruit your own."):format(

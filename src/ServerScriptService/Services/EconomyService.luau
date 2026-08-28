@@ -134,6 +134,13 @@ function EconomyService.AddCash(player: Player, amount: number, countsAsEarned: 
 	end
 	-- the Regular's edge: no special talent, better pay for everything
 	amount = math.floor(amount * Cliques.For(player).cashMult)
+	-- and the study-group bonus: up to +40% for a full crew standing near
+	-- you. SquadService publishes it as an attribute so the pay path never
+	-- has to know that crews exist.
+	local squadBonus = player:GetAttribute("SquadBonus")
+	if typeof(squadBonus) == "number" and squadBonus > 1 then
+		amount = math.floor(amount * squadBonus)
+	end
 	profile.cash += amount
 	if countsAsEarned then
 		profile.totalEarned += amount

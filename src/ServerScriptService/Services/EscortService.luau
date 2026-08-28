@@ -23,6 +23,7 @@ local DataService = require(script.Parent.DataService)
 local StudentGen = require(script.Parent.StudentGen)
 local ActionAnim = require(script.Parent.ActionAnim)
 local EffectsService = require(script.Parent.EffectsService)
+local SquadService = require(script.Parent.SquadService)
 local Signals = require(script.Parent.Parent.Signals)
 
 local EscortService = {}
@@ -139,6 +140,20 @@ local function spawnFor(player: Player)
 end
 
 -- Send the crew at something for a few seconds.
+--
+-- A crew is what turns a fight into a brawl: everyone in the squad who is
+-- close enough to see it sends their escorts in too. Far-away squad-mates
+-- stay out of it, because escorts sprinting across the whole school to a
+-- fight they cannot see just looks broken.
+local BACKUP_RANGE = 120
+
+local function sicOne(player: Player, targetRoot: BasePart)
+	for _, escort in escorts[player] or EMPTY do
+		escort.target = targetRoot
+		escort.targetUntil = os.clock() + 4
+	end
+end
+
 local function sic(player: Player, targetModel: Instance?)
 	if typeof(targetModel) ~= "Instance" or not targetModel:IsA("Model") then
 		return
@@ -147,9 +162,15 @@ local function sic(player: Player, targetModel: Instance?)
 	if not targetRoot then
 		return
 	end
-	for _, escort in escorts[player] or EMPTY do
-		escort.target = targetRoot
-		escort.targetUntil = os.clock() + 4
+	sicOne(player, targetRoot)
+	for _, mate in SquadService.MembersOf(player) do
+		if mate ~= player and mate.Parent then
+			local character = mate.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root and (root.Position - targetRoot.Position).Magnitude <= BACKUP_RANGE then
+				sicOne(mate, targetRoot)
+			end
+		end
 	end
 end
 

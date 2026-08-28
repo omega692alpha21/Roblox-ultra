@@ -90,6 +90,7 @@ local ORDER = {
 	"ActionAnimController",
 	"JournalController",
 	"HouseController",
+	"SquadController",
 }
 
 local results: { { name: string, ok: boolean, err: string? } } = {}

@@ -39,6 +39,9 @@ Z["pills"] = (0.5 - c("PillsW") / 2, c("PillsY"), 0.5 + c("PillsW") / 2, c("Pill
 Z["goal chip"] = (0.5 - c("GoalW") / 2, c("GoalY"), 0.5 + c("GoalW") / 2, c("GoalY") + c("GoalH"))
 Z["house chip"] = (0.5 - c("HouseW") / 2, c("HouseY"), 0.5 + c("HouseW") / 2, c("HouseY") + c("HouseH"))
 
+sx, sy = c("SquadX"), c("SquadY")
+Z["crew strip"] = (sx, sy, sx + c("SquadW"), sy + c("SquadH"))
+
 vw, vh = c("VitalsW"), c("VitalsH")
 vx, vb = c("VitalsX"), c("VitalsBottom")
 Z["vitals"] = (vx - vw / 2, vb - vh, vx + vw / 2, vb)

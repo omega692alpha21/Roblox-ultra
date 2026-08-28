@@ -27,6 +27,8 @@ local EVENTS = {
 	"PlayAction", -- (character: Model, kind: "punch"|"throw"|"hurt"|"knockout"|"flex")
 	"StoryState", -- (state table for the Story panel)
 	"HouseState", -- (term standings for the House Cup)
+	"CrewInvite", -- (invite: {name, userId, clique, color, friend, seconds})
+	"SquadState", -- (rows: {{name, userId, clique, color}})
 	"SecretKeypad", -- server -> client: open the bookshelf keypad
 	-- client -> server
 	"FuseStudent", -- (defId: string)
@@ -49,6 +51,8 @@ local EVENTS = {
 	"UseToy", -- client -> server (toyId: string, direction: Vector3)
 	"BuyToy", -- client -> server (toyId: string)
 	"SecretPin", -- client -> server (code: string)
+	"CrewInviteAnswer", -- client -> server (accept: boolean)
+	"LeaveCrew", -- client -> server
 }
 
 local FUNCTIONS = {

@@ -1,13 +1,765 @@
---!strict
+
+-- ===== datatype + instance shims =====
+local function v3mt()
+  local mt = {}
+  mt.__index = function(v, k)
+    if k == "Magnitude" then return math.sqrt(v.X*v.X + v.Y*v.Y + v.Z*v.Z) end
+    if k == "Unit" then local m = math.sqrt(v.X*v.X+v.Y*v.Y+v.Z*v.Z); return setmetatable({X=v.X/m,Y=v.Y/m,Z=v.Z/m}, mt) end
+    if k == "Dot" then return function(a, b) return a.X*b.X + a.Y*b.Y + a.Z*b.Z end end
+    if k == "Cross" then return function(a, b) return setmetatable({X=a.Y*b.Z-a.Z*b.Y, Y=a.Z*b.X-a.X*b.Z, Z=a.X*b.Y-a.Y*b.X}, mt) end end
+    if k == "Lerp" then return function(a, b, t) return setmetatable({X=a.X+(b.X-a.X)*t, Y=a.Y+(b.Y-a.Y)*t, Z=a.Z+(b.Z-a.Z)*t}, mt) end end
+    return nil
+  end
+  mt.__add = function(a, b) return setmetatable({X=a.X+b.X, Y=a.Y+b.Y, Z=a.Z+b.Z}, mt) end
+  mt.__sub = function(a, b) return setmetatable({X=a.X-b.X, Y=a.Y-b.Y, Z=a.Z-b.Z}, mt) end
+  mt.__mul = function(a, b)
+    if type(a) == "number" then return setmetatable({X=a*b.X, Y=a*b.Y, Z=a*b.Z}, getmetatable(b)) end
+    return setmetatable({X=a.X*b, Y=a.Y*b, Z=a.Z*b}, getmetatable(a))
+  end
+  mt.__div = function(a, b) return setmetatable({X=a.X/b, Y=a.Y/b, Z=a.Z/b}, mt) end
+  mt.__unm = function(a) return setmetatable({X=-a.X, Y=-a.Y, Z=-a.Z}, mt) end
+  return mt
+end
+local V3MT = v3mt()
+Vector3 = {
+  new = function(x, y, z) return setmetatable({X=x or 0, Y=y or 0, Z=z or 0}, V3MT) end,
+}
+Vector3.zero = Vector3.new(0, 0, 0)
+Vector3.one = Vector3.new(1, 1, 1)
+Vector3.yAxis = Vector3.new(0, 1, 0)
+Vector3.xAxis = Vector3.new(1, 0, 0)
+Vector3.zAxis = Vector3.new(0, 0, 1)
+
+local v2mt = {}
+v2mt.__index = function(v, k)
+  if k == "Magnitude" then return math.sqrt(v.X*v.X + v.Y*v.Y) end
+  if k == "Unit" then local m = math.sqrt(v.X*v.X + v.Y*v.Y); return setmetatable({X=v.X/m, Y=v.Y/m}, v2mt) end
+  return nil
+end
+v2mt.__add = function(a, b) return setmetatable({X=a.X+b.X, Y=a.Y+b.Y}, v2mt) end
+v2mt.__sub = function(a, b) return setmetatable({X=a.X-b.X, Y=a.Y-b.Y}, v2mt) end
+v2mt.__mul = function(a, b)
+  if type(a) == "number" then return setmetatable({X=a*b.X, Y=a*b.Y}, v2mt) end
+  return setmetatable({X=a.X*b, Y=a.Y*b}, v2mt)
+end
+Vector2 = { new = function(x, y) return setmetatable({X=x or 0, Y=y or 0}, v2mt) end }
+
+Color3 = {
+  new = function(r, g, b) return {R=r or 0, G=g or 0, B=b or 0} end,
+  fromRGB = function(r, g, b) return {R=(r or 0)/255, G=(g or 0)/255, B=(b or 0)/255} end,
+  fromHSV = function(h, s, v) return {R=v, G=v, B=v} end,
+}
+
+UDim = { new = function(s, o) return {Scale=s, Offset=o} end }
+UDim2 = {
+  new = function(a, b, c, d) return {X={Scale=a,Offset=b}, Y={Scale=c,Offset=d}} end,
+  fromScale = function(a, b) return UDim2.new(a, 0, b, 0) end,
+  fromOffset = function(a, b) return UDim2.new(0, a, 0, b) end,
+}
+
+-- CFrame: position + 3x3 rotation (rows r[1..3] are basis ROWS: world = p + R^T? we store columns)
+local CFMT = {}
+local function cfnew(px, py, pz, m)
+  return setmetatable({ p = {px, py, pz}, m = m or {{1,0,0},{0,1,0},{0,0,1}} }, CFMT)
+end
+local function matmul(a, b)
+  local r = {{0,0,0},{0,0,0},{0,0,0}}
+  for i = 1, 3 do for j = 1, 3 do
+    r[i][j] = a[i][1]*b[1][j] + a[i][2]*b[2][j] + a[i][3]*b[3][j]
+  end end
+  return r
+end
+local function rotvec(m, v)
+  return { m[1][1]*v[1] + m[1][2]*v[2] + m[1][3]*v[3],
+           m[2][1]*v[1] + m[2][2]*v[2] + m[2][3]*v[3],
+           m[3][1]*v[1] + m[3][2]*v[2] + m[3][3]*v[3] }
+end
+CFMT.__index = function(cf, k)
+  if k == "Position" then return Vector3.new(cf.p[1], cf.p[2], cf.p[3]) end
+  if k == "LookVector" then return Vector3.new(-cf.m[1][3], -cf.m[2][3], -cf.m[3][3]) end
+  if k == "RightVector" then return Vector3.new(cf.m[1][1], cf.m[2][1], cf.m[3][1]) end
+  if k == "UpVector" then return Vector3.new(cf.m[1][2], cf.m[2][2], cf.m[3][2]) end
+  return nil
+end
+CFMT.__mul = function(a, b)
+  local rp = rotvec(a.m, b.p)
+  return cfnew(a.p[1] + rp[1], a.p[2] + rp[2], a.p[3] + rp[3], matmul(a.m, b.m))
+end
+CFrame = {}
+function CFrame.new(x, y, z)
+  if x ~= nil and y == nil and type(x) == "table" then return cfnew(x.X, x.Y, x.Z) end
+  return cfnew(x or 0, y or 0, z or 0)
+end
+function CFrame.Angles(rx, ry, rz)
+  local cx, sx = math.cos(rx), math.sin(rx)
+  local cy, sy = math.cos(ry), math.sin(ry)
+  local cz, sz = math.cos(rz), math.sin(rz)
+  local Rx = {{1,0,0},{0,cx,-sx},{0,sx,cx}}
+  local Ry = {{cy,0,sy},{0,1,0},{-sy,0,cy}}
+  local Rz = {{cz,-sz,0},{sz,cz,0},{0,0,1}}
+  return cfnew(0, 0, 0, matmul(Rx, matmul(Ry, Rz)))
+end
+function CFrame.lookAt(pos, target, up)
+  up = up or Vector3.new(0, 1, 0)
+  local f = (target - pos).Unit
+  local z = { -f.X, -f.Y, -f.Z }
+  local upv = { up.X, up.Y, up.Z }
+  local x = { upv[2]*z[3]-upv[3]*z[2], upv[3]*z[1]-upv[1]*z[3], upv[1]*z[2]-upv[2]*z[1] }
+  local xm = math.sqrt(x[1]^2 + x[2]^2 + x[3]^2)
+  if xm < 1e-6 then x = {1, 0, 0} xm = 1 end
+  x = { x[1]/xm, x[2]/xm, x[3]/xm }
+  local y = { z[2]*x[3]-z[3]*x[2], z[3]*x[1]-z[1]*x[3], z[1]*x[2]-z[2]*x[1] }
+  return cfnew(pos.X, pos.Y, pos.Z, {{x[1],y[1],z[1]},{x[2],y[2],z[2]},{x[3],y[3],z[3]}})
+end
+
+ColorSequence = { new = function(...) return { args = { ... } } end }
+ColorSequenceKeypoint = { new = function(t, c) return { Time = t, Value = c } end }
+NumberRange = { new = function(a, b) return { Min = a, Max = b or a } end }
+NumberSequence = { new = function(...) return { args = { ... } } end }
+NumberSequenceKeypoint = { new = function(t, v) return { Time = t, Value = v } end }
+
+-- Deterministic Random (LCG)
+Random = {}
+Random.__index = Random
+function Random.new(seed)
+  return setmetatable({ state = (seed or 42) % 2147483647 }, Random)
+end
+function Random.NextNumber(self, lo, hi)
+  self.state = (self.state * 48271) % 2147483647
+  local r = self.state / 2147483647
+  if lo == nil then return r end
+  return lo + r * (hi - lo)
+end
+function Random.NextInteger(self, lo, hi)
+  return math.floor(self:NextNumber(lo, hi + 0.9999))
+end
+
+-- Enum autotable (cached so identity comparisons work)
+local enumCache = {}
+Enum = setmetatable({}, { __index = function(_, etype)
+  enumCache[etype] = enumCache[etype] or setmetatable({}, { __index = function(t, name)
+    local item = { Name = name, EnumTypeName = etype }
+    rawset(t, name, item)
+    return item
+  end })
+  return enumCache[etype]
+end })
+
+-- Instance shim
+local InstMT = {}
+InstMT.__index = function(self, k)
+  if k == "AddTag" or k == "RemoveTag" then return function() end end
+  if k == "GetTagged" then return function() return {} end end
+  if k == "GetChildren" then return function(s) local out = {} for _, c in ipairs(s._children) do table.insert(out, c) end return out end end
+  if k == "GetDescendants" then
+    return function(s)
+      local out = {}
+      local function walk(node) for _, c in ipairs(node._children) do table.insert(out, c) walk(c) end end
+      walk(s)
+      return out
+    end
+  end
+  if k == "FindFirstChild" then return function(s, name) for _, c in ipairs(s._children) do if c.Name == name then return c end end return nil end end
+  if k == "Position" then
+    local props = rawget(self, "_props")
+    local cf = props and props.CFrame
+    if cf then return Vector3.new(cf.p[1], cf.p[2], cf.p[3]) end
+    return Vector3.new(0, 0, 0)
+  end
+  if k == "FindFirstChildWhichIsA" then
+    return function(s, cls)
+      for _, c in ipairs(s._children) do if c.ClassName == cls then return c end end
+      return nil
+    end
+  end
+  if k == "IsA" then
+    return function(s, class)
+      if class == "BasePart" then return s.ClassName == "Part" or s.ClassName == "SpawnLocation" end
+      return s.ClassName == class
+    end
+  end
+  if k == "Destroy" then
+    return function(s)
+      local parent = rawget(s, "_parent")
+      if parent then
+        for i, c in ipairs(parent._children) do if c == s then table.remove(parent._children, i) break end end
+      end
+      rawset(s, "_parent", nil)
+    end
+  end
+  if k == "Parent" then return rawget(self, "_parent") end
+  return rawget(self, "_props")[k]
+end
+InstMT.__newindex = function(self, k, v)
+  if k == "Parent" then
+    local old = rawget(self, "_parent")
+    if old then for i, c in ipairs(old._children) do if c == self then table.remove(old._children, i) break end end end
+    rawset(self, "_parent", v)
+    if v then table.insert(v._children, self) end
+    return
+  end
+  rawget(self, "_props")[k] = v
+end
+Instance = {
+  new = function(class)
+    local self = { ClassName = class, _children = {}, _props = { Name = class } }
+    return setmetatable(self, InstMT)
+  end,
+}
+
+workspace = Instance.new("Workspace")
+workspace.Terrain = { FillBlock = function() end, FillBall = function() end }
+-- workspace.Terrain assigned via props; give direct access:
+game = { GetService = function(_, name) return Instance.new(name) end }
+local Palette = (function()
+
+-- Brand palette (see design doc): used by map, models, and UI.
+
+return {
+	CashGreen = Color3.fromRGB(63, 191, 74),
+	CashGreenDark = Color3.fromRGB(28, 92, 34),
+	LockerBlue = Color3.fromRGB(46, 107, 214),
+	LockerBlueDark = Color3.fromRGB(29, 68, 145),
+	BusYellow = Color3.fromRGB(245, 197, 49),
+	BusYellowDark = Color3.fromRGB(138, 107, 18),
+	DetentionRed = Color3.fromRGB(217, 67, 47),
+	DetentionRedDark = Color3.fromRGB(125, 35, 23),
+	Blackboard = Color3.fromRGB(34, 48, 31),
+	Chalk = Color3.fromRGB(216, 230, 212),
+	AuraPurple = Color3.fromRGB(180, 75, 217),
+	PanelBg = Color3.fromRGB(28, 39, 26),
+	Floor = Color3.fromRGB(201, 195, 154),
+	White = Color3.fromRGB(255, 255, 255),
+}
+
+end)()
+local GameConfig = (function()
+
+-- Central tuning knobs. Change numbers here, not in service code.
+
+return {
+	-- Plots / bases
+	PlotCount = 8,
+	BaseSlots = 6, -- default character slots per base
+	ExtraSlotsPass = 2, -- added by the +2 Slots game pass
+	SlotsPerRebirth = 1, -- extra slot per rebirth...
+	MaxRebirthSlots = 4, -- ...capped at this many
+
+	-- Conveyor
+	ConveyorSpawnInterval = 3.5, -- seconds between character spawns
+	ConveyorTravelTime = 28, -- seconds to cross the map
+	ConveyorMaxAlive = 12, -- max characters on the belt at once
+
+	-- Income
+	IncomeTickSeconds = 1,
+	StarterCash = 250,
+
+	-- Stealing
+	CarrySpeedMultiplier = 0.7, -- thief walkspeed while carrying
+	StealDepositRadius = 6,
+
+	-- Locks
+	JoinGraceLockSeconds = 30,
+	BaseLockSeconds = 60,
+	LockSecondsPerRebirth = 10,
+	LockCooldownSeconds = 90,
+	ExtendedLockPassBonus = 30,
+
+	-- Offline earnings
+	OfflineEarningsRate = 0.35, -- fraction of live income/s earned while away
+	OfflineEarningsCapHours = 2,
+	OfflineEarningsCapHours2x = 4, -- with 2x Cash pass
+
+	-- Movement. Roblox's default 16/7.2 is a walking pace built for obbies;
+	-- this genre reads as sluggish at that speed, so the whole game moves a
+	-- notch faster and jumps a little higher.
+	BaseWalkSpeed = 20,
+	JumpHeight = 8.4,
+
+	-- Speed pass
+	SpeedPassBonus = 6, -- added walkspeed
+	SprintBonus = 10, -- extra walkspeed while holding sprint
+
+	-- School RPG layer
+	ClassBellIntervalSeconds = 300, -- time between class bells
+	ClassOpenSeconds = 75, -- window to get to the room and sit in
+	QuizQuestionCount = 3,
+	QuizCashReward = 500, -- scaled by rebirth multiplier
+	QuizRepReward = 15,
+	QuizLuckBuffSeconds = 120,
+	QuizLuckBuffMultiplier = 1.5,
+
+	-- Fighting
+	PunchCooldownSeconds = 0.6,
+	PunchRange = 8,
+	PunchKnockback = 40,
+	PunchDamage = 9,
+	-- the account that owns the place: the principal
+	OwnerUserId = 11578479542,
+	RepPerThiefHit = 2,
+	RepPerSteal = 10,
+
+	-- Event flags (set for special weekends, no code changes needed)
+	EventLuckMultiplier = 1, -- e.g. 2 for a "2x Luck Weekend"
+	EventCashMultiplier = 1, -- e.g. 2 for a "2x Cash Hour"
+
+	-- Secret Rush: recurring in-server hype window with boosted odds
+	SecretRushMinInterval = 1080, -- seconds between rushes (min)
+	SecretRushMaxInterval = 1560, -- (max)
+	SecretRushDuration = 75,
+	SecretRushLuckMult = 5,
+
+	-- Bounty: the richest player in the server wears a crown; robbing them pays extra
+	BountyStealAuraBonus = 15,
+
+	-- Rico the Bully (NPC rival)
+	RivalRaidMinSeconds = 100,
+	RivalRaidMaxSeconds = 180,
+	RivalWalkSpeed = 11,
+	RivalEscapeReturnSeconds = 15,
+	RivalFoilAura = 3,
+
+	-- Live server events (EventDirector)
+	EventFirstDelay = 240, -- seconds after server start before the first event
+	EventMinInterval = 420, -- seconds between events (min)
+	EventMaxInterval = 720, -- (max)
+
+	-- Curfew: after Lights Out, being outdoors farms aura but risks detention
+	CurfewNightSeconds = 120,
+	CurfewTickSeconds = 5,
+	CurfewAuraCap = 6, -- per-tick aura ramps 1,2,3... up to this
+	CurfewCatchBase = 0.04, -- prefect catch chance on the first tick outside
+	CurfewCatchRamp = 0.025, -- extra catch chance per consecutive tick
+	CurfewCatchMax = 0.35,
+	DetentionSeconds = 75,
+	DetentionAuraPenalty = 5,
+
+	-- Campus coin pickups
+	CoinValueMin = 25,
+	CoinValueMax = 75,
+	CoinRespawnMin = 45,
+	CoinRespawnMax = 90,
+
+	-- Misc
+	AutosaveSeconds = 60,
+	LeaderboardPushSeconds = 120,
+	LeaderboardSize = 50,
+}
+
+end)()
+local __Cliques = (function()
+
+-- The five roles. You pick one when you first walk in, along with who you are,
+-- and it decides what you are good at for the rest of the game.
+--
+-- This used to be four "cliques" you joined at a board in the courtyard, with
+-- one perk each. It is the character class now, because a school game where
+-- everyone plays identically has nothing to choose. The board is still there
+-- and still lets you re-sort, for a slice of your cash -- people change.
+--
+-- The shape of it:
+--
+--   NERD     wins in the classroom and loses in the corridor
+--   JOCK     the bruiser: hits hard, takes hits, average everywhere else
+--   ATHLETE  fastest, longest wind, best throw -- fragile in a brawl
+--   BULLY    hurts most and lasts longest, and is hopeless at lessons
+--   REGULAR  average at all of it, and paid a little better for the trouble
+--
+-- Every number is a multiplier on the baseline (or an offset where the field
+-- name says bonus), so the "average" role is a row of ones and the others read
+-- as what they trade away.
+--
+-- The old field names are kept exactly as they were -- walkSpeedBonus,
+-- knockbackMult, quizRewardMult, offlineCapBonusHours, carrySpeedMultOverride
+-- -- because StealService, FightService, ClassService and RewardService all
+-- read them and none of that had to change.
+
+export type CliqueDef = {
+	id: string,
+	name: string,
+	motto: string,
+	blurb: string, -- what the pick screen says this role is for
+	icon: string,
+	color: Color3,
+
+	-- movement and the chase
+	walkSpeedBonus: number,
+	energyMax: number,
+	energyDrainMult: number, -- below 1 means you sprint for longer
+
+	-- taking and giving out punishment
+	maxHealth: number,
+	damageMult: number, -- punches and thrown toys
+	knockbackMult: number,
+	aimAssistMult: number, -- how forgiving the throw reticle is
+
+	-- the classroom and the wallet
+	quizRewardMult: number,
+	classTimeBonus: number, -- extra seconds on a lesson's clock
+	cashMult: number,
+	offlineCapBonusHours: number,
+
+	carrySpeedMultOverride: number?, -- replaces GameConfig.CarrySpeedMultiplier
+}
+
+local Cliques: { CliqueDef } = {
+	{
+		id = "nerds",
+		name = "Nerd",
+		motto = "Actually, it's pronounced GIF.",
+		blurb = "Top of every class. Bottom of every fight.",
+		icon = "🤓",
+		color = Color3.fromRGB(46, 107, 214),
+		walkSpeedBonus = -1,
+		energyMax = 80,
+		energyDrainMult = 1.15,
+		maxHealth = 85,
+		damageMult = 0.8,
+		knockbackMult = 0.9,
+		aimAssistMult = 0.9,
+		quizRewardMult = 1.75,
+		classTimeBonus = 4,
+		cashMult = 1,
+		offlineCapBonusHours = 1,
+	},
+	{
+		id = "jocks",
+		name = "Jock",
+		motto = "Touch grass? We ARE the grass.",
+		blurb = "Built for contact. Hits hard, shrugs it off.",
+		icon = "🏈",
+		color = Color3.fromRGB(217, 67, 47),
+		walkSpeedBonus = 2,
+		energyMax = 110,
+		energyDrainMult = 0.95,
+		maxHealth = 120,
+		damageMult = 1.25,
+		knockbackMult = 1.25,
+		aimAssistMult = 1,
+		quizRewardMult = 0.9,
+		classTimeBonus = 0,
+		cashMult = 1,
+		offlineCapBonusHours = 0,
+	},
+	{
+		id = "athletes",
+		name = "Athlete",
+		motto = "You will hear the whistle. You will not catch me.",
+		blurb = "Fastest legs, longest wind, best throw.",
+		icon = "🏃",
+		color = Color3.fromRGB(64, 176, 132),
+		walkSpeedBonus = 4,
+		energyMax = 150,
+		energyDrainMult = 0.65,
+		maxHealth = 95,
+		damageMult = 1,
+		knockbackMult = 1,
+		aimAssistMult = 1.7,
+		quizRewardMult = 1,
+		classTimeBonus = 0,
+		cashMult = 1,
+		offlineCapBonusHours = 0,
+		carrySpeedMultOverride = 0.85, -- still quick with a student over the shoulder
+	},
+	{
+		id = "bullies",
+		name = "Bully",
+		motto = "Lunch money is a participation fee.",
+		blurb = "Hurts the most. Lasts the longest. Learns the least.",
+		icon = "😤",
+		color = Color3.fromRGB(180, 75, 217),
+		walkSpeedBonus = 0,
+		energyMax = 95,
+		energyDrainMult = 1,
+		maxHealth = 145,
+		damageMult = 1.5,
+		knockbackMult = 1.35,
+		aimAssistMult = 0.95,
+		quizRewardMult = 0.7,
+		classTimeBonus = -2,
+		cashMult = 1,
+		offlineCapBonusHours = 0,
+	},
+	{
+		id = "regulars",
+		name = "Regular",
+		motto = "Just here for the lunch, honestly.",
+		blurb = "Average at everything, and paid better for it.",
+		icon = "🙂",
+		color = Color3.fromRGB(245, 197, 49),
+		walkSpeedBonus = 0,
+		energyMax = 100,
+		energyDrainMult = 1,
+		maxHealth = 100,
+		damageMult = 1,
+		knockbackMult = 1,
+		aimAssistMult = 1,
+		quizRewardMult = 1,
+		classTimeBonus = 0,
+		cashMult = 1.18,
+		offlineCapBonusHours = 1,
+	},
+}
+
+local module = {
+	List = Cliques,
+	SwitchCostFraction = 0.15, -- re-sorting costs this fraction of your cash
+}
+
+function module.Get(id: string): CliqueDef?
+	for _, c in Cliques do
+		if c.id == id then
+			return c
+		end
+	end
+	return nil
+end
+
+-- The role a player is actually playing, falling back to Regular so nothing
+-- downstream has to keep writing "or 1".
+function module.For(player: Player): CliqueDef
+	local id = player:GetAttribute("Clique")
+	if typeof(id) == "string" then
+		local found = module.Get(id)
+		if found then
+			return found
+		end
+	end
+	return Cliques[5]
+end
+
+return module
+
+end)()
+local __PropSizes = (function()
+
+-- Generated by tools/prop_registry.py -- do not edit by hand.
+--
+-- The size in studs of every prop the school can place, measured from the
+-- uploaded mesh. MapService scatters furniture into rooms and has to know
+-- how much floor each piece needs before it puts the next one down.
+-- Only kinds whose model actually uploaded appear here, so a scatter pool
+-- naturally narrows to what exists.
+return {
+	SchoolDesk = Vector3.new(2.63, 3.27, 2.02),
+	SchoolChair = Vector3.new(2.09, 3.72, 2.50),
+	OfficeDesk = Vector3.new(7.40, 2.91, 3.50),
+	Chalkboard = Vector3.new(3.40, 5.58, 2.81),
+	ProjectorScreen = Vector3.new(4.05, 6.66, 3.39),
+	Bookshelf = Vector3.new(5.08, 7.63, 2.15),
+	Shelf = Vector3.new(3.71, 7.70, 0.95),
+	SteelShelves = Vector3.new(3.90, 7.60, 1.78),
+	SteelShelves2 = Vector3.new(2.20, 7.92, 1.86),
+	Clock = Vector3.new(1.19, 1.19, 0.17),
+	Laptop = Vector3.new(2.41, 2.01, 1.80),
+	Stationery = Vector3.new(1.12, 0.61, 0.31),
+	Notepads = Vector3.new(4.08, 0.08, 2.44),
+	Clipboard = Vector3.new(0.85, 0.16, 1.25),
+	BunsenBurner = Vector3.new(1.28, 1.60, 1.28),
+	FireAlarm = Vector3.new(0.37, 0.53, 0.10),
+	Extinguisher = Vector3.new(1.04, 2.44, 1.36),
+	Bin = Vector3.new(6.83, 3.35, 2.06),
+	WetFloorSign = Vector3.new(1.11, 2.33, 1.33),
+	Table = Vector3.new(6.66, 2.03, 2.43),
+	Table2 = Vector3.new(1.87, 2.60, 1.87),
+	Chair = Vector3.new(1.60, 3.54, 2.00),
+	Chair2 = Vector3.new(2.37, 4.68, 2.45),
+	ArmChair = Vector3.new(3.14, 3.94, 2.83),
+	Sofa = Vector3.new(5.81, 2.95, 2.43),
+	Sofa2 = Vector3.new(6.69, 2.63, 3.03),
+	CoffeeTable = Vector3.new(5.70, 1.94, 3.60),
+	SideTable = Vector3.new(2.04, 2.04, 1.67),
+	CeilingLamp = Vector3.new(1.60, 3.52, 1.60),
+	HangingLamp = Vector3.new(2.03, 5.01, 2.03),
+	PictureFrame = Vector3.new(2.20, 3.11, 0.06),
+	FramedPicture = Vector3.new(3.90, 3.00, 0.13),
+	Mirror = Vector3.new(3.92, 6.00, 0.21),
+	WhaleStatue = Vector3.new(3.45, 3.97, 5.05),
+	RayStatue = Vector3.new(2.62, 2.18, 1.98),
+	Vase1 = Vector3.new(0.75, 1.48, 0.75),
+	Vase2 = Vector3.new(0.81, 1.14, 0.81),
+	Vase4 = Vector3.new(0.67, 1.27, 0.67),
+	PlanterPot = Vector3.new(3.60, 3.00, 3.56),
+	PlanterBox = Vector3.new(6.44, 3.00, 2.92),
+	PottedPlant = Vector3.new(3.14, 5.00, 3.45),
+	Fern = Vector3.new(11.07, 2.40, 9.67),
+	GrandfatherClock = Vector3.new(2.31, 8.11, 1.58),
+	Ottoman = Vector3.new(3.27, 2.31, 2.30),
+	GreenChair = Vector3.new(2.49, 3.92, 2.46),
+	MonoblocChair = Vector3.new(2.37, 3.26, 2.32),
+	DiningTable = Vector3.new(8.35, 3.24, 5.14),
+	Bench = Vector3.new(4.31, 3.29, 1.84),
+	Stool = Vector3.new(1.42, 2.14, 1.50),
+	PicnicTable = Vector3.new(8.29, 2.76, 11.18),
+	Football = Vector3.new(1.88, 0.82, 0.82),
+	AmericanFootball = Vector3.new(1.68, 0.95, 0.95),
+	Baseball = Vector3.new(0.59, 0.60, 0.60),
+	Dartboard = Vector3.new(1.67, 1.67, 0.15),
+	Shrub = Vector3.new(14.57, 2.40, 6.06),
+	Flowers = Vector3.new(10.84, 2.20, 2.33),
+	SecurityLight = Vector3.new(1.20, 1.96, 1.54),
+	IndustrialLamp = Vector3.new(1.01, 1.59, 0.52),
+	DayBed = Vector3.new(7.30, 4.17, 3.16),
+	Nightstand = Vector3.new(2.10, 2.59, 1.57),
+	Cabinet = Vector3.new(3.69, 9.50, 2.70),
+	Drawer = Vector3.new(3.17, 2.02, 1.69),
+	Pillows = Vector3.new(3.78, 1.67, 2.32),
+	Boombox = Vector3.new(2.68, 1.74, 0.69),
+	Television = Vector3.new(3.94, 3.00, 3.09),
+	LoungeChair = Vector3.new(3.73, 4.33, 4.40),
+	ModernCoffeeTable = Vector3.new(2.22, 1.44, 4.45),
+	WoodenTable = Vector3.new(4.20, 2.96, 2.61),
+	PaintedWoodenNightstand = Vector3.new(1.87, 2.28, 1.88),
+	PaintedWoodenTable = Vector3.new(8.90, 3.55, 4.21),
+	ChineseSofa = Vector3.new(8.46, 3.18, 3.58),
+	ChineseStool = Vector3.new(2.22, 2.33, 1.87),
+	RollershutterDoor = Vector3.new(11.40, 8.88, 1.11),
+	RollershutterWindow = Vector3.new(18.87, 6.85, 1.11),
+	RollershutterWindow2 = Vector3.new(13.32, 5.78, 0.62),
+	RollershutterWindow3 = Vector3.new(11.01, 5.72, 0.57),
+	Barrel = Vector3.new(2.35, 3.44, 2.36),
+	StandingPictureFrame = Vector3.new(0.37, 0.92, 0.74),
+	Croissant = Vector3.new(0.74, 0.23, 0.28),
+	SweetPotato = Vector3.new(0.22, 0.37, 0.23),
+	CarvedWoodenPlate = Vector3.new(1.01, 0.14, 0.99),
+	PaintedWoodenCabinet = Vector3.new(4.42, 4.37, 2.28),
+	WoodenTable2 = Vector3.new(4.91, 3.07, 2.13),
+	Television2 = Vector3.new(1.48, 1.52, 1.30),
+	ChineseTeaTable = Vector3.new(3.11, 1.84, 3.09),
+	BrassVase = Vector3.new(0.31, 0.74, 0.31),
+	BaseballBat = Vector3.new(0.24, 3.38, 0.24),
+	ChineseArmchair = Vector3.new(3.14, 5.87, 2.92),
+	Barrel2 = Vector3.new(2.08, 3.26, 2.08),
+	Barrel3 = Vector3.new(1.81, 3.26, 1.79),
+	CarvedWoodenElephant = Vector3.new(0.40, 0.36, 0.21),
+	BrassVase2 = Vector3.new(0.30, 0.63, 0.23),
+	CeramicVase = Vector3.new(0.42, 1.53, 0.42),
+	OldTyre = Vector3.new(2.22, 2.22, 0.61),
+	StandingPictureFrame2 = Vector3.new(0.38, 0.99, 0.80),
+	WoodenDisplayShelves = Vector3.new(1.37, 5.76, 3.99),
+	Plunger = Vector3.new(0.64, 1.56, 0.64),
+	WoodenCandlestick = Vector3.new(0.36, 0.81, 0.37),
+	BrassPot = Vector3.new(1.36, 0.40, 1.12),
+	SmallWoodenTable = Vector3.new(3.39, 1.97, 1.63),
+	WoodenCuttingBoard = Vector3.new(1.66, 0.15, 0.91),
+	CeramicPot = Vector3.new(2.43, 1.38, 1.86),
+	HangingPictureFrame = Vector3.new(2.78, 1.85, 0.12),
+	BrassPot2 = Vector3.new(1.12, 1.08, 1.12),
+	GothicCommode = Vector3.new(4.45, 4.48, 2.15),
+	Lemon = Vector3.new(0.25, 0.35, 0.25),
+	CoffeeTableRound = Vector3.new(4.81, 1.82, 4.81),
+	PlasticContainer = Vector3.new(3.31, 1.59, 2.32),
+	VintagePocketWatch = Vector3.new(0.23, 0.30, 0.05),
+	RoundWoodenTable = Vector3.new(2.95, 2.76, 2.95),
+	BarberShopChair = Vector3.new(2.80, 5.51, 4.91),
+	Dustpan = Vector3.new(1.23, 0.37, 1.36),
+	BrassPan = Vector3.new(0.71, 0.19, 1.66),
+	PasticTorch6v = Vector3.new(0.51, 0.52, 0.83),
+	VintageStapler = Vector3.new(0.77, 0.35, 0.18),
+	Lightbulb = Vector3.new(0.22, 0.37, 0.22),
+	UtilityBox = Vector3.new(1.92, 4.15, 1.60),
+	Trashbag = Vector3.new(1.95, 2.13, 1.71),
+	WoodenBowl = Vector3.new(0.48, 0.27, 0.46),
+	CassettePlayer = Vector3.new(0.48, 0.88, 0.18),
+	WoodenBucket = Vector3.new(1.36, 2.03, 1.27),
+	WoodenCrate = Vector3.new(1.96, 1.72, 4.32),
+	YellowOnion = Vector3.new(0.27, 0.32, 0.25),
+	GallineraTable = Vector3.new(3.07, 1.80, 1.92),
+	Jug = Vector3.new(1.02, 0.78, 0.62),
+	PaintedWoodenSofa = Vector3.new(9.07, 4.74, 2.91),
+	PlasticCrate = Vector3.new(1.87, 0.94, 1.50),
+	LanternChandelier = Vector3.new(2.14, 3.25, 2.13),
+	MetalJug = Vector3.new(0.73, 1.06, 0.72),
+	WoodenLadder = Vector3.new(3.66, 6.37, 2.29),
+	UtilityBox2 = Vector3.new(3.40, 4.15, 1.60),
+	FoldingWoodenStool = Vector3.new(1.95, 1.64, 2.02),
+	WornMetalRack = Vector3.new(3.39, 7.03, 2.22),
+	SideTableTall = Vector3.new(1.42, 2.82, 1.42),
+	LightbulbLed = Vector3.new(0.23, 0.37, 0.23),
+	MetalStool = Vector3.new(1.66, 1.70, 1.75),
+	MetalStool2 = Vector3.new(1.70, 3.79, 1.74),
+	WoodenCrate2 = Vector3.new(3.05, 1.29, 1.51),
+	ChineseCommode = Vector3.new(16.61, 7.47, 4.33),
+	FoodLychee = Vector3.new(0.15, 0.19, 0.16),
+	GardenGloves = Vector3.new(0.84, 0.28, 1.11),
+	BrassVase3 = Vector3.new(0.78, 1.96, 0.78),
+	FoodApple = Vector3.new(0.36, 0.32, 0.35),
+	IndustrialPasticContainer = Vector3.new(1.76, 1.57, 2.34),
+	FoodGinger = Vector3.new(0.89, 2.13, 0.55),
+	VintageOilLamp = Vector3.new(0.81, 2.97, 0.81),
+	WoodenBucket2 = Vector3.new(2.28, 1.30, 2.28),
+	SungkaBoard = Vector3.new(0.52, 0.13, 2.22),
+	BronzeSharkStatue = Vector3.new(1.30, 1.60, 2.81),
+	ClassicConsole = Vector3.new(5.71, 3.51, 2.18),
+	FoodAvocado = Vector3.new(0.35, 0.53, 0.35),
+	FoodKiwi = Vector3.new(0.26, 0.33, 0.25),
+	ChineseChandelier = Vector3.new(3.25, 2.77, 3.25),
+	Sofa3 = Vector3.new(10.11, 4.14, 3.42),
+	ModernArmChair = Vector3.new(3.04, 3.78, 3.65),
+	SteelFrameShelves = Vector3.new(8.70, 8.55, 2.67),
+	AlarmClock = Vector3.new(0.49, 0.64, 0.25),
+	PlanterBox2 = Vector3.new(4.63, 1.68, 1.73),
+	PlanterBox3 = Vector3.new(3.38, 3.16, 2.43),
+	SeedingTray = Vector3.new(0.81, 0.22, 0.81),
+	WateringCanMetal = Vector3.new(0.71, 0.73, 1.67),
+	GardenSprinkler = Vector3.new(1.33, 0.80, 0.92),
+	GardenHoseWallMounted = Vector3.new(1.73, 2.06, 0.93),
+	WoodenBroom = Vector3.new(1.81, 5.38, 0.42),
+	MetalToolbox = Vector3.new(1.48, 1.28, 1.08),
+	MetalToolChest = Vector3.new(2.54, 2.41, 1.51),
+	HandTruck = Vector3.new(2.20, 5.19, 2.56),
+	WoodenLadder2 = Vector3.new(3.55, 4.94, 1.85),
+	OutdoorTableChairSet = Vector3.new(2.87, 3.18, 6.77),
+	RoundWoodenTable2 = Vector3.new(5.18, 3.72, 5.18),
+	BarChairRound = Vector3.new(1.79, 2.78, 1.80),
+	Rockingchair = Vector3.new(2.62, 3.68, 3.08),
+	GothicCabinet = Vector3.new(6.36, 8.74, 4.18),
+	ChineseConsoleTable = Vector3.new(6.36, 2.44, 1.25),
+	ModernCoffeeTable2 = Vector3.new(4.44, 1.37, 4.44),
+	WoodenStool = Vector3.new(1.57, 1.62, 1.64),
+	WoodenStool2 = Vector3.new(0.98, 0.67, 0.68),
+	GallineraChair = Vector3.new(2.15, 3.82, 2.23),
+	PotEnamel = Vector3.new(0.97, 0.66, 0.67),
+	HamburgerBuns = Vector3.new(1.47, 0.23, 0.42),
+	CarrotCake = Vector3.new(0.83, 0.36, 0.83),
+	FoodPearsAsian = Vector3.new(0.58, 0.41, 0.66),
+	FoodPomegranate = Vector3.new(0.42, 0.43, 0.43),
+	FoodLime = Vector3.new(0.22, 0.28, 0.23),
+	SecurityCamera = Vector3.new(0.63, 1.06, 2.05),
+	SecurityCamera2 = Vector3.new(0.52, 0.77, 1.46),
+	IndustrialWallSconce = Vector3.new(0.56, 1.26, 0.93),
+	IndustrialPipeLamp = Vector3.new(0.68, 1.35, 0.97),
+	WoodenLantern = Vector3.new(0.82, 1.96, 0.87),
+	BrassDiyaLantern = Vector3.new(0.46, 1.41, 0.46),
+	BrassGoblets = Vector3.new(1.68, 1.01, 1.10),
+	SeadogsCompass = Vector3.new(0.30, 0.32, 0.56),
+	RoundSpectacles = Vector3.new(0.58, 0.17, 0.55),
+	FishermansHat = Vector3.new(1.20, 0.46, 1.29),
+	Lifebuoy = Vector3.new(2.90, 3.11, 0.57),
+	PortableCassettePlayer = Vector3.new(0.64, 0.48, 0.15),
+	RetroMultimeter = Vector3.new(0.80, 1.03, 0.75),
+	VintageMicrowave = Vector3.new(3.97, 1.95, 2.76),
+	VintageElectricKettle = Vector3.new(1.19, 1.13, 0.92),
+	Gamepad = Vector3.new(1.49, 0.07, 1.61),
+	DigitalWristWatch = Vector3.new(0.14, 0.03, 0.80),
+	VintageFlashlight = Vector3.new(0.35, 0.53, 1.13),
+	SmallPlasticTorch = Vector3.new(0.37, 0.20, 0.84),
+	SignalFlashlight = Vector3.new(0.26, 0.55, 0.16),
+	WineBarrel = Vector3.new(2.75, 3.22, 2.80),
+}
+
+end)()
+local __MapService
+
 -- Generates all of Crumbworth High from parts at server start. No Studio assets needed.
 -- Returns handles to everything other services attach behavior to.
 
 local CollectionService = game:GetService("CollectionService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Palette = require(ReplicatedStorage.Shared.Palette)
-local GameConfig = require(ReplicatedStorage.Config.GameConfig)
-local PropSizes = require(ReplicatedStorage.Config.PropSizes)
+
+
+
+local PropSizes = __PropSizes
 
 export type Plot = {
 	index: number,
@@ -943,7 +1695,7 @@ local function buildGymMarkings(parent: Instance, center: Vector3)
 end
 
 local function buildStatues(parent: Instance)
-	local StudentGen = require(script.Parent.StudentGen) :: any
+	local StudentGen = { Create = function() return nil end, Stand = function() end } :: any
 	for i, spec in { { id = "school_legend", x = 215 - 14 }, { id = "substitute_who_stayed", x = 215 + 14 } } do
 		local pedestal = part({
 			Name = "StatuePedestal",
@@ -4704,7 +5456,7 @@ end
 	})
 
 	-- clique boards along the west courtyard's north wall
-	local Cliques = require(ReplicatedStorage.Config.Cliques)
+	local Cliques = __Cliques
 	local cliqueBoards: { [string]: BasePart } = {}
 	for i, clique in Cliques.List do
 		local board = part({
@@ -4911,4 +5663,43 @@ end
 
 local _ = GameConfig -- (kept for future map knobs)
 
-return MapService
+__MapService = MapService
+
+local map = __MapService.Build()
+local out = {}
+local function esc(s) return (s:gsub('"', '\\"')) end
+local function walk(inst)
+  for _, child in ipairs(inst:GetChildren()) do
+    if child.ClassName == "Part" or child.ClassName == "SpawnLocation" then
+      local cf = child.CFrame or CFrame.new(0, 0, 0)
+      local size = child.Size or Vector3.new(4, 1.2, 2)
+      local color = child.Color or {R = 0.64, G = 0.64, B = 0.65}
+      local material = child.Material and child.Material.Name or "Plastic"
+      local shape = child.Shape and child.Shape.Name or "Block"
+      table.insert(out, string.format(
+        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s}',
+        esc(child.Name), size.X, size.Y, size.Z, cf.p[1], cf.p[2], cf.p[3],
+        cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
+        math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5),
+        material, child.Transparency or 0, shape,
+        tostring(child.CanCollide ~= false)))
+    end
+    walk(child)
+  end
+end
+walk(map.folder)
+
+-- Props are recorded, not built, so they never appear in the part walk. Dump
+-- the requests too: the placement checker needs them to test furniture against
+-- walls before any of it reaches a server.
+local props = {}
+for _, request in ipairs(map.props or {}) do
+  local cf = request.cframe
+  table.insert(props, string.format(
+    '{"k":"%s","p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"sc":%.3f,"hang":%s}',
+    esc(request.kind), cf.p[1], cf.p[2], cf.p[3],
+    cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
+    request.scale or 1, tostring(request.hang == true)))
+end
+print("PROPS[" .. table.concat(props, ",") .. "]")
+print("[" .. table.concat(out, ",") .. "]")

@@ -204,6 +204,13 @@ function UIBuilder.HasPanel(name: string): boolean
 	return (panels :: { [string]: Frame? })[name] ~= nil
 end
 
+-- Panels live on their own layer, not on the caller's ScreenGui, so a
+-- controller cannot find its own panel by walking `gui`. It asks here.
+function UIBuilder.IsOpen(name: string): boolean
+	local target = (panels :: { [string]: Frame? })[name]
+	return target ~= nil and target.Visible
+end
+
 function UIBuilder.CloseAll()
 	for _, panel in panels do
 		panel.Visible = false

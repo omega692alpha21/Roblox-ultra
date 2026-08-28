@@ -146,10 +146,31 @@ for i, question in ipairs(Quizzes) do
 end
 
 -- ---------- Cliques ----------
-check("4 cliques", #Cliques.List == 4)
+-- five roles now: nerds, jocks, athletes, bullies, regulars. Every role is
+-- better than average at something and worse at something else, so a
+-- multiplier below 1 is the point rather than a bug -- what is checked is
+-- that nothing has run away in either direction.
+check("5 cliques", #Cliques.List == 5)
+local strongest = 0
 for _, clique in ipairs(Cliques.List) do
 	check("clique roundtrip " .. clique.id, Cliques.Get(clique.id) == clique)
-	check("clique mult sane " .. clique.id, clique.quizRewardMult >= 1 and clique.knockbackMult >= 1)
+	check(
+		"clique mult sane " .. clique.id,
+		clique.quizRewardMult >= 0.5
+			and clique.quizRewardMult <= 2
+			and clique.knockbackMult >= 0.5
+			and clique.knockbackMult <= 2
+			and clique.damageMult >= 0.5
+			and clique.damageMult <= 2
+	)
+	check("clique has health " .. clique.id, clique.maxHealth >= 80 and clique.maxHealth <= 200)
+	check("clique has energy " .. clique.id, clique.energyMax >= 60 and clique.energyMax <= 200)
+	-- no role may be best at everything
+	local total = clique.damageMult + clique.quizRewardMult + clique.cashMult + (1 + clique.walkSpeedBonus / 16)
+	if total > strongest then
+		strongest = total
+	end
+	check("clique not dominant " .. clique.id, total < 5)
 end
 check("unknown clique nil", Cliques.Get("emo") == nil)
 check("switch cost fraction sane", Cliques.SwitchCostFraction > 0 and Cliques.SwitchCostFraction < 1)
@@ -160,7 +181,10 @@ for key, pass in pairs(Products.GamePasses) do
 end
 for key, product in pairs(Products.DevProducts) do
 	check("product fields " .. key, product.id ~= nil and product.name and product.price > 0)
-	local grants = (product.cash and 1 or 0) + (product.spins and 1 or 0) + (product.grantRarity and 1 or 0)
+	local grants = (product.cash and 1 or 0)
+		+ (product.spins and 1 or 0)
+		+ (product.grantRarity and 1 or 0)
+		+ (product.hallPasses and 1 or 0)
 	check("product grants exactly one thing " .. key, grants == 1, grants)
 	if product.grantRarity then
 		check("product rarity exists " .. key, Students.RollFromRarity(product.grantRarity, rng) ~= nil)

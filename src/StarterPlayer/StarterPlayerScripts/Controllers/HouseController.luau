@@ -139,7 +139,7 @@ function HouseController.Init(gui: ScreenGui)
 			math.floor(left / 60),
 			left % 60
 		)
-		if (gui:FindFirstChild("Houses") :: any) and (gui.Houses :: any).Visible then
+		if UIBuilder.IsOpen("Houses") then
 			renderPanel()
 		end
 	end)

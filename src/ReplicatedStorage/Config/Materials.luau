@@ -14,7 +14,12 @@
 -- They have to be data, not script: MaterialVariant.ColorMap is Plugin
 -- security, so no running script can ever set it. Rojo serialises them
 -- into the place file, and the game only has to name them.
-return {
+-- Exported so TextureService annotates its tables with the same type rather
+-- than a structural guess: without it the entries that omit `ownsColour` infer
+-- a different shape from the ones that set it, and the two never unify.
+export type Surface = { variant: string, material: Enum.Material, ownsColour: boolean? }
+
+local Materials: { [string]: Surface } = {
 	SchoolBrick = { variant = "SchoolBrick", material = Enum.Material.Brick, ownsColour = true },
 	SchoolStone = { variant = "SchoolStone", material = Enum.Material.Slate, ownsColour = true },
 	SchoolPlaster = { variant = "SchoolPlaster", material = Enum.Material.Plaster, ownsColour = true },
@@ -27,3 +32,5 @@ return {
 	SchoolLawn = { variant = "SchoolLawn", material = Enum.Material.Grass, ownsColour = true },
 	SchoolGlass = { variant = "SchoolGlass", material = Enum.Material.Glass },
 }
+
+return Materials

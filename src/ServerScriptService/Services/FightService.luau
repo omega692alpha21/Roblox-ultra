@@ -40,6 +40,92 @@ type Target = {
 	player: Player?,
 }
 
+local EMPTY_TARGETS: { Target } = {}
+
+-- Everything within range that can be hit.
+--
+-- Deliberately not a spatial query. StudentGen sets CanQuery = false on every
+-- NPC limb (thousands of queryable parts is what made the game stutter), so
+-- GetPartBoundsInRadius returns players and scenery and never a single
+-- student -- which is exactly the bug this replaced. Walking the workspace's
+-- direct children is a few dozen models, once per 0.35s punch.
+local function targetsNear(self: Model, root: BasePart): { Target }
+	local found: { Target } = {}
+	local range = GameConfig.PunchRange
+
+	-- players first, by name, so a knocked-out or unloaded one is skipped
+	local byCharacter: { [Model]: Player } = {}
+	for _, other in Players:GetPlayers() do
+		local character = other.Character
+		if character then
+			byCharacter[character] = other
+		end
+	end
+
+	for _, model in workspace:GetChildren() do
+		if not model:IsA("Model") or model == self then
+			continue
+		end
+		local humanoid = model:FindFirstChildOfClass("Humanoid")
+		if not humanoid or humanoid.Health <= 0 then
+			continue
+		end
+		local otherRoot = (model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")) :: BasePart?
+		if not otherRoot then
+			continue
+		end
+		if (otherRoot.Position - root.Position).Magnitude > range then
+			continue
+		end
+		local owner = byCharacter[model]
+		if owner and VitalsService.IsKnockedOut(owner) then
+			continue -- already at the nurse
+		end
+		table.insert(found, {
+			root = otherRoot,
+			humanoid = humanoid,
+			model = model,
+			player = owner,
+		})
+	end
+
+	-- crews and escorts are parented into folders, not straight into the
+	-- workspace, so one level down is where most students actually live
+	for _, folder in workspace:GetChildren() do
+		if not folder:IsA("Folder") and not folder:IsA("Model") then
+			continue
+		end
+		if folder:IsA("Model") and folder:FindFirstChildOfClass("Humanoid") then
+			continue -- already counted above
+		end
+		for _, model in folder:GetChildren() do
+			if not model:IsA("Model") or model == self then
+				continue
+			end
+			local humanoid = model:FindFirstChildOfClass("Humanoid")
+			if not humanoid or humanoid.Health <= 0 then
+				continue
+			end
+			local otherRoot = (model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")) :: BasePart?
+			if not otherRoot or (otherRoot.Position - root.Position).Magnitude > range then
+				continue
+			end
+			local owner = byCharacter[model]
+			if owner and VitalsService.IsKnockedOut(owner) then
+				continue
+			end
+			table.insert(found, {
+				root = otherRoot,
+				humanoid = humanoid,
+				model = model,
+				player = owner,
+			})
+		end
+	end
+
+	return #found > 0 and found or EMPTY_TARGETS
+end
+
 local function onPunch(player: Player)
 	local now = os.clock()
 	if now - (lastPunch[player] or 0) < GameConfig.PunchCooldownSeconds then

@@ -92,6 +92,12 @@ end
 -- same punch.
 function VitalsService.Damage(player: Player, amount: number, from: Player?)
 	if from then
+		-- no friendly fire inside a crew: you both said yes to it, and a
+		-- brawl where your own side knocks you out is not a crew
+		if from ~= player and from:GetAttribute("SquadId") ~= nil
+			and from:GetAttribute("SquadId") == player:GetAttribute("SquadId") then
+			return
+		end
 		amount *= Cliques.For(from).damageMult
 	end
 	-- your crew gets in the way: five percent off per student walking with you

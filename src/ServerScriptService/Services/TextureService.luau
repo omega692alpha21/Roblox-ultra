@@ -26,7 +26,7 @@ local TextureIds = require(ReplicatedStorage.Config.TextureIds)
 
 local TextureService = {}
 
-type Surface = { variant: string, material: Enum.Material, ownsColour: boolean? }
+type Surface = Materials.Surface
 
 -- Roblox multiplies BasePart.Color into a variant's colour map. When the map
 -- is a photograph of red brick, a red brick part multiplies red by red and the

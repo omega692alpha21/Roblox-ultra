@@ -77,6 +77,15 @@ Layout.CompassY = 0.375
 Layout.CompassW = 0.22
 Layout.CompassH = 0.028
 
+-- ---------------- left edge: the crew strip ----------------
+-- Who is running with you, always visible. A crew you have to open a menu to
+-- see is a crew you forget you have. Sits in the empty left column: below
+-- Roblox's topbar, above its movement thumbstick (y 0.70).
+Layout.SquadX = 0.014
+Layout.SquadY = 0.36
+Layout.SquadW = 0.16
+Layout.SquadH = 0.26 -- six rows at full crew
+
 -- ---------------- bottom centre: the vitals stack ----------------
 -- The whole readout the player actually watches lives in one block, centred
 -- between Roblox's thumbstick and its jump button:
