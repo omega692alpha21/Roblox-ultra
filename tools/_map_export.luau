@@ -5495,6 +5495,14 @@ end
 
 -- A bookshelf that is a door. Returned so a service can own the prompt and
 -- slide it aside; the boards and books are scenery hung on the front of it.
+-- The boards and the books are CHILDREN of the backing slab, not siblings of
+-- it. They used to be siblings, and only the slab was ever moved: pulling the
+-- book slid a bare panel fifteen studs down the passage and left the shelf you
+-- were looking at -- four boards and thirty-two books, hanging in mid-air in
+-- the doorway -- exactly where it was. What that looks like from the reading
+-- room is a bookshelf that does not open, and a SECOND bookshelf appearing
+-- behind it. Owning the pieces is what lets SanctumService swing the whole
+-- thing as one door.
 local function buildSecretBookshelf(parent: Instance, at: CFrame, name: string): BasePart
 	local shelf = part({
 		Name = name,
@@ -5511,7 +5519,7 @@ local function buildSecretBookshelf(parent: Instance, at: CFrame, name: string):
 			CFrame = at * CFrame.new(0, -5 + level * 3.4, 0),
 			Color = Color3.fromRGB(112, 76, 52),
 			Material = Enum.Material.Wood,
-			Parent = parent,
+			Parent = shelf,
 		}).CanCollide = false
 		for book = 0, 7 do
 			part({
@@ -5520,7 +5528,7 @@ local function buildSecretBookshelf(parent: Instance, at: CFrame, name: string):
 				CFrame = at * CFrame.new(-5.6 + book * 1.55, -3.6 + level * 3.4, -0.7),
 				Color = Color3.fromHSV(((level * 8 + book) % 12) / 12, 0.45, 0.62),
 				Material = Enum.Material.Fabric,
-				Parent = parent,
+				Parent = shelf,
 			}).CanCollide = false
 		end
 	end
@@ -6760,7 +6768,7 @@ __MapService = MapService
 local map = __MapService.Build()
 local out = {}
 local function esc(s) return (s:gsub('"', '\\"')) end
-local function walk(inst)
+local function walk(inst, parentName)
   for _, child in ipairs(inst:GetChildren()) do
     if child.ClassName == "Part" or child.ClassName == "SpawnLocation" then
       local cf = child.CFrame or CFrame.new(0, 0, 0)
@@ -6777,17 +6785,19 @@ local function walk(inst)
         end
       end
       table.insert(out, string.format(
-        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s,"lit":'.. lit ..'}',
+        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s,"par":"%s","lit":'.. lit ..'}',
         esc(child.Name), size.X, size.Y, size.Z, cf.p[1], cf.p[2], cf.p[3],
         cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
         math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5),
         material, child.Transparency or 0, shape,
-        tostring(child.CanCollide ~= false)))
+        tostring(child.CanCollide ~= false), esc(parentName or "")))
     end
-    walk(child)
+    -- The name of the thing a part hangs off. A door that MOVES has to own
+    -- every piece of itself, and parentage is the only place that is visible.
+    walk(child, child.Name)
   end
 end
-walk(map.folder)
+walk(map.folder, "")
 
 -- Props are recorded, not built, so they never appear in the part walk. Dump
 -- the requests too: the placement checker needs them to test furniture against

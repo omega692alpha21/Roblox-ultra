@@ -37,7 +37,16 @@ local DOORWAY_RADIUS = 16
 -- Two doors now: the headmaster's, in his office at the top of the staff
 -- lodge, and the library's, behind the stacks on its west wall. Both open on
 -- the same four digits, and opening either opens only itself.
-type Door = { shelf: BasePart, home: CFrame, openUntil: number }
+-- A door is the backing slab AND every board and book on it, each remembered
+-- at its offset from the slab, so the whole shelf moves as one object.
+type Piece = { part: BasePart, rel: CFrame }
+type Door = { shelf: BasePart, home: CFrame, pieces: { Piece }, openUntil: number }
+
+-- It SWINGS, on the hinge at its own left edge, rather than sliding fifteen
+-- studs backwards down the corridor. A slide put the slab in the middle of the
+-- passage you were trying to walk down, which reads as a second door rather
+-- than as an open one; a swing reads as what it is.
+local SWING = CFrame.new(-7, 0, 0) * CFrame.Angles(0, math.rad(104), 0) * CFrame.new(7, 0, 0)
 
 local doors: { Door } = {}
 local attempts: { [Player]: number } = {}
@@ -62,6 +71,18 @@ local function occupied(door: Door): boolean
 	return false
 end
 
+-- Move the slab and everything on it, keeping their offsets. Tweened rather
+-- than set, because a secret door that snaps open is not worth the four digits.
+local function swingTo(door: Door, target: CFrame, seconds: number, style: Enum.EasingStyle)
+	local info = TweenInfo.new(seconds, style, Enum.EasingDirection.Out)
+	TweenService:Create(door.shelf, info, { CFrame = target }):Play()
+	for _, piece in door.pieces do
+		if piece.part.Parent then
+			TweenService:Create(piece.part, info, { CFrame = target * piece.rel }):Play()
+		end
+	end
+end
+
 local function close(door: Door)
 	-- Somebody is in it. Wait rather than shutting a fourteen-stud slab of oak
 	-- through them: an anchored part that becomes solid inside a character does
@@ -76,9 +97,7 @@ local function close(door: Door)
 		end)
 		return
 	end
-	TweenService:Create(door.shelf, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-		CFrame = door.home,
-	}):Play()
+	swingTo(door, door.home, 0.8, Enum.EasingStyle.Quad)
 	task.delay(0.85, function()
 		if door.openUntil <= os.clock() and not occupied(door) then
 			door.shelf.CanCollide = true
@@ -89,10 +108,7 @@ end
 local function open(player: Player, door: Door)
 	door.openUntil = os.clock() + OPEN_SECONDS
 	door.shelf.CanCollide = false
-	-- slides back into the wall and along it, the way a real one would
-	TweenService:Create(door.shelf, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		CFrame = door.home * CFrame.new(0, 0, -15),
-	}):Play()
+	swingTo(door, door.home * SWING, 1.1, Enum.EasingStyle.Quad)
 	Remotes.Get("Notify"):FireClient(player, "The shelf swings aside. Mind the steps.", "aura")
 	task.delay(OPEN_SECONDS, function()
 		if door.openUntil <= os.clock() then
@@ -178,7 +194,13 @@ function SanctumService.Init(map: { secretDoors: { BasePart }? })
 	local NO_DOORS: { BasePart } = {}
 	local shelves: { BasePart } = map.secretDoors or NO_DOORS
 	for _, shelf in shelves do
-		local door: Door = { shelf = shelf, home = shelf.CFrame, openUntil = 0 }
+		local pieces: { Piece } = {}
+		for _, piece in shelf:GetDescendants() do
+			if piece:IsA("BasePart") then
+				table.insert(pieces, { part = piece, rel = shelf.CFrame:ToObjectSpace(piece.CFrame) })
+			end
+		end
+		local door: Door = { shelf = shelf, home = shelf.CFrame, pieces = pieces, openUntil = 0 }
 		table.insert(doors, door)
 
 		local prompt = Instance.new("ProximityPrompt")

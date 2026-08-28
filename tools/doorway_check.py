@@ -64,7 +64,30 @@ def centre_in(part, lane):
     return True
 
 
+# A door that MOVES has to own every piece of itself.
+#
+# The secret bookshelf is a backing slab with four boards and thirty-two books
+# on it. The boards and books were built as SIBLINGS of the slab, and only the
+# slab was ever tweened: pulling the book slid a bare panel down the passage
+# and left the shelf you were looking at hanging in the doorway. From the
+# reading room that is a bookshelf that does not open, with a second bookshelf
+# appearing behind it. Nothing in the geometry is wrong, which is why every
+# walkway check passed while the door was unusable -- the only place the fault
+# is visible is parentage.
+MOVING = {"SecretShelf": "SecretBookshelf"}
+
 bad = 0
+for prefix, owner in MOVING.items():
+    orphans = [p for p in parts
+               if p["n"].startswith(prefix) and not p.get("par", "").startswith(owner)]
+    if orphans:
+        print(f"\n  {len(orphans)} {prefix}* part(s) are not children of a {owner}*")
+        print(f"      they will be left behind when the door moves")
+        for h in orphans[:4]:
+            x, y, z = h["p"]
+            print(f"      {h['n']:22s} at ({x:7.1f},{y:5.1f},{z:7.1f})  parent {h.get('par') or '(root)'}")
+        bad += len(orphans)
+
 for lane in LANES:
     hits = [p for p in parts
             if p.get("cc", True)

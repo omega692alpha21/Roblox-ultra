@@ -4669,6 +4669,14 @@ end
 
 -- A bookshelf that is a door. Returned so a service can own the prompt and
 -- slide it aside; the boards and books are scenery hung on the front of it.
+-- The boards and the books are CHILDREN of the backing slab, not siblings of
+-- it. They used to be siblings, and only the slab was ever moved: pulling the
+-- book slid a bare panel fifteen studs down the passage and left the shelf you
+-- were looking at -- four boards and thirty-two books, hanging in mid-air in
+-- the doorway -- exactly where it was. What that looks like from the reading
+-- room is a bookshelf that does not open, and a SECOND bookshelf appearing
+-- behind it. Owning the pieces is what lets SanctumService swing the whole
+-- thing as one door.
 local function buildSecretBookshelf(parent: Instance, at: CFrame, name: string): BasePart
 	local shelf = part({
 		Name = name,
@@ -4685,7 +4693,7 @@ local function buildSecretBookshelf(parent: Instance, at: CFrame, name: string):
 			CFrame = at * CFrame.new(0, -5 + level * 3.4, 0),
 			Color = Color3.fromRGB(112, 76, 52),
 			Material = Enum.Material.Wood,
-			Parent = parent,
+			Parent = shelf,
 		}).CanCollide = false
 		for book = 0, 7 do
 			part({
@@ -4694,7 +4702,7 @@ local function buildSecretBookshelf(parent: Instance, at: CFrame, name: string):
 				CFrame = at * CFrame.new(-5.6 + book * 1.55, -3.6 + level * 3.4, -0.7),
 				Color = Color3.fromHSV(((level * 8 + book) % 12) / 12, 0.45, 0.62),
 				Material = Enum.Material.Fabric,
-				Parent = parent,
+				Parent = shelf,
 			}).CanCollide = false
 		end
 	end

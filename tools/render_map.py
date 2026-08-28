@@ -275,7 +275,7 @@ EXPORT = r'''
 local map = __MapService.Build()
 local out = {}
 local function esc(s) return (s:gsub('"', '\\"')) end
-local function walk(inst)
+local function walk(inst, parentName)
   for _, child in ipairs(inst:GetChildren()) do
     if child.ClassName == "Part" or child.ClassName == "SpawnLocation" then
       local cf = child.CFrame or CFrame.new(0, 0, 0)
@@ -292,17 +292,19 @@ local function walk(inst)
         end
       end
       table.insert(out, string.format(
-        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s,"lit":'.. lit ..'}',
+        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s,"par":"%s","lit":'.. lit ..'}',
         esc(child.Name), size.X, size.Y, size.Z, cf.p[1], cf.p[2], cf.p[3],
         cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
         math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5),
         material, child.Transparency or 0, shape,
-        tostring(child.CanCollide ~= false)))
+        tostring(child.CanCollide ~= false), esc(parentName or "")))
     end
-    walk(child)
+    -- The name of the thing a part hangs off. A door that MOVES has to own
+    -- every piece of itself, and parentage is the only place that is visible.
+    walk(child, child.Name)
   end
 end
-walk(map.folder)
+walk(map.folder, "")
 
 -- Props are recorded, not built, so they never appear in the part walk. Dump
 -- the requests too: the placement checker needs them to test furniture against
