@@ -57,6 +57,15 @@ def main():
             bad.append(("indoors", f"{p['n']} at {[round(v) for v in p['p']]} is under a roof"
                                    f" ({where[0] if where else 'no room'})"))
 
+    # ---- 2b. the front approach is ceremonial ----------------------------
+    fx0, fz0, fx1, fz1 = plan.FRONT_APPROACH
+    for p in parts:
+        if not (fx0 <= p["p"][0] <= fx1 and fz0 <= p["p"][2] <= fz1):
+            continue
+        if any(k in p["n"] for k in plan.BACK_OF_HOUSE):
+            bad.append(("front", f"{p['n']} at {[round(v) for v in p['p']]} is on the "
+                                 f"ceremonial approach"))
+
     # ---- 3. corridors keep their middle lane clear -----------------------
     for name, rect, level, kind in plan.ROOMS:
         if kind != "corridor":
@@ -138,7 +147,7 @@ def main():
     groups = {}
     for kind, message in bad:
         groups.setdefault(kind, []).append(message)
-    for kind in ("plan", "indoors", "sign", "corridor", "doorway"):
+    for kind in ("plan", "indoors", "front", "sign", "corridor", "doorway"):
         rows = groups.get(kind, [])
         if not rows:
             continue

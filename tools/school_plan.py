@@ -80,6 +80,31 @@ OUTBUILDINGS = [
 # THE RULES
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# THE FRONT
+# ---------------------------------------------------------------------------
+# North is the front. The doors, the drive, the clock tower, the steps and the
+# statue all face that way, and it is the first thing anybody sees when they
+# join. It is a ceremonial approach: lawn, trees, hedge, benches, the drive and
+# the school's own name.
+#
+# It is not where the sport goes, and it is not where the bins go. I put two
+# painted courts and three runs of bunting on it when I took them out of the
+# quadrangles, because "the north field" sounded like the back of the school
+# and I never checked which way the building faced. This rule is here so that
+# cannot happen twice.
+FRONT_APPROACH = (-280, 124, 280, 330)
+
+BACK_OF_HOUSE = (
+    "CourtLine", "CourtRing", "CourtFloor", "BasketHoop", "Bunting", "Goal",
+    "TrackLane", "StandTier", "StandSeat",
+    "Shed", "GardenBed", "GardenCrop", "Compost", "Skip", "Dumpster",
+    "Scoreboard", "Dugout", "Bleacher", "FieldTurf",
+)
+# A bench on the approach is right and so is a bike rack; a grandstand and a
+# basketball hoop are not. Names have to be specific enough to tell those
+# apart -- StandSeat not Seat, CourtLine not Court, BasketHoop not Hoop.
+
 # Names that may only ever appear where there is sky above them. A tree in a
 # lobby and a volleyball net under a roof are the same mistake.
 OUTDOOR_ONLY = (
