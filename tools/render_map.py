@@ -4,6 +4,8 @@ Part to JSON, then software-render camera shots to PNG so the map can be seen
 without Roblox. Usage: python3 render_map.py <repo_root> <out_dir>"""
 import json, math, os, shutil, subprocess, sys
 
+import numpy as np
+
 REPO = sys.argv[1] if len(sys.argv) > 1 else "/home/user/Roblox-ultra"
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.abspath(__file__))
@@ -468,17 +470,71 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                     corners.append(pr)
                 if behind or len(corners) < 4:
                     continue
-                fd = math.sqrt((fcx - cam[0]) ** 2 + (fcy - cam[1]) ** 2 + (fcz - cam[2]) ** 2)
+                # Sort by the face's NEAREST corner, not its centre.
+                #
+                # A painter's algorithm keyed on centroids draws a 90-stud wall
+                # before anything at the sides of it, because the wall's middle
+                # is nearer the camera than a window ten studs off to the left
+                # -- so the wall paints over its own windows. Four of the staff
+                # lodge's six windows per row vanished that way, and I spent a
+                # while looking for a bug in the building. Nearest-corner keeps
+                # detail that stands proud of a big surface in front of it.
                 shade = 0.52 + 0.48 * max(0.0, nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2])
                 c = part["c"]
                 if part["m"] == "Neon":
                     shade = 1.25
                 col = tuple(min(255, int(ch * shade)) for ch in c)
-                faces.append((fd, [(p[0], p[1]) for p in corners], col))
-    faces.sort(key=lambda f: -f[0])
-    for _, poly, col in faces:
-        d.polygon(poly, fill=col)
-    img.save(path)
+                faces.append((corners, col))
+
+    # ---- a real depth buffer ----
+    #
+    # This was a painter's algorithm keyed on each face's CENTRE, and it lied
+    # about the building. A ninety-stud wall's centre is nearer the camera than
+    # a window ten studs off to the side of it, so the wall painted over its
+    # own windows: four of the staff lodge's six windows per row simply were
+    # not in the picture, and I went looking for a bug in the building. Keying
+    # on the nearest corner instead swaps the failure round and paints the far
+    # side of the room over the near wall.
+    #
+    # There is no ordering that gets this right, which is what a z-buffer is
+    # for. Per pixel, nearest wins; nothing sorts, nothing lies.
+    canvas = np.asarray(img, dtype=np.uint8).copy()
+    depth = np.full((height, width), np.inf, dtype=np.float32)
+    for corners, col in faces:
+        for tri in ((0, 1, 2), (0, 2, 3)):
+            pts = [corners[i] for i in tri]
+            xs = [p[0] for p in pts]
+            ys = [p[1] for p in pts]
+            x0 = max(int(math.floor(min(xs))), 0)
+            x1 = min(int(math.ceil(max(xs))) + 1, width)
+            y0 = max(int(math.floor(min(ys))), 0)
+            y1 = min(int(math.ceil(max(ys))) + 1, height)
+            if x1 <= x0 or y1 <= y0:
+                continue
+            ax, ay = pts[0][0], pts[0][1]
+            bx, by = pts[1][0], pts[1][1]
+            cx2, cy2 = pts[2][0], pts[2][1]
+            area = (bx - ax) * (cy2 - ay) - (by - ay) * (cx2 - ax)
+            if abs(area) < 1e-6:
+                continue
+            gx = np.arange(x0, x1, dtype=np.float32)[None, :] + 0.5
+            gy = np.arange(y0, y1, dtype=np.float32)[:, None] + 0.5
+            w0 = ((bx - ax) * (gy - ay) - (by - ay) * (gx - ax)) / area
+            w1 = ((cx2 - bx) * (gy - by) - (cy2 - by) * (gx - bx)) / area
+            inside = (w0 >= 0) & (w1 >= 0) & (w0 + w1 <= 1)
+            if not inside.any():
+                continue
+            # interpolate 1/z, which is what is linear in screen space
+            ia, ib, ic = (1.0 / pts[0][2], 1.0 / pts[1][2], 1.0 / pts[2][2])
+            inv = ic * w0 + ia * w1 + ib * (1.0 - w0 - w1)
+            z = np.where(inv > 1e-9, 1.0 / np.maximum(inv, 1e-9), np.inf)
+            patch = depth[y0:y1, x0:x1]
+            win = inside & (z < patch)
+            if not win.any():
+                continue
+            patch[win] = z[win]
+            canvas[y0:y1, x0:x1][win] = col
+    Image.fromarray(canvas).save(path)
     print("wrote", path)
 
 # eye height 6 for anything meant to be seen on foot: a shot from 50 studs up
@@ -520,6 +576,10 @@ shots = [
     ("lobbystair", (10, 8, 112),     (46, 14, 100)),
     ("upperroom",  (-190, 22, 78),   (-190, 22, 110)),
     ("overview",   (-330, 250, 360), (0, 0, 0)),
+    ("backcampus", (0, 220, -120),   (0, 0, -400)),
+    ("dormfront",  (-176, 26, -140), (-176, 20, -230)),
+    ("lodge",      (-300, 40, -60),  (-300, 30, -170)),
+    ("library",    (-150, 30, -150), (-40, 10, -220)),
 ]
 for name, cam, target in shots:
     render(cam, target, os.path.join(OUT, f"shot_{name}.png"))

@@ -1369,7 +1369,7 @@ local function buildLibrary(parent: Instance, center: Vector3)
 			for shelfLevel = 1, 4 do
 				part({
 					Name = "LibraryBooks",
-					Size = Vector3.new(5.4, 1.8, 38),
+					Size = Vector3.new(6, 1.8, 38),
 					CFrame = CFrame.new(center) * CFrame.new(x, shelfLevel * 2.7, -8),
 					-- spines, not mud: a wider spread so a wall of books reads
 					-- as many books rather than one brown mass
@@ -1929,7 +1929,9 @@ local function buildRockOutcrop(parent: Instance, pos: Vector3, scale: number, s
 	for i = 1, rng:NextInteger(2, 4) do
 		local r = rng:NextNumber(2.2, 4.6) * scale
 		local away = rng:NextNumber(0, math.pi * 2)
-		local out = rng:NextNumber(7, 13) * scale
+		-- outside the slabs, not inside them: the slabs reach eleven studs from
+		-- the centre and the boulders were being dropped at seven
+		local out = rng:NextNumber(14, 21) * scale
 		part({
 			Name = "RockBoulder",
 			Size = Vector3.new(r * 2, r * 1.5, r * 1.8),
@@ -3158,9 +3160,15 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 	for _, spec in { { z = halfD, n = 1 }, { z = -halfD, n = -1 } } do
 		for _, wx in { -36, -24, 24, 36 } do
 			for _, wy in { 8, 24 } do
-				part({ Name = "DormWindow", Size = Vector3.new(8, 8, 0.6), CFrame = at(wx, wy, spec.z + spec.n * 0.6), Color = Color3.fromRGB(158, 196, 214), Material = Enum.Material.Glass, Transparency = 0.32, Parent = parent }).CanCollide = false
-				part({ Name = "DormWinFrame", Size = Vector3.new(9.4, 9.4, 0.5), CFrame = at(wx, wy, spec.z + spec.n * 0.4), Color = TRIM, Parent = parent }).CanCollide = false
-				part({ Name = "DormSill", Size = Vector3.new(10.4, 0.8, 1.6), CFrame = at(wx, wy - 5, spec.z + spec.n * 0.8), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				part({ Name = "DormWindow", Size = Vector3.new(8, 8, 0.4), CFrame = at(wx, wy, spec.z + spec.n * 1.25), Color = Color3.fromRGB(158, 196, 214), Material = Enum.Material.Glass, Transparency = 0.32, Parent = parent }).CanCollide = false
+				for _, bar in {
+					{ 9.4, 1.0, 0, 4.2 }, { 9.4, 1.0, 0, -4.2 },
+					{ 1.0, 9.4, -4.2, 0 }, { 1.0, 9.4, 4.2, 0 },
+				} do
+					part({ Name = "DormWinFrame", Size = Vector3.new(bar[1], bar[2], 0.9), CFrame = at(wx + bar[3], wy + bar[4], spec.z + spec.n * 1.45), Color = TRIM, Parent = parent }).CanCollide = false
+				end
+				part({ Name = "DormWinBar", Size = Vector3.new(8, 0.6, 0.7), CFrame = at(wx, wy, spec.z + spec.n * 1.5), Color = TRIM, Parent = parent }).CanCollide = false
+				part({ Name = "DormSill", Size = Vector3.new(10.4, 0.8, 2.2), CFrame = at(wx, wy - 5, spec.z + spec.n * 1.6), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 			end
 		end
 	end
@@ -3175,12 +3183,15 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 	for _, side in { -1, 1 } do
 		part({
 			Name = "DormPorchGable",
-			Size = Vector3.new(13.6, 1.2, 9),
-			CFrame = at(side * 6, 17.6, halfD + 4) * CFrame.Angles(0, 0, math.rad(-side * 26)),
+			Size = Vector3.new(12.6, 1.2, 9),
+			CFrame = at(side * 6.2, 17.4, halfD + 4) * CFrame.Angles(0, 0, math.rad(-side * 26)),
 			Color = SLATE, Material = Enum.Material.Slate, Parent = parent,
 		}).CanCollide = false
 	end
-	local plaque = part({ Name = "DormPlaque", Size = Vector3.new(22, 3.6, 0.8), CFrame = at(0, 15.2, halfD + 8.6), Color = Palette.Blackboard, Parent = parent })
+	-- On the front of the porch beam, which is where a house puts its name.
+	-- It used to hang four studs proud of the porch gable as a black bar
+	-- across the door; then behind the beam, where nobody could read it.
+	local plaque = part({ Name = "DormPlaque", Size = Vector3.new(18, 2.6, 0.5), CFrame = at(0, 15.6, halfD + 8.8), Color = Palette.Blackboard, Parent = parent })
 	plaque.CanCollide = false
 	signText(plaque, name:upper(), accent, Enum.NormalId.Front)
 	part({ Name = "DormTrim", Size = Vector3.new(24, 1, 1), CFrame = at(0, 13.2, halfD + 1.2), Color = accent, Material = Enum.Material.Neon, Parent = parent }).CanCollide = false
@@ -4119,7 +4130,24 @@ local function buildGrandFacade(parent: Instance)
 	for _, wx in { -17.5, 17.5 } do
 		local pane = part({ Name = "EntryBayWindow", Size = Vector3.new(9, 17, 1), CFrame = CFrame.new(wx, 30.5, bayFace - 0.4), Color = Color3.fromRGB(150, 196, 222), Material = Enum.Material.Glass, Transparency = 0.2, Parent = parent })
 		tag(pane, "TexWindow")
-		part({ Name = "EntryWinSurround", Size = Vector3.new(11, 19, 1.4), CFrame = CFrame.new(wx, 30.5, bayFace - 0.9), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		-- A FRAME, not a slab. This was an eleven-by-nineteen sheet of concrete
+		-- standing in front of the glass and set flush into the bay's face, so
+		-- the two windows over the front door were a solid wall you could not
+		-- see and the pane behind them was never visible from anywhere.
+		local bars: { { w: number, h: number, dx: number, dy: number } } = {
+			{ w = 11, h = 1.6, dx = 0, dy = 9.3 }, { w = 11, h = 1.6, dx = 0, dy = -9.3 },
+			{ w = 1.4, h = 19, dx = -4.8, dy = 0 }, { w = 1.4, h = 19, dx = 4.8, dy = 0 },
+		}
+		for _, bar in bars do
+			part({
+				Name = "EntryWinSurround",
+				Size = Vector3.new(bar.w, bar.h, 1.4),
+				CFrame = CFrame.new(wx + bar.dx, 30.5 + bar.dy, bayFace + 0.3),
+				Color = TRIM, Material = Enum.Material.Concrete, Parent = parent,
+			}).CanCollide = false
+		end
+		-- a bar across the middle, which is what makes a window read as glazed
+		part({ Name = "EntryWinBar", Size = Vector3.new(9.4, 0.9, 1.2), CFrame = CFrame.new(wx, 30.5, bayFace + 0.2), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 		part({ Name = "EntryWinKeystone", Size = Vector3.new(2.2, 3, 2), CFrame = CFrame.new(wx, 40.6, bayFace + 0.1), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	end
 	-- cheek walls flanking the steps, so the approach is funnelled
@@ -5280,15 +5308,55 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		part({ Name = "QuartersDoorPost", Size = Vector3.new(3, 14, 2.4), CFrame = at(halfW, 10, sz), Color = Color3.fromRGB(120, 84, 58), Material = Enum.Material.WoodPlanks, Parent = parent })
 	end
 
-	-- windows: two rows of six on the long faces
+	-- Windows: three rows of six on each long face, standing PROUD of the
+	-- brick. They used to be a frame two and a half studs deep centred on a
+	-- two-stud wall -- a third of a stud of relief either side -- which from
+	-- any distance is a window painted on a wall. Fifty-three studs of brick
+	-- with painted-on windows is why this building read as a warehouse.
+	--
+	-- A surround an inch off the face, a sill under it, and a mullion across
+	-- the middle: three cheap parts that turn a rectangle into an opening.
 	for _, sz in { -1, 1 } do
 		for i = 0, 5 do
 			for _, wy in { 11, 26, 43 } do
 				local wx = -32 + i * 13
-				part({ Name = "QuartersWinFrame", Size = Vector3.new(8, 9, 2.6), CFrame = at(wx, wy, sz * halfD), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent })
-				local glass = part({ Name = "QuartersWindow", Size = Vector3.new(6.2, 7, 2.9), CFrame = at(wx, wy, sz * halfD), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+				-- The wall is two studs thick centred on halfD, so its face is
+				-- at halfD + 1. Glass at +0.6 was INSIDE the brick, and the
+				-- lit pane behind it at +0.1 was deeper still: both fought the
+				-- wall for the same pixels and the windows came out as noise.
+				local face = sz * (halfD + 1.45)
+				-- A FRAME, four bars round the opening -- not a slab. A solid
+				-- nine-by-eleven sheet of concrete standing an inch in front
+				-- of the glass is a blank grey rectangle, and eighteen of them
+				-- a side is worse than no windows at all.
+				local bars: { { w: number, h: number, dx: number, dy: number } } = {
+					{ w = 9.6, h = 1.1, dx = 0, dy = 4.75 },
+					{ w = 9.6, h = 1.1, dx = 0, dy = -4.75 },
+					{ w = 1.1, h = 10.6, dx = -4.25, dy = 0 },
+					{ w = 1.1, h = 10.6, dx = 4.25, dy = 0 },
+				}
+				for _, bar in bars do
+					part({
+						Name = "QuartersWinReveal",
+						Size = Vector3.new(bar.w, bar.h, 1.2),
+						CFrame = at(wx + bar.dx, wy + bar.dy, face),
+						Color = Color3.fromRGB(238, 236, 228),
+						Material = Enum.Material.Concrete,
+						Parent = parent,
+					}).CanCollide = false
+				end
+				local glass = part({ Name = "QuartersWindow", Size = Vector3.new(7.4, 8.4, 0.3), CFrame = at(wx, wy, sz * (halfD + 1.3)), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
 				glass.CanCollide = false
 				tag(glass, "TexWindow")
+				part({ Name = "QuartersWinMullion", Size = Vector3.new(0.7, 8.4, 1.5), CFrame = at(wx, wy, face), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				part({ Name = "QuartersWinTransom", Size = Vector3.new(7.4, 0.7, 1.5), CFrame = at(wx, wy + 1.4, face), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				part({ Name = "QuartersWinSill", Size = Vector3.new(11.2, 1, 2.6), CFrame = at(wx, wy - 5.8, sz * (halfD + 1.7)), Color = Color3.fromRGB(224, 218, 204), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				-- a lit pane behind the glass on the lower two storeys, so the
+				-- building reads as occupied from the campus
+				if wy < 40 then
+					local warm = part({ Name = "QuartersWinGlow", Size = Vector3.new(6.6, 7.6, 0.3), CFrame = at(wx, wy, sz * (halfD + 1.06)), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Neon, Transparency = 0.35, Parent = parent })
+					warm.CanCollide = false
+				end
 			end
 		end
 	end
@@ -5362,7 +5430,8 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	-- ---- the porch over the east door ----
 	part({ Name = "QuartersPorchStep", Size = Vector3.new(9, 1, 22), CFrame = at(halfW + 5, 1.4, 0), Color = Color3.fromRGB(206, 200, 188), Material = Enum.Material.Concrete, Parent = parent })
 	for _, sz in { -8, 8 } do
-		part({ Name = "QuartersPorchPost", Size = Vector3.new(1.8, 14, 1.8), CFrame = at(halfW + 7, 10, sz), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent })
+		-- from the step's own surface at 1.9, not from thin air at 3
+		part({ Name = "QuartersPorchPost", Size = Vector3.new(1.8, 15.8, 1.8), CFrame = at(halfW + 7, 9.8, sz), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent })
 	end
 	part({ Name = "QuartersPorchBeam", Size = Vector3.new(11, 1.8, 22), CFrame = at(halfW + 4, 17.6, 0), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
 	for _, sz in { -1, 1 } do
@@ -7068,7 +7137,10 @@ end
 	roofSlab(142, -94, 168, 62) -- east north rooms
 	roofSlab(-198, 0, 54, 130) -- west outer column
 	roofSlab(198, 0, 54, 130) -- east outer column
-	roofSlab(0, -105, 106, 88, 40) -- gym: open to its full height
+	-- 38.9, not 40: the gym's brick tops out at 38 and its cornice at 38.3, so
+	-- a roof whose underside sat at 39.4 left a stud of daylight running right
+	-- round the building between the wall and the lid.
+	roofSlab(0, -105, 106, 88, 38.9) -- gym: open to its full height
 	roofSlab(-55, -94, 10, 60) -- west flank
 	roofSlab(55, -94, 10, 60) -- east flank
 	-- atrium skylight
