@@ -117,12 +117,53 @@ def paint(image: Image.Image) -> Image.Image:
     return Image.fromarray((rgb * 255).astype(np.uint8))
 
 
+def night(image: Image.Image, horizon: bool = False) -> Image.Image:
+    """Pull a tonemapped night HDRI back down to actual night.
+
+    Poly Haven's tonemapped JPEG is the HDR lifted until a human can see what
+    is in it, so the preview of a moonlit sky arrives looking like an overcast
+    afternoon: the sky body sits around 0.72 when it should sit near 0.09. A
+    flat multiply would take the moon and the stars down with it, and the whole
+    point of a night sky is that the few bright things stay bright.
+
+    So the curve is steep and applied to LUMINANCE -- x ** 6.5 leaves 1.0 at 1.0
+    and drops 0.72 to 0.07 -- and the colour is put back afterwards, blending
+    from a deep blue in the body of the sky to near-white in the moon and the
+    stars. Grading the three channels separately would have skewed the hue as
+    it darkened, which is how night skies end up looking green.
+    """
+    a = np.asarray(image.convert("RGB"), dtype=np.float32) / 255.0
+    lum = a[..., 0] * 0.2126 + a[..., 1] * 0.7152 + a[..., 2] * 0.0722
+    dark = np.clip(lum, 0.0, 1.0) ** 6.5
+
+    deep = np.array([0.40, 0.52, 1.00], dtype=np.float32)   # the body of the sky
+    lit = np.array([1.00, 0.99, 0.94], dtype=np.float32)    # moon, stars
+    t = np.clip((dark - 0.02) / 0.30, 0.0, 1.0)[..., None]
+    tint = deep * (1.0 - t) + lit * t
+
+    out = np.clip(dark[..., None] * tint * 1.55, 0.0, 1.0)
+    # a faint cool lift off the horizon so the sky is not dead flat black
+    h = np.linspace(1.0, 0.0, a.shape[0], dtype=np.float32)[:, None, None]
+    out = np.clip(out + h * h * np.array([0.012, 0.018, 0.038], dtype=np.float32), 0.0, 1.0)
+    if horizon:
+        # This HDRI was shot over water, so the bottom half of every side face
+        # carries a mirror of the moon. None of that is sky -- the ground stands
+        # in front of it -- so it is damped away rather than left to show up as
+        # a second moon sitting under the campus.
+        n = a.shape[0]
+        ramp = np.clip(np.linspace(1.0, -1.0, n, dtype=np.float32) * 6.0, 0.06, 1.0)[:, None, None]
+        out = out * ramp
+    return Image.fromarray((out * 255.0 + 0.5).astype(np.uint8))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("slug")
     ap.add_argument("--cache", default="ph_sky")
     ap.add_argument("--out", default="ph_sky_faces")
     ap.add_argument("--size", type=int, default=1024)
+    ap.add_argument("--night", action="store_true",
+                    help="grade a tonemapped night HDRI back down to night")
     ap.add_argument("--paint", action="store_true",
                     help="grade the faces towards painted rather than photographed")
     args = ap.parse_args()
@@ -138,7 +179,9 @@ def main() -> None:
     os.makedirs(args.out, exist_ok=True)
     for name, image in faces(equirect, args.size).items():
         path = os.path.join(args.out, f"sky_{name}.png")
-        (paint(image) if args.paint else image).save(path)
+        graded = (night(image, horizon=name in ("Ft", "Bk", "Lf", "Rt"))
+                  if args.night else (paint(image) if args.paint else image))
+        graded.save(path)
         print(path)
 
 

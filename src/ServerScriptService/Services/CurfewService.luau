@@ -123,7 +123,7 @@ function CurfewService.StartNight()
 	end
 	night = true
 	streaks = {}
-	tweenClock(0.6, Color3.fromRGB(40, 48, 78))
+	tweenClock(0.4, Color3.fromRGB(14, 19, 34))
 	Remotes.Get("Notify"):FireAllClients(
 		"LIGHTS OUT! Get inside — prefects patrol after dark. Or stay out and farm that aura... 😈",
 		"announce"
@@ -139,7 +139,7 @@ function CurfewService.StartNight()
 	task.delay(GameConfig.CurfewNightSeconds, function()
 		night = false
 		streaks = {}
-		tweenClock(12.8, Color3.fromRGB(130, 135, 125))
+		tweenClock(21.2, Color3.fromRGB(26, 34, 56))
 		Remotes.Get("Notify"):FireAllClients("Morning bell! Curfew's over — back to business.", "info")
 	end)
 end

@@ -2910,8 +2910,10 @@ local function furnishProps()
 	})
 	row("SecurityLight", 9, 0, { { -62, 126.5 }, { 62, 126.5 } })
 	row("IndustrialLamp", 9, 180, { { -30, 126.5 }, { 30, 126.5 } })
-	prop("Bin", CFrame.new(-32, 0, 133))
-	prop("Bin", CFrame.new(32, 0, 133))
+	-- clear of both the court lamp posts at (+-30, 132) and the planter
+	-- boxes at (+-44, 138)
+	prop("Bin", CFrame.new(-38, 0, 128))
+	prop("Bin", CFrame.new(38, 0, 128))
 
 	-- ---------------- second dressing pass ----------------
 	-- the pieces that turn a furnished room into an inhabited one
@@ -3549,8 +3551,11 @@ local function buildGreatCourt(parent: Instance)
 				})
 			end
 			prop(if (bed[1] + bed[2]) % 24 == 0 then "KFlowerRed" else "KFlowerYellow", CFrame.new(bx, 1.1, bz))
-			prop("KBush", CFrame.new(bx + 7, 1.1, bz))
-			prop("KBush", CFrame.new(bx - 7, 1.1, bz))
+			-- No bushes flanking the flowers. The front grounds already plant a
+			-- PlanterShrub at (-44, 150) and these beds run past it, so the two
+			-- builders were putting shrubbery in the same square yard. The bed
+			-- keeps its hedge edging and its flowers; the parterre reads from
+			-- the clipped edge, not from filling every bed to the brim.
 		end
 	end
 
@@ -6114,6 +6119,88 @@ function MapService.Build(): Map
 -- decoration by definition: nothing should ever raycast it, touch it, or ask
 -- it for a shadow. Structure (anything you can walk into) keeps every flag, so
 -- the aim reticle still stops at walls.
+-- Light every window from the inside.
+--
+-- The night references are lit almost entirely by their own windows: a wall of
+-- warm gold rectangles is what makes the building read as a building at 21:00
+-- rather than as a dark mass. There are fifteen separate places in this file
+-- that put glass in a wall, and touching all fifteen is how the last four
+-- passes of this kind went wrong -- one gets missed, and one facade stays dark.
+--
+-- So this runs ONCE over the finished map instead. Anything that is glass and
+-- is called a window gets a neon leaf in the same plane, inset a little so the
+-- frame still reads around it, and every third one carries the actual light.
+-- One PointLight per window would be several hundred lights on a campus this
+-- size; per bay is what the engine can afford and what the eye reads anyway.
+local WINDOW_LIT = Color3.fromRGB(255, 196, 107)
+local WINDOW_DARK = Color3.fromRGB(58, 68, 80)
+local LANTERN = Color3.fromRGB(255, 220, 160)
+
+local function litWindows(root: Instance)
+	local lit, lights = 0, 0
+	for _, glass in root:GetDescendants() do
+		if not glass:IsA("BasePart") or glass.Material ~= Enum.Material.Glass then
+			continue
+		end
+		local n = glass.Name
+		if not (n:find("Window") or n:find("Pane") or n:find("Glass")) then
+			continue
+		end
+		-- vending machines, water coolers and door lights are glass too, and a
+		-- glowing drinks cabinet is not the effect we are after
+		if n:find("Vending") or n:find("Cooler") or n:find("Jug") or n:find("Canopy") then
+			continue
+		end
+		local size = glass.Size
+		if size.X * size.Y * size.Z < 1.2 then
+			continue
+		end
+
+		-- the wall normal is the part's thinnest axis; the leaf sits in the same
+		-- plane, thinner still, and inset on the two long axes
+		local thin = math.min(size.X, size.Y, size.Z)
+		local leaf: Vector3
+		if thin == size.Z then
+			leaf = Vector3.new(math.max(size.X - 0.7, 0.4), math.max(size.Y - 0.7, 0.4), 0.16)
+		elseif thin == size.X then
+			leaf = Vector3.new(0.16, math.max(size.Y - 0.7, 0.4), math.max(size.Z - 0.7, 0.4))
+		else
+			leaf = Vector3.new(math.max(size.X - 0.7, 0.4), 0.16, math.max(size.Z - 0.7, 0.4))
+		end
+
+		-- Not every room in a school is occupied. Which windows are dark is
+		-- decided by position rather than by chance, so the same building looks
+		-- the same on every server instead of flickering between rebuilds.
+		local p = glass.Position
+		local seed = math.floor(p.X * 7.3 + p.Y * 3.1 + p.Z * 11.7)
+		local dark = seed % 9 == 0
+
+		local pane = part({
+			Name = "WindowLeaf",
+			Size = leaf,
+			CFrame = glass.CFrame,
+			Color = if dark then WINDOW_DARK else WINDOW_LIT,
+			Material = if dark then Enum.Material.SmoothPlastic else Enum.Material.Neon,
+			Transparency = if dark then 0.2 else 0.08,
+			Parent = glass.Parent,
+		})
+		pane.CanCollide = false
+		pane.CastShadow = false
+		lit += 1
+
+		if not dark and seed % 3 == 0 then
+			local light = Instance.new("PointLight")
+			light.Color = LANTERN
+			light.Brightness = 1.35
+			light.Range = math.clamp(math.max(size.X, size.Y, size.Z) * 2.4, 14, 30)
+			light.Shadows = false
+			light.Parent = pane
+			lights += 1
+		end
+	end
+	print(("[map] lit %d windows, %d of them carrying light"):format(lit, lights))
+end
+
 local function optimize(root: Instance)
 	for _, part in root:GetDescendants() do
 		if not part:IsA("BasePart") then
@@ -6599,7 +6686,12 @@ end
 	tag(part({ Name = "LobbyRunner", Size = Vector3.new(20, 0.16, 40), CFrame = CFrame.new(0, 0.2, 100), Color = Color3.fromRGB(132, 68, 60), Material = Enum.Material.Fabric, Parent = folder }), "TexCarpet")
 
 	-- notice board by the doors, and planters flanking the way in
-	local notice = part({ Name = "LobbyNotice", Size = Vector3.new(0.5, 9, 16), CFrame = CFrame.new(-56.6, 7, 104), Color = Palette.Blackboard, Parent = folder })
+	-- Hung ON the wall. InnerWallUpper here is rotated a quarter turn -- it runs
+	-- north to south at x = -60 with its east face at x = -59.3 -- so the board
+	-- is thin in X and long in Z, sitting a quarter stud proud of that face and
+	-- reading east into the hall. It used to hang at x = -56.6, two and a half
+	-- studs off the wall with nothing behind it.
+	local notice = part({ Name = "LobbyNotice", Size = Vector3.new(0.5, 9, 16), CFrame = CFrame.new(-59.05, 7, 104), Color = Palette.Blackboard, Parent = folder })
 	signText(notice, "NOTICES\nBELL 8:40\nDETENTION 4PM", Palette.Chalk, Enum.NormalId.Right)
 	for _, side in { -1, 1 } do
 		part({ Name = "LobbyPlanter", Size = Vector3.new(6, 3.4, 6), CFrame = CFrame.new(side * 30, 1.7, 116), Color = Color3.fromRGB(150, 118, 96), Material = Enum.Material.Concrete, Parent = folder })
@@ -6729,6 +6821,7 @@ end
 	local secretDoors = buildSanctum(folder)
 	furnishProps()
 
+	litWindows(folder)
 	optimize(folder)
 	folder.Parent = workspace
 
