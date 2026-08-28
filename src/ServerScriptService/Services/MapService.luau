@@ -3048,7 +3048,12 @@ local function detailCorridor(parent: Instance)
 					part({ Name = "LockerBooks", Size = Vector3.new(2.4, 2.2, 1.6), CFrame = CFrame.new(lx, 2.2, spec.z + spec.face * 1.5), Color = rng:NextNumber() < 0.5 and Color3.fromRGB(178, 62, 58) or Color3.fromRGB(58, 118, 92), Material = Enum.Material.SmoothPlastic, Parent = parent })
 					part({ Name = "LockerBottle", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2.4, 1, 1), CFrame = CFrame.new(lx + 0.9, 7.9, spec.z + spec.face * 1.4) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.SmoothPlastic, Parent = parent })
 					-- door swung out into the corridor
-					part({ Name = "LockerDoorOpen", Size = Vector3.new(3.9, 8.6, 0.35), CFrame = CFrame.new(lx - 1.9, 4.6, spec.z + spec.face * 4.2) * CFrame.Angles(0, math.rad(78) * spec.face, 0), Color = LOCKER, Material = Enum.Material.Metal, Parent = parent })
+					-- A third of a stud of sheet metal swung out into the
+					-- corridor at head height. It is scenery, and a player
+					-- walking into one and stopping dead is a bug wearing a
+					-- locker door: the audit found two of them standing in the
+					-- new walking lanes.
+					part({ Name = "LockerDoorOpen", Size = Vector3.new(3.9, 8.6, 0.35), CFrame = CFrame.new(lx - 1.9, 4.6, spec.z + spec.face * 4.2) * CFrame.Angles(0, math.rad(78) * spec.face, 0), Color = LOCKER, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 				else
 					local door = part({ Name = "LockerDoor", Size = Vector3.new(3.9, 8.6, 0.4), CFrame = CFrame.new(lx, 4.6, spec.z + spec.face * 2.9), Color = LOCKER, Material = Enum.Material.Metal, Parent = parent })
 					local _ = door
@@ -4671,6 +4676,216 @@ local function buildInteriorLights(parent: Instance)
 	end
 end
 
+-- ================= LOCKER ISLANDS =================
+-- The reference corridor is not a tube with lockers painted on its walls: it
+-- is a run of freestanding locker BLOCKS standing out in the floor, with a
+-- bench along the foot of each and the walking lanes either side of them. That
+-- is what gives a school corridor depth instead of reading as a hallway in a
+-- hotel. Ours is thirty-two studs across, which is room for a seven-stud
+-- island down the middle and a twelve-stud lane on each side.
+local function buildLockerIslands(parent: Instance)
+	local Z = 65
+	local HALF_D, HALF_W, H = 3.5, 8, 9
+	for _, cx in { -200, -150, -100, -50, 50, 100, 150, 200 } do
+		part({
+			Name = "LockerIsland",
+			Size = Vector3.new(HALF_W * 2, H, HALF_D * 2),
+			CFrame = CFrame.new(cx, H / 2, Z),
+			Color = Palette.LockerBlue,
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+		-- a cap, so the top reads as a lid and not a cut
+		part({
+			Name = "LockerIslandCap",
+			Size = Vector3.new(HALF_W * 2 + 0.8, 0.5, HALF_D * 2 + 0.8),
+			CFrame = CFrame.new(cx, H + 0.25, Z),
+			Color = Color3.fromRGB(226, 224, 216),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		}).CanCollide = false
+		-- doors, handles and vents on both long faces
+		for _, side in { -1, 1 } do
+			local faceZ = Z + side * (HALF_D + 0.05)
+			for i = 0, 3 do
+				local dx = cx - HALF_W + 2 + i * 4
+				part({ Name = "LockerSeam", Size = Vector3.new(0.3, H - 1, 0.3), CFrame = CFrame.new(dx - 2, H / 2, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
+				for _, row in { 2.6, 6.4 } do
+					part({ Name = "LockerHandle", Size = Vector3.new(0.4, 1, 0.3), CFrame = CFrame.new(dx + 1.2, row, faceZ), Color = Palette.BusYellow, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+					part({ Name = "LockerVent", Size = Vector3.new(2.4, 0.4, 0.25), CFrame = CFrame.new(dx, row + 1.5, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
+				end
+			end
+			-- the bench along the foot of it, and a plinth under that
+			part({ Name = "LockerPlinth", Size = Vector3.new(HALF_W * 2 + 5, 0.5, 3.4), CFrame = CFrame.new(cx, 0.25, Z + side * (HALF_D + 1.7)), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+			part({ Name = "CorridorBench", Size = Vector3.new(HALF_W * 2 + 2, 0.5, 2.2), CFrame = CFrame.new(cx, 2.2, Z + side * (HALF_D + 1.6)), Color = Color3.fromRGB(178, 84, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
+			for _, lx in { -HALF_W + 1, HALF_W - 1 } do
+				part({ Name = "CorridorBenchLeg", Size = Vector3.new(0.6, 2, 1.8), CFrame = CFrame.new(cx + lx, 1, Z + side * (HALF_D + 1.6)), Color = Color3.fromRGB(120, 122, 126), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			end
+		end
+	end
+end
+
+-- ================= THE COURTYARD COURTS =================
+-- Every school game that looks like a school has painted courts in its
+-- courtyard and bunting strung over them. Ours had two empty lawns with a
+-- greenhouse at one end. This is the single most recognisable thing about the
+-- reference and it is flat coloured parts and triangles: cheap to build,
+-- impossible to miss.
+
+local function courtLine(parent: Instance, a: Vector3, b: Vector3, width: number)
+	local delta = b - a
+	local length = delta.Magnitude
+	if length < 0.5 then
+		return
+	end
+	local mid = (a + b) / 2
+	local line = part({
+		Name = "CourtLine",
+		Size = Vector3.new(width, 0.12, length),
+		CFrame = CFrame.lookAt(mid, mid + Vector3.new(delta.X, 0, delta.Z).Unit),
+		Color = Color3.fromRGB(248, 250, 252),
+		Material = Enum.Material.SmoothPlastic,
+		Parent = parent,
+	})
+	line.CanCollide = false
+end
+
+local function courtRing(parent: Instance, centre: Vector3, radius: number, width: number)
+	local segments = 24
+	for i = 0, segments - 1 do
+		local a = i / segments * math.pi * 2
+		local b = (i + 1) / segments * math.pi * 2
+		courtLine(
+			parent,
+			centre + Vector3.new(math.cos(a) * radius, 0, math.sin(a) * radius),
+			centre + Vector3.new(math.cos(b) * radius, 0, math.sin(b) * radius),
+			width
+		)
+	end
+end
+
+-- Bunting: a sagging string of triangles between two points, the way it hangs
+-- across a real schoolyard.
+local BUNTING = {
+	Color3.fromRGB(238, 78, 74), Color3.fromRGB(248, 176, 54),
+	Color3.fromRGB(250, 226, 84), Color3.fromRGB(96, 200, 120),
+	Color3.fromRGB(72, 158, 234), Color3.fromRGB(166, 106, 220),
+}
+
+local function bunting(parent: Instance, a: Vector3, b: Vector3, sag: number)
+	local flags = 22
+	local previous: Vector3? = nil
+	for i = 0, flags do
+		local t = i / flags
+		-- a parabola is close enough to a catenary at this scale
+		local droop = sag * 4 * t * (1 - t)
+		local at = a:Lerp(b, t) - Vector3.new(0, droop, 0)
+		if previous then
+			local mid = (previous + at) / 2
+			local span = at - previous
+			local cord = part({
+				Name = "BuntingCord",
+				Size = Vector3.new(0.16, 0.16, span.Magnitude),
+				CFrame = CFrame.lookAt(mid, mid + span.Unit),
+				Color = Color3.fromRGB(58, 54, 50),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			})
+			cord.CanCollide = false
+			local flag = part({
+				Name = "BuntingFlag",
+				Shape = Enum.PartType.Wedge,
+				Size = Vector3.new(0.1, 2.2, 1.9),
+				CFrame = CFrame.new(mid - Vector3.new(0, 1.2, 0)) * CFrame.Angles(math.pi, 0, 0),
+				Color = BUNTING[(i % #BUNTING) + 1],
+				Material = Enum.Material.Fabric,
+				Parent = parent,
+			})
+			flag.CanCollide = false
+		end
+		previous = at
+	end
+end
+
+local function buildCourt(parent: Instance, centre: Vector3, kind: string, surface: Color3, accent: Color3)
+	local W, D = 56, 34
+	-- the painted surface, a shade over the lawn
+	local pad = part({
+		Name = kind .. "Court",
+		Size = Vector3.new(W + 6, 0.4, D + 6),
+		CFrame = CFrame.new(centre + Vector3.new(0, 0.2, 0)),
+		Color = accent,
+		Material = Enum.Material.SmoothPlastic,
+		Parent = parent,
+	})
+	pad.CanCollide = false
+	local floor = part({
+		Name = kind .. "CourtFloor",
+		Size = Vector3.new(W, 0.5, D),
+		CFrame = CFrame.new(centre + Vector3.new(0, 0.25, 0)),
+		Color = surface,
+		Material = Enum.Material.SmoothPlastic,
+		Parent = parent,
+	})
+	floor.CanCollide = false
+
+	local y = centre.Y + 0.5
+	local hw, hd = W / 2 - 2, D / 2 - 2
+	-- the boundary and the halfway line
+	courtLine(parent, centre + Vector3.new(-hw, y, -hd), centre + Vector3.new(hw, y, -hd), 0.5)
+	courtLine(parent, centre + Vector3.new(-hw, y, hd), centre + Vector3.new(hw, y, hd), 0.5)
+	courtLine(parent, centre + Vector3.new(-hw, y, -hd), centre + Vector3.new(-hw, y, hd), 0.5)
+	courtLine(parent, centre + Vector3.new(hw, y, -hd), centre + Vector3.new(hw, y, hd), 0.5)
+	courtLine(parent, centre + Vector3.new(0, y, -hd), centre + Vector3.new(0, y, hd), 0.5)
+	courtRing(parent, centre + Vector3.new(0, y, 0), 6, 0.5)
+
+	if kind == "Basketball" then
+		-- a key at each end, and a backboard on a post
+		for _, side in { -1, 1 } do
+			local keyX = side * (hw - 9)
+			courtLine(parent, centre + Vector3.new(keyX, y, -5.5), centre + Vector3.new(keyX, y, 5.5), 0.5)
+			courtLine(parent, centre + Vector3.new(side * hw, y, -5.5), centre + Vector3.new(keyX, y, -5.5), 0.5)
+			courtLine(parent, centre + Vector3.new(side * hw, y, 5.5), centre + Vector3.new(keyX, y, 5.5), 0.5)
+			local px = centre.X + side * (hw + 2)
+			part({ Name = "HoopPost", Size = Vector3.new(1, 13, 1), CFrame = CFrame.new(px, centre.Y + 6.5, centre.Z), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent })
+			part({ Name = "HoopArm", Size = Vector3.new(3.4, 0.6, 0.6), CFrame = CFrame.new(px - side * 1.7, centre.Y + 12.4, centre.Z), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			local board = part({ Name = "HoopBoard", Size = Vector3.new(0.4, 4.2, 7), CFrame = CFrame.new(px - side * 3.4, centre.Y + 11.6, centre.Z), Color = Color3.fromRGB(246, 248, 250), Material = Enum.Material.SmoothPlastic, Parent = parent })
+			board.CanCollide = false
+			local rim = part({ Name = "HoopRim", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, 3.2, 3.2), CFrame = CFrame.new(px - side * 5.2, centre.Y + 10.2, centre.Z) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(238, 108, 46), Material = Enum.Material.Metal, Parent = parent })
+			rim.CanCollide = false
+		end
+	else
+		-- a net across the middle
+		for _, side in { -1, 1 } do
+			part({ Name = "NetPost", Size = Vector3.new(0.8, 11, 0.8), CFrame = CFrame.new(centre.X, centre.Y + 5.5, centre.Z + side * (hd + 1)), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent })
+		end
+		local net = part({
+			Name = "CourtNet",
+			Size = Vector3.new(0.2, 3.4, (hd + 1) * 2),
+			CFrame = CFrame.new(centre.X, centre.Y + 8.4, centre.Z),
+			Color = Color3.fromRGB(232, 236, 240),
+			Material = Enum.Material.Fabric,
+			Transparency = 0.35,
+			Parent = parent,
+		})
+		net.CanCollide = false
+	end
+end
+
+local function buildCourtyards(parent: Instance)
+	-- west: basketball, east: volleyball, both in the half of the courtyard
+	-- the greenhouse and the lab do not use
+	buildCourt(parent, Vector3.new(-116, 0, 24), "Basketball", Color3.fromRGB(58, 104, 190), Color3.fromRGB(196, 86, 128))
+	buildCourt(parent, Vector3.new(116, 0, 24), "Volleyball", Color3.fromRGB(176, 74, 116), Color3.fromRGB(58, 104, 190))
+
+	-- bunting over both, strung from the balcony rail to the outer wall
+	for _, cx in { -116, 116 } do
+		for _, bz in { 6, 24, 42 } do
+			bunting(parent, Vector3.new(cx - 52, 21, bz), Vector3.new(cx + 52, 21, bz), 5)
+		end
+	end
+end
+
 -- ================= FINDING YOUR WAY =================
 -- A school you cannot navigate is a maze with lockers. Three things fix that,
 -- and they are the three things real buildings use: a board at the door that
@@ -5387,6 +5602,8 @@ end
 	buildCampusPath(folder, Vector3.new(-232, 0, -170), Vector3.new(-258, 0, -170), 14)
 	buildWayfinding(folder)
 	-- last, so every room it lights already exists
+	buildLockerIslands(folder)
+	buildCourtyards(folder)
 	buildInteriorLights(folder)
 	local secretDoors = buildSanctum(folder)
 	furnishProps()

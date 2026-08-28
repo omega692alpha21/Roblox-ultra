@@ -214,7 +214,10 @@ def collect():
 WALKS = [
     # Corridor centrelines, not arbitrary lines: each one is the middle of a
     # floor slab that exists, so anything this reports is a real obstruction.
-    ("main hallway", (-215, 0, 65), (215, 0, 65)),
+    # The main corridor now has a run of locker islands down its middle, so
+    # the walkable lanes are either side of them rather than up the centreline.
+    ("main hallway north lane", (-215, 0, 74), (215, 0, 74)),
+    ("main hallway south lane", (-215, 0, 56), (215, 0, 56)),
     ("upper corridor", (-215, 16, 65), (215, 16, 65)),
     ("upper west wing", (-213, 16, -60), (-213, 16, 45)),
     ("upper east wing", (213, 16, -60), (213, 16, 45)),
