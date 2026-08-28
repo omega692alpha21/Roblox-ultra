@@ -1345,6 +1345,7 @@ local function buildLibrary(parent: Instance, center: Vector3)
 		Parent = parent,
 	})
 	signText(plaque, "CRUMBWORTH LIBRARY", Palette.BusYellow, Enum.NormalId.Front)
+	signText(plaque, "CRUMBWORTH LIBRARY", Palette.BusYellow, Enum.NormalId.Back)
 	signText(plaque, "SILENCE, PLEASE", Palette.BusYellow, Enum.NormalId.Back)
 
 	local roof = part({
@@ -1730,6 +1731,9 @@ local function buildBus(parent: Instance, cf: CFrame)
 		Color = Palette.Blackboard,
 		Parent = parent,
 	})
+	-- clear of the bodywork: at the bus's own centre both faces of this read
+	-- into eighteen studs of yellow panel
+	sign.CFrame = cf * CFrame.new(0, 10.6, 4.9)
 	signText(sign, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Front)
 	signText(sign, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Back)
 	local _ = body
@@ -4239,7 +4243,10 @@ local function buildGrandFacade(parent: Instance)
 	end
 
 	-- school name over the entrance
-	local sign = part({ Name = "FacadeSign", Size = Vector3.new(40, 5, 1.2), CFrame = CFrame.new(0, 39.6, Z + 12.2), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
+	-- Proud of the entry bay's header, not flush with it. Flush, the sign's
+	-- reading face was inside fourteen studs of concrete: the school's own
+	-- name over its own front door, unreadable from the drive.
+	local sign = part({ Name = "FacadeSign", Size = Vector3.new(40, 5, 1.2), CFrame = CFrame.new(0, 39.6, Z + 13.6), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
 	signText(sign, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Front)
 
 	-- ---- corner towers with crenellations ----
@@ -4393,6 +4400,9 @@ local function buildFrontGrounds(parent: Instance)
 		part({ Name = "StatueLeg", Size = Vector3.new(1.5, 5, 1.5), CFrame = CFrame.new(sx + lx, 8.4, sz), Color = BRONZE, Material = Enum.Material.Metal, Parent = parent })
 	end
 	local plaque = part({ Name = "StatuePlaque", Size = Vector3.new(6, 2.2, 0.4), CFrame = CFrame.new(sx, 6.4, sz - 4.7), Color = Color3.fromRGB(96, 74, 44), Material = Enum.Material.Metal, Parent = parent })
+	-- Front, which in Roblox is the MINUS-Z face -- so this reads south, out
+	-- from the plinth towards the school. I flipped it to Back on the theory
+	-- that Front meant +Z, and tools/sign_check.py caught it in one run.
 	signText(plaque, "CRUMBWORTH", Color3.fromRGB(238, 226, 196), Enum.NormalId.Front)
 
 	-- Clipped hedge borders round the lawns.
@@ -4420,7 +4430,10 @@ local function buildFrontGrounds(parent: Instance)
 	part({ Name = "SignPost", Size = Vector3.new(1.4, 8, 1.4), CFrame = CFrame.new(58, 4, Z + 64), Color = Color3.fromRGB(96, 62, 42), Material = Enum.Material.WoodPlanks, Parent = parent })
 	part({ Name = "SignPost", Size = Vector3.new(1.4, 8, 1.4), CFrame = CFrame.new(82, 4, Z + 64), Color = Color3.fromRGB(96, 62, 42), Material = Enum.Material.WoodPlanks, Parent = parent })
 	local board = part({ Name = "SchoolSignBoard", Size = Vector3.new(28, 9, 1.2), CFrame = CFrame.new(70, 11, Z + 64), Color = Color3.fromRGB(28, 44, 78), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	-- both faces: the road is on one side of this and the whole school on the
+	-- other, and only the road could read it
 	signText(board, "DETENTION\nCRUMBWORTH HIGH", Color3.fromRGB(255, 208, 96), Enum.NormalId.Front)
+	signText(board, "DETENTION\nCRUMBWORTH HIGH", Color3.fromRGB(255, 208, 96), Enum.NormalId.Back)
 	part({ Name = "SignBoardTrim", Size = Vector3.new(29.4, 10.4, 0.6), CFrame = CFrame.new(70, 11, Z + 64.5), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 end
 
@@ -5043,7 +5056,7 @@ local function furnishSubjectRooms(parent: Instance)
 			end
 		end
 		-- a scoreboard on the north wall
-		local board = part({ Name = "Scoreboard", Size = Vector3.new(26, 12, 1.2), CFrame = CFrame.new(0, 20, -144.4), Color = Color3.fromRGB(24, 26, 32), Parent = parent })
+		local board = part({ Name = "Scoreboard", Size = Vector3.new(26, 12, 1.2), CFrame = CFrame.new(0, 20, -143.2), Color = Color3.fromRGB(24, 26, 32), Parent = parent })
 		board.CanCollide = false
 		signText(board, "HOME  00 : 00  AWAY", Color3.fromRGB(255, 96, 72), Enum.NormalId.Front)
 		local glow = Instance.new("SurfaceLight")
@@ -7334,7 +7347,7 @@ end
 	tag(part({ Name = "LobbyRunner", Size = Vector3.new(20, 0.16, 40), CFrame = CFrame.new(0, 0.2, 100), Color = Color3.fromRGB(132, 68, 60), Material = Enum.Material.Fabric, Parent = folder }), "TexCarpet")
 
 	-- notice board by the doors, and planters flanking the way in
-	local notice = part({ Name = "LobbyNotice", Size = Vector3.new(0.5, 9, 16), CFrame = CFrame.new(-52, 7, 104), Color = Palette.Blackboard, Parent = folder })
+	local notice = part({ Name = "LobbyNotice", Size = Vector3.new(0.5, 9, 16), CFrame = CFrame.new(-54.5, 7, 104), Color = Palette.Blackboard, Parent = folder })
 	signText(notice, "NOTICES\nBELL 8:40\nDETENTION 4PM", Palette.Chalk, Enum.NormalId.Right)
 	for _, side in { -1, 1 } do
 		part({ Name = "LobbyPlanter", Size = Vector3.new(6, 3.4, 6), CFrame = CFrame.new(side * 30, 1.7, 116), Color = Color3.fromRGB(150, 118, 96), Material = Enum.Material.Concrete, Parent = folder })
@@ -7517,13 +7530,20 @@ local function walk(inst, parentName)
       -- does this part carry a light? the audit counts lit floor area, and a
       -- roofed room with no fixture in it is a cave under Future lighting
       local lit = 0
+      -- which faces carry writing, so a sign pressed text-first into a wall
+      -- can be found without anybody having to walk up to it
+      local guiFaces = {}
       for _, sub in ipairs(child:GetChildren()) do
         if sub.ClassName == "PointLight" or sub.ClassName == "SpotLight" or sub.ClassName == "SurfaceLight" then
           lit = math.max(lit, sub.Range or 16)
         end
+        if sub.ClassName == "SurfaceGui" then
+          local f = sub.Face
+          table.insert(guiFaces, '"' .. ((f and f.Name) or "Front") .. '"')
+        end
       end
       table.insert(out, string.format(
-        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s,"par":"%s","lit":'.. lit ..'}',
+        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cc":%s,"par":"%s","gui":['.. table.concat(guiFaces, ",") ..'],"lit":'.. lit ..'}',
         esc(child.Name), size.X, size.Y, size.Z, cf.p[1], cf.p[2], cf.p[3],
         cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
         math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5),

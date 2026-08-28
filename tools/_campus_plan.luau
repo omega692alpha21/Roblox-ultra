@@ -1,4 +1,5 @@
---!strict
+local __Plan
+
 -- THE DRAWING. Every wall, door, stair and room on the campus, as data.
 --
 -- Crumbworth High was never drawn before it was built. Every coordinate in
@@ -511,4 +512,87 @@ function Plan.building(name: string)
 	return nil
 end
 
-return Plan
+__Plan = Plan
+
+-- minimal JSON writer: the plan is numbers, strings, booleans and tables
+local function enc(v)
+  local t = type(v)
+  if t == "number" then
+    if v == math.floor(v) then return string.format("%d", v) end
+    return string.format("%.4f", v)
+  elseif t == "string" then
+    return '"' .. v:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
+  elseif t == "boolean" then
+    return tostring(v)
+  elseif t == "nil" then
+    return "null"
+  elseif t == "table" then
+    local n = 0
+    for _ in pairs(v) do n += 1 end
+    if #v == n then
+      local parts = {}
+      for _, item in ipairs(v) do table.insert(parts, enc(item)) end
+      return "[" .. table.concat(parts, ",") .. "]"
+    end
+    local keys = {}
+    for k in pairs(v) do table.insert(keys, tostring(k)) end
+    table.sort(keys)
+    local parts = {}
+    for _, k in ipairs(keys) do
+      local raw = v[k]
+      if raw == nil then raw = v[tonumber(k)] end
+      table.insert(parts, '"' .. k .. '":' .. enc(raw))
+    end
+    return "{" .. table.concat(parts, ",") .. "}"
+  end
+  return "null"
+end
+
+local out = {
+  plot = __Plan.PLOT,
+  core = __Plan.CORE,
+  reserves = __Plan.RESERVES,
+  reserveRatio = __Plan.RESERVE_RATIO,
+  approach = __Plan.APPROACH,
+  site = __Plan.SITE,
+  const = {
+    exteriorWall = __Plan.EXTERIOR_WALL,
+    partition = __Plan.PARTITION,
+    doorWidth = __Plan.DOOR_WIDTH,
+    doorHeight = __Plan.DOOR_HEIGHT,
+    corridorClear = __Plan.CORRIDOR_CLEAR,
+    headroom = __Plan.HEADROOM,
+    stairRise = __Plan.STAIR_RISE,
+    stairTread = __Plan.STAIR_TREAD,
+    landing = __Plan.LANDING,
+  },
+  buildings = {},
+}
+
+for _, b in ipairs(__Plan.BUILDINGS) do
+  local storeys = {}
+  for i, s in ipairs(b.storeys) do
+    table.insert(storeys, {
+      index = i,
+      name = s.name,
+      y = s.y,
+      height = s.height,
+      cells = __Plan.cells(b, i),
+      doors = __Plan.doors(b, i),
+      walls = __Plan.walls(b, i),
+    })
+  end
+  table.insert(out.buildings, {
+    name = b.name,
+    rect = b.rect,
+    facing = b.facing,
+    grid = b.grid,
+    storeys = storeys,
+    stairs = b.stairs,
+    tower = b.tower,
+    entrances = b.entrances,
+    doubleHeight = b.doubleHeight,
+  })
+end
+
+print("PLAN" .. enc(out))

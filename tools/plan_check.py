@@ -87,6 +87,15 @@ def check_site(plan, bad):
             if overlap(r["rect"], e["rect"]):
                 bad.append(("reserve", f"{e['name']} is built on {r['name']}"))
 
+    # the walk from the gate to the front doors is ceremonial. Only things
+    # drawn as part of that walk may stand on it -- a service alley across it
+    # is the sort of thing that passes every check and still looks wrong.
+    for e in plan["site"]:
+        if e.get("ceremonial"):
+            continue
+        if overlap(e["rect"], plan["approach"]):
+            bad.append(("approach", f"{e['name']} stands on the ceremonial approach"))
+
     ratio = reserved / area(core)
     if ratio < plan["reserveRatio"] - 1e-3:
         bad.append(("reserve", f"expansion land is only {ratio:.2f}x the core, "

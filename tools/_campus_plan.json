@@ -2770,6 +2770,2614 @@
     "x": 0,
     "z": 96
    }
+  },
+  {
+   "entrances": [
+    {
+     "at": {
+      "x": 0,
+      "z": -250
+     },
+     "facing": "north",
+     "name": "Dorm doors",
+     "width": 14
+    },
+    {
+     "at": {
+      "x": 0,
+      "z": -370
+     },
+     "facing": "south",
+     "name": "Dorm rear door",
+     "width": 12
+    }
+   ],
+   "facing": "north",
+   "grid": {
+    "corridorCols": [],
+    "corridorRows": [
+     2
+    ],
+    "x": [
+     -142,
+     -86,
+     -30,
+     30,
+     86,
+     142
+    ],
+    "z": [
+     -362,
+     -326,
+     -294,
+     -258
+    ]
+   },
+   "name": "Student Dorms",
+   "rect": [
+    -150,
+    -370,
+    150,
+    -250
+   ],
+   "stairs": [
+    {
+     "cell": {
+      "col": 3,
+      "row": 3
+     },
+     "flights": [
+      {
+       "from": [
+        -20,
+        0,
+        -266
+       ],
+       "to": [
+        -4,
+        8,
+        -266
+       ]
+      },
+      {
+       "from": [
+        -4,
+        8,
+        -282
+       ],
+       "to": [
+        -20,
+        15,
+        -282
+       ]
+      }
+     ],
+     "landings": [
+      {
+       "rect": [
+        -21,
+        -289,
+        -3,
+        -259
+       ],
+       "y": 8
+      }
+     ],
+     "name": "Dorm stair",
+     "width": 14
+    }
+   ],
+   "storeys": [
+    {
+     "cells": [
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Dorm 1",
+       "rect": [
+        -142,
+        -362,
+        -86,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 2,
+       "kind": "room",
+       "name": "Dorm 2",
+       "rect": [
+        -86,
+        -362,
+        -30,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 3,
+       "kind": "room",
+       "name": "Common room",
+       "rect": [
+        -30,
+        -362,
+        30,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 4,
+       "kind": "room",
+       "name": "Dorm 3",
+       "rect": [
+        30,
+        -362,
+        86,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 5,
+       "kind": "room",
+       "name": "Dorm 4",
+       "rect": [
+        86,
+        -362,
+        142,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 1,
+       "kind": "corridor",
+       "name": "Corridor r2c1",
+       "rect": [
+        -142,
+        -326,
+        -86,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 2,
+       "kind": "corridor",
+       "name": "Corridor r2c2",
+       "rect": [
+        -86,
+        -326,
+        -30,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 3,
+       "kind": "corridor",
+       "name": "Corridor r2c3",
+       "rect": [
+        -30,
+        -326,
+        30,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 4,
+       "kind": "corridor",
+       "name": "Corridor r2c4",
+       "rect": [
+        30,
+        -326,
+        86,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 5,
+       "kind": "corridor",
+       "name": "Corridor r2c5",
+       "rect": [
+        86,
+        -326,
+        142,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Warden's flat",
+       "rect": [
+        -142,
+        -294,
+        -86,
+        -258
+       ],
+       "row": 3
+      },
+      {
+       "col": 2,
+       "kind": "room",
+       "name": "Dorm 5",
+       "rect": [
+        -86,
+        -294,
+        -30,
+        -258
+       ],
+       "row": 3
+      },
+      {
+       "col": 3,
+       "kind": "room",
+       "name": "Dorm lobby",
+       "rect": [
+        -30,
+        -294,
+        30,
+        -258
+       ],
+       "row": 3
+      },
+      {
+       "col": 4,
+       "kind": "room",
+       "name": "Dorm 6",
+       "rect": [
+        30,
+        -294,
+        86,
+        -258
+       ],
+       "row": 3
+      },
+      {
+       "col": 5,
+       "kind": "room",
+       "name": "Laundry",
+       "rect": [
+        86,
+        -294,
+        142,
+        -258
+       ],
+       "row": 3
+      }
+     ],
+     "doors": [
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Dorm 1",
+       "row": 1,
+       "width": 12,
+       "x": -114,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 2,
+       "height": 11,
+       "room": "Dorm 2",
+       "row": 1,
+       "width": 12,
+       "x": -58,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 3,
+       "height": 11,
+       "room": "Common room",
+       "row": 1,
+       "width": 12,
+       "x": 0,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 4,
+       "height": 11,
+       "room": "Dorm 3",
+       "row": 1,
+       "width": 12,
+       "x": 58,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 5,
+       "height": 11,
+       "room": "Dorm 4",
+       "row": 1,
+       "width": 12,
+       "x": 114,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Warden's flat",
+       "row": 3,
+       "width": 12,
+       "x": -114,
+       "z": -294
+      },
+      {
+       "axis": "z",
+       "col": 2,
+       "height": 11,
+       "room": "Dorm 5",
+       "row": 3,
+       "width": 12,
+       "x": -58,
+       "z": -294
+      },
+      {
+       "axis": "z",
+       "col": 3,
+       "height": 11,
+       "room": "Dorm lobby",
+       "row": 3,
+       "width": 12,
+       "x": 0,
+       "z": -294
+      },
+      {
+       "axis": "z",
+       "col": 4,
+       "height": 11,
+       "room": "Dorm 6",
+       "row": 3,
+       "width": 12,
+       "x": 58,
+       "z": -294
+      },
+      {
+       "axis": "z",
+       "col": 5,
+       "height": 11,
+       "room": "Laundry",
+       "row": 3,
+       "width": 12,
+       "x": 114,
+       "z": -294
+      }
+     ],
+     "height": 15,
+     "index": 1,
+     "name": "Ground",
+     "walls": [
+      {
+       "from": [
+        -150,
+        -370
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        150,
+        -370
+       ]
+      },
+      {
+       "from": [
+        -150,
+        -250
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        150,
+        -250
+       ]
+      },
+      {
+       "from": [
+        -150,
+        -370
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -150,
+        -250
+       ]
+      },
+      {
+       "from": [
+        150,
+        -370
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        150,
+        -250
+       ]
+      },
+      {
+       "from": [
+        -86,
+        -362
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -86,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -86,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -86,
+        -258
+       ]
+      },
+      {
+       "from": [
+        -30,
+        -362
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -30,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -30,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -30,
+        -258
+       ]
+      },
+      {
+       "from": [
+        30,
+        -362
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        30,
+        -326
+       ]
+      },
+      {
+       "from": [
+        30,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        30,
+        -258
+       ]
+      },
+      {
+       "from": [
+        86,
+        -362
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        86,
+        -326
+       ]
+      },
+      {
+       "from": [
+        86,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        86,
+        -258
+       ]
+      },
+      {
+       "from": [
+        -142,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -86,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -86,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -30,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -30,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        30,
+        -326
+       ]
+      },
+      {
+       "from": [
+        30,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        86,
+        -326
+       ]
+      },
+      {
+       "from": [
+        86,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        142,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -142,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -86,
+        -294
+       ]
+      },
+      {
+       "from": [
+        -86,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -30,
+        -294
+       ]
+      },
+      {
+       "from": [
+        -30,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        30,
+        -294
+       ]
+      },
+      {
+       "from": [
+        30,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        86,
+        -294
+       ]
+      },
+      {
+       "from": [
+        86,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        142,
+        -294
+       ]
+      }
+     ],
+     "y": 0
+    },
+    {
+     "cells": [
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Dorm 7",
+       "rect": [
+        -142,
+        -362,
+        -86,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 2,
+       "kind": "room",
+       "name": "Dorm 8",
+       "rect": [
+        -86,
+        -362,
+        -30,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 3,
+       "kind": "room",
+       "name": "Study",
+       "rect": [
+        -30,
+        -362,
+        30,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 4,
+       "kind": "room",
+       "name": "Dorm 9",
+       "rect": [
+        30,
+        -362,
+        86,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 5,
+       "kind": "room",
+       "name": "Dorm 10",
+       "rect": [
+        86,
+        -362,
+        142,
+        -326
+       ],
+       "row": 1
+      },
+      {
+       "col": 1,
+       "kind": "corridor",
+       "name": "Corridor r2c1",
+       "rect": [
+        -142,
+        -326,
+        -86,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 2,
+       "kind": "corridor",
+       "name": "Corridor r2c2",
+       "rect": [
+        -86,
+        -326,
+        -30,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 3,
+       "kind": "corridor",
+       "name": "Corridor r2c3",
+       "rect": [
+        -30,
+        -326,
+        30,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 4,
+       "kind": "corridor",
+       "name": "Corridor r2c4",
+       "rect": [
+        30,
+        -326,
+        86,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 5,
+       "kind": "corridor",
+       "name": "Corridor r2c5",
+       "rect": [
+        86,
+        -326,
+        142,
+        -294
+       ],
+       "row": 2
+      },
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Dorm 11",
+       "rect": [
+        -142,
+        -294,
+        -86,
+        -258
+       ],
+       "row": 3
+      },
+      {
+       "col": 2,
+       "kind": "room",
+       "name": "Dorm 12",
+       "rect": [
+        -86,
+        -294,
+        -30,
+        -258
+       ],
+       "row": 3
+      },
+      {
+       "col": 3,
+       "kind": "room",
+       "name": "Upper landing",
+       "rect": [
+        -30,
+        -294,
+        30,
+        -258
+       ],
+       "row": 3
+      },
+      {
+       "col": 4,
+       "kind": "room",
+       "name": "Dorm 13",
+       "rect": [
+        30,
+        -294,
+        86,
+        -258
+       ],
+       "row": 3
+      },
+      {
+       "col": 5,
+       "kind": "room",
+       "name": "Dorm 14",
+       "rect": [
+        86,
+        -294,
+        142,
+        -258
+       ],
+       "row": 3
+      }
+     ],
+     "doors": [
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Dorm 7",
+       "row": 1,
+       "width": 12,
+       "x": -114,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 2,
+       "height": 11,
+       "room": "Dorm 8",
+       "row": 1,
+       "width": 12,
+       "x": -58,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 3,
+       "height": 11,
+       "room": "Study",
+       "row": 1,
+       "width": 12,
+       "x": 0,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 4,
+       "height": 11,
+       "room": "Dorm 9",
+       "row": 1,
+       "width": 12,
+       "x": 58,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 5,
+       "height": 11,
+       "room": "Dorm 10",
+       "row": 1,
+       "width": 12,
+       "x": 114,
+       "z": -326
+      },
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Dorm 11",
+       "row": 3,
+       "width": 12,
+       "x": -114,
+       "z": -294
+      },
+      {
+       "axis": "z",
+       "col": 2,
+       "height": 11,
+       "room": "Dorm 12",
+       "row": 3,
+       "width": 12,
+       "x": -58,
+       "z": -294
+      },
+      {
+       "axis": "z",
+       "col": 3,
+       "height": 11,
+       "room": "Upper landing",
+       "row": 3,
+       "width": 12,
+       "x": 0,
+       "z": -294
+      },
+      {
+       "axis": "z",
+       "col": 4,
+       "height": 11,
+       "room": "Dorm 13",
+       "row": 3,
+       "width": 12,
+       "x": 58,
+       "z": -294
+      },
+      {
+       "axis": "z",
+       "col": 5,
+       "height": 11,
+       "room": "Dorm 14",
+       "row": 3,
+       "width": 12,
+       "x": 114,
+       "z": -294
+      }
+     ],
+     "height": 15,
+     "index": 2,
+     "name": "Upper",
+     "walls": [
+      {
+       "from": [
+        -150,
+        -370
+       ],
+       "kind": "exterior",
+       "storey": 2,
+       "thickness": 8,
+       "to": [
+        150,
+        -370
+       ]
+      },
+      {
+       "from": [
+        -150,
+        -250
+       ],
+       "kind": "exterior",
+       "storey": 2,
+       "thickness": 8,
+       "to": [
+        150,
+        -250
+       ]
+      },
+      {
+       "from": [
+        -150,
+        -370
+       ],
+       "kind": "exterior",
+       "storey": 2,
+       "thickness": 8,
+       "to": [
+        -150,
+        -250
+       ]
+      },
+      {
+       "from": [
+        150,
+        -370
+       ],
+       "kind": "exterior",
+       "storey": 2,
+       "thickness": 8,
+       "to": [
+        150,
+        -250
+       ]
+      },
+      {
+       "from": [
+        -86,
+        -362
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        -86,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -86,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        -86,
+        -258
+       ]
+      },
+      {
+       "from": [
+        -30,
+        -362
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        -30,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -30,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        -30,
+        -258
+       ]
+      },
+      {
+       "from": [
+        30,
+        -362
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        30,
+        -326
+       ]
+      },
+      {
+       "from": [
+        30,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        30,
+        -258
+       ]
+      },
+      {
+       "from": [
+        86,
+        -362
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        86,
+        -326
+       ]
+      },
+      {
+       "from": [
+        86,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        86,
+        -258
+       ]
+      },
+      {
+       "from": [
+        -142,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        -86,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -86,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        -30,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -30,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        30,
+        -326
+       ]
+      },
+      {
+       "from": [
+        30,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        86,
+        -326
+       ]
+      },
+      {
+       "from": [
+        86,
+        -326
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        142,
+        -326
+       ]
+      },
+      {
+       "from": [
+        -142,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        -86,
+        -294
+       ]
+      },
+      {
+       "from": [
+        -86,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        -30,
+        -294
+       ]
+      },
+      {
+       "from": [
+        -30,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        30,
+        -294
+       ]
+      },
+      {
+       "from": [
+        30,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        86,
+        -294
+       ]
+      },
+      {
+       "from": [
+        86,
+        -294
+       ],
+       "kind": "partition",
+       "storey": 2,
+       "thickness": 3,
+       "to": [
+        142,
+        -294
+       ]
+      }
+     ],
+     "y": 15
+    }
+   ]
+  },
+  {
+   "entrances": [
+    {
+     "at": {
+      "x": -320,
+      "z": -252
+     },
+     "facing": "north",
+     "name": "Library doors",
+     "width": 14
+    }
+   ],
+   "facing": "north",
+   "grid": {
+    "corridorCols": [
+     2
+    ],
+    "corridorRows": [],
+    "x": [
+     -412,
+     -336,
+     -304,
+     -228
+    ],
+    "z": [
+     -340,
+     -300,
+     -260
+    ]
+   },
+   "name": "Library",
+   "rect": [
+    -420,
+    -348,
+    -220,
+    -252
+   ],
+   "stairs": [],
+   "storeys": [
+    {
+     "cells": [
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Stacks west",
+       "rect": [
+        -412,
+        -340,
+        -336,
+        -300
+       ],
+       "row": 1
+      },
+      {
+       "col": 2,
+       "kind": "corridor",
+       "name": "Corridor r1c2",
+       "rect": [
+        -336,
+        -340,
+        -304,
+        -300
+       ],
+       "row": 1
+      },
+      {
+       "col": 3,
+       "kind": "room",
+       "name": "Stacks east",
+       "rect": [
+        -304,
+        -340,
+        -228,
+        -300
+       ],
+       "row": 1
+      },
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Reading room",
+       "rect": [
+        -412,
+        -300,
+        -336,
+        -260
+       ],
+       "row": 2
+      },
+      {
+       "col": 2,
+       "kind": "corridor",
+       "name": "Corridor r2c2",
+       "rect": [
+        -336,
+        -300,
+        -304,
+        -260
+       ],
+       "row": 2
+      },
+      {
+       "col": 3,
+       "kind": "room",
+       "name": "Archive",
+       "rect": [
+        -304,
+        -300,
+        -228,
+        -260
+       ],
+       "row": 2
+      }
+     ],
+     "doors": [
+      {
+       "axis": "x",
+       "col": 1,
+       "height": 11,
+       "room": "Stacks west",
+       "row": 1,
+       "width": 12,
+       "x": -336,
+       "z": -320
+      },
+      {
+       "axis": "x",
+       "col": 3,
+       "height": 11,
+       "room": "Stacks east",
+       "row": 1,
+       "width": 12,
+       "x": -304,
+       "z": -320
+      },
+      {
+       "axis": "x",
+       "col": 1,
+       "height": 11,
+       "room": "Reading room",
+       "row": 2,
+       "width": 12,
+       "x": -336,
+       "z": -280
+      },
+      {
+       "axis": "x",
+       "col": 3,
+       "height": 11,
+       "room": "Archive",
+       "row": 2,
+       "width": 12,
+       "x": -304,
+       "z": -280
+      }
+     ],
+     "height": 22,
+     "index": 1,
+     "name": "Ground",
+     "walls": [
+      {
+       "from": [
+        -420,
+        -348
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -220,
+        -348
+       ]
+      },
+      {
+       "from": [
+        -420,
+        -252
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -220,
+        -252
+       ]
+      },
+      {
+       "from": [
+        -420,
+        -348
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -420,
+        -252
+       ]
+      },
+      {
+       "from": [
+        -220,
+        -348
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -220,
+        -252
+       ]
+      },
+      {
+       "from": [
+        -336,
+        -340
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -336,
+        -300
+       ]
+      },
+      {
+       "from": [
+        -336,
+        -300
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -336,
+        -260
+       ]
+      },
+      {
+       "from": [
+        -304,
+        -340
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -304,
+        -300
+       ]
+      },
+      {
+       "from": [
+        -304,
+        -300
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -304,
+        -260
+       ]
+      },
+      {
+       "from": [
+        -412,
+        -300
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -336,
+        -300
+       ]
+      },
+      {
+       "from": [
+        -304,
+        -300
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -228,
+        -300
+       ]
+      }
+     ],
+     "y": 0
+    }
+   ]
+  },
+  {
+   "entrances": [
+    {
+     "at": {
+      "x": 316,
+      "z": -252
+     },
+     "facing": "north",
+     "name": "Cafeteria doors",
+     "width": 16
+    }
+   ],
+   "facing": "north",
+   "grid": {
+    "corridorCols": [
+     2
+    ],
+    "corridorRows": [],
+    "x": [
+     228,
+     300,
+     332,
+     412
+    ],
+    "z": [
+     -340,
+     -300,
+     -260
+    ]
+   },
+   "name": "Cafeteria",
+   "rect": [
+    220,
+    -348,
+    420,
+    -252
+   ],
+   "stairs": [],
+   "storeys": [
+    {
+     "cells": [
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Kitchen",
+       "rect": [
+        228,
+        -340,
+        300,
+        -300
+       ],
+       "row": 1
+      },
+      {
+       "col": 2,
+       "kind": "corridor",
+       "name": "Corridor r1c2",
+       "rect": [
+        300,
+        -340,
+        332,
+        -300
+       ],
+       "row": 1
+      },
+      {
+       "col": 3,
+       "kind": "room",
+       "name": "Dining hall",
+       "rect": [
+        332,
+        -340,
+        412,
+        -300
+       ],
+       "row": 1
+      },
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Servery",
+       "rect": [
+        228,
+        -300,
+        300,
+        -260
+       ],
+       "row": 2
+      },
+      {
+       "col": 2,
+       "kind": "corridor",
+       "name": "Corridor r2c2",
+       "rect": [
+        300,
+        -300,
+        332,
+        -260
+       ],
+       "row": 2
+      },
+      {
+       "col": 3,
+       "kind": "room",
+       "name": "Dining hall",
+       "rect": [
+        332,
+        -300,
+        412,
+        -260
+       ],
+       "row": 2
+      }
+     ],
+     "doors": [
+      {
+       "axis": "x",
+       "col": 1,
+       "height": 11,
+       "room": "Kitchen",
+       "row": 1,
+       "width": 12,
+       "x": 300,
+       "z": -320
+      },
+      {
+       "axis": "x",
+       "col": 3,
+       "height": 11,
+       "room": "Dining hall",
+       "row": 1,
+       "width": 12,
+       "x": 332,
+       "z": -320
+      },
+      {
+       "axis": "x",
+       "col": 1,
+       "height": 11,
+       "room": "Servery",
+       "row": 2,
+       "width": 12,
+       "x": 300,
+       "z": -280
+      },
+      {
+       "axis": "x",
+       "col": 3,
+       "height": 11,
+       "room": "Dining hall",
+       "row": 2,
+       "width": 12,
+       "x": 332,
+       "z": -280
+      }
+     ],
+     "height": 20,
+     "index": 1,
+     "name": "Ground",
+     "walls": [
+      {
+       "from": [
+        220,
+        -348
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        420,
+        -348
+       ]
+      },
+      {
+       "from": [
+        220,
+        -252
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        420,
+        -252
+       ]
+      },
+      {
+       "from": [
+        220,
+        -348
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        220,
+        -252
+       ]
+      },
+      {
+       "from": [
+        420,
+        -348
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        420,
+        -252
+       ]
+      },
+      {
+       "from": [
+        300,
+        -340
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        300,
+        -300
+       ]
+      },
+      {
+       "from": [
+        300,
+        -300
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        300,
+        -260
+       ]
+      },
+      {
+       "from": [
+        332,
+        -340
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        332,
+        -300
+       ]
+      },
+      {
+       "from": [
+        332,
+        -300
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        332,
+        -260
+       ]
+      },
+      {
+       "from": [
+        228,
+        -300
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        300,
+        -300
+       ]
+      }
+     ],
+     "y": 0
+    }
+   ]
+  },
+  {
+   "entrances": [
+    {
+     "at": {
+      "x": -315,
+      "z": 20
+     },
+     "facing": "east",
+     "name": "Detention doors",
+     "width": 14
+    }
+   ],
+   "facing": "east",
+   "grid": {
+    "corridorCols": [],
+    "corridorRows": [
+     2
+    ],
+    "x": [
+     -477,
+     -400,
+     -323
+    ],
+    "z": [
+     -32,
+     4,
+     36,
+     72
+    ]
+   },
+   "name": "Detention Hall",
+   "rect": [
+    -485,
+    -40,
+    -315,
+    80
+   ],
+   "stairs": [],
+   "storeys": [
+    {
+     "cells": [
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Detention hall",
+       "rect": [
+        -477,
+        -32,
+        -400,
+        4
+       ],
+       "row": 1
+      },
+      {
+       "col": 2,
+       "kind": "room",
+       "name": "Holding room",
+       "rect": [
+        -400,
+        -32,
+        -323,
+        4
+       ],
+       "row": 1
+      },
+      {
+       "col": 1,
+       "kind": "corridor",
+       "name": "Corridor r2c1",
+       "rect": [
+        -477,
+        4,
+        -400,
+        36
+       ],
+       "row": 2
+      },
+      {
+       "col": 2,
+       "kind": "corridor",
+       "name": "Corridor r2c2",
+       "rect": [
+        -400,
+        4,
+        -323,
+        36
+       ],
+       "row": 2
+      },
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Warden's office",
+       "rect": [
+        -477,
+        36,
+        -400,
+        72
+       ],
+       "row": 3
+      },
+      {
+       "col": 2,
+       "kind": "room",
+       "name": "Confiscation store",
+       "rect": [
+        -400,
+        36,
+        -323,
+        72
+       ],
+       "row": 3
+      }
+     ],
+     "doors": [
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Detention hall",
+       "row": 1,
+       "width": 12,
+       "x": -438.5,
+       "z": 4
+      },
+      {
+       "axis": "z",
+       "col": 2,
+       "height": 11,
+       "room": "Holding room",
+       "row": 1,
+       "width": 12,
+       "x": -361.5,
+       "z": 4
+      },
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Warden's office",
+       "row": 3,
+       "width": 12,
+       "x": -438.5,
+       "z": 36
+      },
+      {
+       "axis": "z",
+       "col": 2,
+       "height": 11,
+       "room": "Confiscation store",
+       "row": 3,
+       "width": 12,
+       "x": -361.5,
+       "z": 36
+      }
+     ],
+     "height": 18,
+     "index": 1,
+     "name": "Ground",
+     "walls": [
+      {
+       "from": [
+        -485,
+        -40
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -315,
+        -40
+       ]
+      },
+      {
+       "from": [
+        -485,
+        80
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -315,
+        80
+       ]
+      },
+      {
+       "from": [
+        -485,
+        -40
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -485,
+        80
+       ]
+      },
+      {
+       "from": [
+        -315,
+        -40
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        -315,
+        80
+       ]
+      },
+      {
+       "from": [
+        -400,
+        -32
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -400,
+        4
+       ]
+      },
+      {
+       "from": [
+        -400,
+        36
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -400,
+        72
+       ]
+      },
+      {
+       "from": [
+        -477,
+        4
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -400,
+        4
+       ]
+      },
+      {
+       "from": [
+        -400,
+        4
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -323,
+        4
+       ]
+      },
+      {
+       "from": [
+        -477,
+        36
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -400,
+        36
+       ]
+      },
+      {
+       "from": [
+        -400,
+        36
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        -323,
+        36
+       ]
+      }
+     ],
+     "y": 0
+    }
+   ]
+  },
+  {
+   "entrances": [
+    {
+     "at": {
+      "x": 330,
+      "z": 396
+     },
+     "facing": "west",
+     "name": "Gym doors",
+     "width": 16
+    }
+   ],
+   "facing": "west",
+   "grid": {
+    "corridorCols": [],
+    "corridorRows": [
+     2
+    ],
+    "x": [
+     338,
+     512
+    ],
+    "z": [
+     348,
+     380,
+     412,
+     462
+    ]
+   },
+   "name": "Gymnasium",
+   "rect": [
+    330,
+    340,
+    520,
+    470
+   ],
+   "stairs": [],
+   "storeys": [
+    {
+     "cells": [
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Changing rooms",
+       "rect": [
+        338,
+        348,
+        512,
+        380
+       ],
+       "row": 1
+      },
+      {
+       "col": 1,
+       "kind": "corridor",
+       "name": "Corridor r2c1",
+       "rect": [
+        338,
+        380,
+        512,
+        412
+       ],
+       "row": 2
+      },
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Sports hall",
+       "rect": [
+        338,
+        412,
+        512,
+        462
+       ],
+       "row": 3
+      }
+     ],
+     "doors": [
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Changing rooms",
+       "row": 1,
+       "width": 12,
+       "x": 425,
+       "z": 380
+      },
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Sports hall",
+       "row": 3,
+       "width": 12,
+       "x": 425,
+       "z": 412
+      }
+     ],
+     "height": 26,
+     "index": 1,
+     "name": "Ground",
+     "walls": [
+      {
+       "from": [
+        330,
+        340
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        520,
+        340
+       ]
+      },
+      {
+       "from": [
+        330,
+        470
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        520,
+        470
+       ]
+      },
+      {
+       "from": [
+        330,
+        340
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        330,
+        470
+       ]
+      },
+      {
+       "from": [
+        520,
+        340
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        520,
+        470
+       ]
+      },
+      {
+       "from": [
+        338,
+        380
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        512,
+        380
+       ]
+      },
+      {
+       "from": [
+        338,
+        412
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        512,
+        412
+       ]
+      }
+     ],
+     "y": 0
+    }
+   ]
+  },
+  {
+   "entrances": [
+    {
+     "at": {
+      "x": 265,
+      "z": 400
+     },
+     "facing": "east",
+     "name": "Alley door",
+     "width": 12
+    }
+   ],
+   "facing": "east",
+   "grid": {
+    "corridorCols": [],
+    "corridorRows": [
+     2
+    ],
+    "x": [
+     163,
+     210,
+     257
+    ],
+    "z": [
+     353,
+     385,
+     417,
+     447
+    ]
+   },
+   "name": "Secret Rooftop",
+   "rect": [
+    155,
+    345,
+    265,
+    455
+   ],
+   "stairs": [],
+   "storeys": [
+    {
+     "cells": [
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Boiler room",
+       "rect": [
+        163,
+        353,
+        210,
+        385
+       ],
+       "row": 1
+      },
+      {
+       "col": 2,
+       "kind": "room",
+       "name": "Store",
+       "rect": [
+        210,
+        353,
+        257,
+        385
+       ],
+       "row": 1
+      },
+      {
+       "col": 1,
+       "kind": "corridor",
+       "name": "Corridor r2c1",
+       "rect": [
+        163,
+        385,
+        210,
+        417
+       ],
+       "row": 2
+      },
+      {
+       "col": 2,
+       "kind": "corridor",
+       "name": "Corridor r2c2",
+       "rect": [
+        210,
+        385,
+        257,
+        417
+       ],
+       "row": 2
+      },
+      {
+       "col": 1,
+       "kind": "room",
+       "name": "Stairwell",
+       "rect": [
+        163,
+        417,
+        210,
+        447
+       ],
+       "row": 3
+      },
+      {
+       "col": 2,
+       "kind": "room",
+       "name": "Roof access",
+       "rect": [
+        210,
+        417,
+        257,
+        447
+       ],
+       "row": 3
+      }
+     ],
+     "doors": [
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Boiler room",
+       "row": 1,
+       "width": 12,
+       "x": 186.5,
+       "z": 385
+      },
+      {
+       "axis": "z",
+       "col": 2,
+       "height": 11,
+       "room": "Store",
+       "row": 1,
+       "width": 12,
+       "x": 233.5,
+       "z": 385
+      },
+      {
+       "axis": "z",
+       "col": 1,
+       "height": 11,
+       "room": "Stairwell",
+       "row": 3,
+       "width": 12,
+       "x": 186.5,
+       "z": 417
+      },
+      {
+       "axis": "z",
+       "col": 2,
+       "height": 11,
+       "room": "Roof access",
+       "row": 3,
+       "width": 12,
+       "x": 233.5,
+       "z": 417
+      }
+     ],
+     "height": 16,
+     "index": 1,
+     "name": "Ground",
+     "walls": [
+      {
+       "from": [
+        155,
+        345
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        265,
+        345
+       ]
+      },
+      {
+       "from": [
+        155,
+        455
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        265,
+        455
+       ]
+      },
+      {
+       "from": [
+        155,
+        345
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        155,
+        455
+       ]
+      },
+      {
+       "from": [
+        265,
+        345
+       ],
+       "kind": "exterior",
+       "storey": 1,
+       "thickness": 8,
+       "to": [
+        265,
+        455
+       ]
+      },
+      {
+       "from": [
+        210,
+        353
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        210,
+        385
+       ]
+      },
+      {
+       "from": [
+        210,
+        417
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        210,
+        447
+       ]
+      },
+      {
+       "from": [
+        163,
+        385
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        210,
+        385
+       ]
+      },
+      {
+       "from": [
+        210,
+        385
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        257,
+        385
+       ]
+      },
+      {
+       "from": [
+        163,
+        417
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        210,
+        417
+       ]
+      },
+      {
+       "from": [
+        210,
+        417
+       ],
+       "kind": "partition",
+       "storey": 1,
+       "thickness": 3,
+       "to": [
+        257,
+        417
+       ]
+      }
+     ],
+     "y": 0
+    }
+   ]
   }
  ],
  "const": {
@@ -2846,6 +5454,7 @@
    ]
   },
   {
+   "ceremonial": true,
    "kind": "grounds",
    "name": "Great Court",
    "rect": [
@@ -2922,9 +5531,9 @@
    ],
    "name": "Gymnasium",
    "rect": [
-    165,
+    330,
     340,
-    355,
+    520,
     470
    ]
   },
@@ -2935,9 +5544,9 @@
    ],
    "name": "Secret Rooftop",
    "rect": [
-    -295,
+    155,
     345,
-    -125,
+    265,
     455
    ]
   },
@@ -2949,9 +5558,9 @@
    ],
    "name": "Hidden Alley",
    "rect": [
-    -125,
+    265,
     390,
-    165,
+    330,
     410
    ]
   },
@@ -2966,6 +5575,7 @@
    ]
   },
   {
+   "ceremonial": true,
    "kind": "grounds",
    "name": "Main Gate",
    "rect": [

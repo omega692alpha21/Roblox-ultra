@@ -458,6 +458,7 @@ local function buildLibrary(parent: Instance, center: Vector3)
 		Parent = parent,
 	})
 	signText(plaque, "CRUMBWORTH LIBRARY", Palette.BusYellow, Enum.NormalId.Front)
+	signText(plaque, "CRUMBWORTH LIBRARY", Palette.BusYellow, Enum.NormalId.Back)
 	signText(plaque, "SILENCE, PLEASE", Palette.BusYellow, Enum.NormalId.Back)
 
 	local roof = part({
@@ -843,6 +844,9 @@ local function buildBus(parent: Instance, cf: CFrame)
 		Color = Palette.Blackboard,
 		Parent = parent,
 	})
+	-- clear of the bodywork: at the bus's own centre both faces of this read
+	-- into eighteen studs of yellow panel
+	sign.CFrame = cf * CFrame.new(0, 10.6, 4.9)
 	signText(sign, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Front)
 	signText(sign, "CRUMBWORTH HIGH", Palette.BusYellow, Enum.NormalId.Back)
 	local _ = body
@@ -3352,7 +3356,10 @@ local function buildGrandFacade(parent: Instance)
 	end
 
 	-- school name over the entrance
-	local sign = part({ Name = "FacadeSign", Size = Vector3.new(40, 5, 1.2), CFrame = CFrame.new(0, 39.6, Z + 12.2), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
+	-- Proud of the entry bay's header, not flush with it. Flush, the sign's
+	-- reading face was inside fourteen studs of concrete: the school's own
+	-- name over its own front door, unreadable from the drive.
+	local sign = part({ Name = "FacadeSign", Size = Vector3.new(40, 5, 1.2), CFrame = CFrame.new(0, 39.6, Z + 15.4), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
 	signText(sign, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Front)
 
 	-- ---- corner towers with crenellations ----
@@ -3428,6 +3435,143 @@ end
 -- The campus front, built from the reference: a paved parking apron with
 -- parked cars and a bus, bike racks, benches, a bronze statue on a plinth,
 -- clipped hedge borders and tall conifers flanking the facade.
+-- ================= THE GREAT COURT =================
+-- The reference is a formal court: a tiered fountain on the entrance axis,
+-- paths radiating from it in a hard geometry, clipped hedge parterres filling
+-- the quadrants between them, and lamps at every junction. Ours was an apron
+-- of pale paving with a statue off to one side and a car park behind it, which
+-- is a forecourt, not a court.
+--
+-- Everything here is laid out from the fountain, so the whole thing reads as
+-- one composition rather than as things that happen to be near each other.
+local COURT_CENTRE = Vector3.new(0, 0, 166)
+local COURT_R = 22
+
+local function courtLamp(parent: Instance, x: number, z: number)
+	part({ Name = "CourtLampBase", Size = Vector3.new(2.6, 1.2, 2.6), CFrame = CFrame.new(x, 0.6, z), Color = Color3.fromRGB(48, 50, 56), Material = Enum.Material.Metal, Parent = parent })
+	part({ Name = "CourtLampPost", Size = Vector3.new(0.9, 15, 0.9), CFrame = CFrame.new(x, 8, z), Color = Color3.fromRGB(38, 40, 46), Material = Enum.Material.Metal, Parent = parent })
+	part({ Name = "CourtLampArm", Size = Vector3.new(2.2, 1.6, 2.2), CFrame = CFrame.new(x, 15.6, z), Color = Color3.fromRGB(38, 40, 46), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	local head = part({ Name = "CourtLampHead", Size = Vector3.new(3, 4.4, 3), CFrame = CFrame.new(x, 17.8, z), Color = Color3.fromRGB(255, 226, 168), Material = Enum.Material.Neon, Transparency = 0.15, Parent = parent })
+	head.CanCollide = false
+	part({ Name = "CourtLampCap", Size = Vector3.new(3.6, 1.4, 3.6), CFrame = CFrame.new(x, 20.6, z), Color = Color3.fromRGB(38, 40, 46), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	local light = Instance.new("PointLight")
+	light.Brightness = 2.4
+	light.Range = 52
+	light.Color = Color3.fromRGB(255, 214, 156)
+	light.Parent = head
+end
+
+-- a light set into the paving, aimed up. The reference is full of these and
+-- they are most of why its ground reads as wet stone rather than as a floor.
+local function upLight(parent: Instance, x: number, z: number, colour: Color3?)
+	local lens = part({ Name = "CourtUplight", Size = Vector3.new(1.6, 0.3, 1.6), CFrame = CFrame.new(x, 0.45, z), Color = colour or Color3.fromRGB(255, 224, 170), Material = Enum.Material.Neon, Parent = parent })
+	lens.CanCollide = false
+	local light = Instance.new("PointLight")
+	light.Brightness = 1.5
+	light.Range = 22
+	light.Color = colour or Color3.fromRGB(255, 214, 156)
+	light.Parent = lens
+end
+
+local function buildGreatCourt(parent: Instance)
+	local cx, cz = COURT_CENTRE.X, COURT_CENTRE.Z
+	local PAVE = Color3.fromRGB(96, 96, 102)
+	local PAVE_LIGHT = Color3.fromRGB(126, 126, 132)
+	local HEDGE = Color3.fromRGB(44, 84, 46)
+
+	-- ---- the paved court ----
+	tag(part({ Name = "CourtPaving", Size = Vector3.new(280, 0.4, 84), CFrame = CFrame.new(cx, 0.2, cz), Color = PAVE, Material = Enum.Material.Slate, Parent = parent }), "TexPlaza").CanCollide = false
+	-- the banding that makes paving read as paving
+	for i = -6, 6 do
+		part({ Name = "CourtJoint", Size = Vector3.new(280, 0.1, 0.5), CFrame = CFrame.new(cx, 0.42, cz + i * 6.4), Color = PAVE_LIGHT, Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+	end
+
+	-- ---- the paths, radiating from the fountain ----
+	for _, run in {
+		{ w = 18, d = 84, x = 0, z = 0 },            -- the entrance axis
+		{ w = 280, d = 16, x = 0, z = 0 },           -- the cross axis
+		{ w = 14, d = 84, x = -96, z = 0 },
+		{ w = 14, d = 84, x = 96, z = 0 },
+	} do
+		part({
+			Name = "CourtPath",
+			Size = Vector3.new(run.w, 0.3, run.d),
+			CFrame = CFrame.new(cx + run.x, 0.5, cz + run.z),
+			Color = PAVE_LIGHT,
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		}).CanCollide = false
+	end
+
+	-- ---- the fountain ----
+	part({ Name = "FountainRim", Size = Vector3.new(COURT_R * 2 + 5, 3, COURT_R * 2 + 5), CFrame = CFrame.new(cx, 1.5, cz), Color = Color3.fromRGB(188, 184, 174), Material = Enum.Material.Marble, Parent = parent }).Shape = Enum.PartType.Cylinder
+	local bowl = part({ Name = "FountainBasin", Size = Vector3.new(COURT_R * 2, 2.4, COURT_R * 2), CFrame = CFrame.new(cx, 1.6, cz), Color = Color3.fromRGB(36, 74, 92), Material = Enum.Material.Glass, Transparency = 0.25, Parent = parent })
+	bowl.Shape = Enum.PartType.Cylinder
+	bowl.CanCollide = false
+	bowl.Reflectance = 0.4
+	for tier, spec in {
+		{ r = 11, y = 4.4, h = 1.6 },
+		{ r = 7, y = 7.4, h = 1.4 },
+		{ r = 4, y = 10.2, h = 1.2 },
+	} do
+		part({ Name = "FountainStem", Size = Vector3.new(2.6, spec.y - 1.6, 2.6), CFrame = CFrame.new(cx, (spec.y + 1.6) / 2, cz), Color = Color3.fromRGB(196, 192, 182), Material = Enum.Material.Marble, Parent = parent })
+		local dish = part({ Name = "FountainTier", Size = Vector3.new(spec.r * 2, spec.h, spec.r * 2), CFrame = CFrame.new(cx, spec.y, cz), Color = Color3.fromRGB(206, 202, 192), Material = Enum.Material.Marble, Parent = parent })
+		dish.Shape = Enum.PartType.Cylinder
+		dish.CanCollide = false
+		-- the sheet of water falling off each dish
+		local fall = part({ Name = "FountainFall", Size = Vector3.new(spec.r * 2 - 1, 2.6, spec.r * 2 - 1), CFrame = CFrame.new(cx, spec.y - 1.8, cz), Color = Color3.fromRGB(198, 232, 244), Material = Enum.Material.Glass, Transparency = 0.55, Parent = parent })
+		fall.Shape = Enum.PartType.Cylinder
+		fall.CanCollide = false
+		local _ = tier
+	end
+	part({ Name = "FountainFinial", Size = Vector3.new(1.8, 3.4, 1.8), CFrame = CFrame.new(cx, 12.4, cz), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Marble, Parent = parent }).CanCollide = false
+	-- lights set into the rim, which is what the reference actually glows with
+	for i = 0, 15 do
+		local a = i * math.pi / 8
+		upLight(parent, cx + math.cos(a) * (COURT_R + 1), cz + math.sin(a) * (COURT_R + 1), Color3.fromRGB(190, 226, 255))
+	end
+
+	-- ---- the parterres: clipped hedge boxes filling the quadrants ----
+	for _, quad in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+		for _, bed in { { 34, 12 }, { 62, 12 }, { 34, 30 }, { 62, 30 } } do
+			local bx = cx + quad[1] * bed[1]
+			local bz = cz + quad[2] * bed[2]
+			part({ Name = "ParterreBed", Size = Vector3.new(22, 0.9, 12), CFrame = CFrame.new(bx, 0.65, bz), Color = Color3.fromRGB(74, 58, 44), Material = Enum.Material.Ground, Parent = parent }).CanCollide = false
+			-- the clipped edge, four low runs round the bed
+			for _, edge in { { 22, 1.6, 0, 5.2 }, { 22, 1.6, 0, -5.2 }, { 1.6, 12, 10.2, 0 }, { 1.6, 12, -10.2, 0 } } do
+				part({
+					Name = "ParterreHedge",
+					Size = Vector3.new(edge[1], 2.6, edge[2]),
+					CFrame = CFrame.new(bx + edge[3], 1.5, bz + edge[4]),
+					Color = HEDGE,
+					Material = Enum.Material.Grass,
+					Parent = parent,
+				})
+			end
+			prop(if (bed[1] + bed[2]) % 24 == 0 then "KFlowerRed" else "KFlowerYellow", CFrame.new(bx, 1.1, bz))
+			prop("KBush", CFrame.new(bx + 7, 1.1, bz))
+			prop("KBush", CFrame.new(bx - 7, 1.1, bz))
+		end
+	end
+
+	-- ---- lamps: at every junction, down both flanks ----
+	for _, at in {
+		{ -30, -34 }, { 30, -34 }, { -30, 34 }, { 30, 34 },
+		{ -78, -34 }, { 78, -34 }, { -78, 34 }, { 78, 34 },
+		{ -114, -20 }, { 114, -20 }, { -114, 20 }, { 114, 20 },
+		{ -78, 0 }, { 78, 0 }, { -132, 0 }, { 132, 0 },
+	} do
+		courtLamp(parent, cx + at[1], cz + at[2])
+	end
+	-- and uplighters along the entrance axis
+	for i = -5, 5 do
+		if i ~= 0 then
+			upLight(parent, cx - 10, cz + i * 7)
+			upLight(parent, cx + 10, cz + i * 7)
+		end
+	end
+end
+
 local function buildFrontGrounds(parent: Instance)
 	local Z = 124
 	local ASPHALT = Color3.fromRGB(64, 66, 72)
@@ -3506,6 +3650,9 @@ local function buildFrontGrounds(parent: Instance)
 		part({ Name = "StatueLeg", Size = Vector3.new(1.5, 5, 1.5), CFrame = CFrame.new(sx + lx, 8.4, sz), Color = BRONZE, Material = Enum.Material.Metal, Parent = parent })
 	end
 	local plaque = part({ Name = "StatuePlaque", Size = Vector3.new(6, 2.2, 0.4), CFrame = CFrame.new(sx, 6.4, sz - 4.7), Color = Color3.fromRGB(96, 74, 44), Material = Enum.Material.Metal, Parent = parent })
+	-- Front, which in Roblox is the MINUS-Z face -- so this reads south, out
+	-- from the plinth towards the school. I flipped it to Back on the theory
+	-- that Front meant +Z, and tools/sign_check.py caught it in one run.
 	signText(plaque, "CRUMBWORTH", Color3.fromRGB(238, 226, 196), Enum.NormalId.Front)
 
 	-- Clipped hedge borders round the lawns.
@@ -3533,7 +3680,10 @@ local function buildFrontGrounds(parent: Instance)
 	part({ Name = "SignPost", Size = Vector3.new(1.4, 8, 1.4), CFrame = CFrame.new(58, 4, Z + 64), Color = Color3.fromRGB(96, 62, 42), Material = Enum.Material.WoodPlanks, Parent = parent })
 	part({ Name = "SignPost", Size = Vector3.new(1.4, 8, 1.4), CFrame = CFrame.new(82, 4, Z + 64), Color = Color3.fromRGB(96, 62, 42), Material = Enum.Material.WoodPlanks, Parent = parent })
 	local board = part({ Name = "SchoolSignBoard", Size = Vector3.new(28, 9, 1.2), CFrame = CFrame.new(70, 11, Z + 64), Color = Color3.fromRGB(28, 44, 78), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	-- both faces: the road is on one side of this and the whole school on the
+	-- other, and only the road could read it
 	signText(board, "DETENTION\nCRUMBWORTH HIGH", Color3.fromRGB(255, 208, 96), Enum.NormalId.Front)
+	signText(board, "DETENTION\nCRUMBWORTH HIGH", Color3.fromRGB(255, 208, 96), Enum.NormalId.Back)
 	part({ Name = "SignBoardTrim", Size = Vector3.new(29.4, 10.4, 0.6), CFrame = CFrame.new(70, 11, Z + 64.5), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
 end
 
@@ -4156,9 +4306,11 @@ local function furnishSubjectRooms(parent: Instance)
 			end
 		end
 		-- a scoreboard on the north wall
-		local board = part({ Name = "Scoreboard", Size = Vector3.new(26, 12, 1.2), CFrame = CFrame.new(0, 20, -144.4), Color = Color3.fromRGB(24, 26, 32), Parent = parent })
+		local board = part({ Name = "Scoreboard", Size = Vector3.new(26, 12, 1.2), CFrame = CFrame.new(0, 20, -143.4), Color = Color3.fromRGB(24, 26, 32), Parent = parent })
 		board.CanCollide = false
-		signText(board, "HOME  00 : 00  AWAY", Color3.fromRGB(255, 96, 72), Enum.NormalId.Front)
+		-- Back, which is +Z: this hangs on the gym's NORTH wall, so it has to read
+		-- south into the hall. Front pointed it into the facade behind it.
+		signText(board, "HOME  00 : 00  AWAY", Color3.fromRGB(255, 96, 72), Enum.NormalId.Back)
 		local glow = Instance.new("SurfaceLight")
 		glow.Face = Enum.NormalId.Front
 		glow.Range = 30
@@ -6447,7 +6599,7 @@ end
 	tag(part({ Name = "LobbyRunner", Size = Vector3.new(20, 0.16, 40), CFrame = CFrame.new(0, 0.2, 100), Color = Color3.fromRGB(132, 68, 60), Material = Enum.Material.Fabric, Parent = folder }), "TexCarpet")
 
 	-- notice board by the doors, and planters flanking the way in
-	local notice = part({ Name = "LobbyNotice", Size = Vector3.new(0.5, 9, 16), CFrame = CFrame.new(-52, 7, 104), Color = Palette.Blackboard, Parent = folder })
+	local notice = part({ Name = "LobbyNotice", Size = Vector3.new(0.5, 9, 16), CFrame = CFrame.new(-56.6, 7, 104), Color = Palette.Blackboard, Parent = folder })
 	signText(notice, "NOTICES\nBELL 8:40\nDETENTION 4PM", Palette.Chalk, Enum.NormalId.Right)
 	for _, side in { -1, 1 } do
 		part({ Name = "LobbyPlanter", Size = Vector3.new(6, 3.4, 6), CFrame = CFrame.new(side * 30, 1.7, 116), Color = Color3.fromRGB(150, 118, 96), Material = Enum.Material.Concrete, Parent = folder })
@@ -6467,6 +6619,7 @@ end
 
 	buildGrandFacade(folder)
 	buildFrontGrounds(folder)
+	buildGreatCourt(folder)
 	detailCorridor(folder)
 
 	-- ---------------- outside: entrance, dorms, grounds ----------------
