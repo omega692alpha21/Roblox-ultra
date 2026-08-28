@@ -820,6 +820,48 @@ return {
 	Rug = Vector3.new(25.31, 0.30, 26.04),
 	RoundRug = Vector3.new(47.52, 0.30, 48.26),
 	LodgeFireplace = Vector3.new(10.15, 8.00, 3.62),
+	BunkBed2 = Vector3.new(6.05, 9.00, 11.59),
+	SingleBed = Vector3.new(3.96, 2.60, 7.80),
+	DoubleBed = Vector3.new(6.63, 2.60, 7.80),
+	BedsideDrawers = Vector3.new(2.63, 2.60, 2.15),
+	OpenBookcase = Vector3.new(3.18, 7.00, 1.99),
+	WideBookcase = Vector3.new(7.09, 7.00, 2.22),
+	BookStack = Vector3.new(1.74, 1.20, 1.09),
+	CoatRack = Vector3.new(2.48, 7.00, 2.48),
+	StudyDesk = Vector3.new(5.54, 2.90, 2.96),
+	StudyChair = Vector3.new(1.87, 3.40, 1.76),
+	SideDrawers = Vector3.new(3.89, 2.80, 1.62),
+	TableLamp = Vector3.new(0.97, 2.00, 1.12),
+	FloorLamp = Vector3.new(0.89, 6.40, 0.89),
+	CommonSofa = Vector3.new(6.39, 3.00, 2.67),
+	CommonChair = Vector3.new(3.20, 3.00, 2.67),
+	LowTable = Vector3.new(4.60, 1.60, 2.78),
+	LongPillow = Vector3.new(1.22, 0.70, 0.28),
+	RugRect = Vector3.new(1.57, 0.01, 0.92),
+	RugRound2 = Vector3.new(0.92, 0.01, 0.92),
+	Bin2 = Vector3.new(1.17, 2.40, 1.31),
+	DeskPlant = Vector3.new(1.08, 1.60, 1.08),
+	PottedPlant2 = Vector3.new(1.36, 4.20, 1.55),
+	Basin2 = Vector3.new(1.94, 3.20, 1.66),
+	Mirror2 = Vector3.new(2.36, 3.40, 1.13),
+	Toilet2 = Vector3.new(2.36, 3.40, 3.60),
+	Shower = Vector3.new(4.11, 8.00, 4.25),
+	LaundryStack = Vector3.new(2.74, 6.60, 2.74),
+	Stove2 = Vector3.new(3.44, 3.60, 3.60),
+	Sink2 = Vector3.new(3.16, 3.60, 3.31),
+	Fridge2 = Vector3.new(3.27, 7.00, 2.22),
+	StoneWall = Vector3.new(10.69, 14.00, 10.69),
+	StoneWallCorner = Vector3.new(10.69, 14.00, 10.69),
+	StoneWallGate = Vector3.new(5.34, 14.00, 10.69),
+	StonePier = Vector3.new(12.21, 16.00, 12.21),
+	PicketFence = Vector3.new(4.34, 6.00, 4.14),
+	IronGate = Vector3.new(2.00, 12.00, 8.73),
+	StoneSteps = Vector3.new(1.72, 5.00, 6.07),
+	Banner = Vector3.new(0.22, 12.00, 3.48),
+	FallenLog = Vector3.new(2.34, 2.60, 9.38),
+	TowerBase = Vector3.new(15.84, 16.00, 15.84),
+	TowerMid = Vector3.new(14.73, 16.00, 14.73),
+	TowerTop = Vector3.new(18.52, 20.00, 18.52),
 }
 
 end)()
@@ -3168,14 +3210,21 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 	firelight.Range = 46
 	firelight.Color = Color3.fromRGB(255, 172, 96)
 	firelight.Parent = fire
-	prop("Sofa", CFrame.new(center + Vector3.new(-24, 2, -8)) * CFrame.Angles(0, math.rad(90), 0))
-	prop("ArmChair", CFrame.new(center + Vector3.new(-16, 2, -18)) * CFrame.Angles(0, math.rad(150), 0))
-	prop("ArmChair", CFrame.new(center + Vector3.new(-16, 2, 2)) * CFrame.Angles(0, math.rad(-150), 0))
-	prop("CoffeeTable", CFrame.new(center + Vector3.new(-16, 2, -8)))
-	prop("Bookshelf", CFrame.new(center + Vector3.new(-30, 2, 22)) * CFrame.Angles(0, math.rad(180), 0))
-	prop("PottedPlant", CFrame.new(center + Vector3.new(-40, 2, 30)))
+	-- One hand throughout: these are the Kenney set, which is flat-shaded and
+	-- consistent with itself. A photoscanned sofa beside a photoscanned
+	-- wardrobe beside a hand-built brick wall reads as three different games.
+	prop("RugRect", CFrame.new(center + Vector3.new(-22, 2, -8)))
+	prop("CommonSofa", CFrame.new(center + Vector3.new(-22, 2, -16)) * CFrame.Angles(0, math.rad(180), 0))
+	prop("CommonChair", CFrame.new(center + Vector3.new(-30, 2, -4)) * CFrame.Angles(0, math.rad(90), 0))
+	prop("CommonChair", CFrame.new(center + Vector3.new(-14, 2, -4)) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("LowTable", CFrame.new(center + Vector3.new(-22, 2, -8)))
+	prop("FloorLamp", CFrame.new(center + Vector3.new(-33, 2, -18)))
+	prop("OpenBookcase", CFrame.new(center + Vector3.new(-30, 2, 24)) * CFrame.Angles(0, math.rad(180), 0))
+	prop("WideBookcase", CFrame.new(center + Vector3.new(-14, 2, 24)) * CFrame.Angles(0, math.rad(180), 0))
+	prop("PottedPlant2", CFrame.new(center + Vector3.new(-40, 2, 30)))
+	prop("CoatRack", CFrame.new(center + Vector3.new(-8, 2, 32)))
 	-- the kitchen bench, along the south wall
-	for index, kind in { "KitchenSink", "Oven", "KitchenCabinet", "Fridge" } do
+	for index, kind in { "Sink2", "Stove2", "KitchenCabinet", "Fridge2" } do
 		prop(kind, CFrame.new(center + Vector3.new(-6 + index * 8, 2, -halfD + 4)))
 	end
 	prop("RefectoryTable", CFrame.new(center + Vector3.new(14, 2, -18)))
@@ -3194,7 +3243,8 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 			local shade = 0.85 + col * 0.12
 			local mattress = part({ Name = "DormBed", Size = Vector3.new(11, 1, 6.4), CFrame = CFrame.new(bx, UPPER + 3.9, bz), Color = Color3.new(math.min(1, accent.R * shade), math.min(1, accent.G * shade), math.min(1, accent.B * shade)), Material = Enum.Material.Fabric, Parent = parent })
 			part({ Name = "Pillow", Size = Vector3.new(2.6, 0.8, 4.5), CFrame = CFrame.new(bx - 3.8, UPPER + 4.6, bz), Color = Color3.fromRGB(240, 240, 232), Material = Enum.Material.Fabric, Parent = parent })
-			prop("QuartersNightstand", CFrame.new(bx + 4, UPPER + 2, bz + 5.6))
+			prop("BedsideDrawers", CFrame.new(bx + 4, UPPER + 2, bz + 5.6) * CFrame.Angles(0, math.rad(-90), 0))
+			prop("TableLamp", CFrame.new(bx + 4, UPPER + 4.6, bz + 5.6))
 			table.insert(beds, mattress)
 		end
 	end
@@ -3202,10 +3252,13 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 	part({ Name = "WashroomFloor", Size = Vector3.new(26, 0.4, 26), CFrame = at(20, UPPER + 2.2, 22), Color = Color3.fromRGB(206, 214, 216), Material = Enum.Material.CeramicTiles, Parent = parent }).CanCollide = false
 	part({ Name = "WashroomPartition", Size = Vector3.new(1, 11, 26), CFrame = at(7, UPPER + 7.5, 22), Color = Color3.fromRGB(224, 224, 218), Material = Enum.Material.SmoothPlastic, Parent = parent })
 	for index = 0, 2 do
-		prop("Toilet", CFrame.new(center + Vector3.new(12 + index * 8, UPPER + 2, 32)) * CFrame.Angles(0, math.pi, 0))
-		prop("Washbasin", CFrame.new(center + Vector3.new(12 + index * 8, UPPER + 2, 14)))
+		prop("Toilet2", CFrame.new(center + Vector3.new(12 + index * 8, UPPER + 2, 32)) * CFrame.Angles(0, math.pi, 0))
+		prop("Basin2", CFrame.new(center + Vector3.new(12 + index * 8, UPPER + 2, 14)))
+		prop("Mirror2", CFrame.new(center + Vector3.new(12 + index * 8, UPPER + 7, 12.6)))
 	end
-	prop("BinSmall", CFrame.new(center + Vector3.new(34, UPPER + 2, 22)))
+	prop("Shower", CFrame.new(center + Vector3.new(34, UPPER + 2, 32)) * CFrame.Angles(0, math.pi, 0))
+	prop("Bin2", CFrame.new(center + Vector3.new(34, UPPER + 2, 20)))
+	prop("LaundryStack", CFrame.new(center + Vector3.new(34, UPPER + 2, 12)))
 
 	-- ---- a garden wall and a gate on the approach ----
 	for _, seg in { { -halfW - 4, -14 }, { 14, halfW + 4 } } do

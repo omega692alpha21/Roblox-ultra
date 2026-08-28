@@ -252,7 +252,7 @@ local KINDS: { [string]: Spec } = {
 	LodgeSofa                 = { id = 127725539416222, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa2
 	LodgeSofaLong             = { id = 115288639285099, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa3
 	LodgeArmchair             = { id = 123264730568631, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa_individual
-	LoungeStool               = { id = 123290378028877, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
+	LoungeStool               = { id = 137011939546237, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
 	RefectoryTable            = { id = 84911854162743, collide = true, shadow = true, height = 3.4 }, -- qt_Table
 	RefectoryTable2           = { id = 139344400848486, collide = true, shadow = true, height = 3.0 }, -- qt_Table2
 	PlainChair                = { id = 92355465659938, collide = true, shadow = true, height = 4.2 }, -- qt_Chair
@@ -280,12 +280,54 @@ local KINDS: { [string]: Spec } = {
 	DiningChair               = { id = 112220312010726, collide = true, shadow = true, height = 4.2 }, -- qt_Chair_3
 	RoundTable                = { id = 99087364840474, collide = true, shadow = true, height = 3.4 }, -- qt_Table_RoundLarge
 	RoundTableSmall           = { id = 79348850644788, collide = true, shadow = true, height = 2.8 }, -- qt_Table_RoundSmall
-	PaddedStool               = { id = 123290378028877, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
+	PaddedStool               = { id = 137011939546237, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
 	LoungeCouch               = { id = 122543864904209, collide = true, shadow = true, height = 3.6 }, -- qt_Couch_Medium1
 	ChestOfDrawers            = { id = 134877556225571, collide = true, shadow = true, height = 4.6 }, -- qt_Drawer_3
 	Rug                       = { id = 121504473848590, height = 0.3 }, -- qt_Carpet_2
 	RoundRug                  = { id = 92757372097210, height = 0.3 }, -- qt_Carpet_Round
 	LodgeFireplace            = { id = 75074307762935, collide = true, shadow = true, height = 8.0 }, -- qt_Fireplace
+	BunkBed2                  = { id = 119049619500493, collide = true, shadow = true, height = 9.0 }, -- kf-bedBunk
+	SingleBed                 = { id = 112994836439015, collide = true, shadow = true, height = 2.6 }, -- kf-bedSingle
+	DoubleBed                 = { id = 123142734051302, collide = true, shadow = true, height = 2.6 }, -- kf-bedDouble
+	BedsideDrawers            = { id = 75602091083424, collide = true, shadow = true, height = 2.6 }, -- kf-cabinetBedDrawer
+	OpenBookcase              = { id = 79139625042438, collide = true, shadow = true, height = 7.0 }, -- kf-bookcaseOpen
+	WideBookcase              = { id = 88957918518447, collide = true, shadow = true, height = 7.0 }, -- kf-bookcaseClosedWide
+	BookStack                 = { id = 99591462579889, height = 1.2 }, -- kf-books
+	CoatRack                  = { id = 96280094800365, collide = true, shadow = true, height = 7.0 }, -- kf-coatRackStanding
+	StudyDesk                 = { id = 101487852952650, collide = true, shadow = true, height = 2.9 }, -- kf-desk
+	StudyChair                = { id = 84234487790814, collide = true, shadow = true, height = 3.4 }, -- kf-chairDesk
+	SideDrawers               = { id = 110381758391376, collide = true, shadow = true, height = 2.8 }, -- kf-sideTableDrawers
+	TableLamp                 = { id = 125342280273748, height = 2.0 }, -- kf-lampRoundTable
+	FloorLamp                 = { id = 99485928856628, shadow = true, height = 6.4 }, -- kf-lampSquareFloor
+	CommonSofa                = { id = 93922260955660, collide = true, shadow = true, height = 3.0 }, -- kf-loungeSofa
+	CommonChair               = { id = 117052917144527, collide = true, shadow = true, height = 3.0 }, -- kf-loungeChair
+	LowTable                  = { id = 75758326282371, collide = true, shadow = true, height = 1.6 }, -- kf-tableCoffee
+	LongPillow                = { id = 131547524174778, height = 0.7 }, -- kf-pillowLong
+	RugRect                   = { id = 81342883052835, height = 0.2 }, -- kf-rugRectangle
+	RugRound2                 = { id = 72824510681017, height = 0.2 }, -- kf-rugRound
+	Bin2                      = { id = 86967948227589, collide = true, shadow = true, height = 2.4 }, -- kf-trashcan
+	DeskPlant                 = { id = 125403304581585, height = 1.6 }, -- kf-plantSmall1
+	PottedPlant2              = { id = 91459378911935, shadow = true, height = 4.2 }, -- kf-pottedPlant
+	Basin2                    = { id = 109698419840801, collide = true, shadow = true, height = 3.2 }, -- kf-bathroomSink
+	Mirror2                   = { id = 108799939721109, height = 3.4 }, -- kf-bathroomMirror
+	Toilet2                   = { id = 131827132825503, collide = true, shadow = true, height = 3.4 }, -- kf-toilet
+	Shower                    = { id = 125739997981128, collide = true, shadow = true, height = 8.0 }, -- kf-shower
+	LaundryStack              = { id = 129122227300683, collide = true, shadow = true, height = 6.6 }, -- kf-washerDryerStacked
+	Stove2                    = { id = 84154242692023, collide = true, shadow = true, height = 3.6 }, -- kf-kitchenStove
+	Sink2                     = { id = 115013875089205, collide = true, shadow = true, height = 3.6 }, -- kf-kitchenSink
+	Fridge2                   = { id = 111715510786876, collide = true, shadow = true, height = 7.0 }, -- kf-kitchenFridge
+	StoneWall                 = { id = 130997895648095, collide = true, shadow = true, height = 14.0 }, -- kc-wall
+	StoneWallCorner           = { id = 113202468426471, collide = true, shadow = true, height = 14.0 }, -- kc-wall-corner
+	StoneWallGate             = { id = 125410166521694, collide = true, shadow = true, height = 14.0 }, -- kc-wall-doorway
+	StonePier                 = { id = 87014209068263, collide = true, shadow = true, height = 16.0 }, -- kc-wall-pillar
+	PicketFence               = { id = 127110523256370, collide = true, shadow = true, height = 6.0 }, -- kc-wall-narrow-wood-fence
+	IronGate                  = { id = 78148106067551, collide = true, shadow = true, height = 12.0 }, -- kc-gate
+	StoneSteps                = { id = 120384736662134, collide = true, shadow = true, height = 5.0 }, -- kc-stairs-stone
+	Banner                    = { id = 121142940801638, height = 12.0 }, -- kc-flag-banner-long
+	FallenLog                 = { id = 70834775265796, collide = true, shadow = true, height = 2.6 }, -- kc-tree-log
+	TowerBase                 = { id = 85813655100506, collide = true, shadow = true, height = 16.0 }, -- kc-tower-square-base
+	TowerMid                  = { id = 133359507729143, collide = true, shadow = true, height = 16.0 }, -- kc-tower-square-mid-windows
+	TowerTop                  = { id = 75005846028640, collide = true, shadow = true, height = 20.0 }, -- kc-tower-square-top-roof-high-windows
 }
 
 local templates: { [string]: Model } = {}

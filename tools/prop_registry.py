@@ -82,6 +82,23 @@ HEIGHT = {
     "Rug": 0.3,
     "RoundRug": 0.3,
     "LodgeFireplace": 8.0,
+    # Kenney's kits are built at roughly a tenth of Roblox's scale -- a single
+    # bed measures a stud and a bit end to end -- so every one of them is told
+    # how tall a school thinks it is. Heights are the real-world figure: a bed
+    # frame is knee high, a wardrobe is over your head.
+    "BunkBed2": 9.0, "SingleBed": 2.6, "DoubleBed": 2.6,
+    "BedsideDrawers": 2.6, "OpenBookcase": 7.0, "WideBookcase": 7.0,
+    "BookStack": 1.2, "CoatRack": 7.0, "StudyDesk": 2.9, "StudyChair": 3.4,
+    "SideDrawers": 2.8, "TableLamp": 2.0, "FloorLamp": 6.4,
+    "CommonSofa": 3.0, "CommonChair": 3.0, "LowTable": 1.6,
+    "LongPillow": 0.7, "RugRect": 0.2, "RugRound2": 0.2, "Bin2": 2.4,
+    "DeskPlant": 1.6, "PottedPlant2": 4.2,
+    "Basin2": 3.2, "Mirror2": 3.4, "Toilet2": 3.4, "Shower": 8.0,
+    "LaundryStack": 6.6, "Stove2": 3.6, "Sink2": 3.6, "Fridge2": 7.0,
+    "StoneWall": 14.0, "StoneWallCorner": 14.0, "StoneWallGate": 14.0,
+    "StonePier": 16.0, "PicketFence": 6.0, "IronGate": 12.0,
+    "StoneSteps": 5.0, "Banner": 12.0, "FallenLog": 2.6,
+    "TowerBase": 16.0, "TowerMid": 16.0, "TowerTop": 20.0,
 }
 
 # kind -> (poly haven slug, collides with players, casts a shadow)
@@ -365,7 +382,65 @@ QUATERNIUS = [
     ("LodgeFireplace",    "qt_Fireplace",            True,  True),
 ]
 
-REGISTRY = REGISTRY + [(k, s, c, sh) for k, s, c, sh in WAVE2] + QUATERNIUS
+# ---------------------------------------------------------------------------
+# Kenney.nl, CC0 1.0 Universal (https://kenney.nl). Flat-shaded, tiny, and
+# consistent with each other -- which is exactly what the boarding houses and
+# the staff lodge want, because a photoscanned bed next to a photoscanned
+# wardrobe next to a hand-built brick wall reads as three different games.
+#
+# The furniture and castle kits upload as GLB. The nature kit's GLBs are
+# rejected by the importer ("failed to parse") though they are well-formed;
+# its FBX exports of the same models go through, so those are pulled as FBX
+# and the slug carries no extension either way.
+KENNEY = [
+    # boarding house
+    ("BunkBed2",        "kf-bedBunk",            True,  True),
+    ("SingleBed",       "kf-bedSingle",          True,  True),
+    ("DoubleBed",       "kf-bedDouble",          True,  True),
+    ("BedsideDrawers",  "kf-cabinetBedDrawer",   True,  True),
+    ("OpenBookcase",    "kf-bookcaseOpen",       True,  True),
+    ("WideBookcase",    "kf-bookcaseClosedWide", True,  True),
+    ("BookStack",       "kf-books",              False, False),
+    ("CoatRack",        "kf-coatRackStanding",   True,  True),
+    ("StudyDesk",       "kf-desk",               True,  True),
+    ("StudyChair",      "kf-chairDesk",          True,  True),
+    ("SideDrawers",     "kf-sideTableDrawers",   True,  True),
+    ("TableLamp",       "kf-lampRoundTable",     False, False),
+    ("FloorLamp",       "kf-lampSquareFloor",    False, True),
+    ("CommonSofa",      "kf-loungeSofa",         True,  True),
+    ("CommonChair",     "kf-loungeChair",        True,  True),
+    ("LowTable",        "kf-tableCoffee",        True,  True),
+    ("LongPillow",      "kf-pillowLong",         False, False),
+    ("RugRect",         "kf-rugRectangle",       False, False),
+    ("RugRound2",       "kf-rugRound",           False, False),
+    ("Bin2",            "kf-trashcan",           True,  True),
+    ("DeskPlant",       "kf-plantSmall1",        False, False),
+    ("PottedPlant2",    "kf-pottedPlant",        False, True),
+    # washroom and kitchen
+    ("Basin2",          "kf-bathroomSink",       True,  True),
+    ("Mirror2",         "kf-bathroomMirror",     False, False),
+    ("Toilet2",         "kf-toilet",             True,  True),
+    ("Shower",          "kf-shower",             True,  True),
+    ("LaundryStack",    "kf-washerDryerStacked", True,  True),
+    ("Stove2",          "kf-kitchenStove",       True,  True),
+    ("Sink2",           "kf-kitchenSink",        True,  True),
+    ("Fridge2",         "kf-kitchenFridge",      True,  True),
+    # grounds and walling
+    ("StoneWall",       "kc-wall",               True,  True),
+    ("StoneWallCorner", "kc-wall-corner",        True,  True),
+    ("StoneWallGate",   "kc-wall-doorway",       True,  True),
+    ("StonePier",       "kc-wall-pillar",        True,  True),
+    ("PicketFence",     "kc-wall-narrow-wood-fence", True, True),
+    ("IronGate",        "kc-gate",               True,  True),
+    ("StoneSteps",      "kc-stairs-stone",       True,  True),
+    ("Banner",          "kc-flag-banner-long",   False, False),
+    ("FallenLog",       "kc-tree-log",           True,  True),
+    ("TowerBase",       "kc-tower-square-base",  True,  True),
+    ("TowerMid",        "kc-tower-square-mid-windows", True, True),
+    ("TowerTop",        "kc-tower-square-top-roof-high-windows", True, True),
+]
+
+REGISTRY = REGISTRY + [(k, s, c, sh) for k, s, c, sh in WAVE2] + QUATERNIUS + KENNEY
 
 
 def sizes(ids: dict, glb_dir: str, out_path: str) -> int:
