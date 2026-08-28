@@ -1375,7 +1375,8 @@ local function buildPlot(index: number, cf: CFrame, parent: Instance): Plot
 	local collectPad = part({
 		Name = "CollectPad",
 		Size = Vector3.new(10, 0.4, 8),
-		CFrame = cf * CFrame.new(0, 0.2, 16),
+		-- proud of the plot floor rather than flush in it
+		CFrame = cf * CFrame.new(0, 0.32, 16),
 		Color = Palette.CashGreen,
 		Material = Enum.Material.Neon,
 		Parent = model,
@@ -2622,7 +2623,9 @@ local function buildCheckerFloor(parent: Instance, center: Vector3, size: Vector
 					Size = Vector3.new(tile - 0.4, 0.2, tile - 0.4),
 					CFrame = CFrame.new(
 						center.X - size.X / 2 + tile / 2 + i * tile,
-						0.11,
+						-- 0.24, not 0.11: a checker tile is drawn ON the hallway
+						-- floor, and at 0.11 its top landed on the floor's top
+						0.24,
 						center.Z - size.Y / 2 + tile / 2 + j * tile
 					),
 					-- a warm stone against the pale floor: the old pillarbox red
@@ -3470,7 +3473,7 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 	} do
 		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
 		tag(part({ Name = "DormUpperFloor", Size = Vector3.new(x1 - x0, 1, z1 - z0), CFrame = at((x0 + x1) / 2, UPPER + 1.5, (z0 + z1) / 2), Color = Color3.fromRGB(158, 118, 84), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
-		tag(part({ Name = "DormSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, UPPER + 0.7, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
+		tag(part({ Name = "DormSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, UPPER + 0.82, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
 	end
 
 	-- ---- the shell: brick with a window band on each storey ----
@@ -3636,7 +3639,7 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 		end
 	end
 	-- and the boys'/girls' washroom, in the north-east corner upstairs
-	part({ Name = "WashroomFloor", Size = Vector3.new(26, 0.4, 26), CFrame = at(20, UPPER + 2.2, 22), Color = Color3.fromRGB(206, 214, 216), Material = Enum.Material.CeramicTiles, Parent = parent }).CanCollide = false
+	part({ Name = "WashroomFloor", Size = Vector3.new(26, 0.4, 26), CFrame = at(20, UPPER + 2.34, 22), Color = Color3.fromRGB(206, 214, 216), Material = Enum.Material.CeramicTiles, Parent = parent }).CanCollide = false
 	part({ Name = "WashroomPartition", Size = Vector3.new(1, 11, 26), CFrame = at(7, UPPER + 7.5, 22), Color = Color3.fromRGB(224, 224, 218), Material = Enum.Material.SmoothPlastic, Parent = parent })
 	for index = 0, 2 do
 		prop("Toilet2", CFrame.new(center + Vector3.new(12 + index * 8, UPPER + 2, 32)) * CFrame.Angles(0, math.pi, 0))
@@ -4604,10 +4607,21 @@ local function buildGrandFacade(parent: Instance)
 	-- a recessed panel inside the arch, so the head reads as depth rather than
 	-- as an outline drawn on a flat wall
 	tag(part({ Name = "ArchTympanum", Size = Vector3.new(OPENING - 5.5, 15, 1.0), CFrame = CFrame.new(0, 27.5, FACE - 0.2), Color = Color3.fromRGB(111, 103, 92), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone").CanCollide = false
+	-- Round, not square. An oculus is a circle; two lit squares in a gothic
+	-- arch read as a pair of light boxes, which is what they were. A cylinder
+	-- laid on its side against the face gives the disc, and a slightly larger
+	-- stone one behind it gives the surround.
 	for _, side in { -1, 1 } do
-		local glow = part({ Name = "ArchOculusGlass", Size = Vector3.new(5.0, 5.0, 0.5), CFrame = CFrame.new(side * 6, 28.5, FACE + 0.5), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Parent = parent })
+		local lie = CFrame.Angles(0, math.rad(90), math.rad(90))
+		tag(part({ Name = "ArchOculusRing", Size = Vector3.new(1.0, 6.4, 6.4), CFrame = CFrame.new(side * 6, 28.5, FACE + 0.2) * lie, Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Shape = Enum.PartType.Cylinder, Parent = parent }), "TexAshlar").CanCollide = false
+		local glow = part({ Name = "ArchOculusGlass", Size = Vector3.new(0.6, 5.0, 5.0), CFrame = CFrame.new(side * 6, 28.5, FACE + 0.6) * lie, Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Shape = Enum.PartType.Cylinder, Parent = parent })
 		glow.CanCollide = false
 		glow.CastShadow = false
+		-- a quatrefoil bar across it, which is what stops a round window
+		-- reading as a hole
+		for _, spin in { 0, 90 } do
+			part({ Name = "OculusBar", Size = Vector3.new(0.4, 5.0, 0.4), CFrame = CFrame.new(side * 6, 28.5, FACE + 0.9) * CFrame.Angles(0, 0, math.rad(spin)), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		end
 	end
 	tag(part({ Name = "ArchMullion", Size = Vector3.new(0.8, 15, 1.2), CFrame = CFrame.new(0, 27.5, FACE + 0.3), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }), "TexAshlar").CanCollide = false
 
@@ -4845,7 +4859,7 @@ local function buildGreatCourt(parent: Instance)
 	tag(part({ Name = "CourtPaving", Size = Vector3.new(280, 0.4, 84), CFrame = CFrame.new(cx, 0.2, cz), Color = PAVE, Material = Enum.Material.Slate, Parent = parent }), "TexCourtPaving").CanCollide = false
 	-- the banding that makes paving read as paving
 	for i = -6, 6 do
-		part({ Name = "CourtJoint", Size = Vector3.new(280, 0.1, 0.5), CFrame = CFrame.new(cx, 0.42, cz + i * 6.4), Color = PAVE_LIGHT, Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+		part({ Name = "CourtJoint", Size = Vector3.new(280, 0.1, 0.5), CFrame = CFrame.new(cx, 0.52, cz + i * 6.4), Color = PAVE_LIGHT, Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
 	end
 
 	-- ---- the paths, radiating from the fountain ----
@@ -5974,7 +5988,7 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	} do
 		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
 		tag(part({ Name = "QuartersUpperFloor", Size = Vector3.new(x1 - x0, 1, z1 - z0), CFrame = at((x0 + x1) / 2, GROUND + 2.5, (z0 + z1) / 2), Color = Color3.fromRGB(150, 110, 78), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
-		tag(part({ Name = "QuartersSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, GROUND + 1.7, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
+		tag(part({ Name = "QuartersSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, GROUND + 1.82, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
 	end
 	-- railing round both wells -- the light well over the fire, and the
 	-- stairwell. The stairwell is left open on its south edge, which is where
@@ -6258,7 +6272,7 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	} do
 		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
 		tag(part({ Name = "OfficeFloor", Size = Vector3.new(x1 - x0, 1, z1 - z0), CFrame = at((x0 + x1) / 2, OFFICE_FLOOR - 0.5, (z0 + z1) / 2), Color = Color3.fromRGB(92, 60, 40), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
-		tag(part({ Name = "OfficeSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, OFFICE_FLOOR - 1.3, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
+		tag(part({ Name = "OfficeSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, OFFICE_FLOOR - 1.18, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
 	end
 	for _, rail in {
 		{ -16, -14, 16, -14 }, { -16, 14, 16, 14 },
@@ -6971,7 +6985,7 @@ local function buildLockerIslands(parent: Instance)
 			end
 		end
 		-- a bench along the foot of them, still inside the wall zone
-		part({ Name = "LockerPlinth", Size = Vector3.new(HALF_W * 2 + 5, 0.5, 3.0), CFrame = CFrame.new(cx, 0.25, Z - HALF_D - 1.6), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		part({ Name = "LockerPlinth", Size = Vector3.new(HALF_W * 2 + 5, 0.5, 3.0), CFrame = CFrame.new(cx, 0.38, Z - HALF_D - 1.6), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 		part({ Name = "CorridorBench", Size = Vector3.new(HALF_W * 2 + 2, 0.5, 2.0), CFrame = CFrame.new(cx, 2.2, Z - HALF_D - 1.5), Color = Color3.fromRGB(178, 84, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
 		for _, lx in { -HALF_W + 1, HALF_W - 1 } do
 			part({ Name = "CorridorBenchLeg", Size = Vector3.new(0.6, 2, 1.8), CFrame = CFrame.new(cx + lx, 1, Z - HALF_D - 1.5), Color = Color3.fromRGB(120, 122, 126), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
@@ -7198,13 +7212,21 @@ local function buildBackCampus(parent: Instance)
 		for i = 0, segments - 1 do
 			local a0 = (i / segments) * math.pi * 2
 			local a1 = ((i + 1) / segments) * math.pi * 2
-			local p0 = FIELD + Vector3.new(math.cos(a0) * rx, 0.25, math.sin(a0) * rz)
-			local p1 = FIELD + Vector3.new(math.cos(a1) * rx, 0.25, math.sin(a1) * rz)
+			-- Every lane sat at y 0.25 and every segment was overlength by 0.6,
+			-- so each lane fought its neighbours AND its own next segment: 568
+			-- flickering pairs, the worst single case on the campus. The lanes
+			-- step up by four hundredths each, which is under a rendering
+			-- artefact and over the depth buffer's resolution.
+			local ly = 0.30 + lane * 0.04
+			local p0 = FIELD + Vector3.new(math.cos(a0) * rx, ly, math.sin(a0) * rz)
+			local p1 = FIELD + Vector3.new(math.cos(a1) * rx, ly, math.sin(a1) * rz)
 			local mid = (p0 + p1) / 2
 			local run = (p1 - p0).Magnitude
 			local piece = part({
 				Name = "TrackLane",
-				Size = Vector3.new(run + 0.6, 0.3, 5.4),
+				-- abutting, not overlapping: an overlength segment shares a plane
+				-- with the next one along
+				Size = Vector3.new(run + 0.02, 0.3, 5.4),
 				CFrame = CFrame.lookAt(mid, mid + Vector3.new(-(p1 - p0).Z, 0, (p1 - p0).X)),
 				Color = if lane % 2 == 0 then Color3.fromRGB(196, 84, 62) else Color3.fromRGB(208, 100, 76),
 				Material = Enum.Material.Concrete,
@@ -7420,13 +7442,18 @@ local function buildWayfinding(parent: Instance)
 			local sideways = if math.abs(delta.X) > math.abs(delta.Z)
 				then Vector3.new(0, 0, spread)
 				else Vector3.new(spread, 0, 0)
-			local mid = from + delta * 0.5 + sideways + Vector3.new(0, 0.2, 0)
+			-- 0.34, not 0.2. The floors and the lobby runner are 0.16 thick
+			-- slabs centred at 0.2, so a line at 0.2 was EXACTLY coplanar with
+			-- them and the two z-fought: the wayfinding stripes flickered
+			-- through the carpet in bands wherever they crossed it. A line is
+			-- painted ON a floor, so it sits on top of one.
+			local mid = from + delta * 0.5 + sideways + Vector3.new(0, 0.34, 0)
 			local horizontal = Vector3.new(delta.X, 0, delta.Z).Unit
 			local line = part({
 				Name = "Route_" .. route.id,
 				-- overlength by a stud so the corners meet instead of leaving
 				-- a gap the eye has to jump
-				Size = Vector3.new(0.9, 0.16, length + 1),
+				Size = Vector3.new(0.9, 0.1, length + 1),
 				CFrame = CFrame.lookAt(mid, mid + horizontal),
 				Color = route.color,
 				Material = Enum.Material.Neon,
@@ -7957,7 +7984,10 @@ end
 		local lead = part({
 			Name = "RoofLead",
 			Size = Vector3.new(sx, 0.5, sz),
-			CFrame = CFrame.new(cx, at + 0.85, cz),
+			-- 0.7, not 0.85: at 0.85 the lead's underside landed EXACTLY on the
+			-- slab's top face and 10,400 square studs of roof z-fought. It
+			-- overlaps into the slab now, so no two faces share a plane.
+			CFrame = CFrame.new(cx, at + 0.7, cz),
 			Color = Color3.fromRGB(96, 104, 116),
 			Material = Enum.Material.Slate,
 			Parent = folder,
@@ -7973,12 +8003,14 @@ end
 			end
 		end
 	end
-	roofSlab(0, 102, 448, 44) -- south rooms + lobby (pitched roof sits above)
-	roofSlab(0, 70, 448, 22) -- corridor
+	-- 116 wide, not 448: the wing slabs below already cover x +-58..226, so
+	-- this was laying a second ceiling over both of them.
+	roofSlab(0, 102, 116, 44) -- the centre bay only; wings are covered below
+	roofSlab(0, 71.5, 448, 15) -- corridor, between the colonnades and the front range
 	roofSlab(-116, 58, 112, 12) -- west colonnade
 	roofSlab(116, 58, 112, 12) -- east colonnade
-	roofSlab(-116, -58, 112, 12) -- west north leg
-	roofSlab(116, -58, 112, 12) -- east north leg
+	roofSlab(-116, -57.5, 112, 11) -- west north leg
+	roofSlab(116, -57.5, 112, 11) -- east north leg
 	roofSlab(0, 0, 120, 128) -- atrium (with skylight ring)
 	roofSlab(-142, 102, 168, 46) -- west south rooms
 	roofSlab(142, 102, 168, 46) -- east south rooms
