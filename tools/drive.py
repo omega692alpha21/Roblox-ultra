@@ -8,6 +8,30 @@ window['_DRIVE_ivd']; files come down from the usual uc?export=download path.
 import codecs, json, re, subprocess, sys, os
 
 def listing(folder_id):
+    """Every file in a public folder, as (id, name, mime).
+
+    Two sources, and the second is the one that works. The folder page embeds
+    its listing in window['_DRIVE_ivd'], but only the FIRST PAGE of it -- fine
+    for a twenty-file furniture pack, silently wrong for a hundred-and-twenty
+    file interior pack, where it hands back fifty and no indication there are
+    more. embeddedfolderview is the plain HTML listing Drive serves for
+    iframes and it carries the lot.
+    """
+    html = subprocess.run(
+        ["curl", "-sSL", "--max-time", "90",
+         f"https://drive.google.com/embeddedfolderview?id={folder_id}#list"],
+        capture_output=True, text=True).stdout
+    rows = re.findall(
+        r'<div class="flip-entry" id="entry-([-\w]+)".*?'
+        r'<div class="flip-entry-title">([^<]+)</div>',
+        html, re.S)
+    if rows:
+        return [
+            (fid, name, "application/vnd.google-apps.folder"
+             if "." not in name else "application/octet-stream")
+            for fid, name in rows
+        ]
+    # fall back to the folder page for anything embeddedfolderview refuses
     html = subprocess.run(
         ["curl", "-sSL", "--max-time", "60",
          f"https://drive.google.com/drive/folders/{folder_id}"],

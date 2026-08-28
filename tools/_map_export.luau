@@ -1581,96 +1581,6 @@ local function buildBus(parent: Instance, cf: CFrame)
 	local _ = body
 end
 
--- ================= LIGHT =================
--- Future lighting gives an interior nothing except what its own fixtures emit
--- and what comes through its windows, and this building had 46 light sources
--- in it, most of them door signs. The main hallway had none: there was a
--- buildHallwayLights that was written for the corridor's old position and was
--- never called from anywhere, so four hundred studs of school ran on ambient.
---
--- One table, read by the builder below and by tools/light_check.py, so the
--- fixtures and the check can never disagree about which rooms exist.
---   name, centre x, centre z, half width, half depth, ceiling y, spacing
-export type LitRoom = {
-	name: string,
-	x: number,
-	z: number,
-	hx: number,
-	hz: number,
-	y: number,
-	step: number,
-	warm: boolean?,
-}
-
-local LIT_ROOMS: { LitRoom } = {
-	{ name = "MainHall", x = 0, z = 65, hx = 212, hz = 14, y = 13.6, step = 24 },
-	{ name = "UpperHall", x = 0, z = 65, hx = 212, hz = 14, y = 30, step = 24 },
-	{ name = "Lobby", x = 0, z = 100, hx = 26, hz = 20, y = 13.6, step = 20 },
-	{ name = "Atrium", x = 0, z = 22, hx = 26, hz = 24, y = 13.6, step = 20 },
-	{ name = "Gym", x = 0, z = -100, hx = 46, hz = 28, y = 24, step = 26 },
-	{ name = "Library", x = 0, z = -232, hx = 42, hz = 30, y = 23, step = 26, warm = true },
-	{ name = "Cafeteria", x = -204, z = -29, hx = 17, hz = 26, y = 13.6, step = 20 },
-	{ name = "Office", x = -204, z = 35, hx = 17, hz = 26, y = 13.6, step = 20, warm = true },
-	{ name = "Detention", x = 204, z = 35, hx = 17, hz = 26, y = 13.6, step = 20 },
-	{ name = "TrophyRoom", x = 204, z = -29, hx = 17, hz = 26, y = 13.6, step = 20, warm = true },
-	{ name = "Room101", x = -74, z = -95, hx = 11, hz = 25, y = 13.6, step = 20 },
-	{ name = "MusicRoom", x = 74, z = -95, hx = 11, hz = 25, y = 13.6, step = 20, warm = true },
-	{ name = "EastLab", x = 116, z = -28, hx = 15, hz = 14, y = 13.6, step = 18 },
-	{ name = "Greenhouse", x = -116, z = -28, hx = 15, hz = 14, y = 13.6, step = 18 },
-	{ name = "WestDorm", x = -176, z = -212, hx = 26, hz = 22, y = 15, step = 22, warm = true },
-	{ name = "EastDorm", x = 176, z = -212, hx = 26, hz = 22, y = 15, step = 22, warm = true },
-	{ name = "StaffCommon", x = -300, z = -170, hx = 36, hz = 26, y = 17, step = 22, warm = true },
-	{ name = "StaffStudies", x = -300, z = -170, hx = 36, hz = 26, y = 33, step = 22, warm = true },
-	{ name = "LibraryPassage", x = -73, z = -222, hx = 25, hz = 4, y = 10, step = 22 },
-}
-
-MapService.LitRooms = LIT_ROOMS
-
--- A fixture: a housing, a neon panel, and the light itself. Cheap enough to
--- put a hundred of in a school and bright enough that a corridor reads as lit
--- rather than as merely not black.
-local function ceilingFixture(parent: Instance, at: Vector3, warm: boolean?)
-	local tint = if warm then Color3.fromRGB(255, 226, 176) else Color3.fromRGB(248, 250, 255)
-	local housing = part({
-		Name = "CeilingFixture",
-		Size = Vector3.new(7, 0.6, 2.6),
-		CFrame = CFrame.new(at),
-		Color = Color3.fromRGB(226, 224, 218),
-		Material = Enum.Material.SmoothPlastic,
-		Parent = parent,
-	})
-	housing.CanCollide = false
-	local panel = part({
-		Name = "CeilingPanel",
-		Size = Vector3.new(6.2, 0.3, 2),
-		CFrame = CFrame.new(at - Vector3.new(0, 0.4, 0)),
-		Color = tint,
-		Material = Enum.Material.Neon,
-		Parent = parent,
-	})
-	panel.CanCollide = false
-	local light = Instance.new("PointLight")
-	light.Brightness = 1.4
-	light.Range = 34
-	light.Color = tint
-	light.Shadows = false -- a hundred shadow-casting lights is a slideshow
-	light.Parent = panel
-end
-
-local function buildInteriorLights(parent: Instance)
-	for _, room in LIT_ROOMS do
-		local cols = math.max(1, math.floor(room.hx * 2 / room.step))
-		local rows = math.max(1, math.floor(room.hz * 2 / room.step))
-		for i = 0, cols do
-			for j = 0, rows do
-				local x = room.x - room.hx + (if cols > 0 then i * (room.hx * 2 / cols) else room.hx)
-				local z = room.z - room.hz + (if rows > 0 then j * (room.hz * 2 / rows) else room.hz)
-				ceilingFixture(parent, Vector3.new(x, room.y, z), room.warm)
-			end
-		end
-	end
-end
-
 local function buildBenches(parent: Instance)
 	for x = -90, 90, 60 do
 		for _, side in { -1, 1 } do
@@ -2809,6 +2719,35 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 			table.insert(beds, mattress)
 		end
 	end
+
+	-- The washroom bay along the back wall. A boarding school with no
+	-- lavatory in it is the sort of thing nobody notices until they do.
+	local wz = center.Z + d2 / 2 - 6
+	part({
+		Name = "WashroomPartition",
+		Size = Vector3.new(w - 12, 9, 1),
+		CFrame = CFrame.new(center.X, 4.5, wz - 7),
+		Color = Color3.fromRGB(224, 224, 218),
+		Material = Enum.Material.SmoothPlastic,
+		Parent = parent,
+	})
+	part({
+		Name = "WashroomFloor",
+		Size = Vector3.new(w - 12, 0.4, 12),
+		CFrame = CFrame.new(center.X, 0.2, wz - 1),
+		Color = Color3.fromRGB(206, 214, 216),
+		Material = Enum.Material.CeramicTiles,
+		Parent = parent,
+	}).CanCollide = false
+	for i = 0, 2 do
+		local sx = center.X - 20 + i * 20
+		prop("Toilet", CFrame.new(sx, 0, wz + 1) * CFrame.Angles(0, math.pi, 0))
+		prop("Washbasin", CFrame.new(sx + 9, 0, wz + 1) * CFrame.Angles(0, math.pi, 0))
+		prop("WashroomMirror", CFrame.new(sx + 9, 7, wz + 3.6) * CFrame.Angles(0, math.pi, 0))
+	end
+	prop("BinSmall", CFrame.new(center.X + 28, 0, wz + 1))
+	-- and a bunk in the corner, because six beds in a room this size is thin
+	prop("BunkBed", CFrame.new(center.X - 29, 0, center.Z) * CFrame.Angles(0, math.rad(90), 0))
 end
 
 -- ===== 1:1 reference-art detail pass =========================================
@@ -3124,6 +3063,10 @@ local function furnishProps()
 	prop("Vase1", CFrame.new(-38, 3.8, 92))
 	prop("Vase2", CFrame.new(-22, 3.8, 92))
 	row("PlanterPot", 0, 0, { { -56, 86 }, { 54.5, 80 }, { -56, 118 } })
+	-- greenery where people wait, which is every school lobby ever built
+	row("Houseplant", 0, 0, { { -40, 120 }, { 40, 120 } })
+	row("Houseplant2", 0, 0, { { -20, 84 }, { 20, 84 } })
+	row("Houseplant4", 0, 0, { { -34, 30 }, { 34, 30 } })
 	row("PottedPlant", 0, 0, { { -56, 100 }, { 54.5, 93 } })
 	prop("Clock", CFrame.new(-40, 12, 102.8))
 
@@ -3189,6 +3132,13 @@ local function furnishProps()
 			end
 		end
 	end
+	-- the servery: a kitchen behind the counter rather than a painted wall
+	prop("Fridge", CFrame.new(-220, 0, 2) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("Oven", CFrame.new(-211, 0, 3) * CFrame.Angles(0, math.pi, 0))
+	prop("KitchenSink", CFrame.new(-204, 0, 3) * CFrame.Angles(0, math.pi, 0))
+	prop("KitchenCabinet", CFrame.new(-197, 0, 3) * CFrame.Angles(0, math.pi, 0))
+	prop("KitchenDrawers", CFrame.new(-191, 0, 3) * CFrame.Angles(0, math.pi, 0))
+	prop("BinLarge", CFrame.new(-189, 0, -4))
 	prop("Stool", CFrame.new(-221, 0, -32))
 	prop("Stool", CFrame.new(-189, 0, -32))
 	prop("Bin", CFrame.new(-221, 0, -48))
@@ -4907,6 +4857,9 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 	end
 	prop("LodgeArmchair", CFrame.new(center + Vector3.new(-14, OFFICE_FLOOR, -22)) * CFrame.Angles(0, math.rad(20), 0))
 	prop("LodgeArmchair", CFrame.new(center + Vector3.new(2, OFFICE_FLOOR, -22)) * CFrame.Angles(0, math.rad(-20), 0))
+	prop("Rug", CFrame.new(center + Vector3.new(-halfW + 24, OFFICE_FLOOR + 1.6, 0)))
+	prop("Houseplant3", CFrame.new(center + Vector3.new(-halfW + 8, OFFICE_FLOOR, 26)))
+	prop("Houseplant", CFrame.new(center + Vector3.new(-halfW + 8, OFFICE_FLOOR, -26)))
 	prop("Globe", CFrame.new(center + Vector3.new(-halfW + 26, OFFICE_FLOOR, 16)))
 	prop("DeskLamp", CFrame.new(center + Vector3.new(-halfW + 18, OFFICE_FLOOR + 6.9, -8)))
 
@@ -5371,6 +5324,106 @@ local function buildSanctum(parent: Instance): { BasePart }
 	end
 
 	return shelves
+end
+
+-- ================= LIGHT =================
+-- Future lighting gives an interior nothing except what its own fixtures emit
+-- and what comes through its windows, and this building had 46 light sources
+-- in it, most of them door signs. The main hallway had none: there was a
+-- buildHallwayLights that was written for the corridor's old position and was
+-- never called from anywhere, so four hundred studs of school ran on ambient.
+--
+-- One table, read by the builder below and by tools/light_check.py, so the
+-- fixtures and the check can never disagree about which rooms exist.
+--   name, centre x, centre z, half width, half depth, ceiling y, spacing
+export type LitRoom = {
+	name: string,
+	x: number,
+	z: number,
+	hx: number,
+	hz: number,
+	y: number,
+	step: number,
+	warm: boolean?,
+	lamp: string?,
+}
+
+local LIT_ROOMS: { LitRoom } = {
+	{ name = "MainHall", x = 0, z = 65, hx = 212, hz = 14, y = 13.6, step = 24 },
+	{ name = "UpperHall", x = 0, z = 65, hx = 212, hz = 14, y = 30, step = 24 },
+	{ name = "Lobby", x = 0, z = 100, hx = 26, hz = 20, y = 13.6, step = 20 , lamp = "CeilingLampDisc" },
+	{ name = "Atrium", x = 0, z = 22, hx = 26, hz = 24, y = 13.6, step = 20 , lamp = "CeilingLampDisc" },
+	{ name = "Gym", x = 0, z = -100, hx = 46, hz = 28, y = 24, step = 26 , lamp = "CeilingLampBox" },
+	{ name = "Library", x = 0, z = -232, hx = 42, hz = 30, y = 23, step = 26, warm = true , lamp = "GrandChandelier" },
+	{ name = "Cafeteria", x = -204, z = -29, hx = 17, hz = 26, y = 13.6, step = 20 , lamp = "CeilingLampBox" },
+	{ name = "Office", x = -204, z = 35, hx = 17, hz = 26, y = 13.6, step = 20, warm = true , lamp = "PendantLamp" },
+	{ name = "Detention", x = 204, z = 35, hx = 17, hz = 26, y = 13.6, step = 20 , lamp = "CeilingLampBox" },
+	{ name = "TrophyRoom", x = 204, z = -29, hx = 17, hz = 26, y = 13.6, step = 20, warm = true , lamp = "PendantLamp" },
+	{ name = "Room101", x = -74, z = -95, hx = 11, hz = 25, y = 13.6, step = 20 , lamp = "CeilingLampDisc" },
+	{ name = "MusicRoom", x = 74, z = -95, hx = 11, hz = 25, y = 13.6, step = 20, warm = true , lamp = "CeilingLampDisc" },
+	{ name = "EastLab", x = 116, z = -28, hx = 15, hz = 14, y = 13.6, step = 18 , lamp = "CeilingLampDisc" },
+	{ name = "Greenhouse", x = -116, z = -28, hx = 15, hz = 14, y = 13.6, step = 18 , lamp = "CeilingLampDisc" },
+	{ name = "WestDorm", x = -176, z = -212, hx = 26, hz = 22, y = 15, step = 22, warm = true , lamp = "CeilingLampBox" },
+	{ name = "EastDorm", x = 176, z = -212, hx = 26, hz = 22, y = 15, step = 22, warm = true , lamp = "CeilingLampBox" },
+	{ name = "StaffCommon", x = -300, z = -170, hx = 36, hz = 26, y = 17, step = 22, warm = true , lamp = "PendantLamp" },
+	{ name = "StaffStudies", x = -300, z = -170, hx = 36, hz = 26, y = 33, step = 22, warm = true , lamp = "PendantLamp" },
+	{ name = "LibraryPassage", x = -73, z = -222, hx = 25, hz = 4, y = 10, step = 22 },
+}
+
+MapService.LitRooms = LIT_ROOMS
+
+-- A fixture: a housing, a neon panel, and the light itself. Cheap enough to
+-- put a hundred of in a school and bright enough that a corridor reads as lit
+-- rather than as merely not black.
+local function ceilingFixture(parent: Instance, at: Vector3, warm: boolean?, lamp: string?)
+	local tint = if warm then Color3.fromRGB(255, 226, 176) else Color3.fromRGB(248, 250, 255)
+	-- A room gets a real fitting; a corridor gets a strip. Four hundred studs
+	-- of hallway is a hundred and eighty fixtures, and a hundred and eighty
+	-- imported meshes to light a corridor is a poor trade for a panel nobody
+	-- looks at. The rooms people stand still in get the lamp.
+	if lamp then
+		prop(lamp, CFrame.new(at + Vector3.new(0, 0.6, 0)), { hang = true })
+	else
+		local housing = part({
+			Name = "CeilingFixture",
+			Size = Vector3.new(7, 0.6, 2.6),
+			CFrame = CFrame.new(at),
+			Color = Color3.fromRGB(226, 224, 218),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		})
+		housing.CanCollide = false
+	end
+	local panel = part({
+		Name = "CeilingPanel",
+		Size = Vector3.new(if lamp then 1.4 else 6.2, 0.3, if lamp then 1.4 else 2),
+		CFrame = CFrame.new(at - Vector3.new(0, if lamp then 2.4 else 0.4, 0)),
+		Color = tint,
+		Material = Enum.Material.Neon,
+		Transparency = if lamp then 0.25 else 0,
+		Parent = parent,
+	})
+	panel.CanCollide = false
+	local light = Instance.new("PointLight")
+	light.Brightness = 1.4
+	light.Range = 34
+	light.Color = tint
+	light.Shadows = false -- a hundred shadow-casting lights is a slideshow
+	light.Parent = panel
+end
+
+local function buildInteriorLights(parent: Instance)
+	for _, room in LIT_ROOMS do
+		local cols = math.max(1, math.floor(room.hx * 2 / room.step))
+		local rows = math.max(1, math.floor(room.hz * 2 / room.step))
+		for i = 0, cols do
+			for j = 0, rows do
+				local x = room.x - room.hx + (if cols > 0 then i * (room.hx * 2 / cols) else room.hx)
+				local z = room.z - room.hz + (if rows > 0 then j * (room.hz * 2 / rows) else room.hz)
+				ceilingFixture(parent, Vector3.new(x, room.y, z), room.warm, room.lamp)
+			end
+		end
+	end
 end
 
 -- ================= FINDING YOUR WAY =================

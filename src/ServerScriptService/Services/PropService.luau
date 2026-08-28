@@ -252,10 +252,40 @@ local KINDS: { [string]: Spec } = {
 	LodgeSofa                 = { id = 127725539416222, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa2
 	LodgeSofaLong             = { id = 115288639285099, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa3
 	LodgeArmchair             = { id = 123264730568631, collide = true, shadow = true, height = 3.6 }, -- qt_Sofa_individual
-	LoungeStool               = { id = 137011939546237, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
+	LoungeStool               = { id = 123290378028877, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
 	RefectoryTable            = { id = 84911854162743, collide = true, shadow = true, height = 3.4 }, -- qt_Table
 	RefectoryTable2           = { id = 139344400848486, collide = true, shadow = true, height = 3.0 }, -- qt_Table2
 	PlainChair                = { id = 92355465659938, collide = true, shadow = true, height = 4.2 }, -- qt_Chair
+	CeilingLampBox            = { id = 73108196780977, height = 2.2 }, -- qt_Light_Ceiling1
+	CeilingLampDisc           = { id = 84423693218058, height = 2.0 }, -- qt_Light_Ceiling3
+	PendantLamp               = { id = 125640447375117, height = 3.4 }, -- qt_Light_CeilingSingle
+	GrandChandelier           = { id = 79299854540548, height = 5.4 }, -- qt_Light_Chandelier
+	Houseplant                = { id = 97510396980260, shadow = true, height = 5.4 }, -- qt_Houseplant_1
+	Houseplant2               = { id = 128679370183207, shadow = true, height = 4.4 }, -- qt_Houseplant_3
+	Houseplant3               = { id = 127273611529075, shadow = true, height = 6.2 }, -- qt_Houseplant_5
+	Houseplant4               = { id = 112825125523782, shadow = true, height = 4.8 }, -- qt_Houseplant_7
+	BunkBed                   = { id = 92711821404556, collide = true, shadow = true, height = 9.0 }, -- qt_Bed_Bunk
+	Nightstand2               = { id = 121394718105473, collide = true, shadow = true, height = 2.8 }, -- qt_NightStand_2
+	Fridge                    = { id = 110879311963883, collide = true, shadow = true, height = 8.4 }, -- qt_Kitchen_Fridge
+	Oven                      = { id = 118467489810103, collide = true, shadow = true, height = 5.0 }, -- qt_Kitchen_Oven_Large
+	KitchenSink               = { id = 80770441577035, collide = true, shadow = true, height = 5.0 }, -- qt_Kitchen_Sink
+	KitchenCabinet            = { id = 128918242322720, collide = true, shadow = true, height = 5.0 }, -- qt_Kitchen_Cabinet1
+	KitchenDrawers            = { id = 97267875979158, collide = true, shadow = true, height = 5.0 }, -- qt_Kitchen_2Drawers
+	BinLarge                  = { id = 128541492775033, collide = true, shadow = true, height = 4.6 }, -- qt_Trashcan_Large
+	BinSmall                  = { id = 119801096123411, collide = true, shadow = true, height = 2.8 }, -- qt_Trashcan_Small1
+	Toilet                    = { id = 89973174542710, collide = true, shadow = true, height = 3.4 }, -- qt_Bathroom_Toilet
+	Washbasin                 = { id = 115830687746011, collide = true, shadow = true, height = 3.2 }, -- qt_Bathroom_Sink
+	WashroomMirror            = { id = 79339123474900, height = 4.0 }, -- qt_Bathroom_Mirror1
+	WideShelf                 = { id = 99144985442437, collide = true, shadow = true, height = 8.0 }, -- qt_Shelf_Large
+	DiningChair               = { id = 112220312010726, collide = true, shadow = true, height = 4.2 }, -- qt_Chair_3
+	RoundTable                = { id = 99087364840474, collide = true, shadow = true, height = 3.4 }, -- qt_Table_RoundLarge
+	RoundTableSmall           = { id = 79348850644788, collide = true, shadow = true, height = 2.8 }, -- qt_Table_RoundSmall
+	PaddedStool               = { id = 123290378028877, collide = true, shadow = true, height = 2.8 }, -- qt_Stool
+	LoungeCouch               = { id = 122543864904209, collide = true, shadow = true, height = 3.6 }, -- qt_Couch_Medium1
+	ChestOfDrawers            = { id = 134877556225571, collide = true, shadow = true, height = 4.6 }, -- qt_Drawer_3
+	Rug                       = { id = 121504473848590, height = 0.3 }, -- qt_Carpet_2
+	RoundRug                  = { id = 92757372097210, height = 0.3 }, -- qt_Carpet_Round
+	LodgeFireplace            = { id = 75074307762935, collide = true, shadow = true, height = 8.0 }, -- qt_Fireplace
 }
 
 local templates: { [string]: Model } = {}
