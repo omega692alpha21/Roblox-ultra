@@ -38,8 +38,8 @@ local SHAPES: { Shape } = {
 	{ x = -132, z = 170, w = 120, d = 62, color = Color3.fromRGB(58, 60, 66) }, -- west lot
 	{ x = 132, z = 170, w = 120, d = 62, color = Color3.fromRGB(58, 60, 66) }, -- east lot
 	{ x = 0, z = 208, w = 520, d = 22, color = Color3.fromRGB(48, 50, 56) }, -- road
-	{ x = -176, z = -212, w = 64, d = 54, color = Color3.fromRGB(92, 76, 68) }, -- boys dorm
-	{ x = 176, z = -212, w = 64, d = 54, color = Color3.fromRGB(92, 76, 68) }, -- girls dorm
+	{ x = -176, z = -232, w = 90, d = 76, color = Color3.fromRGB(92, 76, 68) }, -- boys dorm
+	{ x = 176, z = -232, w = 90, d = 76, color = Color3.fromRGB(92, 76, 68) }, -- girls dorm
 	{ x = 0, z = -232, w = 92, d = 68, color = Color3.fromRGB(150, 142, 128) }, -- library
 	{ x = 340, z = -20, w = 190, d = 110, color = Color3.fromRGB(58, 104, 88) }, -- tennis
 	{ x = -340, z = -20, w = 120, d = 88, color = Color3.fromRGB(96, 168, 200) }, -- pool
@@ -61,8 +61,8 @@ local MARKERS: { Marker } = {
 	{ x = 116, z = -28, icon = "⚗️", color = Color3.fromRGB(150, 240, 190) },
 	{ x = -116, z = 0, icon = "👥", color = Color3.fromRGB(180, 255, 200) },
 	{ x = -300, z = -170, icon = "🎓", color = Color3.fromRGB(226, 186, 120) }, -- teachers' quarters
-	{ x = -176, z = -212, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
-	{ x = 176, z = -212, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
+	{ x = -176, z = -232, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
+	{ x = 176, z = -232, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
 }
 
 function MinimapController.Init(gui: ScreenGui)

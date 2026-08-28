@@ -1651,23 +1651,57 @@ end
 -- are: a grove was growing up through the staff lodge, and one of its trunks
 -- stood in the middle of the stair to the studies. A tree inside a building is
 -- not a decoration, it is a wall.
+-- ================= THE PLOT =================
+-- The campus boundary, in one place. It used to be a 558-stud square wall
+-- round a 900-stud square of ground, which put the pool and the tennis
+-- stadium hard against the fence and left nothing at all behind the school
+-- but the strip the library and the two boarding houses stood on.
+--
+-- It is a rectangle now, and a long one: the whole back of the plot -- the
+-- playing fields, the boarding houses, the orchard, the lake -- lives south
+-- of the library, which is where a school this size keeps its land.
+local WALL_W, WALL_N, WALL_S = 420, 320, -520
+local PLOT_W, PLOT_D = 1400, 1500
+local PLOT_MID = -100
+
 local NO_TREES = {
 	{ -350, -210, -250, -130 },  -- the staff lodge and its turret
 	{ -265, -202, -232, -170 },
-	{ -215, -245, -138, -180 },  -- boys dorm
-	{ 138, -245, 215, -180 },    -- girls dorm
+	{ -228, -278, -124, -186 },  -- boys dorm
+	{ 124, -278, 228, -186 },    -- girls dorm
 	{ -55, -272, 55, -192 },     -- the library
 	{ -230, -130, 230, 130 },    -- the school itself
 	{ 290, -70, 400, 70 },       -- the tennis stadium
 	{ -400, -70, -290, 70 },     -- the pool
+	{ -180, -470, 180, -320 },   -- the running track and playing field
+	{ -392, -258, -356, -166 },  -- the groundsman's yard
 }
+
+-- A point on a rounded rectangle, so the belt of trees and the ridge of rock
+-- follow the boundary the campus actually has instead of a circle drawn round
+-- the middle of it. With a plot half as long again as it is wide, a circle
+-- either crosses the wall at the ends or leaves the corners bare.
+local function onBoundary(t: number, outX: number, outN: number, outS: number): Vector3
+	local w, d = outX * 2, outN - outS
+	local perimeter = (w + d) * 2
+	local at = (t % 1) * perimeter
+	local midZ = (outN + outS) / 2
+	if at < w then
+		return Vector3.new(-outX + at, 0, outN)
+	elseif at < w + d then
+		return Vector3.new(outX, 0, outN - (at - w))
+	elseif at < w * 2 + d then
+		return Vector3.new(outX - (at - w - d), 0, outS)
+	end
+	return Vector3.new(-outX, 0, outS + (at - w * 2 - d))
+end
 
 local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, number) -> ())
 	local rng = Random.new(2026)
-	for i = 1, 190 do
-		local angle = (i / 190) * math.pi * 2 + rng:NextNumber(-0.02, 0.02)
-		local dist = rng:NextNumber(292, 372)
-		local pos = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
+	for i = 1, 300 do
+		local out = rng:NextNumber(26, 96)
+		local pos = onBoundary(i / 300 + rng:NextNumber(-0.001, 0.001),
+			WALL_W + out, WALL_N + out, WALL_S - out)
 		local scale = rng:NextNumber(1.1, 2.3)
 		local blocked = false
 		for _, rect in NO_TREES do
@@ -1702,21 +1736,23 @@ local function buildRocks(parent: Instance)
 	end
 
 	-- the far ridge: big, out past the treeline, closing the horizon
-	for i = 1, 46 do
-		local angle = (i / 46) * math.pi * 2 + rng:NextNumber(-0.05, 0.05)
-		local dist = rng:NextNumber(316, 404)
-		local pos = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
+	for i = 1, 62 do
+		local out = rng:NextNumber(110, 210)
+		local pos = onBoundary(i / 62 + rng:NextNumber(-0.002, 0.002),
+			WALL_W + out, WALL_N + out, WALL_S - out)
 		if clear(pos, 26) then
-			buildRockOutcrop(parent, pos, rng:NextNumber(1.0, 2.1), 900 + i)
+			buildRockOutcrop(parent, pos, rng:NextNumber(1.2, 2.4), 900 + i)
 		end
 	end
 	-- low outcrops on the lawns, well clear of anything anybody walks through
 	for _, spot in {
-		Vector3.new(-250, 0, 118), Vector3.new(250, 0, 118),
-		Vector3.new(-256, 0, -78), Vector3.new(256, 0, -78),
-		Vector3.new(-118, 0, 196), Vector3.new(118, 0, 196),
+		Vector3.new(-300, 0, 150), Vector3.new(300, 0, 150),
+		Vector3.new(-330, 0, -78), Vector3.new(330, 0, -78),
+		Vector3.new(-360, 0, 60), Vector3.new(360, 0, 60),
+		Vector3.new(-340, 0, -300), Vector3.new(340, 0, -300),
+		Vector3.new(-380, 0, -430), Vector3.new(380, 0, -430),
+		Vector3.new(-120, 0, -470), Vector3.new(120, 0, -470),
 		Vector3.new(-262, 0, -252), Vector3.new(262, 0, -252),
-		Vector3.new(0, 0, -300), Vector3.new(-92, 0, -296), Vector3.new(92, 0, -296),
 	} do
 		if clear(spot, 18) then
 			buildRockOutcrop(parent, spot, rng:NextNumber(0.6, 0.95), 700 + math.floor(spot.X))
@@ -1725,11 +1761,13 @@ local function buildRocks(parent: Instance)
 end
 
 local function buildPerimeter(parent: Instance)
+	local W, D = WALL_W * 2, WALL_N - WALL_S
+	local midZ = (WALL_N + WALL_S) / 2
 	for _, spec in {
-		{ size = Vector3.new(560, 6, 2), cf = CFrame.new(0, 3, -279) },
-		{ size = Vector3.new(560, 6, 2), cf = CFrame.new(0, 3, 279) },
-		{ size = Vector3.new(2, 6, 560), cf = CFrame.new(-279, 3, 0) },
-		{ size = Vector3.new(2, 6, 560), cf = CFrame.new(279, 3, 0) },
+		{ size = Vector3.new(W + 2, 6, 2), cf = CFrame.new(0, 3, WALL_S) },
+		{ size = Vector3.new(W + 2, 6, 2), cf = CFrame.new(0, 3, WALL_N) },
+		{ size = Vector3.new(2, 6, D), cf = CFrame.new(-WALL_W, 3, midZ) },
+		{ size = Vector3.new(2, 6, D), cf = CFrame.new(WALL_W, 3, midZ) },
 	} do
 		part({
 			Name = "PerimeterWall",
@@ -1761,26 +1799,27 @@ local function buildTerrain()
 		terrain:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(92, 162, 60))
 		terrain:SetMaterialColor(Enum.Material.Water, Color3.fromRGB(38, 158, 200))
 	end)
-	-- 900, not 680. The old block stopped at x = 340, and the tennis stadium
-	-- runs to 390 and the pool to -400: both stood with one edge over the void,
-	-- and the aisle between the two courts had no ground under it at all.
-	terrain:FillBlock(CFrame.new(0, -2.1, 0), Vector3.new(900, 4, 900), Enum.Material.Grass)
+	-- 1400 x 1500, and no longer square. The campus grew backwards -- the
+	-- playing fields, the boarding houses and the orchard are all behind the
+	-- school -- so the ground is longer north-to-south than it is wide, and
+	-- the middle of it sits south of the origin.
+	terrain:FillBlock(CFrame.new(0, -2.1, PLOT_MID), Vector3.new(PLOT_W, 4, PLOT_D), Enum.Material.Grass)
 	local rng = Random.new(7)
-	for i = 1, 26 do
-		local angle = (i / 26) * math.pi * 2
-		local dist = rng:NextNumber(430, 520)
-		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(-6, 8), math.sin(angle) * dist)
-		terrain:FillBall(pos, rng:NextNumber(28, 64), Enum.Material.Grass)
+	for i = 1, 34 do
+		local angle = (i / 34) * math.pi * 2
+		local dist = rng:NextNumber(640, 730)
+		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(-6, 8), PLOT_MID + math.sin(angle) * dist)
+		terrain:FillBall(pos, rng:NextNumber(34, 78), Enum.Material.Grass)
 	end
 	-- hard rule: nothing rises above ground level anywhere inside the walls
-	terrain:FillBlock(CFrame.new(0, 34, 0), Vector3.new(900, 64, 900), Enum.Material.Air)
+	terrain:FillBlock(CFrame.new(0, 34, PLOT_MID), Vector3.new(PLOT_W, 64, PLOT_D), Enum.Material.Air)
 
 	-- no terrain under any interior floor (air-carved, so no grass blades either)
 	for _, region in {
 		{ cf = CFrame.new(0, -2.3, 0), size = Vector3.new(452, 5, 252) }, -- main building (plan footprint)
 		{ cf = CFrame.new(0, -2.3, -135), size = Vector3.new(104, 5, 26) }, -- gym protrusion
-		{ cf = CFrame.new(-176, -2.3, -212), size = Vector3.new(64, 5, 54) }, -- boys dorm
-		{ cf = CFrame.new(176, -2.3, -212), size = Vector3.new(64, 5, 54) }, -- girls dorm
+		{ cf = CFrame.new(-176, -2.3, -232), size = Vector3.new(100, 5, 86) }, -- boys dorm
+		{ cf = CFrame.new(176, -2.3, -232), size = Vector3.new(100, 5, 86) }, -- girls dorm
 		{ cf = CFrame.new(0, -2.3, -232), size = Vector3.new(96, 5, 72) }, -- library
 		-- the staff lodge, and the turret with the headmaster's spiral in it
 		{ cf = CFrame.new(-300, -2.3, -170), size = Vector3.new(96, 5, 76) },
@@ -1798,10 +1837,10 @@ local function buildTerrain()
 	end
 
 	-- a few distant rocky peaks for the horizon
-	for i = 1, 8 do
-		local angle = (i / 8) * math.pi * 2 + 0.3
-		local dist = rng:NextNumber(430, 520)
-		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(10, 30), math.sin(angle) * dist)
+	for i = 1, 12 do
+		local angle = (i / 12) * math.pi * 2 + 0.3
+		local dist = rng:NextNumber(640, 740)
+		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(10, 30), PLOT_MID + math.sin(angle) * dist)
 		terrain:FillBall(pos, rng:NextNumber(40, 80), Enum.Material.Grass)
 		terrain:FillBall(pos + Vector3.new(0, 26, 0), rng:NextNumber(16, 30), Enum.Material.Rock)
 	end
@@ -2148,92 +2187,210 @@ end
 
 -- Dormitory: a snug building full of beds. Napping gives a luck buff.
 -- Boys and girls dorms share a layout but wear their own accent color.
+-- ================= THE BOARDING HOUSES =================
+-- A seventy-by-sixty box, one storey, with three stepped slabs on top for a
+-- roof and its front door facing AWAY from the school. That is a shed with
+-- beds in it, and it was two of the four buildings a player spends real time
+-- in.
+--
+-- This is a boarding house: two storeys, a pitched roof with dormers and
+-- chimneys, a porch you come up steps onto, and the beds upstairs where beds
+-- go. The common room, the kitchen and the washroom are on the ground floor,
+-- and the stair between them is in the east bay with a proper well cut for it.
 local function buildDorm(parent: Instance, center: Vector3, name: string, accent: Color3, beds: { BasePart })
-	local w, d2 = 70, 60
-	buildZone(parent, name:gsub(" ", ""), center, Vector2.new(w, d2), Color3.fromRGB(196, 176, 150), name:upper(), Enum.Material.WoodPlanks)
-	-- four walls, door on the side facing campus center (negative Z side)
-	local x0, x1 = center.X - w / 2, center.X + w / 2
-	local z0, z1 = center.Z - d2 / 2, center.Z + d2 / 2
-	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x1, 0, z0), { { at = w / 2, width = 14 } })
-	buildWallRun(parent, Vector3.new(x0, 0, z1), Vector3.new(x1, 0, z1), {})
-	buildWallRun(parent, Vector3.new(x0, 0, z0), Vector3.new(x0, 0, z1), {})
-	buildWallRun(parent, Vector3.new(x1, 0, z0), Vector3.new(x1, 0, z1), {})
-	-- accent trim over the door + a name plaque so you can tell whose dorm it is
-	part({ Name = "DormTrim", Size = Vector3.new(20, 1.2, 1), CFrame = CFrame.new(center.X, 14.6, z0), Color = accent, Material = Enum.Material.Neon, Parent = parent })
-	local plaque = part({ Name = "DormPlaque", Size = Vector3.new(22, 4, 1), CFrame = CFrame.new(center.X, 11.4, z0 - 1.6), Color = Palette.Blackboard, Parent = parent })
-	signText(plaque, name:upper(), accent, Enum.NormalId.Front)
-	for _, layer in { { inset = -4, y = 17.4 }, { inset = 10, y = 18.9 }, { inset = 24, y = 20.4 } } do
-		part({ Name = "DormRoof", Size = Vector3.new(w - layer.inset, 1.5, d2 - layer.inset), CFrame = CFrame.new(center.X, layer.y, center.Z), Color = Color3.fromRGB(122, 78, 64), Material = Enum.Material.ClayRoofTiles, Parent = parent })
+	local W, D = 90, 76
+	local halfW, halfD = W / 2, D / 2
+	local GROUND, UPPER, EAVES, RIDGE = 0, 16, 32, 44
+	local BRICK = Color3.fromRGB(146, 88, 68)
+	local TRIM = Color3.fromRGB(236, 230, 218)
+	local SLATE = Color3.fromRGB(74, 82, 92)
+
+	local function at(x: number, y: number, z: number): CFrame
+		return CFrame.new(center + Vector3.new(x, y, z))
 	end
-	-- warm interior light
-	local glow = part({ Name = "DormLight", Size = Vector3.new(1, 0.4, d2 * 0.5), CFrame = CFrame.new(center.X, 14.6, center.Z), Color = Color3.fromRGB(255, 240, 200), Material = Enum.Material.Neon, Parent = parent })
-	local light = Instance.new("PointLight")
-	light.Brightness = 1.2
-	light.Range = 38
-	light.Color = Color3.fromRGB(255, 234, 190)
-	light.Parent = glow
-	-- six beds in two rows
-	for row = 0, 1 do
-		for col = 0, 2 do
-			local bx = center.X - 22 + col * 22
-			-- Rows at -16 and +10 of centre, not -14 and +14: the north row
-			-- used to sit three studs off the washroom partition, with its
-			-- footlocker inside it.
-			local bz = center.Z - 16 + row * 26
-			part({ Name = "BedFrame", Size = Vector3.new(7, 1.6, 12), CFrame = CFrame.new(bx, 0.8, bz), Color = Color3.fromRGB(105, 76, 48), Material = Enum.Material.Wood, Parent = parent })
-			local shade = 0.85 + col * 0.12
-			local mattress = part({ Name = "DormBed", Size = Vector3.new(6.4, 1, 11), CFrame = CFrame.new(bx, 1.9, bz), Color = Color3.new(math.min(1, accent.R * shade), math.min(1, accent.G * shade), math.min(1, accent.B * shade)), Material = Enum.Material.Fabric, Parent = parent })
-			part({ Name = "Pillow", Size = Vector3.new(4.5, 0.8, 2.6), CFrame = CFrame.new(bx, 2.6, bz - 3.8), Color = Color3.fromRGB(240, 240, 232), Material = Enum.Material.Fabric, Parent = parent })
-			-- somewhere to put your things. The bed itself stays a part: it is
-			-- what DormService touches to know you went to sleep.
-			prop("QuartersNightstand", CFrame.new(bx + 5.4, 0, bz - 4))
-			prop("QuartersLocker", CFrame.new(bx + 5.4, 0, bz + 4) * CFrame.Angles(0, math.rad(-90), 0))
-			table.insert(beds, mattress)
+
+	buildZone(parent, name:gsub(" ", ""), center, Vector2.new(W, D), Color3.fromRGB(196, 176, 150), name:upper(), Enum.Material.WoodPlanks)
+
+	-- ---- plinth and the two floors ----
+	tag(part({ Name = "DormPlinth", Size = Vector3.new(W + 8, 2, D + 8), CFrame = at(0, 0, 0), Color = Color3.fromRGB(198, 192, 180), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
+	tag(part({ Name = "DormFloor", Size = Vector3.new(W, 1, D), CFrame = at(0, 1.5, 0), Color = Color3.fromRGB(158, 118, 84), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
+
+	-- the upper deck, with the stairwell cut out of the east bay
+	for _, rect in {
+		{ -halfW, -halfD, 16, halfD },
+		{ 36, -halfD, halfW, halfD },
+		{ 16, -halfD, 36, -16 },
+		{ 16, 18, 36, halfD },
+	} do
+		local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
+		tag(part({ Name = "DormUpperFloor", Size = Vector3.new(x1 - x0, 1, z1 - z0), CFrame = at((x0 + x1) / 2, UPPER + 1.5, (z0 + z1) / 2), Color = Color3.fromRGB(158, 118, 84), Material = Enum.Material.WoodPlanks, Parent = parent }), "TexWood")
+		tag(part({ Name = "DormSoffit", Size = Vector3.new(x1 - x0, 0.6, z1 - z0), CFrame = at((x0 + x1) / 2, UPPER + 0.7, (z0 + z1) / 2), Color = Color3.fromRGB(238, 234, 224), Parent = parent }), "TexCeiling")
+	end
+
+	-- ---- the shell: brick with a window band on each storey ----
+	local SHELL = EAVES - 2
+	local function wall(nm: string, size: Vector3, off: Vector3)
+		tag(part({ Name = nm, Size = size, CFrame = at(off.X, off.Y, off.Z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+	end
+	-- north face, with the doorway punched through it: this is the side the
+	-- school is on, and the door used to be on the other one
+	for _, seg in { { -halfW, -11 }, { 11, halfW } } do
+		wall("DormWallN", Vector3.new(seg[2] - seg[1], SHELL, 2), Vector3.new((seg[1] + seg[2]) / 2, SHELL / 2 + 2, halfD))
+	end
+	wall("DormLintelN", Vector3.new(22, SHELL - 13, 2), Vector3.new(0, 13 + (SHELL - 13) / 2 + 2, halfD))
+	wall("DormWallS", Vector3.new(W, SHELL, 2), Vector3.new(0, SHELL / 2 + 2, -halfD))
+	wall("DormWallW", Vector3.new(2, SHELL, D), Vector3.new(-halfW, SHELL / 2 + 2, 0))
+	wall("DormWallE", Vector3.new(2, SHELL, D), Vector3.new(halfW, SHELL / 2 + 2, 0))
+
+	-- windows: a band on each storey, both long faces
+	for _, spec in { { z = halfD, n = 1 }, { z = -halfD, n = -1 } } do
+		for _, wx in { -36, -24, 24, 36 } do
+			for _, wy in { 8, 24 } do
+				part({ Name = "DormWindow", Size = Vector3.new(8, 8, 0.6), CFrame = at(wx, wy, spec.z + spec.n * 0.6), Color = Color3.fromRGB(158, 196, 214), Material = Enum.Material.Glass, Transparency = 0.32, Parent = parent }).CanCollide = false
+				part({ Name = "DormWinFrame", Size = Vector3.new(9.4, 9.4, 0.5), CFrame = at(wx, wy, spec.z + spec.n * 0.4), Color = TRIM, Parent = parent }).CanCollide = false
+				part({ Name = "DormSill", Size = Vector3.new(10.4, 0.8, 1.6), CFrame = at(wx, wy - 5, spec.z + spec.n * 0.8), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+			end
 		end
 	end
 
-	-- The washroom bay along the back wall. A boarding school with no
-	-- lavatory in it is the sort of thing nobody notices until they do.
-	local wz = center.Z + d2 / 2 - 6
-	-- A screen, not a wall. The first version was nine studs tall and
-	-- fifty-eight wide, which cut the dormitory in half and made the room read
-	-- as two corridors. Six studs, and a doorway in the middle of it.
+	-- ---- the porch: steps, two posts, a gable over the door ----
+	part({ Name = "DormStepLow", Size = Vector3.new(26, 1, 6), CFrame = at(0, 0.5, halfD + 7), Color = Color3.fromRGB(206, 200, 188), Material = Enum.Material.Concrete, Parent = parent })
+	part({ Name = "DormStepHigh", Size = Vector3.new(22, 1, 4), CFrame = at(0, 1.2, halfD + 4.5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+	for _, side in { -1, 1 } do
+		part({ Name = "DormPorchPost", Size = Vector3.new(1.6, 13, 1.6), CFrame = at(side * 10, 8.5, halfD + 6), Color = TRIM, Material = Enum.Material.WoodPlanks, Parent = parent })
+	end
+	part({ Name = "DormPorchBeam", Size = Vector3.new(24, 1.6, 9), CFrame = at(0, 15.6, halfD + 4), Color = TRIM, Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
 	for _, side in { -1, 1 } do
 		part({
-			Name = "WashroomPartition",
-			Size = Vector3.new((w - 12 - 14) / 2, 6, 1),
-			CFrame = CFrame.new(center.X + side * ((w - 12) / 4 + 3.5), 3, wz - 7),
-			Color = Color3.fromRGB(224, 224, 218),
-			Material = Enum.Material.SmoothPlastic,
+			Name = "DormPorchGable",
+			Size = Vector3.new(13.6, 1.2, 9),
+			CFrame = at(side * 6, 17.6, halfD + 4) * CFrame.Angles(0, 0, math.rad(-side * 26)),
+			Color = SLATE, Material = Enum.Material.Slate, Parent = parent,
+		}).CanCollide = false
+	end
+	local plaque = part({ Name = "DormPlaque", Size = Vector3.new(22, 3.6, 0.8), CFrame = at(0, 15.2, halfD + 8.6), Color = Palette.Blackboard, Parent = parent })
+	plaque.CanCollide = false
+	signText(plaque, name:upper(), accent, Enum.NormalId.Front)
+	part({ Name = "DormTrim", Size = Vector3.new(24, 1, 1), CFrame = at(0, 13.2, halfD + 1.2), Color = accent, Material = Enum.Material.Neon, Parent = parent }).CanCollide = false
+	for _, side in { -1, 1 } do
+		local lamp = part({ Name = "PorchLantern", Size = Vector3.new(1.8, 2.6, 1.8), CFrame = at(side * 13, 11, halfD + 1.4), Color = Color3.fromRGB(255, 214, 150), Material = Enum.Material.Neon, Parent = parent })
+		lamp.CanCollide = false
+		local light = Instance.new("PointLight")
+		light.Brightness = 2
+		light.Range = 34
+		light.Color = Color3.fromRGB(255, 206, 148)
+		light.Parent = lamp
+	end
+
+	-- ---- the roof: a real pitch, with dormers and two chimneys ----
+	local slope = math.sqrt(halfD * halfD + (RIDGE - EAVES) * (RIDGE - EAVES))
+	local pitch = math.atan2(RIDGE - EAVES, halfD)
+	for _, side in { -1, 1 } do
+		tag(part({
+			Name = "DormRoof",
+			Size = Vector3.new(W + 6, 1.6, slope + 3),
+			CFrame = at(0, (EAVES + RIDGE) / 2, side * halfD / 2) * CFrame.Angles(side * pitch, 0, 0),
+			Color = SLATE, Material = Enum.Material.Slate, Parent = parent,
+		}), "TexRoof")
+	end
+	part({ Name = "DormRidge", Size = Vector3.new(W + 7, 1.4, 2.6), CFrame = at(0, RIDGE + 0.4, 0), Color = Color3.fromRGB(58, 66, 76), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+	-- gable ends, stepped rather than cut, which reads as masonry at this size
+	for _, side in { -1, 1 } do
+		for step = 0, 5 do
+			local inset = (step + 0.5) * (halfD / 6)
+			wall("DormGable", Vector3.new(2, RIDGE - EAVES + 2, halfD * 2 - inset * 2),
+				Vector3.new(side * halfW, EAVES + (step + 0.5) * ((RIDGE - EAVES) / 6), 0))
+		end
+	end
+	-- dormers on the campus side, so the upstairs reads as lived in
+	for _, dx in { -30, -10, 10, 30 } do
+		part({ Name = "DormerBox", Size = Vector3.new(9, 8, 10), CFrame = at(dx, EAVES + 2.4, halfD - 8), Color = TRIM, Material = Enum.Material.WoodPlanks, Parent = parent })
+		part({ Name = "DormerGlass", Size = Vector3.new(6, 5, 0.5), CFrame = at(dx, EAVES + 2.6, halfD - 3.2), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Neon, Parent = parent }).CanCollide = false
+		for _, side in { -1, 1 } do
+			part({ Name = "DormerRoof", Size = Vector3.new(6.4, 1, 10.4), CFrame = at(dx + side * 2.4, EAVES + 7.4, halfD - 8) * CFrame.Angles(0, 0, math.rad(-side * 34)), Color = SLATE, Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+		end
+	end
+	for _, cx in { -halfW + 12, halfW - 12 } do
+		tag(part({ Name = "DormChimney", Size = Vector3.new(7, 22, 7), CFrame = at(cx, RIDGE - 4, -8), Color = Color3.fromRGB(128, 76, 60), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+		part({ Name = "DormChimneyCap", Size = Vector3.new(8.4, 1.4, 8.4), CFrame = at(cx, RIDGE + 7.4, -8), Color = Color3.fromRGB(206, 200, 188), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+	end
+
+	-- ---- the stair, in the east bay ----
+	-- Sixteen treads from the ground floor's surface at y = 2 to the deck's at
+	-- 18. Measured from the FLOOR, not from zero: the plinth lifts this
+	-- building two studs and a flight that forgets it starts underground.
+	for i = 0, 15 do
+		part({
+			Name = "DormTread",
+			Size = Vector3.new(9, i + 3, 1.9),
+			CFrame = at(26, (i + 3) / 2, 16 - (i + 0.5) * 1.9),
+			Color = Color3.fromRGB(150, 110, 78),
+			Material = Enum.Material.WoodPlanks,
 			Parent = parent,
 		})
 	end
-	part({
-		Name = "WashroomLintel",
-		Size = Vector3.new(14, 1.2, 1),
-		CFrame = CFrame.new(center.X, 5.4, wz - 7),
-		Color = Color3.fromRGB(224, 224, 218),
-		Material = Enum.Material.SmoothPlastic,
-		Parent = parent,
-	}).CanCollide = false
-	part({
-		Name = "WashroomFloor",
-		Size = Vector3.new(w - 12, 0.4, 12),
-		CFrame = CFrame.new(center.X, 0.2, wz - 1),
-		Color = Color3.fromRGB(206, 214, 216),
-		Material = Enum.Material.CeramicTiles,
-		Parent = parent,
-	}).CanCollide = false
-	for i = 0, 2 do
-		local sx = center.X - 20 + i * 20
-		prop("Toilet", CFrame.new(sx, 0, wz + 1) * CFrame.Angles(0, math.pi, 0))
-		prop("Washbasin", CFrame.new(sx + 9, 0, wz + 1) * CFrame.Angles(0, math.pi, 0))
-		prop("WashroomMirror", CFrame.new(sx + 9, 7, wz + 3.6) * CFrame.Angles(0, math.pi, 0))
+	for _, rail in { { 16, -16, 16, 18 }, { 36, -16, 36, 18 }, { 16, 18, 36, 18 } } do
+		part({ Name = "DormWell", Size = Vector3.new(math.max(math.abs(rail[3] - rail[1]), 1.2), 4, math.max(math.abs(rail[4] - rail[2]), 1.2)), CFrame = at((rail[1] + rail[3]) / 2, UPPER + 4, (rail[2] + rail[4]) / 2), Color = TRIM, Material = Enum.Material.WoodPlanks, Parent = parent })
 	end
-	prop("BinSmall", CFrame.new(center.X + 24, 0, wz + 4))
-	-- and a bunk in the corner, because six beds in a room this size is thin
-	prop("BunkBed", CFrame.new(center.X - 25, 0, center.Z) * CFrame.Angles(0, math.rad(90), 0))
+
+	-- ---- ground floor: a common room, a hearth and a kitchen ----
+	tag(part({ Name = "DormHearth", Size = Vector3.new(3, 14, 20), CFrame = at(-halfW + 3, 9, -8), Color = Color3.fromRGB(128, 76, 60), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+	local fire = part({ Name = "DormFire", Size = Vector3.new(1, 5, 11), CFrame = at(-halfW + 4.6, 5, -8), Color = Color3.fromRGB(255, 158, 72), Material = Enum.Material.Neon, Parent = parent })
+	fire.CanCollide = false
+	local firelight = Instance.new("PointLight")
+	firelight.Brightness = 2.4
+	firelight.Range = 46
+	firelight.Color = Color3.fromRGB(255, 172, 96)
+	firelight.Parent = fire
+	prop("Sofa", CFrame.new(center + Vector3.new(-24, 2, -8)) * CFrame.Angles(0, math.rad(90), 0))
+	prop("ArmChair", CFrame.new(center + Vector3.new(-16, 2, -18)) * CFrame.Angles(0, math.rad(150), 0))
+	prop("ArmChair", CFrame.new(center + Vector3.new(-16, 2, 2)) * CFrame.Angles(0, math.rad(-150), 0))
+	prop("CoffeeTable", CFrame.new(center + Vector3.new(-16, 2, -8)))
+	prop("Bookshelf", CFrame.new(center + Vector3.new(-30, 2, 22)) * CFrame.Angles(0, math.rad(180), 0))
+	prop("PottedPlant", CFrame.new(center + Vector3.new(-40, 2, 30)))
+	-- the kitchen bench, along the south wall
+	for index, kind in { "KitchenSink", "Oven", "KitchenCabinet", "Fridge" } do
+		prop(kind, CFrame.new(center + Vector3.new(-6 + index * 8, 2, -halfD + 4)))
+	end
+	prop("RefectoryTable", CFrame.new(center + Vector3.new(14, 2, -18)))
+	for _, sx in { -5, 5 } do
+		prop("LoungeStool", CFrame.new(center + Vector3.new(14 + sx, 2, -18)))
+	end
+
+	-- ---- upstairs: the beds, six of them, in two rooms off the landing ----
+	part({ Name = "DormPartition", Size = Vector3.new(1.2, 13, D - 4), CFrame = at(-6, UPPER + 8.5, 0), Color = Color3.fromRGB(226, 222, 212), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	part({ Name = "DormPartitionGap", Size = Vector3.new(1.6, 5, 12), CFrame = at(-6, UPPER + 4.5, 24), Color = Color3.fromRGB(226, 222, 212), Transparency = 1, Parent = parent }).CanCollide = false
+	for row = 0, 1 do
+		for col = 0, 2 do
+			local bx = center.X - 38 + row * 26
+			local bz = center.Z - 24 + col * 22
+			part({ Name = "BedFrame", Size = Vector3.new(12, 1.6, 7), CFrame = CFrame.new(bx, UPPER + 2.8, bz), Color = Color3.fromRGB(105, 76, 48), Material = Enum.Material.Wood, Parent = parent })
+			local shade = 0.85 + col * 0.12
+			local mattress = part({ Name = "DormBed", Size = Vector3.new(11, 1, 6.4), CFrame = CFrame.new(bx, UPPER + 3.9, bz), Color = Color3.new(math.min(1, accent.R * shade), math.min(1, accent.G * shade), math.min(1, accent.B * shade)), Material = Enum.Material.Fabric, Parent = parent })
+			part({ Name = "Pillow", Size = Vector3.new(2.6, 0.8, 4.5), CFrame = CFrame.new(bx - 3.8, UPPER + 4.6, bz), Color = Color3.fromRGB(240, 240, 232), Material = Enum.Material.Fabric, Parent = parent })
+			prop("QuartersNightstand", CFrame.new(bx + 4, UPPER + 2, bz + 5.6))
+			table.insert(beds, mattress)
+		end
+	end
+	-- and the boys'/girls' washroom, in the north-east corner upstairs
+	part({ Name = "WashroomFloor", Size = Vector3.new(26, 0.4, 26), CFrame = at(20, UPPER + 2.2, 22), Color = Color3.fromRGB(206, 214, 216), Material = Enum.Material.CeramicTiles, Parent = parent }).CanCollide = false
+	part({ Name = "WashroomPartition", Size = Vector3.new(1, 11, 26), CFrame = at(7, UPPER + 7.5, 22), Color = Color3.fromRGB(224, 224, 218), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	for index = 0, 2 do
+		prop("Toilet", CFrame.new(center + Vector3.new(12 + index * 8, UPPER + 2, 32)) * CFrame.Angles(0, math.pi, 0))
+		prop("Washbasin", CFrame.new(center + Vector3.new(12 + index * 8, UPPER + 2, 14)))
+	end
+	prop("BinSmall", CFrame.new(center + Vector3.new(34, UPPER + 2, 22)))
+
+	-- ---- a garden wall and a gate on the approach ----
+	for _, seg in { { -halfW - 4, -14 }, { 14, halfW + 4 } } do
+		part({ Name = "DormGardenWall", Size = Vector3.new(seg[2] - seg[1], 4, 1.6), CFrame = at((seg[1] + seg[2]) / 2, 2, halfD + 26), Color = Color3.fromRGB(184, 176, 162), Material = Enum.Material.Concrete, Parent = parent })
+	end
+	for _, side in { -1, 1 } do
+		part({ Name = "DormGatePier", Size = Vector3.new(3, 7, 3), CFrame = at(side * 14, 3.5, halfD + 26), Color = Color3.fromRGB(206, 200, 188), Material = Enum.Material.Concrete, Parent = parent })
+	end
+	part({ Name = "DormPath", Size = Vector3.new(16, 0.3, 30), CFrame = at(0, 0.2, halfD + 16), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
 end
+
 
 -- ===== 1:1 reference-art detail pass =========================================
 -- Brick academy w/ white trim + castellated towers, furnished interiors,
@@ -4213,19 +4370,90 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		end
 	end
 
-	-- ---- pitched roof ----
-	for step = 0, 6 do
-		local inset = step * 6
-		part({
+	-- ---- the roof ----
+	-- Seven concentric slabs stacked one on the next is a ziggurat, not a
+	-- roof, and it sat on top of a fifty-three stud brick box with nothing on
+	-- it. This is a real pitch: two slate planes to a ridge, stepped gable
+	-- ends, a course of dormers on the campus side and two stacks with pots.
+	local RIDGE_TOP = RIDGE + 22
+	local slope = math.sqrt(halfD * halfD + (RIDGE_TOP - RIDGE) * (RIDGE_TOP - RIDGE))
+	local pitch = math.atan2(RIDGE_TOP - RIDGE, halfD)
+	for _, side in { -1, 1 } do
+		tag(part({
 			Name = "QuartersRoof",
-			Size = Vector3.new(W + 8 - inset, 2, D + 8 - inset),
-			CFrame = at(0, RIDGE + 1 + step * 1.9, 0),
-			Color = Color3.fromRGB(96, 90, 84),
+			Size = Vector3.new(W + 10, 2, slope + 4),
+			CFrame = at(0, (RIDGE + RIDGE_TOP) / 2, side * halfD / 2) * CFrame.Angles(side * pitch, 0, 0),
+			Color = Color3.fromRGB(84, 92, 102),
 			Material = Enum.Material.Slate,
 			Parent = parent,
-		})
+		}), "TexRoof")
 	end
-	part({ Name = "QuartersChimney", Size = Vector3.new(9, 34, 9), CFrame = at(-halfW + 8, 50, 0), Color = Color3.fromRGB(120, 68, 54), Material = Enum.Material.Brick, Parent = parent })
+	part({ Name = "QuartersRidge", Size = Vector3.new(W + 11, 1.8, 3), CFrame = at(0, RIDGE_TOP + 0.6, 0), Color = Color3.fromRGB(64, 72, 82), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+	-- eaves board, which is what stops a roof reading as a lid
+	for _, side in { -1, 1 } do
+		part({ Name = "QuartersEaves", Size = Vector3.new(W + 12, 2.2, 1.4), CFrame = at(0, RIDGE - 1, side * (halfD + 4.4)), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
+	end
+	for _, side in { -1, 1 } do
+		for step = 0, 6 do
+			local inset = (step + 0.5) * (halfD / 7)
+			wall("QuartersGable", Vector3.new(2, (RIDGE_TOP - RIDGE) / 7 + 1.4, halfD * 2 - inset * 2),
+				Vector3.new(side * halfW, RIDGE + (step + 0.5) * ((RIDGE_TOP - RIDGE) / 7), 0))
+		end
+	end
+	-- dormers, on the side the campus is
+	for _, dx in { -28, -9, 9, 28 } do
+		part({ Name = "QuartersDormer", Size = Vector3.new(10, 9, 11), CFrame = at(dx, RIDGE + 3, halfD - 8), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent })
+		local pane = part({ Name = "QuartersDormerGlass", Size = Vector3.new(6.6, 5.6, 0.5), CFrame = at(dx, RIDGE + 3.2, halfD - 2.6), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Neon, Parent = parent })
+		pane.CanCollide = false
+		local warm = Instance.new("PointLight")
+		warm.Brightness = 1.4
+		warm.Range = 26
+		warm.Color = Color3.fromRGB(255, 208, 150)
+		warm.Parent = pane
+		for _, side in { -1, 1 } do
+			part({ Name = "QuartersDormerRoof", Size = Vector3.new(7, 1.1, 11.4), CFrame = at(dx + side * 2.7, RIDGE + 8.6, halfD - 8) * CFrame.Angles(0, 0, math.rad(-side * 34)), Color = Color3.fromRGB(84, 92, 102), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+		end
+	end
+	-- two stacks, with pots
+	for _, cx in { -halfW + 10, halfW - 10 } do
+		tag(part({ Name = "QuartersChimney", Size = Vector3.new(10, 40, 10), CFrame = at(cx, RIDGE_TOP - 8, -10), Color = Color3.fromRGB(120, 68, 54), Material = Enum.Material.Brick, Parent = parent }), "TexBrick")
+		part({ Name = "QuartersChimneyCap", Size = Vector3.new(12, 1.6, 12), CFrame = at(cx, RIDGE_TOP + 12.8, -10), Color = Color3.fromRGB(214, 208, 196), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		for _, px in { -2.6, 2.6 } do
+			part({ Name = "QuartersChimneyPot", Size = Vector3.new(2.4, 4, 2.4), CFrame = at(cx + px, RIDGE_TOP + 15.6, -10), Color = Color3.fromRGB(178, 108, 78), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+		end
+	end
+
+	-- ---- a string course between the storeys, and quoins at the corners ----
+	-- Fifty-three studs of unbroken brick is a warehouse. Two bands and a run
+	-- of stone at each corner is what turns it into a building with floors.
+	for _, band in { GROUND + 3, UPPER + 3 } do
+		part({ Name = "QuartersBand", Size = Vector3.new(W + 3, 1.6, D + 3), CFrame = at(0, band, 0), Color = Color3.fromRGB(226, 220, 206), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+	end
+	for _, corner in { Vector3.new(-halfW, 0, -halfD), Vector3.new(halfW, 0, -halfD), Vector3.new(-halfW, 0, halfD), Vector3.new(halfW, 0, halfD) } do
+		for course = 0, 12 do
+			local wide = if course % 2 == 0 then 5.2 else 3.4
+			part({ Name = "QuartersQuoin", Size = Vector3.new(wide, 4, wide), CFrame = at(corner.X, 5 + course * 4, corner.Z), Color = Color3.fromRGB(222, 216, 202), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		end
+	end
+
+	-- ---- the porch over the east door ----
+	part({ Name = "QuartersPorchStep", Size = Vector3.new(9, 1, 22), CFrame = at(halfW + 5, 1.4, 0), Color = Color3.fromRGB(206, 200, 188), Material = Enum.Material.Concrete, Parent = parent })
+	for _, sz in { -8, 8 } do
+		part({ Name = "QuartersPorchPost", Size = Vector3.new(1.8, 14, 1.8), CFrame = at(halfW + 7, 10, sz), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent })
+	end
+	part({ Name = "QuartersPorchBeam", Size = Vector3.new(11, 1.8, 22), CFrame = at(halfW + 4, 17.6, 0), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
+	for _, sz in { -1, 1 } do
+		part({ Name = "QuartersPorchRoof", Size = Vector3.new(11.4, 1.2, 13), CFrame = at(halfW + 4, 19.6, sz * 5.6) * CFrame.Angles(sz * math.rad(24), 0, 0), Color = Color3.fromRGB(84, 92, 102), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+	end
+	for _, sz in { -10, 10 } do
+		local lantern = part({ Name = "QuartersLantern", Size = Vector3.new(1.8, 2.8, 1.8), CFrame = at(halfW + 1.6, 12, sz), Color = Color3.fromRGB(255, 214, 150), Material = Enum.Material.Neon, Parent = parent })
+		lantern.CanCollide = false
+		local glow = Instance.new("PointLight")
+		glow.Brightness = 2.2
+		glow.Range = 36
+		glow.Color = Color3.fromRGB(255, 206, 148)
+		glow.Parent = lantern
+	end
 
 	-- ---- the sign over the door ----
 	local sign = part({ Name = "QuartersSign", Size = Vector3.new(30, 5, 0.8), CFrame = at(halfW + 2.4, 24, 0), Color = Palette.Blackboard, Parent = parent })
@@ -5220,6 +5448,131 @@ local function buildCourtyards(parent: Instance)
 	end
 end
 
+-- ================= THE BACK OF THE PLOT =================
+-- The campus used to stop eighty studs behind the library. Everything a
+-- school actually keeps out the back -- the running track, the playing field,
+-- the orchard, the groundsman's yard -- had nowhere to be, so the boarding
+-- houses stood on the boundary with a fence behind them.
+--
+-- This is that land. It is walked to down an avenue from the gym, and it is
+-- the reason the plot is now half as long again as it is wide.
+local function buildBackCampus(parent: Instance)
+	local FIELD = Vector3.new(0, 0, -400)
+
+	-- ---- the running track: an oval of six lanes round a grass infield ----
+	local RX, RZ = 150, 86
+	for lane = 0, 5 do
+		local rx, rz = RX - lane * 5.5, RZ - lane * 5.5
+		local segments = 64
+		for i = 0, segments - 1 do
+			local a0 = (i / segments) * math.pi * 2
+			local a1 = ((i + 1) / segments) * math.pi * 2
+			local p0 = FIELD + Vector3.new(math.cos(a0) * rx, 0.25, math.sin(a0) * rz)
+			local p1 = FIELD + Vector3.new(math.cos(a1) * rx, 0.25, math.sin(a1) * rz)
+			local mid = (p0 + p1) / 2
+			local run = (p1 - p0).Magnitude
+			local piece = part({
+				Name = "TrackLane",
+				Size = Vector3.new(run + 0.6, 0.3, 5.4),
+				CFrame = CFrame.lookAt(mid, mid + Vector3.new(-(p1 - p0).Z, 0, (p1 - p0).X)),
+				Color = if lane % 2 == 0 then Color3.fromRGB(196, 84, 62) else Color3.fromRGB(208, 100, 76),
+				Material = Enum.Material.Concrete,
+				Parent = parent,
+			})
+			piece.CanCollide = false
+		end
+	end
+	tag(part({ Name = "FieldTurf", Size = Vector3.new(RX * 2 - 70, 0.4, RZ * 2 - 70), CFrame = CFrame.new(FIELD + Vector3.new(0, 0.2, 0)), Color = Color3.fromRGB(96, 162, 68), Material = Enum.Material.Grass, Parent = parent }), "TexGrass").CanCollide = false
+	-- goalposts at each end of the infield
+	for _, side in { -1, 1 } do
+		local gx = FIELD.X + side * 92
+		for _, sz in { -13, 13 } do
+			part({ Name = "GoalPost", Size = Vector3.new(1.1, 17, 1.1), CFrame = CFrame.new(gx, 8.5, FIELD.Z + sz), Color = Palette.White, Material = Enum.Material.Metal, Parent = parent })
+		end
+		part({ Name = "GoalBar", Size = Vector3.new(1.1, 1.1, 27), CFrame = CFrame.new(gx, 17, FIELD.Z), Color = Palette.White, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+
+	-- ---- a stand along the near side, so the field has a front ----
+	for tier = 0, 3 do
+		part({
+			Name = "StandTier",
+			Size = Vector3.new(210, 3, 8),
+			CFrame = CFrame.new(FIELD.X, 1.5 + tier * 3, FIELD.Z + RZ + 16 + tier * 7),
+			Color = Color3.fromRGB(214, 208, 196),
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		})
+		for seat = -6, 6 do
+			part({
+				Name = "StandSeat",
+				Size = Vector3.new(11, 1, 3.4),
+				CFrame = CFrame.new(FIELD.X + seat * 15, 3.4 + tier * 3, FIELD.Z + RZ + 15 + tier * 7),
+				Color = if seat % 2 == 0 then Color3.fromRGB(64, 108, 196) else Color3.fromRGB(226, 92, 76),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			}).CanCollide = false
+		end
+	end
+
+	-- ---- the avenue down to it, from the gym ----
+	part({ Name = "BackAvenue", Size = Vector3.new(20, 0.3, 180), CFrame = CFrame.new(0, 0.2, -240), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+	for _, side in { -1, 1 } do
+		for i = 0, 6 do
+			buildTree(parent, Vector3.new(side * 20, 0, -166 - i * 24), 1.15)
+			local lamp = part({ Name = "AvenueLamp", Size = Vector3.new(1.4, 14, 1.4), CFrame = CFrame.new(side * 14, 7, -178 - i * 24), Color = Color3.fromRGB(72, 78, 86), Material = Enum.Material.Metal, Parent = parent })
+			local head = part({ Name = "AvenueLampHead", Size = Vector3.new(2.6, 2.2, 2.6), CFrame = CFrame.new(side * 14, 14.6, -178 - i * 24), Color = Color3.fromRGB(255, 226, 172), Material = Enum.Material.Neon, Parent = parent })
+			head.CanCollide = false
+			local light = Instance.new("PointLight")
+			light.Brightness = 1.6
+			light.Range = 40
+			light.Color = Color3.fromRGB(255, 216, 160)
+			light.Parent = head
+			local _ = lamp
+		end
+	end
+
+	-- ---- the orchard, west of the track, in rows ----
+	for row = 0, 5 do
+		for col = 0, 4 do
+			buildTree(parent, Vector3.new(-232 - col * 26, 0, -318 - row * 26), 0.9)
+		end
+	end
+	-- and the kitchen garden's beds, east of the track
+	for row = 0, 4 do
+		for col = 0, 3 do
+			part({
+				Name = "GardenBed",
+				Size = Vector3.new(20, 1.4, 9),
+				CFrame = CFrame.new(240 + col * 26, 0.7, -320 - row * 15),
+				Color = Color3.fromRGB(122, 88, 60),
+				Material = Enum.Material.Ground,
+				Parent = parent,
+			})
+			part({
+				Name = "GardenCrop",
+				Size = Vector3.new(18, 2.2, 7),
+				CFrame = CFrame.new(240 + col * 26, 2, -320 - row * 15),
+				Color = Color3.fromRGB(104, 158, 74),
+				Material = Enum.Material.Grass,
+				Parent = parent,
+			}).CanCollide = false
+		end
+	end
+
+	-- ---- the groundsman's yard: three sheds and a wall ----
+	-- West of the staff lodge, not inside it: at x = -320 these stood in the
+	-- middle of the common room, whose own footprint runs to -342.
+	for index, off in { Vector3.new(-374, 0, -180), Vector3.new(-374, 0, -212), Vector3.new(-374, 0, -244) } do
+		part({ Name = "ShedWall", Size = Vector3.new(24, 12, 20), CFrame = CFrame.new(off + Vector3.new(0, 6, 0)), Color = Color3.fromRGB(126, 92, 66), Material = Enum.Material.WoodPlanks, Parent = parent })
+		for _, side in { -1, 1 } do
+			part({ Name = "ShedRoof", Size = Vector3.new(26, 1.2, 12), CFrame = CFrame.new(off + Vector3.new(0, 14, side * 5)) * CFrame.Angles(side * math.rad(22), 0, 0), Color = Color3.fromRGB(74, 82, 92), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+		end
+		local door = part({ Name = "ShedDoor", Size = Vector3.new(8, 9, 0.6), CFrame = CFrame.new(off + Vector3.new(0, 4.5, 10.2)), Color = Color3.fromRGB(96, 68, 46), Material = Enum.Material.WoodPlanks, Parent = parent })
+		door.CanCollide = false
+		local _ = index
+	end
+end
+
 -- ================= FINDING YOUR WAY =================
 -- A school you cannot navigate is a maze with lockers. Three things fix that,
 -- and they are the three things real buildings use: a board at the door that
@@ -5862,8 +6215,11 @@ end
 	-- the residential quad: behind the school, either side of the library, with
 	-- walks onto the same north path. A dorm parked between the car park and
 	-- the road is not a place anyone lives.
-	buildDorm(folder, Vector3.new(-176, 0, -212), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
-	buildDorm(folder, Vector3.new(176, 0, -212), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
+	-- Twenty studs further back than they were, and half as big again: there
+	-- is land behind the school now, and a boarding house wants a garden in
+	-- front of it rather than a fence.
+	buildDorm(folder, Vector3.new(-176, 0, -232), "Boys Dorm", Color3.fromRGB(70, 130, 220), dormBeds)
+	buildDorm(folder, Vector3.new(176, 0, -232), "Girls Dorm", Color3.fromRGB(232, 110, 170), dormBeds)
 	buildCampusPath(folder, Vector3.new(-52, 0, -212), Vector3.new(-142, 0, -212), 12)
 	buildCampusPath(folder, Vector3.new(52, 0, -212), Vector3.new(142, 0, -212), 12)
 	buildPath(folder, Vector3.new(-60, 0, 150), Vector3.new(-130, 0, 192), 8)
@@ -5948,6 +6304,7 @@ end
 	-- last, so every room it lights already exists
 	buildLockerIslands(folder)
 	buildCourtyards(folder)
+	buildBackCampus(folder)
 	buildInteriorLights(folder)
 	local secretDoors = buildSanctum(folder)
 	furnishProps()

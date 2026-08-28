@@ -136,7 +136,7 @@ def near(point):
 # MapService lays a 900 x 900 grass slab whose top sits just under y = 0.
 # Terrain is not in the part dump, so the audit has to know about it or every
 # outdoor spot reads as a hole.
-TERRAIN_HALF = 450
+TERRAIN_HALF = 700
 TERRAIN_TOP = -0.1
 
 # Where MapService carves the terrain back to air. A shaft driven through solid
@@ -145,8 +145,8 @@ TERRAIN_TOP = -0.1
 CARVED = [
     (-226, -126, 226, 126),      # main building
     (-52, -148, 52, -122),       # gym protrusion
-    (-208, -239, -144, -185),    # boys dorm
-    (144, -239, 208, -185),      # girls dorm
+    (-226, -275, -126, -189),    # boys dorm
+    (126, -275, 226, -189),      # girls dorm
     (-48, -268, 48, -196),       # library
     (-348, -208, -252, -132),    # staff lodge
     (-263, -200, -235, -172),    # the turret
@@ -162,7 +162,10 @@ def floor_under(point, reach=7.0):
     carved = any(
         x0 <= point[0] <= x1 and z0 <= point[2] <= z1 for x0, z0, x1, z1 in CARVED
     )
-    if (not carved and abs(point[0]) <= TERRAIN_HALF and abs(point[2]) <= TERRAIN_HALF
+    # The plot is a rectangle now, longer north-to-south than it is wide and
+    # centred south of the origin, because the campus grew backwards.
+    if (not carved and abs(point[0]) <= TERRAIN_HALF
+            and -850 <= point[2] <= 650
             and point[1] + 1.5 >= TERRAIN_TOP >= point[1] - reach):
         best = (TERRAIN_TOP, "terrain")
     for part in near(point):
@@ -282,8 +285,10 @@ def collect():
         ("mission npc courtyard", 150, 0, 10),
         ("mission npc cafeteria", -204, 0, -6),
         ("detention cell", 204, 0, 35),
-        ("dorm west", -176, 0, -212),
-        ("dorm east", 176, 0, -212),
+        ("dorm west", -176, 2, -220),
+        ("dorm west upstairs", -190, 18, -240),
+        ("dorm east upstairs", 162, 18, -240),
+        ("dorm east", 176, 2, -220),
         ("tennis court", 340, 0, -20),
         ("pool deck", -340, 0, -50),
         ("clique board row", -158, 0, -44),
@@ -357,6 +362,8 @@ STAIRS = [
     ("wing stair E", (178, 0.5, -9), (178, 16, 17), 5),
     ("lodge stair to studies", (-270, 3.5, -146), (-270, 19, -176.4), 4),
     ("lodge stair to office", (-270, 19.5, -140), (-270, 35, -170.4), 4),
+    ("boys dorm stair", (-150, 2, -216), (-150, 18, -246.4), 4),
+    ("girls dorm stair", (202, 2, -216), (202, 18, -246.4), 4),
 ]
 
 SPIRAL_RISE = 1.4
