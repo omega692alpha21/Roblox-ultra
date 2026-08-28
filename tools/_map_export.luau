@@ -81,6 +81,15 @@ CFMT.__index = function(cf, k)
   if k == "UpVector" then return Vector3.new(cf.m[1][2], cf.m[2][2], cf.m[3][2]) end
   return nil
 end
+-- CFrame +/- Vector3: offsets the position, keeps the rotation. `cf - cf.Position`
+-- is the idiom for "just the rotation", which is how the sanctum places
+-- everything, and without this the shim could not run that module at all.
+CFMT.__sub = function(a, v)
+  return cfnew(a.p[1] - v.X, a.p[2] - v.Y, a.p[3] - v.Z, a.m)
+end
+CFMT.__add = function(a, v)
+  return cfnew(a.p[1] + v.X, a.p[2] + v.Y, a.p[3] + v.Z, a.m)
+end
 CFMT.__mul = function(a, b)
   local rp = rotvec(a.m, b.p)
   return cfnew(a.p[1] + rp[1], a.p[2] + rp[2], a.p[3] + rp[3], matmul(a.m, b.m))

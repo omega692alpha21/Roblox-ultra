@@ -69,12 +69,75 @@ local function open(player: Player)
 	end)
 end
 
+-- ---------------------------------------------------------------------------
+-- Getting around down there.
+--
+-- The estate came from a game that sold membership: the pyramid's doors were
+-- shut until you bought a seat, and each chamber was reached through a gate
+-- that checked your tier and moved you up. None of that came across -- the
+-- module opens every gate, because here the lock is the bookshelf and the four
+-- digits -- but the doors themselves were still solid and the chambers still
+-- had no stairs between them. So the reward at the bottom of a hundred and ten
+-- steps was a sealed pyramid: you could walk round the boulevard and look at
+-- it. This wires the movement back up.
+-- A pad you stand on that puts you somewhere else. Used for both directions:
+-- a gate carries you up into the next chamber, a descent pad drops you back.
+local function linkPad(pad: BasePart, destination: Vector3, label: string)
+	local recent: { [Player]: number } = {}
+	pad.CanCollide = false
+	pad.CanTouch = true
+	pad.Touched:Connect(function(hit)
+		local character = hit:FindFirstAncestorOfClass("Model")
+		local player = character and Players:GetPlayerFromCharacter(character)
+		if not player or not character then
+			return
+		end
+		local now = os.clock()
+		-- both ends of a link are pads, so without this you arrive on one and
+		-- are sent straight back
+		if (recent[player] or 0) > now then
+			return
+		end
+		recent[player] = now + 1.5
+		character:PivotTo(CFrame.new(destination))
+		Remotes.Get("Notify"):FireClient(player, label, "aura")
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		recent[player] = nil
+	end)
+end
+
+local function wireEstate(estate: SanctumMap.Map)
+	-- up: each gate stands at the near wall of a chamber and lands you in the
+	-- next one. The gates are already non-collidable, so this is a step
+	-- through a doorway rather than a wall you press against.
+	for _, gate in estate.gates do
+		linkPad(gate.door, gate.landing, "▲ " .. gate.tier)
+	end
+	-- down: the pad on the far side of each chamber floor
+	local floors = { estate.hallPoint }
+	for _, gate in estate.gates do
+		table.insert(floors, gate.landing)
+	end
+	for index, pad in estate.descents do
+		local below = floors[index]
+		if below then
+			linkPad(pad, below, "▼ down")
+		end
+	end
+end
+
 function SanctumService.Init(map: { secretDoor: BasePart? })
 	-- the estate itself, built once and left alone
 	task.spawn(function()
-		local ok, err = pcall(SanctumMap.Build)
+		local ok, result = pcall(SanctumMap.Build)
 		if not ok then
-			warn("[SanctumService] the estate failed to build: " .. tostring(err))
+			warn("[SanctumService] the estate failed to build: " .. tostring(result))
+			return
+		end
+		local wired = pcall(wireEstate, result :: any)
+		if not wired then
+			warn("[SanctumService] the estate built but could not be wired")
 		end
 	end)
 

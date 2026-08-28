@@ -47,3 +47,15 @@ jobs:
 
       - name: Content
         run: python3 tools/content_check.py
+
+      - name: Map geometry and reachability
+        run: |
+          pip install --quiet numpy pillow
+          LUAU_BIN="$HOME/tools/luau" python3 tools/render_map.py
+          python3 tools/reach_check.py
+          cd tools && python3 world_audit.py && python3 doorway_check.py && python3 prop_check.py
+
+      - name: Sanctum
+        run: |
+          LUAU_BIN="$HOME/tools/luau" python3 tools/sanctum_export.py
+          python3 tools/sanctum_check.py

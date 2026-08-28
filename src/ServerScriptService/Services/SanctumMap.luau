@@ -30,6 +30,15 @@ local ORIGIN = Vector3.new(-214, -170, -264)
 
 -- Where the stair has to arrive: the far end of the boulevard, in world space.
 SanctumMap.Entrance = ORIGIN + Vector3.new(0, 2, 184 * SCALE)
+
+-- A point in the estate's own coordinates, in world space. Everything BUILT
+-- here goes through place() below, but the landing points handed back to the
+-- caller did not: they were raw estate coordinates like (0, 55, -114), which
+-- as world coordinates is fifty-five studs above the school courtyard. Any
+-- code that teleported to one would have thrown the player into the sky.
+function SanctumMap.ToWorld(v: Vector3): Vector3
+	return ORIGIN + v * SCALE
+end
 SanctumMap.Scale = SCALE
 SanctumMap.Origin = ORIGIN
 
@@ -563,21 +572,30 @@ local function buildPyramid(folder: Model): (BasePart, BasePart, BasePart)
 		decal(p, Enum.NormalId.Front, geos[i])
 	end
 
-	-- the grand doors: tall gold, and a gate part that owns the prompt
+	-- The grand doors: tall gold, and a gate part that owns the prompt.
+	--
+	-- Built STANDING OPEN, swung back against the face of the pyramid. In the
+	-- game these came from they were shut until you bought a seat, and nothing
+	-- carried that check across -- so they were simply solid, and the reward at
+	-- the bottom of a hundred and ten steps was a sealed building you could
+	-- walk around and look at. The lock on this place is the bookshelf and the
+	-- four digits; past those, the doors are open.
 	local doorL = part({
 		Name = "DoorL",
 		Size = Vector3.new(7, 18, 1.2),
-		CFrame = CFrame.new(-3.5, 9, DOOR_Z),
+		CFrame = CFrame.new(-7, 9, DOOR_Z - 3) * CFrame.Angles(0, math.rad(-78), 0),
 		Color = GOLD,
 		Material = Enum.Material.Metal,
+		CanCollide = false,
 		Parent = folder,
 	})
 	local doorR = part({
 		Name = "DoorR",
 		Size = Vector3.new(7, 18, 1.2),
-		CFrame = CFrame.new(3.5, 9, DOOR_Z),
+		CFrame = CFrame.new(7, 9, DOOR_Z - 3) * CFrame.Angles(0, math.rad(78), 0),
 		Color = GOLD,
 		Material = Enum.Material.Metal,
+		CanCollide = false,
 		Parent = folder,
 	})
 	decal(doorL, Enum.NormalId.Front, Config.Textures.Geo1)
@@ -714,7 +732,7 @@ local function buildChamber(folder: Model, meshes: { [string]: Model? }, spec: C
 		Material = Enum.Material.Metal,
 		Parent = folder,
 	})
-	return Vector3.new(cx, spec.y + 3, cz - spec.r + 6), pad
+	return SanctumMap.ToWorld(Vector3.new(cx, spec.y + 3, cz - spec.r + 6)), pad
 end
 
 -- ------------------------------------------------------------ grand hall ---
@@ -1161,8 +1179,8 @@ function SanctumMap.Build(): Map
 		gates = gates,
 		descents = descents,
 		registryWall = registryWall,
-		hallCenter = HALL_CENTER,
-		hallPoint = Vector3.new(HALL_CENTER.X, 3, HALL_CENTER.Z + 58),
+		hallCenter = SanctumMap.ToWorld(HALL_CENTER),
+		hallPoint = SanctumMap.ToWorld(Vector3.new(HALL_CENTER.X, 3, HALL_CENTER.Z + 58)),
 	}
 end
 

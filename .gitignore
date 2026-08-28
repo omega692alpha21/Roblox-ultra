@@ -6,3 +6,7 @@ sourcemap.json
 /build/
 tests/_build/
 tools/__pycache__/
+tools/_sanctum_export.json
+tools/_sanctum_export.luau
+tools/_sanctum_links.json
+tools/_sanctum_entrance.json
