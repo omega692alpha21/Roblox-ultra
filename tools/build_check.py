@@ -1,167 +1,153 @@
 #!/usr/bin/env python3
-"""Hold the built school to tools/school_plan.py.
+"""Hold the BUILT map to the drawing.
 
-Every other check in this repo asks whether the map WORKS -- is there floor,
-can you reach it, does anything clip. None of them ask whether it is the
-building it is supposed to be. That is how the school ended up with a
-volleyball court in a light well, a glasshouse in a quadrangle, a bank of
-lockers in front of the principal's door and two signs pointing at each
-other's rooms: every one of those passed every check, because none of them
-is broken. They are just wrong.
+plan_check.py proves the drawing is sound. Nothing until now proved the build
+matched it, and the gap showed: standing at the main gate, on the ceremonial
+axis, the school was completely hidden behind a wall of trees with a slab of
+tarmac across the walk. The drawing forbids that -- Plan.APPROACH is reserved
+-- but the drawing was only ever checked against itself.
 
+    python3 tools/plan_export.py
     python3 tools/render_map.py . tools
-    python3 tools/plan_check.py
+    python3 tools/build_check.py
 """
-import json, math, os, sys
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import school_plan as plan
+import json, os, sys
+from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DUMP = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "_map_export.json")
-PROPS = os.path.join(os.path.dirname(DUMP) or ".", "_map_props.json")
-REPO = sys.argv[2] if len(sys.argv) > 2 else "."
+
+# Things that have no business on the walk up to the front doors. A hedge is
+# fine; a wood is not. A bench is fine; a skip is not.
+# Back-of-house. None of it belongs anywhere on the ceremonial walk, at any
+# distance from the axis.
+BLOCKERS = (
+    "Shed", "Skip", "Dumpster", "Compost", "Goal", "Hoop", "Bleacher", "Dugout",
+    "Scoreboard", "TrackLane", "FieldTurf", "Bunting", "NetPost", "Crop",
+)
+# Planting is different. An avenue of trees DOWN an approach is what an
+# approach is for -- the reference art is full of them. What is wrong is a wood
+# growing ACROSS it, so these are judged against the sight corridor instead of
+# the whole rect.
+SCENERY = ("Tree", "Trunk", "Branch", "Leaves", "Foliage", "Canopy", "Boulder", "Rock")
+BLOCKER_PROPS = ("Bin", "Dumpster", "Skip", "Shed", "Compost")
+SCENERY_PROPS = ("Tree", "KTree", "KRock", "KStump", "KLog", "KBush")
+# The sight line itself: stand at the gate and you must see the doors.
+SIGHT_HALF = 44.0
+SIGHT_MAX_HEIGHT = 11.0
+SIGHT_ALLOW = ("Gate", "Pier", "Fountain", "Water", "Basin", "Lamp", "Monument",
+               "Flag", "Crest", "Pennant",
+               "Fingerpost", "Banner", "Railing", "Bollard", "Kerb", "Paving",
+               "Path", "Walk", "Court", "Plaza", "Lawn", "Step", "Joint")
 
 
-def aabb(part):
-    r, s, p = part["r"], part["s"], part["p"]
-    half = [0.5 * sum(abs(r[row * 3 + col]) * s[col] for col in range(3)) for row in range(3)]
-    return [(p[i] - half[i], p[i] + half[i]) for i in range(3)]
+def aabb(p):
+    r, s, q = p["r"], p["s"], p["p"]
+    h = [0.5 * sum(abs(r[i * 3 + j]) * s[j] for j in range(3)) for i in range(3)]
+    return [(q[i] - h[i], q[i] + h[i]) for i in range(3)]
+
+
+def overlaps(b, rect):
+    return b[0][0] < rect[2] and rect[0] < b[0][1] and b[2][0] < rect[3] and rect[1] < b[2][1]
 
 
 def main():
-    parts = json.load(open(DUMP))
-    boxes = {id(p): aabb(p) for p in parts}
-    bad = []
+    out = sys.argv[1] if len(sys.argv) > 1 else HERE
+    plan = json.load(open(os.path.join(HERE, "_campus_plan.json")))
+    parts = json.load(open(os.path.join(out, "_map_export.json")))
+    props = json.load(open(os.path.join(out, "_map_props.json")))
+    bad, notes = [], []
 
-    # ---- 1. the rooms may not overlap each other -------------------------
-    for i, (an, ar, al, ak) in enumerate(plan.ROOMS):
-        for bn, br, bl, bk in plan.ROOMS[i + 1:]:
-            if al != bl:
-                continue
-            if (ar[0] < br[2] and br[0] < ar[2] and ar[1] < br[3] and br[1] < ar[3]):
-                bad.append(("plan", f"{an} and {bn} overlap on storey {al}"))
+    approach = plan["approach"]
+    plot, core = plan["plot"], plan["core"]
 
-    # ---- 2. nothing outdoor-only may stand under a roof ------------------
-    roof = [boxes[id(p)] for p in parts
-            if p["n"].startswith("RoofSlab") or p["n"].startswith("UpperFloor")]
-
-    def roofed(x, z):
-        return any(b[0][0] <= x <= b[0][1] and b[2][0] <= z <= b[2][1] for b in roof)
-
-    for p in parts:
-        if p["p"][1] > plan.ROOF_Y:
-            continue
-        if any(k in p["n"] for k in plan.OUTDOOR_ONLY) and roofed(p["p"][0], p["p"][2]):
-            where = plan.room_at(p["p"][0], p["p"][2])
-            bad.append(("indoors", f"{p['n']} at {[round(v) for v in p['p']]} is under a roof"
-                                   f" ({where[0] if where else 'no room'})"))
-
-    # ---- 2b. the front approach is ceremonial ----------------------------
-    fx0, fz0, fx1, fz1 = plan.FRONT_APPROACH
-    for p in parts:
-        if not (fx0 <= p["p"][0] <= fx1 and fz0 <= p["p"][2] <= fz1):
-            continue
-        if any(k in p["n"] for k in plan.BACK_OF_HOUSE):
-            bad.append(("front", f"{p['n']} at {[round(v) for v in p['p']]} is on the "
-                                 f"ceremonial approach"))
-
-    # ---- 3. corridors keep their middle lane clear -----------------------
-    for name, rect, level, kind in plan.ROOMS:
-        if kind != "corridor":
-            continue
-        y = plan.GROUND_Y if level == 0 else plan.UPPER_Y
-        cz = (rect[1] + rect[3]) / 2
+    # ---- A. the expansion reserves stay clear ------------------------------
+    # A STRUCTURE on reserved land is a fault -- it is the expansion room being
+    # eaten. Woodland is not: a tree belt is cleared the day somebody builds
+    # there, so it is reported and not failed.
+    for r in plan["reserves"]:
+        built, wild = Counter(), 0
         for p in parts:
-            if not p.get("cc"):
+            if not overlaps(aabb(p), r["rect"]):
                 continue
-            b = boxes[id(p)]
-            if b[1][1] < y + 1.0 or b[1][0] > y + 7.0:
-                continue      # not at body height on this storey
-            # inside the corridor's RUN, not at either end of it: the block's
-            # own outer facade sits across the last few studs of the hall and
-            # is the corridor's end wall, not an obstruction in it
-            if b[0][1] < rect[0] + 6 or b[0][0] > rect[2] - 6:
-                continue
-            # the part's CENTRE, not its extents: a wall that runs along the
-            # corridor's edge has a bounding box reaching into it, and the
-            # question is what is STANDING in the lane, not what leans over it
-            if abs(p["p"][2] - cz) < plan.CORRIDOR_CLEAR_HALF:
-                bad.append(("corridor", f"{p['n']} at {[round(v) for v in p['p']]} stands in "
-                                        f"{name}'s middle lane"))
+            if any(w in p["n"] for w in SCENERY):
+                wild += 1
+            else:
+                built[p["n"]] += 1
+        if built:
+            worst = ", ".join(f"{n} x {k}" for k, n in built.most_common(3))
+            bad.append(("reserve", f"{sum(built.values())} built parts stand on {r['name']}: {worst}"))
+        if wild:
+            notes.append(f"{wild} trees and rocks stand on {r['name']} (cleared when it is built on)")
 
-    # ---- 4. door signs must name the room behind them --------------------
-    signs = {}
-    text = open(os.path.join(REPO, "src/ServerScriptService/Services/MapService.luau")).read()
-    block = text[text.index("local DOOR_SIGNS"):]
-    block = block[:block.index("\n}")]
-    import re
-    for m in re.finditer(r'label = "([^"]+)".*?Vector3\.new\(([-\d.]+), ([-\d.]+), ([-\d.]+)\), face = (-?1)', block):
-        signs[m.group(1)] = (float(m.group(2)), float(m.group(4)), int(m.group(5)))
-    ALIAS = {
-        "ROOM 101 · MATHS": "Room 101", "MUSIC ROOM": "Music room", "GYM": "Gym",
-        "CAFETERIA": "Cafeteria", "OFFICE · THE STORE": "Principal's office",
-        "TROPHY HALL": "Trophy hall", "DETENTION": "Detention",
-        "GREENHOUSE": "West quad", "EAST LAB": "East quad",
-    }
-    for label, (x, z, face) in signs.items():
-        # the room is on the far side of the wall the sign hangs on
-        inside = plan.room_at(x, z - face * plan.DOOR_SIGN_DEPTH)
-        want = ALIAS.get(label)
-        if want is None:
+    # ---- B. nothing escapes the plot ---------------------------------------
+    outside = [p for p in parts if not (plot[0] - 1 <= p["p"][0] <= plot[2] + 1
+                                        and plot[1] - 1 <= p["p"][2] <= plot[3] + 1)]
+    if outside:
+        worst = Counter(p["n"] for p in outside).most_common(3)
+        bad.append(("plot", f"{len(outside)} parts stand outside the plot "
+                            f"({', '.join(n for n, _ in worst)})"))
+
+    # ---- C. the ceremonial approach ----------------------------------------
+    blocking = Counter()
+    for p in parts:
+        if not overlaps(aabb(p), approach):
             continue
-        if inside is None or inside[0] != want:
-            bad.append(("sign", f'"{label}" at ({x:.0f},{z:.0f}) hangs on '
-                                f'{inside[0] if inside else "nothing"}, not {want}'))
+        if any(w in p["n"] for w in BLOCKERS):
+            blocking[p["n"]] += 1
+    sight_rect = [-SIGHT_HALF, approach[1], SIGHT_HALF, approach[3]]
+    for p in parts:
+        if any(w in p["n"] for w in SCENERY) and overlaps(aabb(p), sight_rect):
+            blocking[p["n"] + " (across the axis)"] += 1
+    for kind, n in Counter(p["k"] for p in props
+                           if approach[0] < p["p"][0] < approach[2]
+                           and approach[1] < p["p"][2] < approach[3]).items():
+        if any(w in kind for w in BLOCKER_PROPS):
+            blocking[kind + " (prop)"] += n
+    for p in props:
+        if (any(w in p["k"] for w in SCENERY_PROPS)
+                and -SIGHT_HALF < p["p"][0] < SIGHT_HALF
+                and approach[1] < p["p"][2] < approach[3]):
+            blocking[p["k"] + " (prop, across the axis)"] += 1
+    for name, n in blocking.most_common(10):
+        bad.append(("approach", f"{n} x {name} stands on the walk from the gate to the doors"))
 
-    # ---- 5. doorways stay clear, of parts AND of props -------------------
-    prop_sizes = {}
-    sizes_path = os.path.join(REPO, "src/ReplicatedStorage/Config/PropSizes.luau")
-    if os.path.exists(sizes_path):
-        for m in re.finditer(r"(\w+) = Vector3\.new\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)",
-                             open(sizes_path).read()):
-            prop_sizes[m.group(1)] = [float(m.group(i)) for i in (2, 3, 4)]
-    occupants = [(p["n"], p["p"], boxes[id(p)]) for p in parts if p.get("cc")]
-    if os.path.exists(PROPS):
-        for row in json.load(open(PROPS)):
-            size = prop_sizes.get(row["k"])
-            if not size:
-                continue
-            sc = row.get("sc") or 1.0
-            s = [v * sc for v in size]
-            up = [row["r"][1], row["r"][4], row["r"][7]]
-            edge = s[1] / 2 * (-1.0 if row.get("hang") else 1.0)
-            c = [row["p"][i] + up[i] * edge for i in range(3)]
-            occupants.append(("prop " + row["k"], c,
-                              [(c[i] - s[i] / 2, c[i] + s[i] / 2) for i in range(3)]))
-    for name, x, y, z, w, h, d in plan.DOORWAYS:
-        lane = [(x - w / 2, x + w / 2), (y - h / 2, y + h / 2), (z - d / 2, z + d / 2)]
-        for n, p, b in occupants:
-            if "Floor" in n or any(k in n for k in ("Stripe", "Band", "Carpet", "Rug",
-                                                     "Trim", "Sill", "Panel", "Window",
-                                                     "Post", "Jamb", "Lintel", "Sign")):
-                continue     # the door frame is not a blocked door
-            if all(b[i][0] < lane[i][1] and lane[i][0] < b[i][1] for i in range(3)):
-                bad.append(("doorway", f"{n} at {[round(v) for v in p]} blocks the {name}"))
-
-    groups = {}
-    for kind, message in bad:
-        groups.setdefault(kind, []).append(message)
-    for kind in ("plan", "indoors", "front", "sign", "corridor", "doorway"):
-        rows = groups.get(kind, [])
-        if not rows:
+    # ---- D. and you can actually SEE the doors from the gate ---------------
+    # The corridor starts BEYOND the facade. The approach rect begins at the
+    # building line, so measuring from there counted the school's own window
+    # frames, arch voussoirs and spire as things blocking the view of itself.
+    sight = [-SIGHT_HALF, approach[1] + 16, SIGHT_HALF, approach[3]]
+    tall = Counter()
+    for p in parts:
+        b = aabb(p)
+        if not overlaps(b, sight) or b[1][1] < SIGHT_MAX_HEIGHT:
             continue
-        print(f"  {kind.upper()} ({len(rows)})")
-        seen = set()
-        for message in rows:
-            key = message.split(" at ")[0]
-            if key in seen and len(seen) > 6:
-                continue
-            seen.add(key)
-            print(f"      {message}")
-    print(f"{'FAIL' if bad else 'PASS'} - the school matches its plan "
-          f"({len(plan.ROOMS)} rooms, {len(plan.DOORWAYS)} doorways, {len(bad)} departures)")
-    return 1 if bad else 0
+        if any(w in p["n"] for w in SIGHT_ALLOW):
+            continue
+        tall[p["n"]] += 1
+    for name, n in tall.most_common(8):
+        bad.append(("sightline", f"{n} x {name} rises over {SIGHT_MAX_HEIGHT:.0f} studs on the axis"))
+
+    # ---- E. every drawn building is actually there -------------------------
+    for entry in plan["site"]:
+        if entry["kind"] != "building":
+            continue
+        n = sum(1 for p in parts if overlaps(aabb(p), entry["rect"]))
+        if n < 20:
+            bad.append(("missing", f"{entry['name']} is drawn at {entry['rect']} and only "
+                                   f"{n} parts stand there"))
+
+    print(f"{len(parts)} parts, {len(props)} props measured against the drawing")
+    if not bad:
+        for note in notes:
+            print(f"  (note) {note}")
+        print("PASS - the build matches the drawing")
+        return 0
+    for note in notes:
+        print(f"  (note) {note}")
+    for where, why in bad:
+        print(f"  [{where}] {why}")
+    print(f"FAIL - {len(bad)} ways the build departs from the drawing")
+    return 1
 
 
 if __name__ == "__main__":

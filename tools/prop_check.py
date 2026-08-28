@@ -154,14 +154,34 @@ def main():
 
     # furniture standing inside other furniture. Only solid pieces count --
     # a laptop is *meant* to be inside the volume of the desk it sits on.
+    # Woodland is the exception, and only against itself. Two chairs inside each
+    # other is a fault; two trees in a belt with their canopies touching is what
+    # a wood IS -- the whole silhouette depends on the crowns interlocking. So
+    # a tree is measured by its TRUNK against another tree, and by its full
+    # canopy against everything else. Swapping three hundred box trees for
+    # mesh ones tripled their footprints and threw 43 of these at once, none of
+    # which was a real fault.
+    CANOPY = ("Tree", "Bush", "Shrub", "KGrass", "Fern", "Foliage")
+    TRUNK_FRACTION = 0.22
+
+    def is_canopy(kind):
+        return any(w in kind for w in CANOPY)
+
     collisions = []
     solids_only = [t for t in placed if solid_kind.get(t[0]["k"])]
     for i, (a, ca, ha) in enumerate(solids_only):
         for b, cb, hb in solids_only[i + 1:]:
-            gaps = [abs(ca[j] - cb[j]) - (ha[j] + hb[j]) for j in range(3)]
+            both_wood = is_canopy(a["k"]) and is_canopy(b["k"])
+            sa = [v * TRUNK_FRACTION for v in ha] if both_wood else ha
+            sb = [v * TRUNK_FRACTION for v in hb] if both_wood else hb
+            if both_wood:
+                sa = [sa[0], ha[1], sa[2]]  # height is not the question
+                sb = [sb[0], hb[1], sb[2]]
+            gaps = [abs(ca[j] - cb[j]) - (sa[j] + sb[j]) for j in range(3)]
             overlap = -max(gaps)
             if overlap > 0.4:
-                collisions.append((round(overlap, 1), a["k"], b["k"],
+                label = " (trunks)" if both_wood else ""
+                collisions.append((round(overlap, 1), a["k"] + label, b["k"],
                                    [round(v, 1) for v in a["p"]]))
     collisions.sort(reverse=True)
     print(f"{len(collisions)} props standing inside each other")

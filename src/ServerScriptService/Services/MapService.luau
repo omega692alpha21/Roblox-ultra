@@ -945,79 +945,6 @@ local function scatterBlocked(x: number, z: number, radius: number): boolean
 	return false
 end
 
-local function buildTree(parent: Instance, pos: Vector3, scale: number)
-	-- a seed from the position, so the same tree comes out of every server
-	local rng = Random.new(math.floor(pos.X * 7 + pos.Z * 13))
-	local lean = CFrame.Angles(rng:NextNumber(-0.05, 0.05), rng:NextNumber(0, 6.28), rng:NextNumber(-0.05, 0.05))
-	local trunkH = 8 * scale
-
-	local trunk = part({
-		Name = "TreeTrunk",
-		Size = Vector3.new(1.9 * scale, trunkH, 1.9 * scale),
-		CFrame = CFrame.new(pos + Vector3.new(0, trunkH / 2, 0)) * lean,
-		Color = Color3.fromRGB(96, 68, 44),
-		Material = Enum.Material.Wood,
-		Parent = parent,
-	})
-	-- a flare at the base, which is the whole difference between a trunk and a
-	-- pole where it meets the ground
-	part({
-		Name = "TreeRoot",
-		Size = Vector3.new(3.1 * scale, 1.4 * scale, 3.1 * scale),
-		CFrame = CFrame.new(pos + Vector3.new(0, 0.7 * scale, 0)),
-		Color = Color3.fromRGB(84, 60, 40),
-		Material = Enum.Material.Wood,
-		Parent = parent,
-	}).CanCollide = false
-	for _, side in { -1, 1 } do
-		part({
-			Name = "TreeBranch",
-			Size = Vector3.new(0.9 * scale, 3.4 * scale, 0.9 * scale),
-			CFrame = trunk.CFrame
-				* CFrame.new(side * 1.1 * scale, trunkH * 0.22, 0)
-				* CFrame.Angles(0, 0, math.rad(-side * 38)),
-			Color = Color3.fromRGB(96, 68, 44),
-			Material = Enum.Material.Wood,
-			Parent = parent,
-		}).CanCollide = false
-	end
-
-	-- the canopy: one wide dark mass, then lighter lobes above and around it
-	local lobes = {
-		{ r = 5.2, at = Vector3.new(0, 9.6, 0), lit = 0.15, flat = 0.72 },
-		{ r = 4.0, at = Vector3.new(2.6, 8.6, 1.7), lit = 0.0, flat = 0.85 },
-		{ r = 3.7, at = Vector3.new(-2.4, 8.9, -1.9), lit = 0.0, flat = 0.85 },
-		{ r = 3.9, at = Vector3.new(0.9, 11.6, -1.2), lit = 1.0, flat = 0.9 },
-		{ r = 3.2, at = Vector3.new(-1.8, 11.2, 1.5), lit = 0.7, flat = 0.9 },
-		{ r = 2.6, at = Vector3.new(0.2, 13.2, 0.4), lit = 1.0, flat = 0.95 },
-	}
-	for index, lobe in lobes do
-		local tint = CANOPY_DARK:Lerp(CANOPY_LIT, lobe.lit)
-		local leaves = part({
-			Name = "TreeLeaves",
-			-- flattened, not spherical: a canopy is wider than it is tall, and
-			-- the flattening is what gives the silhouette its layers
-			Size = Vector3.new(lobe.r * 2, lobe.r * 2 * lobe.flat, lobe.r * 2) * scale,
-			CFrame = CFrame.new(pos + lobe.at * scale)
-				* CFrame.Angles(0, index * 0.9, 0),
-			Color = tint,
-			Material = Enum.Material.Grass,
-			Parent = parent,
-		})
-		leaves.Shape = Enum.PartType.Ball
-		leaves.CanCollide = false
-	end
-end
-
--- ================= ROCK OUTCROPS =================
--- The reference landscape is not grass and trees, it is grass and trees and
--- BLOCKS OF STONE: flat-topped, hard-edged, cool blue-grey, standing in
--- clusters with smaller boulders piled at their feet. They are what gives that
--- art its scale and its silhouette, and the campus had none of it -- a treeline
--- on a flat lawn and nothing else out to the wall.
---
--- Each outcrop is a few tall slabs turned to different angles, and a handful of
--- boulders around the base. Hard edges on purpose: no spheres, no smoothing.
 local ROCK_PALE = Color3.fromRGB(178, 188, 202)
 local ROCK_DEEP = Color3.fromRGB(120, 134, 154)
 
@@ -1703,6 +1630,38 @@ end
 -- playing fields, the boarding houses, the orchard, the lake -- lives south
 -- of the library, which is where a school this size keeps its land.
 local WALL_W, WALL_N, WALL_S = 420, 320, -520
+
+-- The plot, from CampusPlan. The far ridge of rock is thrown 110 to 170 studs
+-- beyond the wall, and off the south side that put 81 boulders out at z -722,
+-- eighty studs past the edge of the land the campus is drawn on. Scenery is
+-- held inside the plot like everything else.
+local PLOT_MIN_X, PLOT_MIN_Z, PLOT_MAX_X, PLOT_MAX_Z = -800, -640, 840, 780
+
+-- Where the scenery already stands.
+--
+-- The treeline and the rock ridge are two independent loops walking the same
+-- boundary, and neither has ever known about the other, so fourteen trees grew
+-- straight through boulders. It is the same fault as the two sets of dormers
+-- and the two builders planting shrubs in one bed: whatever goes down first
+-- has to leave a record the next builder reads.
+local sceneryPlaced: { { pos: Vector3, radius: number } } = {}
+
+local function claimGround(pos: Vector3, radius: number): boolean
+	for _, taken in sceneryPlaced do
+		local dx, dz = pos.X - taken.pos.X, pos.Z - taken.pos.Z
+		local reach = radius + taken.radius
+		if dx * dx + dz * dz < reach * reach then
+			return false
+		end
+	end
+	table.insert(sceneryPlaced, { pos = pos, radius = radius })
+	return true
+end
+
+local function insidePlot(pos: Vector3, margin: number): boolean
+	return pos.X > PLOT_MIN_X + margin and pos.X < PLOT_MAX_X - margin
+		and pos.Z > PLOT_MIN_Z + margin and pos.Z < PLOT_MAX_Z - margin
+end
 local PLOT_W, PLOT_D = 1400, 1500
 local PLOT_MID = -100
 
@@ -1719,6 +1678,13 @@ local NO_TREES = {
 	{ -334, -274, -266, -226 },  -- the two courts, behind the school
 	{ 266, -274, 334, -226 },
 	{ -392, -258, -356, -166 },  -- the groundsman's yard
+	-- THE CEREMONIAL APPROACH. Standing at the main gate on the axis, the
+	-- school was completely hidden behind a wall of trees: 178 canopies, 58
+	-- branches, 29 trunks and sixteen boulders between the gate and the front
+	-- doors. The treeline follows the boundary and the boundary runs straight
+	-- across the walk, and nothing had ever told it not to. This rect is
+	-- CampusPlan.APPROACH, and tools/build_check.py holds the built map to it.
+	{ -150, 124, 150, 575 },
 }
 
 -- A point on a rounded rectangle, so the belt of trees and the ridge of rock
@@ -1756,7 +1722,7 @@ local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, numbe
 				break
 			end
 		end
-		if not blocked then
+		if not blocked and insidePlot(pos, 20) and claimGround(pos, 10 * scale) then
 			treeFn(parent, pos, scale)
 		end
 	end
@@ -1781,11 +1747,13 @@ local function buildRocks(parent: Instance)
 
 	-- the far ridge: big, out past the treeline, closing the horizon
 	for i = 1, 62 do
-		local out = rng:NextNumber(110, 210)
+		-- 110..170, not 110..210: at 210 the ridge stepped outside the plot
+		local out = rng:NextNumber(110, 170)
 		local pos = onBoundary(i / 62 + rng:NextNumber(-0.002, 0.002),
 			WALL_W + out, WALL_N + out, WALL_S - out)
-		if clear(pos, 26) then
-			buildRockOutcrop(parent, pos, rng:NextNumber(1.2, 2.4), 900 + i)
+		local grade = rng:NextNumber(1.2, 2.4)
+		if clear(pos, 26) and insidePlot(pos, 24) and claimGround(pos, 20 * grade) then
+			buildRockOutcrop(parent, pos, grade, 900 + i)
 		end
 	end
 	-- low outcrops on the lawns, well clear of anything anybody walks through
@@ -1798,8 +1766,9 @@ local function buildRocks(parent: Instance)
 		Vector3.new(-120, 0, -470), Vector3.new(120, 0, -470),
 		Vector3.new(-262, 0, -252), Vector3.new(262, 0, -252),
 	} do
-		if clear(spot, 18) then
-			buildRockOutcrop(parent, spot, rng:NextNumber(0.6, 0.95), 700 + math.floor(spot.X))
+		local grade = rng:NextNumber(0.6, 0.95)
+		if clear(spot, 18) and claimGround(spot, 20 * grade) then
+			buildRockOutcrop(parent, spot, grade, 700 + math.floor(spot.X))
 		end
 	end
 end
@@ -1837,11 +1806,16 @@ local function buildTerrain()
 		-- reference art is more than half made of, and it costs nothing to
 		-- author -- the engine renders it.
 		terrain.Decoration = true
-		terrain:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(116, 186, 72))
-		terrain:SetMaterialColor(Enum.Material.Rock, Color3.fromRGB(158, 168, 184))
-		terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(150, 116, 76))
-		terrain:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(92, 162, 60))
-		terrain:SetMaterialColor(Enum.Material.Water, Color3.fromRGB(38, 158, 200))
+		-- Night colours. These were a bright daylight green -- 116, 186, 72 --
+		-- and every stud of the campus that is not a building is terrain grass,
+		-- so under the new lighting the ground came out as a sheet of yellow
+		-- green brighter than the school standing on it. The palette's grass is
+		-- 62, 107, 58 and the rest follow it down.
+		terrain:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(62, 107, 58))
+		terrain:SetMaterialColor(Enum.Material.Rock, Color3.fromRGB(96, 104, 116))
+		terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(84, 68, 50))
+		terrain:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(48, 88, 46))
+		terrain:SetMaterialColor(Enum.Material.Water, Color3.fromRGB(28, 74, 104))
 	end)
 	-- 1400 x 1500, and no longer square. The campus grew backwards -- the
 	-- playing fields, the boarding houses and the orchard are all behind the
@@ -2044,6 +2018,29 @@ type Zone = {
 	seed: number,
 	margin: number?,
 }
+
+-- A tree that is a TREE.
+--
+-- buildTree assembles one out of a trunk, a root flare, two branches and six
+-- flattened spheres: ten parts, and three hundred of them along the boundary
+-- is three thousand parts of blocky canopy filling the top of every frame. It
+-- is the single largest thing in shot on a campus this size and it looked
+-- exactly like what it was.
+--
+-- Poly Haven's scanned trees are the obvious upgrade and they are unusable:
+-- jacaranda_tree is 3.9 million triangles and pine_tree_01 is 17 million,
+-- against Roblox's cap of ten thousand per MeshPart. Kenney's nature kit is
+-- CC0, already uploaded, and built at game scale -- four species, real
+-- silhouettes, one mesh each. Ten parts becomes one, and it looks like a tree.
+local TREE_KINDS = { "KTreeOak", "KTree", "KTreeTall", "KTreeThin" }
+
+local function meshTree(parent: Instance, pos: Vector3, scale: number)
+	-- chosen by position, so the same tree stands in the same place on every
+	-- server rather than reshuffling on each build
+	local seed = math.floor(math.abs(pos.X) * 3 + math.abs(pos.Z) * 7)
+	local kind = TREE_KINDS[(seed % #TREE_KINDS) + 1]
+	prop(kind, CFrame.new(pos) * CFrame.Angles(0, (seed % 62) / 10, 0), { scale = scale * 0.62 })
+end
 
 local function scatter(zone: Zone)
 	local available = {}
@@ -2934,8 +2931,9 @@ local function furnishProps()
 	-- the arch, and these stood inside the new buttresses.
 	-- clear of both the court lamp posts at (+-30, 132) and the planter
 	-- boxes at (+-44, 138)
-	prop("Bin", CFrame.new(-48, 0, 128))
-	prop("Bin", CFrame.new(48, 0, 128))
+	-- out by the bike racks at +-186, off the ceremonial approach entirely
+	prop("Bin", CFrame.new(-176, 0, 132))
+	prop("Bin", CFrame.new(176, 0, 132))
 
 	-- ---------------- second dressing pass ----------------
 	-- the pieces that turn a furnished room into an inhabited one
@@ -3812,9 +3810,15 @@ local function buildFrontGrounds(parent: Instance)
 		end
 	end
 
-	-- bike racks by the entrance
+	-- Bike racks OFF the ceremonial approach.
+	--
+	-- These stood at x +-68 on the walk up to the front doors, which is the one
+	-- place on the campus they cannot go: the approach is the view of the
+	-- school, and a rank of steel hoops across it is exactly the "why is there
+	-- a court on the front of the school" problem in miniature. They sit out at
+	-- +-186, past the wings, where people actually arrive from the road.
 	for _, sgn in { -1, 1 } do
-		local bx = sgn * 68
+		local bx = sgn * 186
 		part({ Name = "BikeRackBase", Size = Vector3.new(16, 0.5, 6), CFrame = CFrame.new(bx, 0.4, Z + 22), Color = Color3.fromRGB(150, 150, 156), Material = Enum.Material.Concrete, Parent = parent })
 		for i = 0, 4 do
 			part({ Name = "BikeHoop", Size = Vector3.new(0.5, 4.4, 0.5), CFrame = CFrame.new(bx - 6 + i * 3, 2.6, Z + 22), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = parent })
@@ -6006,7 +6010,7 @@ local function buildCourtyards(parent: Instance)
 		end
 		for _, corner in { Vector3.new(-34, 0, -34), Vector3.new(34, 0, -34),
 		                   Vector3.new(-34, 0, 30), Vector3.new(34, 0, 30) } do
-			buildTree(parent, Vector3.new(cx + corner.X, 0, corner.Z), 0.85)
+			meshTree(parent, Vector3.new(cx + corner.X, 0, corner.Z), 0.85)
 		end
 	end
 end
@@ -6201,8 +6205,14 @@ local function buildPlanting(parent: Instance)
 	for i = 1, 40 do
 		local pos = onBoundary(i / 40 + rng:NextNumber(-0.004, 0.004),
 			WALL_W - rng:NextNumber(6, 22), WALL_N - rng:NextNumber(6, 22), WALL_S + rng:NextNumber(6, 22))
-		prop(if i % 3 == 0 then "KRockTall" else "KRockLarge",
-			CFrame.new(pos) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0))
+		-- one of these landed on the ceremonial axis, between the gate and the
+		-- front doors, which is the one strip of ground on the campus that has
+		-- to stay clear
+		local onAxis = math.abs(pos.X) < 46 and pos.Z > 124
+		if not onAxis and claimGround(pos, 11) then
+			prop(if i % 3 == 0 then "KRockTall" else "KRockLarge",
+				CFrame.new(pos) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0))
+		end
 	end
 end
 
@@ -6931,8 +6941,8 @@ end
 	-- west courtyard dressing: flowerbeds + trees; east courtyard: courts
 	buildFlowerbed(folder, Vector3.new(-150, 0, 20))
 	buildFlowerbed(folder, Vector3.new(-86, 0, 20))
-	buildTree(folder, Vector3.new(-146, 0, -16), 1.1)
-	buildTree(folder, Vector3.new(-90, 0, 24), 0.95)
+	meshTree(folder, Vector3.new(-146, 0, -16), 1.1)
+	meshTree(folder, Vector3.new(-90, 0, 24), 0.95)
 	local courtBase = part({ Name = "BasketballCourt", Size = Vector3.new(34, 0.2, 22), CFrame = CFrame.new(96, 0.11, -14), Color = Color3.fromRGB(52, 118, 190), Material = Enum.Material.SmoothPlastic, Parent = folder })
 	local _cb = courtBase
 	part({ Name = "CourtKey", Size = Vector3.new(10, 0.22, 22), CFrame = CFrame.new(96, 0.12, -14), Color = Color3.fromRGB(226, 130, 62), Material = Enum.Material.SmoothPlastic, Parent = folder })
@@ -7040,16 +7050,19 @@ end
 	buildPath(folder, Vector3.new(-60, 0, 150), Vector3.new(-130, 0, 192), 8)
 	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(130, 0, 192), 8)
 	buildFlagpole(folder)
-	buildTreeline(folder, buildTree)
+	buildTreeline(folder, meshTree)
 	buildRocks(folder)
+	-- Feature trees flanking the facade and the wings. The pair at +-58 moved
+	-- out to +-66: a mesh oak is eighteen studs across where the old box tree
+	-- was ten, and at 58 it swallowed the whale statue standing beside it.
 	for _, pos in {
-		Vector3.new(-58, 0, 136), Vector3.new(58, 0, 136),
-		Vector3.new(-92, 0, 136), Vector3.new(92, 0, 136),
+		Vector3.new(-76, 0, 158), Vector3.new(76, 0, 158),
+		Vector3.new(-112, 0, 158), Vector3.new(112, 0, 158),
 		Vector3.new(-236, 0, 60), Vector3.new(236, 0, 60),
 		Vector3.new(-236, 0, -60), Vector3.new(236, 0, -60),
 		Vector3.new(-236, 0, 0), Vector3.new(236, 0, 0),
 	} do
-		buildTree(folder, pos, 1.1 + (math.abs(pos.X) % 3) * 0.12)
+		meshTree(folder, pos, 1.1 + (math.abs(pos.X) % 3) * 0.12)
 	end
 
 	local detentionCenter = Vector3.new(204, 0, 35)
