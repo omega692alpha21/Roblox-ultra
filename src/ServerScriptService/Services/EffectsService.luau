@@ -138,7 +138,10 @@ local function setupLighting()
 	-- the hard edge a midday sun does
 	Lighting.ShadowSoftness = 0.26
 	-- lifted, because everything interesting is now in the bottom of the range
-	Lighting.ExposureCompensation = 0.35
+	-- 0.35 pushed the whole frame up until everything cleared the bloom
+	-- threshold at once. At night the interesting range is already at the top
+	-- of the scale; it does not need lifting into it.
+	Lighting.ExposureCompensation = 0.0
 	Lighting.Ambient = Color3.fromRGB(20, 26, 42)
 	Lighting.OutdoorAmbient = Color3.fromRGB(26, 34, 56)
 
@@ -146,7 +149,7 @@ local function setupLighting()
 	-- thicker than the day pass and with the glare off. Density is what turns
 	-- each lamp into a pool of light instead of a bright dot, and glare at
 	-- night only puts a daytime sun flare on a moon.
-	atmosphere.Density = 0.42
+	atmosphere.Density = 0.30
 	atmosphere.Offset = 0.1
 	atmosphere.Color = Color3.fromRGB(42, 53, 80)
 	atmosphere.Decay = Color3.fromRGB(14, 20, 36)
@@ -157,18 +160,24 @@ local function setupLighting()
 	-- Effect order matters: colour first to set the mood, then bloom, then
 	-- depth of field, then sun rays last.
 	local bloom = Instance.new("BloomEffect")
-	-- The single most important effect in a night scene. Every lit window and
-	-- every lantern has to bloom, so the threshold sits below the warm glass
-	-- rather than above it the way it did for a daylit sky.
-	bloom.Intensity = 1.1
-	bloom.Size = 34
-	bloom.Threshold = 0.85
+	-- This was the white-out. At threshold 0.85 every one of the 111 neon
+	-- window panes cleared the bar, and at size 34 each one smeared far enough
+	-- to reach its neighbours, so a facade of lit windows became one sheet of
+	-- light and the glow bled down over the grass. The lamps and the windows
+	-- still bloom -- neon sits well above 1.35 -- but each one blooms as
+	-- itself instead of merging into the next.
+	bloom.Intensity = 0.45
+	bloom.Size = 20
+	bloom.Threshold = 1.35
 	bloom.Parent = Lighting
 
 	local color = Instance.new("ColorCorrectionEffect")
-	color.Saturation = 0.18
-	color.Contrast = 0.22
-	color.TintColor = Color3.fromRGB(255, 244, 228)
+	color.Saturation = 0.12
+	color.Contrast = 0.14
+	-- nearly neutral. The warmth in a night scene should come from the lamps
+	-- being warm, not from a filter over the whole frame -- with the tint at
+	-- 255/244/228 on top of the bloom, the grass came out yellow.
+	color.TintColor = Color3.fromRGB(252, 249, 244)
 	color.Parent = Lighting
 
 	local dof = Instance.new("DepthOfFieldEffect")

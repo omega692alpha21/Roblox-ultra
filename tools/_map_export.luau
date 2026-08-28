@@ -4287,18 +4287,18 @@ local function lampPost(parent: Instance, x: number, z: number, opts: { short: b
 	prop(if short then "StreetLampShort" else "StreetLamp", CFrame.new(x, 0, z))
 	local head = part({
 		Name = "LampGlow",
-		Size = Vector3.new(1.7, 1.7, 1.7),
+		Size = Vector3.new(1.2, 1.2, 1.2),
 		CFrame = CFrame.new(x, if short then 18.2 else 24.0, z),
 		Color = LAMP_GLOW,
 		Material = Enum.Material.Neon,
-		Transparency = 0.25,
+		Transparency = 0.4,
 		Parent = parent,
 	})
 	head.CanCollide = false
 	head.CastShadow = false
 	local light = Instance.new("PointLight")
-	light.Brightness = o.brightness or 2.2
-	light.Range = o.range or 48
+	light.Brightness = o.brightness or 1.3
+	light.Range = o.range or 38
 	light.Color = LAMP_GLOW
 	light.Shadows = false
 	light.Parent = head
@@ -7349,46 +7349,95 @@ local function litWindows(root: Instance)
 		if size.X * size.Y * size.Z < 1.2 then
 			continue
 		end
+		local leafFor: BasePart? = nil
 
-		-- the wall normal is the part's thinnest axis; the leaf sits in the same
-		-- plane, thinner still, and inset on the two long axes
+		-- The wall normal is the part's thinnest axis. But several of these
+		-- "windows" are BANDS -- one part running the whole length of a facade
+		-- -- and lighting a band gives a forty-stud bar of neon, which is what
+		-- turned the school into a sheet of light. A band is cut into separate
+		-- panes instead, which both drops the emissive area by two thirds and
+		-- is what the reference actually shows: a row of individual lit
+		-- windows with dark wall between them.
 		local thin = math.min(size.X, size.Y, size.Z)
-		local leaf: Vector3
+		local runAxis, runLength
 		if thin == size.Z then
-			leaf = Vector3.new(math.max(size.X - 0.7, 0.4), math.max(size.Y - 0.7, 0.4), 0.16)
+			runAxis, runLength = "X", size.X
 		elseif thin == size.X then
-			leaf = Vector3.new(0.16, math.max(size.Y - 0.7, 0.4), math.max(size.Z - 0.7, 0.4))
+			runAxis, runLength = "Z", size.Z
 		else
-			leaf = Vector3.new(math.max(size.X - 0.7, 0.4), 0.16, math.max(size.Z - 0.7, 0.4))
+			runAxis, runLength = "X", size.X
 		end
 
-		-- Not every room in a school is occupied. Which windows are dark is
-		-- decided by position rather than by chance, so the same building looks
-		-- the same on every server instead of flickering between rebuilds.
+		-- Split in BOTH directions. Cutting only along the length still left
+		-- panes sixteen studs tall where a glass wall spans two storeys, and a
+		-- lit rectangle that size is a light panel, not a window.
+		local PANE, PITCH = 4.4, 9.0
+		local VPANE, VPITCH = 4.6, 8.0
+		local height = size.Y
+		if thin == size.Y then
+			height = size.Z
+		end
+		local across = math.max(1, math.floor(runLength / PITCH))
+		local up = math.max(1, math.floor(height / VPITCH))
+		local paneRun = if across > 1 then PANE else math.max(runLength - 0.7, 0.4)
+		local paneUp = if up > 1 then VPANE else math.max(height - 0.7, 0.4)
+
+		local leaf: Vector3
+		if thin == size.Z then
+			leaf = Vector3.new(paneRun, paneUp, 0.16)
+		elseif thin == size.X then
+			leaf = Vector3.new(0.16, paneUp, paneRun)
+		else
+			leaf = Vector3.new(paneRun, 0.16, paneUp)
+		end
+
 		local p = glass.Position
 		local seed = math.floor(p.X * 7.3 + p.Y * 3.1 + p.Z * 11.7)
 		local dark = seed % 9 == 0
 
-		local pane = part({
-			Name = "WindowLeaf",
-			Size = leaf,
-			CFrame = glass.CFrame,
-			Color = if dark then WINDOW_DARK else WINDOW_LIT,
-			Material = if dark then Enum.Material.SmoothPlastic else Enum.Material.Neon,
-			Transparency = if dark then 0.2 else 0.08,
-			Parent = glass.Parent,
-		})
-		pane.CanCollide = false
-		pane.CastShadow = false
-		lit += 1
+		local gapX = if across > 1 then runLength / across else 0
+		local gapY = if up > 1 then height / up else 0
+		for i = 1, across do
+			for j = 1, up do
+				local slide = if across > 1 then (i - 0.5) * gapX - runLength / 2 else 0
+				local rise = if up > 1 then (j - 0.5) * gapY - height / 2 else 0
+				local offset
+				if thin == size.Y then
+					offset = if runAxis == "X" then CFrame.new(slide, 0, rise) else CFrame.new(rise, 0, slide)
+				elseif runAxis == "X" then
+					offset = CFrame.new(slide, rise, 0)
+				else
+					offset = CFrame.new(0, rise, slide)
+				end
+				local paneDark = dark or (seed + i * 7 + j * 23) % 11 == 0
+				local pane = part({
+					Name = "WindowLeaf",
+					Size = leaf,
+					CFrame = glass.CFrame * offset,
+					Color = if paneDark then WINDOW_DARK else WINDOW_LIT,
+					Material = if paneDark then Enum.Material.SmoothPlastic else Enum.Material.Neon,
+					Transparency = if paneDark then 0.2 else 0.34,
+					Parent = glass.Parent,
+				})
+				pane.CanCollide = false
+				pane.CastShadow = false
+				lit += 1
+				if not paneDark then
+					leafFor = pane
+				end
+			end
+		end
 
-		if not dark and seed % 3 == 0 then
+		if not dark and leafFor and seed % 5 == 0 then
+			-- one light per BAY, not per pane: a light behind every window on a
+			-- campus this size is several hundred of them, and the eye reads a
+			-- lit row the same either way
 			local light = Instance.new("PointLight")
 			light.Color = LANTERN
-			light.Brightness = 1.35
-			light.Range = math.clamp(math.max(size.X, size.Y, size.Z) * 2.4, 14, 30)
+			light.Brightness = 0.8
+			light.Range = math.clamp(math.max(size.X, size.Y, size.Z) * 1.6, 12, 22)
 			light.Shadows = false
-			light.Parent = pane
+			light.Parent = leafFor
 			lights += 1
 		end
 	end
@@ -8072,12 +8121,14 @@ local function walk(inst, parentName)
       -- does this part carry a light? the audit counts lit floor area, and a
       -- roofed room with no fixture in it is a cave under Future lighting
       local lit = 0
+      local lamps = {}
       -- which faces carry writing, so a sign pressed text-first into a wall
       -- can be found without anybody having to walk up to it
       local guiFaces = {}
       for _, sub in ipairs(child:GetChildren()) do
         if sub.ClassName == "PointLight" or sub.ClassName == "SpotLight" or sub.ClassName == "SurfaceLight" then
           lit = math.max(lit, sub.Range or 16)
+          table.insert(lamps, string.format("[%.2f,%.2f]", sub.Range or 16, sub.Brightness or 1))
         end
         if sub.ClassName == "SurfaceGui" then
           local f = sub.Face
@@ -8085,7 +8136,7 @@ local function walk(inst, parentName)
         end
       end
       table.insert(out, string.format(
-        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cls":"%s","cc":%s,"par":"%s","gui":['.. table.concat(guiFaces, ",") ..'],"lit":'.. lit ..'}',
+        '{"n":"%s","s":[%.3f,%.3f,%.3f],"p":[%.3f,%.3f,%.3f],"r":[%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f],"c":[%d,%d,%d],"m":"%s","t":%.2f,"sh":"%s","cls":"%s","cc":%s,"par":"%s","gui":['.. table.concat(guiFaces, ",") ..'],"lit":'.. lit ..',"lamps":['.. table.concat(lamps, ",") ..']}',
         esc(child.Name), size.X, size.Y, size.Z, cf.p[1], cf.p[2], cf.p[3],
         cf.m[1][1], cf.m[1][2], cf.m[1][3], cf.m[2][1], cf.m[2][2], cf.m[2][3], cf.m[3][1], cf.m[3][2], cf.m[3][3],
         math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5),
