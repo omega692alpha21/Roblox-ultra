@@ -3527,11 +3527,35 @@ local function buildGrandFacade(parent: Instance)
 				part({ Name = "Crenel", Size = Vector3.new(3.4, 3.4, 3.4), CFrame = CFrame.new(edge.x, 55.4, edge.z), Color = BRICK, Material = Enum.Material.Brick, Parent = parent })
 			end
 		end
-		-- arched windows up the tower
-		for _, y in { 12, 26, 40 } do
-			local w = part({ Name = "TowerWindow", Size = Vector3.new(5, 7, 0.6), CFrame = CFrame.new(cx, y, cz + (cz > 0 and 16.2 or -16.2)), Color = Color3.fromRGB(196, 224, 240), Material = Enum.Material.Glass, Transparency = 0.25, Parent = parent })
-			tag(w, "TexWindow")
-			trimBand(cx, y + 4, cz + (cz > 0 and 16.3 or -16.3), 6.4, 0.8, 0.8)
+		-- Articulated the same way the clock tower is, so the corner towers stop
+		-- being 52 studs of blank stone with three windows on one face. Corner
+		-- pilasters, a string course at each stage, and a lancet on EVERY face
+		-- rather than only the one the old code happened to pick.
+		local kit = kitFor(parent)
+		for _, corner in { Vector3.new(-14.6, 0, -14.6), Vector3.new(14.6, 0, -14.6), Vector3.new(-14.6, 0, 14.6), Vector3.new(14.6, 0, 14.6) } do
+			tag(part({ Name = "CornerTowerPilaster", Size = Vector3.new(5.4, 52, 5.4), CFrame = CFrame.new(cx + corner.X, 26, cz + corner.Z), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		end
+		for _, stage in { 19, 33, 47 } do
+			tag(part({ Name = "CornerTowerCourse", Size = Vector3.new(33.6, 1.2, 33.6), CFrame = CFrame.new(cx, stage, cz), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		end
+		for _, face in {
+			{ dx = 0, dz = 16.2, ax = 1 },
+			{ dx = 0, dz = -16.2, ax = 1 },
+			{ dx = 16.2, dz = 0, ax = 0 },
+			{ dx = -16.2, dz = 0, ax = 0 },
+		} do
+			for _, y in { 11, 26, 40 } do
+				local reveal = if face.ax == 1 then Vector3.new(9.0, 12.4, 0.7) else Vector3.new(0.7, 12.4, 9.0)
+				local paneSize = if face.ax == 1 then Vector3.new(6.0, 9.6, 0.7) else Vector3.new(0.7, 9.6, 6.0)
+				tag(part({ Name = "TowerLancetSurround", Size = reveal, CFrame = CFrame.new(cx + face.dx, y, cz + face.dz), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+				local pane = part({ Name = "TowerLancetGlass", Size = paneSize, CFrame = CFrame.new(cx + face.dx * 1.04, y, cz + face.dz * 1.04), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Parent = parent })
+				pane.CanCollide = false
+				pane.CastShadow = false
+			end
+		end
+		-- and a pinnacle standing on each corner of the parapet
+		for _, corner in { Vector3.new(-14.6, 0, -14.6), Vector3.new(14.6, 0, -14.6), Vector3.new(-14.6, 0, 14.6), Vector3.new(14.6, 0, 14.6) } do
+			Kit.pinnacle(kit, { x = cx + corner.X, z = cz + corner.Z, base = 57.1, height = 13 })
 		end
 	end
 
@@ -6717,15 +6741,42 @@ end
 	-- which is what "can't go upstairs, it's glitching" was. The roof is above
 	-- the upper storey now, at the height the upper walls actually reach.
 	local ROOF_Y = 32.6
+	-- The slab is the CEILING of the room under it, so it keeps its pale
+	-- plaster. But seen from anywhere above -- the tower, the upper windows, an
+	-- overview -- these read as a white plaza laid across the middle of a slate
+	-- roof, which is the single ugliest thing on the building.
+	--
+	-- A real school of this kind has lead flats between its pitches, edged with
+	-- a parapet. So each slab gets a lead covering laid over it and a low kerb
+	-- round the edge: the ceiling stays a ceiling, and the roof becomes a roof.
 	local function roofSlab(cx: number, cz: number, sx: number, sz: number, y: number?)
+		local at = y or ROOF_Y
 		tag(part({
 			Name = "RoofSlab",
 			Size = Vector3.new(sx, 1.2, sz),
-			CFrame = CFrame.new(cx, y or ROOF_Y, cz),
+			CFrame = CFrame.new(cx, at, cz),
 			Color = Color3.fromRGB(228, 226, 220),
 			Material = Enum.Material.SmoothPlastic,
 			Parent = folder,
 		}), "TexCeiling")
+		local lead = part({
+			Name = "RoofLead",
+			Size = Vector3.new(sx, 0.5, sz),
+			CFrame = CFrame.new(cx, at + 0.85, cz),
+			Color = Color3.fromRGB(96, 104, 116),
+			Material = Enum.Material.Slate,
+			Parent = folder,
+		})
+		lead.CanCollide = false
+		tag(lead, "TexSlateRoof")
+		-- a parapet kerb on the two long edges, so the flat has an edge to it
+		for _, side in { -1, 1 } do
+			if sx >= sz then
+				tag(part({ Name = "RoofKerb", Size = Vector3.new(sx + 1.0, 2.2, 1.4), CFrame = CFrame.new(cx, at + 1.6, cz + side * (sz / 2 - 0.3)), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = folder }), "TexAshlar").CanCollide = false
+			else
+				tag(part({ Name = "RoofKerb", Size = Vector3.new(1.4, 2.2, sz + 1.0), CFrame = CFrame.new(cx + side * (sx / 2 - 0.3), at + 1.6, cz), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = folder }), "TexAshlar").CanCollide = false
+			end
+		end
 	end
 	roofSlab(0, 102, 448, 44) -- south rooms + lobby (pitched roof sits above)
 	roofSlab(0, 70, 448, 22) -- corridor
