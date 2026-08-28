@@ -99,6 +99,12 @@ HEIGHT = {
     "StonePier": 16.0, "PicketFence": 6.0, "IronGate": 12.0,
     "StoneSteps": 5.0, "Banner": 12.0, "FallenLog": 2.6,
     "TowerBase": 16.0, "TowerMid": 16.0, "TowerTop": 20.0,
+    "KTree": 26.0, "KTreeOak": 30.0, "KTreeTall": 34.0, "KTreeThin": 24.0,
+    "KPineTall": 36.0, "KPineRound": 26.0, "KStump": 3.4,
+    "KBush": 4.0, "KBushLarge": 6.0, "KGrass": 2.2,
+    "KFlowerRed": 2.0, "KFlowerYellow": 2.0, "KFlowerPurple": 2.0,
+    "KRockLarge": 7.0, "KRockTall": 12.0, "KRockSmall": 3.0,
+    "KFencePlanks": 6.0, "KFenceGate": 7.0, "KCampfire": 2.0,
 }
 
 # kind -> (poly haven slug, collides with players, casts a shadow)
@@ -438,6 +444,26 @@ KENNEY = [
     ("TowerBase",       "kc-tower-square-base",  True,  True),
     ("TowerMid",        "kc-tower-square-mid-windows", True, True),
     ("TowerTop",        "kc-tower-square-top-roof-high-windows", True, True),
+    # nature, as FBX (see the note above)
+    ("KTree",           "kn-tree_default",       True,  True),
+    ("KTreeOak",        "kn-tree_oak",           True,  True),
+    ("KTreeTall",       "kn-tree_tall",          True,  True),
+    ("KTreeThin",       "kn-tree_thin",          True,  True),
+    ("KPineTall",       "kn-tree_pineTallA",     True,  True),
+    ("KPineRound",      "kn-tree_pineRoundA",    True,  True),
+    ("KStump",          "kn-stump_old",          True,  True),
+    ("KBush",           "kn-plant_bush",         False, True),
+    ("KBushLarge",      "kn-plant_bushLarge",    False, True),
+    ("KGrass",          "kn-grass_large",        False, False),
+    ("KFlowerRed",      "kn-flower_redA",        False, False),
+    ("KFlowerYellow",   "kn-flower_yellowA",     False, False),
+    ("KFlowerPurple",   "kn-flower_purpleA",     False, False),
+    ("KRockLarge",      "kn-rock_largeA",        True,  True),
+    ("KRockTall",       "kn-rock_tallA",         True,  True),
+    ("KRockSmall",      "kn-rock_smallA",        True,  True),
+    ("KFencePlanks",    "kn-fence_planks",       True,  True),
+    ("KFenceGate",      "kn-fence_gate",         True,  True),
+    ("KCampfire",       "kn-campfire_logs",      False, True),
 ]
 
 REGISTRY = REGISTRY + [(k, s, c, sh) for k, s, c, sh in WAVE2] + QUATERNIUS + KENNEY

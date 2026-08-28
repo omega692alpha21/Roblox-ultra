@@ -323,7 +323,7 @@ WALKS = [
     # solid west wall, so the walk starts INSIDE the library and crosses the
     # wall line.
     ("library secret door", (-38, 0, -222), (-56, 0, -222)),
-    ("library passage", (-49, 0, -222), (-100, 0, -222)),
+    ("library passage", (-88, -16, -222), (-100, -16, -222)),
     ("lobby to atrium", (0, 0, 118), (0, 0, 20)),
     # The entrance hall, across as well as through. It is the first room
     # anybody sees and it had grown two life-size statues, three sofas and a
@@ -350,7 +350,7 @@ WALKS = [
 # estate, so they get walked tread by tread.
 SPIRALS = [
     ("headmaster spiral", -249, -186, 33.6, -119.5, 7.0, math.pi),
-    ("library spiral", -100, -222, -1.4, -119.5, 6.5, 0.0),
+    ("library spiral", -100, -222, -17.4, -119.5, 6.5, 0.0),
 ]
 # Every straight flight in the school, as (name, foot x/y/z, head x/y/z, half
 # width). A flight is walked tread by tread like the spirals: the centreline
@@ -362,6 +362,7 @@ STAIRS = [
     ("wing stair E", (178, 0.5, -9), (178, 16, 17), 5),
     ("lodge stair to studies", (-270, 3.5, -146), (-270, 19, -176.4), 4),
     ("lodge stair to office", (-270, 19.5, -140), (-270, 35, -170.4), 4),
+    ("library steps down", (-49, 0, -222), (-88, -16, -222), 5),
     ("boys dorm stair", (-150, 2, -216), (-150, 18, -246.4), 4),
     ("girls dorm stair", (202, 2, -216), (202, 18, -246.4), 4),
 ]
@@ -479,6 +480,9 @@ def walk_stairs():
     the second tread, the tree growing through the lodge steps."""
     problems = []
     for name, foot, head, half in STAIRS:
+        run = (head[0] - foot[0], head[2] - foot[2])
+        length = math.hypot(*run) or 1.0
+        across = (-run[1] / length, run[0] / length)
         span = math.dist(foot, head)
         steps = max(4, int(span / 1.6))
         previous = None
@@ -496,12 +500,16 @@ def walk_stairs():
             # obstruction: a framed picture a stud and a bit wide, hung at
             # chest height in the middle of the west lobby flight, slipped
             # between three probes three studs apart for four builds.
-            for dx, dz in ((0, 0), (half * 0.3, 0), (-half * 0.3, 0),
-                           (half * 0.6, 0), (-half * 0.6, 0),
-                           (half * 0.9, 0), (-half * 0.9, 0)):
-                probe = [stand[0] + dx, stand[1], stand[2] + dz]
+            #
+            # "Either side" is ACROSS the flight, not along it. Stepping in x
+            # is sideways only for a flight that runs in z; on the library's
+            # steps, which run east, it walked into the next tread up and
+            # reported the staircase as blocked by itself.
+            for offset in (0, 0.3, -0.3, 0.6, -0.6, 0.9, -0.9):
+                probe = [stand[0] + across[0] * half * offset, stand[1],
+                         stand[2] + across[1] * half * offset]
                 blocked = headroom(probe, need=5.0)
-                if blocked and not any(k in blocked for k in ("Tread", "Stringer", "Rail")):
+                if blocked and not any(k in blocked for k in ("Tread", "Step", "Stringer", "Rail", "Secret")):
                     problems.append((name, probe, "no headroom: " + blocked))
                     break
             if previous is not None and abs(under[0] - previous) > 2.4:

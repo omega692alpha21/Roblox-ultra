@@ -328,6 +328,25 @@ local KINDS: { [string]: Spec } = {
 	TowerBase                 = { id = 85813655100506, collide = true, shadow = true, height = 16.0 }, -- kc-tower-square-base
 	TowerMid                  = { id = 133359507729143, collide = true, shadow = true, height = 16.0 }, -- kc-tower-square-mid-windows
 	TowerTop                  = { id = 75005846028640, collide = true, shadow = true, height = 20.0 }, -- kc-tower-square-top-roof-high-windows
+	KTree                     = { id = 90092126819228, collide = true, shadow = true, height = 26.0 }, -- kn-tree_default
+	KTreeOak                  = { id = 76360142277065, collide = true, shadow = true, height = 30.0 }, -- kn-tree_oak
+	KTreeTall                 = { id = 90635636573368, collide = true, shadow = true, height = 34.0 }, -- kn-tree_tall
+	KTreeThin                 = { id = 120839910338137, collide = true, shadow = true, height = 24.0 }, -- kn-tree_thin
+	KPineTall                 = { id = 89846840359418, collide = true, shadow = true, height = 36.0 }, -- kn-tree_pineTallA
+	KPineRound                = { id = 112753872463623, collide = true, shadow = true, height = 26.0 }, -- kn-tree_pineRoundA
+	KStump                    = { id = 110328189212446, collide = true, shadow = true, height = 3.4 }, -- kn-stump_old
+	KBush                     = { id = 140638617578237, shadow = true, height = 4.0 }, -- kn-plant_bush
+	KBushLarge                = { id = 98043992688337, shadow = true, height = 6.0 }, -- kn-plant_bushLarge
+	KGrass                    = { id = 107930833666193, height = 2.2 }, -- kn-grass_large
+	KFlowerRed                = { id = 140094030971720, height = 2.0 }, -- kn-flower_redA
+	KFlowerYellow             = { id = 72409429281991, height = 2.0 }, -- kn-flower_yellowA
+	KFlowerPurple             = { id = 138218104338097, height = 2.0 }, -- kn-flower_purpleA
+	KRockLarge                = { id = 108889429566807, collide = true, shadow = true, height = 7.0 }, -- kn-rock_largeA
+	KRockTall                 = { id = 98407710344734, collide = true, shadow = true, height = 12.0 }, -- kn-rock_tallA
+	KRockSmall                = { id = 76802618929365, collide = true, shadow = true, height = 3.0 }, -- kn-rock_smallA
+	KFencePlanks              = { id = 108138688986562, collide = true, shadow = true, height = 6.0 }, -- kn-fence_planks
+	KFenceGate                = { id = 119755587854634, collide = true, shadow = true, height = 7.0 }, -- kn-fence_gate
+	KCampfire                 = { id = 71147980188997, shadow = true, height = 2.0 }, -- kn-campfire_logs
 }
 
 local templates: { [string]: Model } = {}

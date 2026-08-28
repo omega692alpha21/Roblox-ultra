@@ -38,7 +38,7 @@ FLOOR_Y = -119.5
 SPIRAL_RISE = 1.4
 SPIRAL_PER_TURN = 24
 DESCENTS = [
-    ("library spiral", -100.0, -222.0, 6.5, 0.0, -1.4),
+    ("library spiral", -100.0, -222.0, 6.5, 0.0, -17.4),
     ("headmaster spiral", -249.0, -186.0, 7.0, math.pi, 33.6),
 ]
 
