@@ -221,6 +221,12 @@ function StoryService.Init()
 	Signals.ThiefHit:Connect(function(player)
 		StoryService.Bump(player, "foil")
 	end)
+	-- "Land 40 toys on somebody" counted nothing at all: the only toy signal
+	-- was ToyUsed, which fires when you THROW one. Forty misses closed the
+	-- chapter and forty hits did not.
+	Signals.ToyHit:Connect(function(player)
+		StoryService.Bump(player, "toyhit")
+	end)
 	Signals.Earned:Connect(function(player)
 		check(player)
 	end)

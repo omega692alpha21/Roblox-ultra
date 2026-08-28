@@ -235,6 +235,62 @@ def walk_routes():
     return problems
 
 
+ANCHORS = os.path.join(os.path.dirname(DUMP) or ".", "_map_anchors.json")
+
+
+def standable(point, reach=9.0):
+    """Could a player stand here: floor within `reach` below, and room for a body.
+
+    `reach` is deep when the caller is a wall-mounted anchor: a notice board at
+    head height is reached from the floor seven studs under it, and searching
+    only a step down finds nothing and calls a perfectly good board unreachable.
+    """
+    under = floor_under([point[0], point[1] + 3.0, point[2]], reach=reach)
+    if under is None:
+        return False
+    stand = [point[0], under[0] + 0.5, point[2]]
+    for part in solids:
+        box = aabb(part)
+        # a body is about five studs of head-height above the feet
+        if (box[0][0] <= stand[0] <= box[0][1] and box[2][0] <= stand[2] <= box[2][1]
+                and box[1][0] < stand[1] + 4.5 and box[1][1] > stand[1] + 0.4):
+            return False
+    return True
+
+
+def reachable(point, radius=13.0):
+    """Is there anywhere within prompt range you could stand and use this?
+
+    Anchors are the things the game asks you to walk up to -- a collect pad, a
+    clique board, the secret door. Several are mounted high on a wall, so the
+    question is never "is the anchor standable" but "can a player get within
+    reach of it". Sixteen bearings at three distances is enough to find a spot
+    if one exists and cheap enough to run over every anchor in the map.
+    """
+    for ring in (radius * 0.45, radius * 0.7, radius * 0.95):
+        for i in range(16):
+            angle = i * math.pi / 8
+            probe = [
+                point[0] + math.cos(angle) * ring,
+                point[1],
+                point[2] + math.sin(angle) * ring,
+            ]
+            if standable(probe, reach=24.0):
+                return True
+    return False
+
+
+def audit_anchors():
+    """Every named place the map hands a service: can you get to it?"""
+    if not os.path.exists(ANCHORS):
+        return []
+    problems = []
+    for row in json.load(open(ANCHORS)):
+        if not reachable(row["p"]):
+            problems.append((row["k"], row["p"], "nothing within reach of it is standable"))
+    return problems
+
+
 def main():
     bad = 0
     for name, point in collect():
@@ -255,6 +311,10 @@ def main():
             bad += 1
             print(f"  {name:26s} {[round(v, 1) for v in point]}  {'; '.join(problems)}")
 
+    for name, point, why in audit_anchors():
+        bad += 1
+        print(f"  {name:34s} {[round(v, 1) for v in point]}  {why}")
+
     walked = walk_routes()
     # one line per route rather than per sample: a broken slab trips fifty
     # consecutive samples and the list stops being readable
@@ -267,8 +327,10 @@ def main():
         bad += 1
         print(f"  {name:26s} {[round(v, 1) for v in point]}  {why}")
 
+    anchor_count = len(json.load(open(ANCHORS))) if os.path.exists(ANCHORS) else 0
     print(f"{'FAIL' if bad else 'PASS'} - {bad} bad spots "
-          f"({len(WALKS)} routes walked at {STEP:.0f}-stud spacing)")
+          f"({len(WALKS)} routes walked at {STEP:.0f}-stud spacing, "
+          f"{anchor_count} anchors checked for reach)")
     return 1 if bad else 0
 
 

@@ -39,6 +39,7 @@ return {
 	EventScore = makeSignal(), -- (player, eventId) scored during a live event
 	Locked = makeSignal(), -- (player) locked their own homeroom
 	ToyUsed = makeSignal(), -- (player, toyId) threw a toy
+	ToyHit = makeSignal(), -- (player, toyId) landed one on somebody
 	ClassAttended = makeSignal(), -- (player, subjectId) sat down in a lesson
 	ChapterDone = makeSignal(), -- (player, chapterNumber) closed a story chapter
 	FoundTheDoor = makeSignal(), -- (player) touched the bookshelf in the office

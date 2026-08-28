@@ -4407,23 +4407,33 @@ end
 
 	-- ---------------- plots: 8 homerooms on the perimeter rows ----------------
 	local plots: { Plot } = {}
-	-- south row (doors north onto the main corridor)
+	-- South row: doors NORTH onto the main corridor. North row: doors SOUTH
+	-- onto the wing corridor. Both rows had these the wrong way round, and it
+	-- sealed all eight homerooms.
+	--
+	-- CFrame.lookAt puts the look direction on local -Z, so local +Z -- which
+	-- is a plot's front, where its gate and sign go -- points AWAY from the
+	-- target. Aiming a south plot at c - Z therefore put its front at z = 127,
+	-- flat against the exterior facade, and its solid back wall of lockers at
+	-- z = 80: exactly across the bay opening the interior walls deliberately
+	-- leave clear. Every homeroom was a closed box with its door facing a
+	-- brick wall. Nothing in the game complained, because nothing in the game
+	-- ever needed to walk in.
 	for i, x in { -190, -122 } do
 		local c = Vector3.new(x, 0, 103)
-		table.insert(plots, buildPlot(i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
+		table.insert(plots, buildPlot(i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
 	end
 	for i, x in { 122, 190 } do
 		local c = Vector3.new(x, 0, 103)
-		table.insert(plots, buildPlot(2 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
+		table.insert(plots, buildPlot(2 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
 	end
-	-- north row (doors south onto the wing corridor)
 	for i, x in { -190, -122 } do
 		local c = Vector3.new(x, 0, -94)
-		table.insert(plots, buildPlot(4 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
+		table.insert(plots, buildPlot(4 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
 	end
 	for i, x in { 122, 190 } do
 		local c = Vector3.new(x, 0, -94)
-		table.insert(plots, buildPlot(6 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
+		table.insert(plots, buildPlot(6 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
 	end
 
 	-- ---------------- room floors (plan rooms, both wings) ----------------

@@ -47,7 +47,7 @@ local function addCrown(character: Model, head: BasePart)
 	weld(base, head)
 	for i = 0, 4 do
 		local spike = Instance.new("Part")
-		spike.Name = "CrownSpike"
+		spike.Name = "Cosmetic_CrownSpike"
 		spike.Size = Vector3.new(0.22, 0.6, 0.22)
 		spike.Color = base.Color
 		spike.Material = Enum.Material.Neon
@@ -114,6 +114,16 @@ local BUILDERS: { [string]: (Model, BasePart, BasePart) -> () } = {
 	end,
 }
 
+-- Everything this service builds is named Cosmetic_* or lives on an
+-- Attachment of that name, so taking it all off again is one sweep.
+local function stripCosmetics(character: Model)
+	for _, thing in character:GetDescendants() do
+		if thing.Name:sub(1, 9) == "Cosmetic_"  then
+			thing:Destroy()
+		end
+	end
+end
+
 local function applyCosmetics(player: Player)
 	local character = player.Character
 	local head = character and character:FindFirstChild("Head") :: BasePart?
@@ -121,6 +131,10 @@ local function applyCosmetics(player: Player)
 	if not character or not head or not root then
 		return
 	end
+	-- Clear first. This ran once per attribute change and only ever ADDED, so
+	-- buying a second cosmetic re-applied the first as well and you ended up
+	-- wearing two halos inside each other.
+	stripCosmetics(character)
 	for _, attr in COSMETIC_ATTRS do
 		if player:GetAttribute(attr) == true then
 			local builder = BUILDERS[attr]
@@ -132,7 +146,7 @@ local function applyCosmetics(player: Player)
 end
 
 function CosmeticsService.Init()
-	Players.PlayerAdded:Connect(function(player)
+	local function hook(player: Player)
 		player.CharacterAdded:Connect(function()
 			task.wait(0.4)
 			applyCosmetics(player)
@@ -142,7 +156,16 @@ function CosmeticsService.Init()
 				applyCosmetics(player)
 			end)
 		end
-	end)
+		-- someone already in the server when this service starts, and anyone
+		-- whose character spawned before the hook above existed
+		if player.Character then
+			task.defer(applyCosmetics, player)
+		end
+	end
+	for _, player in Players:GetPlayers() do
+		hook(player)
+	end
+	Players.PlayerAdded:Connect(hook)
 end
 
 return CosmeticsService

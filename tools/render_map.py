@@ -281,6 +281,37 @@ for _, request in ipairs(map.props or {}) do
     request.scale or 1, tostring(request.hang == true)))
 end
 print("PROPS[" .. table.concat(props, ",") .. "]")
+
+-- Every named place the map hands to a service: a plot pad, a clique board,
+-- the secret door, the infirmary. These are the game's verbs -- if one of them
+-- ends up inside a wall or over a hole, that feature is dead and no part-level
+-- check would notice. Dumped by key path so the audit can name what it found.
+local anchors = {}
+local function isVec(v) return type(v) == "table" and type(v.X) == "number" and type(v.Y) == "number" and type(v.Z) == "number" and v.Magnitude ~= nil end
+local function record(path, x, y, z)
+  table.insert(anchors, string.format('{"k":"%s","p":[%.3f,%.3f,%.3f]}', esc(path), x, y, z))
+end
+local function scan(value, path, depth)
+  if depth > 4 or value == nil then return end
+  if type(value) == "table" and value.ClassName == "Part" then
+    local cf = value.CFrame
+    record(path, cf.p[1], cf.p[2], cf.p[3])
+    return
+  end
+  if isVec(value) then
+    record(path, value.X, value.Y, value.Z)
+    return
+  end
+  if type(value) == "table" then
+    for k, v in pairs(value) do
+      if k ~= "folder" and k ~= "props" and k ~= "trim" and k ~= "_children" and k ~= "_props" and k ~= "_parent" then
+        scan(v, path .. "." .. tostring(k), depth + 1)
+      end
+    end
+  end
+end
+scan(map, "map", 0)
+print("ANCHORS[" .. table.concat(anchors, ",") .. "]")
 print("[" .. table.concat(out, ",") .. "]")
 '''
 
@@ -313,6 +344,12 @@ props = json.loads(_prop_line[len("PROPS"):])
 with open(os.path.join(OUT, "_map_props.json"), "w") as fh:
     json.dump(props, fh)
 print(f"exported {len(parts)} parts and {len(props)} prop placements")
+
+_anchor_line = next((l for l in reversed(result.stdout.splitlines()) if l.startswith("ANCHORS[")), "ANCHORS[]")
+anchors = json.loads(_anchor_line[len("ANCHORS"):])
+with open(os.path.join(OUT, "_map_anchors.json"), "w") as fh:
+    json.dump(anchors, fh)
+print(f"exported {len(anchors)} named anchor points")
 
 # ===== renderer =====
 from PIL import Image, ImageDraw

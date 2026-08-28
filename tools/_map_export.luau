@@ -5159,23 +5159,33 @@ end
 
 	-- ---------------- plots: 8 homerooms on the perimeter rows ----------------
 	local plots: { Plot } = {}
-	-- south row (doors north onto the main corridor)
+	-- South row: doors NORTH onto the main corridor. North row: doors SOUTH
+	-- onto the wing corridor. Both rows had these the wrong way round, and it
+	-- sealed all eight homerooms.
+	--
+	-- CFrame.lookAt puts the look direction on local -Z, so local +Z -- which
+	-- is a plot's front, where its gate and sign go -- points AWAY from the
+	-- target. Aiming a south plot at c - Z therefore put its front at z = 127,
+	-- flat against the exterior facade, and its solid back wall of lockers at
+	-- z = 80: exactly across the bay opening the interior walls deliberately
+	-- leave clear. Every homeroom was a closed box with its door facing a
+	-- brick wall. Nothing in the game complained, because nothing in the game
+	-- ever needed to walk in.
 	for i, x in { -190, -122 } do
 		local c = Vector3.new(x, 0, 103)
-		table.insert(plots, buildPlot(i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
+		table.insert(plots, buildPlot(i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
 	end
 	for i, x in { 122, 190 } do
 		local c = Vector3.new(x, 0, 103)
-		table.insert(plots, buildPlot(2 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
+		table.insert(plots, buildPlot(2 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
 	end
-	-- north row (doors south onto the wing corridor)
 	for i, x in { -190, -122 } do
 		local c = Vector3.new(x, 0, -94)
-		table.insert(plots, buildPlot(4 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
+		table.insert(plots, buildPlot(4 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
 	end
 	for i, x in { 122, 190 } do
 		local c = Vector3.new(x, 0, -94)
-		table.insert(plots, buildPlot(6 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, 1)), folder))
+		table.insert(plots, buildPlot(6 + i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)), folder))
 	end
 
 	-- ---------------- room floors (plan rooms, both wings) ----------------
@@ -5732,4 +5742,35 @@ for _, request in ipairs(map.props or {}) do
     request.scale or 1, tostring(request.hang == true)))
 end
 print("PROPS[" .. table.concat(props, ",") .. "]")
+
+-- Every named place the map hands to a service: a plot pad, a clique board,
+-- the secret door, the infirmary. These are the game's verbs -- if one of them
+-- ends up inside a wall or over a hole, that feature is dead and no part-level
+-- check would notice. Dumped by key path so the audit can name what it found.
+local anchors = {}
+local function isVec(v) return type(v) == "table" and type(v.X) == "number" and type(v.Y) == "number" and type(v.Z) == "number" and v.Magnitude ~= nil end
+local function record(path, x, y, z)
+  table.insert(anchors, string.format('{"k":"%s","p":[%.3f,%.3f,%.3f]}', esc(path), x, y, z))
+end
+local function scan(value, path, depth)
+  if depth > 4 or value == nil then return end
+  if type(value) == "table" and value.ClassName == "Part" then
+    local cf = value.CFrame
+    record(path, cf.p[1], cf.p[2], cf.p[3])
+    return
+  end
+  if isVec(value) then
+    record(path, value.X, value.Y, value.Z)
+    return
+  end
+  if type(value) == "table" then
+    for k, v in pairs(value) do
+      if k ~= "folder" and k ~= "props" and k ~= "trim" and k ~= "_children" and k ~= "_props" and k ~= "_parent" then
+        scan(v, path .. "." .. tostring(k), depth + 1)
+      end
+    end
+  end
+end
+scan(map, "map", 0)
+print("ANCHORS[" .. table.concat(anchors, ",") .. "]")
 print("[" .. table.concat(out, ",") .. "]")

@@ -44,3 +44,6 @@ jobs:
 
       - name: Per-player state
         run: python3 tools/leak_check.py
+
+      - name: Content
+        run: python3 tools/content_check.py

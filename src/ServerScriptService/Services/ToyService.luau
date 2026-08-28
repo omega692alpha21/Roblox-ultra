@@ -310,6 +310,7 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 						-- closer to the bang, more of it
 						local falloff = 1 - (root.Position - at).Magnitude / 16
 						VitalsService.Damage(other, 8 + 14 * falloff, shooter)
+						Signals.ToyHit:Fire(shooter, def.id)
 					end
 				end
 			end
@@ -338,6 +339,7 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 				Remotes.Get("Notify"):FireClient(hitPlayer, "🪨 " .. shooter.DisplayName .. " pinged you with a slingshot!", "info")
 			end
 			AuraService.Add(shooter, 1)
+			Signals.ToyHit:Fire(shooter, def.id)
 		end
 		pellet:Destroy()
 	end
@@ -357,6 +359,7 @@ local function fireProjectile(shooter: Player, def: ToyDef, origin: Vector3, vel
 				ActionAnim.KnockDown(model, origin)
 				Remotes.Get("HitMarker"):FireClient(shooter, pellet.Position, 0, false)
 				AuraService.Add(shooter, 1)
+				Signals.ToyHit:Fire(shooter, def.id)
 			end
 		end
 		detonate(pellet.Position, hitPlayer)
