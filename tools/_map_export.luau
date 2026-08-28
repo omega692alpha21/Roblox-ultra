@@ -3377,7 +3377,7 @@ local function furnishProps()
 	prop("RayStatue", CFrame.new(56, 0, 130) * CFrame.Angles(0, math.pi, 0), { scale = 1.2 })
 	prop("Vase1", CFrame.new(-38, 3.8, 92))
 	prop("Vase2", CFrame.new(-22, 3.8, 92))
-	row("PlanterPot", 0, 0, { { -56, 86 }, { 54.5, 80 }, { -56, 118 } })
+	row("PlanterPot", 0, 0, { { -56, 86 }, { 42, 122 }, { -56, 118 } })
 	-- greenery where people wait, which is every school lobby ever built
 	-- in the corners, not either side of the way in
 	row("Houseplant", 0, 0, { { -54, 118 }, { 54, 118 } })
@@ -3484,8 +3484,8 @@ local function furnishProps()
 	prop("CoffeeTable", CFrame.new(-208, 0, 10))
 	prop("PottedPlant", CFrame.new(-189, 0, 60))
 	prop("Vase1", CFrame.new(-199, 2.9, 46))
-	prop("Bin", CFrame.new(-203, 0, 60))
-	prop("FramedPicture", CFrame.new(-204, 9, 63.2) * CFrame.Angles(0, math.pi, 0))
+	prop("Bin", CFrame.new(-220, 0, 52))
+	prop("FramedPicture", CFrame.new(-222.5, 9, 40) * CFrame.Angles(0, math.rad(90), 0))
 
 	-- ---------------- gym ----------------
 	row("Football", 0, 0, { { -22, -98 }, { 18, -112 } })
@@ -3595,9 +3595,10 @@ local function furnishProps()
 		-- the courtyard edges, left and right of the way through
 		{ min = Vector2.new(-40, 34), max = Vector2.new(-30, 66), y = 0, pool = GARDEN, count = 8, seed = 3106 },
 		{ min = Vector2.new(30, 34), max = Vector2.new(40, 66), y = 0, pool = GARDEN, count = 8, seed = 3107 },
-		-- the lawn either side of the front approach
-		{ min = Vector2.new(-104, 166), max = Vector2.new(-70, 182), y = 0, pool = TERRACE, count = 7, seed = 3108 },
-		{ min = Vector2.new(70, 166), max = Vector2.new(104, 182), y = 0, pool = TERRACE, count = 7, seed = 3109 },
+		-- the lawn OUTSIDE the two courts, which is where the front approach's
+		-- seating went when the courts came out of the quadrangles
+		{ min = Vector2.new(-196, 150), max = Vector2.new(-156, 182), y = 0, pool = TERRACE, count = 7, seed = 3108 },
+		{ min = Vector2.new(156, 150), max = Vector2.new(196, 182), y = 0, pool = TERRACE, count = 7, seed = 3109 },
 		-- the dorm yards
 		{ min = Vector2.new(-198, -234), max = Vector2.new(-180, -214), y = 0, pool = GARDEN, count = 6, seed = 3110 },
 		{ min = Vector2.new(180, -234), max = Vector2.new(198, -214), y = 0, pool = GARDEN, count = 6, seed = 3111 },
@@ -5801,43 +5802,49 @@ end
 -- hotel. Ours is thirty-two studs across, which is room for a seven-stud
 -- island down the middle and a twelve-stud lane on each side.
 local function buildLockerIslands(parent: Instance)
-	local Z = 65
-	local HALF_D, HALF_W, H = 3.5, 8, 9
-	for _, cx in { -200, -150, -100, -50, 50, 100, 150, 200 } do
+	-- Against the NORTH WALL, in a run, the way a school corridor is. They
+	-- used to stand out in the middle of the floor as freestanding islands,
+	-- because a reference photograph had them that way -- in a corridor twice
+	-- this one's width. Here the hall is thirty-two studs across and a
+	-- sixteen-by-seven island down the centre of it leaves two lanes and reads
+	-- as a barricade. One of them stood squarely across the principal's door.
+	--
+	-- The middle of a corridor is for walking down; tools/plan_check.py keeps
+	-- it that way now.
+	local Z = 77.6                      -- hard against the north wall at 81
+	local HALF_D, HALF_W, H = 2.6, 8, 9
+	for _, cx in { -150, -100, -50, 50, 100, 150 } do
 		part({
-			Name = "LockerIsland",
+			Name = "LockerBankRun",
 			Size = Vector3.new(HALF_W * 2, H, HALF_D * 2),
 			CFrame = CFrame.new(cx, H / 2, Z),
 			Color = Palette.LockerBlue,
 			Material = Enum.Material.Metal,
 			Parent = parent,
 		})
-		-- a cap, so the top reads as a lid and not a cut
 		part({
-			Name = "LockerIslandCap",
+			Name = "LockerBankCap",
 			Size = Vector3.new(HALF_W * 2 + 0.8, 0.5, HALF_D * 2 + 0.8),
 			CFrame = CFrame.new(cx, H + 0.25, Z),
 			Color = Color3.fromRGB(226, 224, 216),
 			Material = Enum.Material.SmoothPlastic,
 			Parent = parent,
 		}).CanCollide = false
-		-- doors, handles and vents on both long faces
-		for _, side in { -1, 1 } do
-			local faceZ = Z + side * (HALF_D + 0.05)
-			for i = 0, 3 do
-				local dx = cx - HALF_W + 2 + i * 4
-				part({ Name = "LockerSeam", Size = Vector3.new(0.3, H - 1, 0.3), CFrame = CFrame.new(dx - 2, H / 2, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
-				for _, row in { 2.6, 6.4 } do
-					part({ Name = "LockerHandle", Size = Vector3.new(0.4, 1, 0.3), CFrame = CFrame.new(dx + 1.2, row, faceZ), Color = Palette.BusYellow, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-					part({ Name = "LockerVent", Size = Vector3.new(2.4, 0.4, 0.25), CFrame = CFrame.new(dx, row + 1.5, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
-				end
+		-- doors, handles and vents on the one face anybody can see
+		local faceZ = Z - (HALF_D + 0.05)
+		for i = 0, 3 do
+			local dx = cx - HALF_W + 2 + i * 4
+			part({ Name = "LockerSeam", Size = Vector3.new(0.3, H - 1, 0.3), CFrame = CFrame.new(dx - 2, H / 2, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
+			for _, row in { 2.6, 6.4 } do
+				part({ Name = "LockerHandle", Size = Vector3.new(0.4, 1, 0.3), CFrame = CFrame.new(dx + 1.2, row, faceZ), Color = Palette.BusYellow, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+				part({ Name = "LockerVent", Size = Vector3.new(2.4, 0.4, 0.25), CFrame = CFrame.new(dx, row + 1.5, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
 			end
-			-- the bench along the foot of it, and a plinth under that
-			part({ Name = "LockerPlinth", Size = Vector3.new(HALF_W * 2 + 5, 0.5, 3.4), CFrame = CFrame.new(cx, 0.25, Z + side * (HALF_D + 1.7)), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
-			part({ Name = "CorridorBench", Size = Vector3.new(HALF_W * 2 + 2, 0.5, 2.2), CFrame = CFrame.new(cx, 2.2, Z + side * (HALF_D + 1.6)), Color = Color3.fromRGB(178, 84, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
-			for _, lx in { -HALF_W + 1, HALF_W - 1 } do
-				part({ Name = "CorridorBenchLeg", Size = Vector3.new(0.6, 2, 1.8), CFrame = CFrame.new(cx + lx, 1, Z + side * (HALF_D + 1.6)), Color = Color3.fromRGB(120, 122, 126), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-			end
+		end
+		-- a bench along the foot of them, still inside the wall zone
+		part({ Name = "LockerPlinth", Size = Vector3.new(HALF_W * 2 + 5, 0.5, 3.0), CFrame = CFrame.new(cx, 0.25, Z - HALF_D - 1.6), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		part({ Name = "CorridorBench", Size = Vector3.new(HALF_W * 2 + 2, 0.5, 2.0), CFrame = CFrame.new(cx, 2.2, Z - HALF_D - 1.5), Color = Color3.fromRGB(178, 84, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
+		for _, lx in { -HALF_W + 1, HALF_W - 1 } do
+			part({ Name = "CorridorBenchLeg", Size = Vector3.new(0.6, 2, 1.8), CFrame = CFrame.new(cx + lx, 1, Z - HALF_D - 1.5), Color = Color3.fromRGB(120, 122, 126), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 		end
 	end
 end
@@ -5990,15 +5997,51 @@ local function buildCourt(parent: Instance, centre: Vector3, kind: string, surfa
 end
 
 local function buildCourtyards(parent: Instance)
-	-- west: basketball, east: volleyball, both in the half of the courtyard
-	-- the greenhouse and the lab do not use
-	buildCourt(parent, Vector3.new(-116, 0, 24), "Basketball", Color3.fromRGB(58, 104, 190), Color3.fromRGB(196, 86, 128))
-	buildCourt(parent, Vector3.new(116, 0, 24), "Volleyball", Color3.fromRGB(176, 74, 116), Color3.fromRGB(58, 104, 190))
+	-- The courts are on the FIELD, north of the building, not in the two
+	-- quadrangles. A quadrangle is a light well a hundred studs across with
+	-- school on all four sides of it; a painted sports court and a bunting run
+	-- inside one reads as an indoor gymnasium with the roof forgotten, which
+	-- is exactly what it was being read as. Out here they have sky over them
+	-- and the whole north lawn around them, which is what a court wants.
+	buildCourt(parent, Vector3.new(-102, 0, 168), "Basketball", Color3.fromRGB(58, 104, 190), Color3.fromRGB(196, 86, 128))
+	buildCourt(parent, Vector3.new(102, 0, 168), "Volleyball", Color3.fromRGB(176, 74, 116), Color3.fromRGB(58, 104, 190))
 
-	-- bunting over both, strung from the balcony rail to the outer wall
-	for _, cx in { -116, 116 } do
-		for _, bz in { 6, 24, 42 } do
+	-- bunting over both, strung across the field
+	for _, cx in { -102, 102 } do
+		for _, bz in { 150, 168, 186 } do
 			bunting(parent, Vector3.new(cx - 52, 21, bz), Vector3.new(cx + 52, 21, bz), 5)
+		end
+	end
+
+	-- and the quadrangles become quadrangles: lawn, a path across, a bench
+	-- under a tree at each corner. The glasshouse and the lab stay -- a
+	-- glasshouse in a school quad is what a school quad is for -- but they now
+	-- stand in a garden instead of on the touchline of a volleyball court.
+	for _, cx in { -116, 116 } do
+		tag(part({
+			Name = "QuadLawn",
+			Size = Vector3.new(104, 0.4, 92),
+			CFrame = CFrame.new(cx, 0.2, -2),
+			Color = Color3.fromRGB(104, 168, 72),
+			Material = Enum.Material.Grass,
+			Parent = parent,
+		}), "TexGrass").CanCollide = false
+		for _, run in { { Vector3.new(cx, 0.45, -48), Vector3.new(cx, 0.45, 44) },
+		                { Vector3.new(cx - 50, 0.45, -2), Vector3.new(cx + 50, 0.45, -2) } } do
+			local delta = run[2] - run[1]
+			part({
+				Name = "QuadPath",
+				Size = Vector3.new(if math.abs(delta.X) > 1 then delta.Magnitude else 7,
+					0.3, if math.abs(delta.Z) > 1 then delta.Magnitude else 7),
+				CFrame = CFrame.new((run[1] + run[2]) / 2),
+				Color = Color3.fromRGB(206, 198, 182),
+				Material = Enum.Material.Slate,
+				Parent = parent,
+			}).CanCollide = false
+		end
+		for _, corner in { Vector3.new(-34, 0, -34), Vector3.new(34, 0, -34),
+		                   Vector3.new(-34, 0, 30), Vector3.new(34, 0, 30) } do
+			buildTree(parent, Vector3.new(cx + corner.X, 0, corner.Z), 0.85)
 		end
 	end
 end
@@ -6028,8 +6071,11 @@ local DOOR_SIGNS = {
 	{ label = "GYM", icon = "🏀", at = Vector3.new(0, 0, -62), face = 1, color = Color3.fromRGB(255, 176, 88) },
 	{ label = "GREENHOUSE", icon = "🧬", at = Vector3.new(-116, 0, -9), face = 1, color = Color3.fromRGB(150, 220, 130) },
 	{ label = "EAST LAB", icon = "⚗️", at = Vector3.new(116, 0, -9), face = 1, color = Color3.fromRGB(150, 240, 190) },
-	{ label = "CAFETERIA", icon = "🍔", at = Vector3.new(-204, 0, 62), face = 1, color = Color3.fromRGB(235, 214, 156) },
-	{ label = "OFFICE · THE STORE", icon = "🛒", at = Vector3.new(-204, 0, -50), face = -1, color = Color3.fromRGB(214, 226, 235) },
+	-- These two were the wrong way round for every build the west wing has
+	-- existed: the office is the NORTH half of the wing and the cafeteria the
+	-- south, and the signs named each other's rooms.
+	{ label = "OFFICE · THE STORE", icon = "🛒", at = Vector3.new(-204, 0, 62), face = 1, color = Color3.fromRGB(214, 226, 235) },
+	{ label = "CAFETERIA", icon = "🍔", at = Vector3.new(-204, 0, -50), face = -1, color = Color3.fromRGB(235, 214, 156) },
 	{ label = "TROPHY HALL", icon = "🏆", at = Vector3.new(204, 0, -50), face = -1, color = Color3.fromRGB(240, 226, 190) },
 	{ label = "DETENTION", icon = "⛓️", at = Vector3.new(204, 0, 62), face = 1, color = Color3.fromRGB(226, 96, 88) },
 }
@@ -6393,9 +6439,13 @@ end
 		}), "TexLocker")
 	end
 	-- columns along the open corridor edges (colonnade + lobby + atrium)
+	-- On the corridor's south EDGE at z = 52, not four studs into it at 59.
+	-- The hall is thirty-two studs across and a colonnade standing a third of
+	-- the way into it narrows the walking lane to the point where the columns
+	-- are the thing you are dodging rather than the thing holding the roof up.
 	for _, colSpec in {
-		{ z = 59, xs = { -160, -132, -104, -76 } },
-		{ z = 59, xs = { 76, 104, 132, 160 } },
+		{ z = 52, xs = { -160, -132, -104, -76 } },
+		{ z = 52, xs = { 76, 104, 132, 160 } },
 		-- no column at x = 0: that is the middle of the lobby opening
 		{ z = 81, xs = { -40, 40 } },
 	} do
@@ -6613,8 +6663,11 @@ end
 	for _, side in { -1, 1 } do
 		part({ Name = "LobbyPlanter", Size = Vector3.new(6, 3.4, 6), CFrame = CFrame.new(side * 30, 1.7, 116), Color = Color3.fromRGB(150, 118, 96), Material = Enum.Material.Concrete, Parent = folder })
 		part({ Name = "LobbyPlanterSoil", Size = Vector3.new(5, 0.4, 5), CFrame = CFrame.new(side * 30, 3.5, 116), Color = Color3.fromRGB(78, 62, 48), Material = Enum.Material.Ground, Parent = folder })
-		part({ Name = "TreeTrunk", Size = Vector3.new(1.2, 7, 1.2), CFrame = CFrame.new(side * 30, 7.2, 116), Color = Color3.fromRGB(104, 74, 52), Material = Enum.Material.Wood, Parent = folder })
-		part({ Name = "TreeLeaves", Size = Vector3.new(7, 6, 7), CFrame = CFrame.new(side * 30, 12.4, 116), Color = Color3.fromRGB(96, 148, 84), Material = Enum.Material.Grass, Parent = folder })
+		-- NOT a tree: this one is indoors, under thirty studs of roof, in the
+		-- entrance hall. A planted bay tree in a tub is the thing a school
+		-- lobby actually has either side of its doors.
+		part({ Name = "LobbyTub", Size = Vector3.new(4.4, 3.2, 4.4), CFrame = CFrame.new(side * 30, 5.6, 116), Color = Color3.fromRGB(178, 122, 88), Material = Enum.Material.Slate, Parent = folder })
+		part({ Name = "LobbyBayFoliage", Size = Vector3.new(7, 6, 7), CFrame = CFrame.new(side * 30, 10.4, 116), Color = Color3.fromRGB(96, 148, 84), Material = Enum.Material.Grass, Parent = folder }).CanCollide = false
 	end
 	-- On the wall beside the corridor opening, not across it. This was a 16
 	-- stud board hung in the middle of a 23 stud doorway, so walking in from
