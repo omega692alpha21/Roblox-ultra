@@ -10121,22 +10121,57 @@ local function buildBackCampus(parent: Instance)
 	-- and the kitchen garden's beds
 	for row = 0, 3 do
 		for col = 0, 3 do
+			-- A RAISED BED, not two slabs. Each of these sixteen was a brown
+			-- box with a green box laid on it -- the exact "basic shape that
+			-- looks like an object" the whole rebuild is against, surviving
+			-- out the back where no camera pointed. A bed is four boards, the
+			-- soil standing in them, and rows of plants growing out of it.
+			local bx = GX - 54 + col * 26
+			local bz = GZ - 358 - row * 15
+			for _, board in {
+				{ Vector3.new(20.0, 1.6, 0.8), Vector3.new(0, 0, -4.1) },
+				{ Vector3.new(20.0, 1.6, 0.8), Vector3.new(0, 0, 4.1) },
+				{ Vector3.new(0.8, 1.6, 7.4), Vector3.new(-9.6, 0, 0) },
+				{ Vector3.new(0.8, 1.6, 7.4), Vector3.new(9.6, 0, 0) },
+			} do
+				part({
+					Name = "GardenBoard",
+					Size = board[1],
+					CFrame = CFrame.new(bx + board[2].X, 0.8, bz + board[2].Z),
+					Color = Color3.fromRGB(124, 92, 60),
+					Material = Enum.Material.WoodPlanks,
+					Parent = parent,
+				})
+			end
 			part({
 				Name = "GardenBed",
-				Size = Vector3.new(20, 1.4, 9),
-				CFrame = CFrame.new(GX - 54 + col * 26, 0.7, GZ - 358 - row * 15),
-				Color = Color3.fromRGB(122, 88, 60),
+				Size = Vector3.new(18.4, 1.2, 7.4),
+				CFrame = CFrame.new(bx, 0.6, bz),
+				Color = Color3.fromRGB(92, 68, 48),
 				Material = Enum.Material.Ground,
 				Parent = parent,
 			})
-			part({
-				Name = "GardenCrop",
-				Size = Vector3.new(18, 2.2, 7),
-				CFrame = CFrame.new(GX - 54 + col * 26, 2, GZ - 358 - row * 15),
-				Color = Color3.fromRGB(104, 158, 74),
-				Material = Enum.Material.Grass,
-				Parent = parent,
-			}).CanCollide = false
+			-- three drills of five, each plant its own size and green, set on
+			-- the soil so nothing shares a plane with it
+			for drill = -1, 1 do
+				for i = 0, 4 do
+					local n = row * 71 + col * 29 + (drill + 1) * 13 + i * 7
+					local w = 1.6 + (n % 5) * 0.24
+					local h = 1.5 + ((n // 5) % 6) * 0.26
+					part({
+						Name = "GardenCrop",
+						Size = Vector3.new(w, h, w * 0.86),
+						CFrame = CFrame.new(bx - 7.4 + i * 3.7, 1.2 + h / 2, bz + drill * 2.4),
+						Color = Color3.fromRGB(
+							math.clamp(62 + (n % 7) * 11, 55, 140),
+							math.clamp(118 + ((n // 7) % 8) * 9, 100, 190),
+							math.clamp(52 + ((n // 3) % 6) * 10, 45, 120)
+						),
+						Material = Enum.Material.Grass,
+						Parent = parent,
+					}).CanCollide = false
+				end
+			end
 		end
 	end
 
