@@ -736,6 +736,11 @@ shots = [
     ("biketrack",  (-430, 130, 520),  (-430, 4, 330)),
     ("dormcourt",  (0, 70, -110),     (0, 6, -230)),
     ("dormcourteye",(0, 6, -160),     (0, 10, -250)),
+    # The estate fence, and the whole core from the air at the angle the
+    # labelled site plan is drawn at.
+    ("fencewest",  (-640, 22, 60),    (-480, 6, 20)),
+    ("fencenorth", (-260, 20, 660),   (-120, 6, 520)),
+    ("siteplan",   (90, 980, 1180),   (15, 0, 40)),
 ]
 # SKIP_SHOTS=1 exports the part dump and stops. The dump takes a few seconds;
 # drawing sixty z-buffered PNGs takes minutes, and the check suite only ever

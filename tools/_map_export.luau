@@ -2261,6 +2261,62 @@ function GroundsKit.railing(ctx: Ctx, x0: number, z0: number, x1: number, z1: nu
 	end
 end
 
+-- ------------------------------------------------------------- boundary --
+-- The estate fence. Four thousand two hundred studs of it round the built
+-- core, which is why it is not GroundsKit.railing: that one puts a bar every
+-- 2.6 studs, and round the whole core that is sixteen hundred bars before a
+-- single rail. This is the same fence written as bays -- a coursed dwarf wall
+-- with an ashlar coping, two rails and a spear every nine studs standing on
+-- it -- with a pier at every bay end.
+--
+-- The dwarf wall is the only part of it that collides. Railings are half a
+-- stud thick and a player walks straight between them, so each bay also
+-- carries one invisible guard slab: the fence keeps people in, which is the
+-- whole reason a school has one.
+function GroundsKit.boundaryPier(ctx: Ctx, x: number, z: number)
+	ctx.part({ Name = "BoundaryPierPlinth", Size = Vector3.new(3.6, 2.4, 3.6), CFrame = CFrame.new(x, 0.7, z), Color = GroundsKit.STONE_DEEP, Material = Enum.Material.Concrete, Parent = ctx.parent })
+	ctx.tag(ctx.part({ Name = "BoundaryPierShaft", Size = Vector3.new(2.8, 7.5, 2.8), CFrame = CFrame.new(x, 5.65, z), Color = GroundsKit.STONE, Material = Enum.Material.Slate, Parent = ctx.parent }), "TexCoursedStone")
+	ctx.part({ Name = "BoundaryPierCornice", Size = Vector3.new(3.4, 0.9, 3.4), CFrame = CFrame.new(x, 9.85, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "BoundaryPierCap", Size = Vector3.new(2.4, 1.5, 2.4), CFrame = CFrame.new(x, 11.05, z) * CFrame.Angles(0, math.rad(45), 0), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "BoundaryPierFinial", Size = Vector3.new(1.6, 1.6, 1.6), CFrame = CFrame.new(x, 12.6, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Shape = Enum.PartType.Ball, Parent = ctx.parent }).CanCollide = false
+end
+
+-- One bay of it, pier centre to pier centre. Everything laid here is narrower
+-- than the 2.8-stud pier shaft, so the wall, the coping and both rails run
+-- straight through a pier and come out the other side as one continuous line
+-- instead of stopping at every pier with a joint to hide.
+function GroundsKit.boundaryRun(ctx: Ctx, x0: number, z0: number, x1: number, z1: number)
+	local dx, dz = x1 - x0, z1 - z0
+	local length = math.sqrt(dx * dx + dz * dz)
+	if length < 4 then
+		return
+	end
+	local yaw = math.atan2(dx, dz)
+	local mid = CFrame.new((x0 + x1) / 2, 0, (z0 + z1) / 2) * CFrame.Angles(0, yaw, 0)
+	-- founded at -0.6 rather than on grade: the gate apron's own underside is
+	-- at y = 0 and the two runs of the fence pass over the ends of it
+	ctx.tag(ctx.part({ Name = "BoundaryWall", Size = Vector3.new(1.6, 3.2, length), CFrame = mid * CFrame.new(0, 1.0, 0), Color = GroundsKit.STONE_DEEP, Material = Enum.Material.Slate, Parent = ctx.parent }), "TexCoursedStone")
+	ctx.part({ Name = "BoundaryCoping", Size = Vector3.new(2.2, 0.5, length), CFrame = mid * CFrame.new(0, 2.85, 0), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({
+		Name = "BoundaryGuard",
+		Size = Vector3.new(1.0, 10.1, length),
+		CFrame = mid * CFrame.new(0, 5.55, 0),
+		Color = GroundsKit.IRON,
+		Material = Enum.Material.Metal,
+		Transparency = 1,
+		Parent = ctx.parent,
+	})
+	for _, y in { 4.6, 8.7 } do
+		ctx.part({ Name = "BoundaryRail", Size = Vector3.new(0.55, 0.45, length), CFrame = mid * CFrame.new(0, y, 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+	local bars = math.max(2, math.floor(length / 9 + 0.5))
+	for i = 0, bars - 1 do
+		local along = -length / 2 + (i + 0.5) * (length / bars)
+		ctx.part({ Name = "BoundaryBar", Size = Vector3.new(0.4, 6.0, 0.4), CFrame = mid * CFrame.new(0, 6.1, along), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.part({ Name = "BoundarySpear", Size = Vector3.new(0.72, 1.3, 0.72), CFrame = mid * CFrame.new(0, 9.75, along) * CFrame.Angles(0, math.rad(45), 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+end
+
 -- A gate pier: plinth, shaft, cornice and a ball finial.
 function GroundsKit.gatePier(ctx: Ctx, x: number, z: number, height: number)
 	ctx.part({ Name = "PierPlinth", Size = Vector3.new(7.0, 1.6, 7.0), CFrame = CFrame.new(x, 0.9, z), Color = GroundsKit.STONE, Material = Enum.Material.Concrete, Parent = ctx.parent })
@@ -4492,7 +4548,15 @@ end
 -- It is a rectangle now, and a long one: the whole back of the plot -- the
 -- playing fields, the boarding houses, the orchard, the lake -- lives south
 -- of the library, which is where a school this size keeps its land.
-local WALL_W, WALL_N, WALL_S = 420, 320, -520
+-- and it is not a hand-typed rectangle either. CampusPlan.CORE is the built
+-- campus -- (-560, -420) to (590, 560) -- and the four expansion reserves are
+-- the plot minus it, so the core boundary is the one line the treeline, the
+-- rock ridge and the estate fence all want. 420/320/-520 was an 840 x 840
+-- square typed before the drawing existed: it ran 140 studs inside the core
+-- on the east and 160 inside on the north, so the belt of trees meant to
+-- close the horizon grew across the car park and the sports field instead.
+local CORE_X0, CORE_Z0, CORE_X1, CORE_Z1 =
+	CampusPlan.CORE[1], CampusPlan.CORE[2], CampusPlan.CORE[3], CampusPlan.CORE[4]
 
 -- The plot, from CampusPlan. The far ridge of rock is thrown 110 to 170 studs
 -- beyond the wall, and off the south side that put 81 boulders out at z -722,
@@ -4607,19 +4671,18 @@ end
 -- follow the boundary the campus actually has instead of a circle drawn round
 -- the middle of it. With a plot half as long again as it is wide, a circle
 -- either crosses the wall at the ends or leaves the corners bare.
-local function onBoundary(t: number, outX: number, outN: number, outS: number): Vector3
-	local w, d = outX * 2, outN - outS
+local function onBoundary(t: number, x0: number, z0: number, x1: number, z1: number): Vector3
+	local w, d = x1 - x0, z1 - z0
 	local perimeter = (w + d) * 2
 	local at = (t % 1) * perimeter
-	local midZ = (outN + outS) / 2
 	if at < w then
-		return Vector3.new(-outX + at, 0, outN)
+		return Vector3.new(x0 + at, 0, z1)
 	elseif at < w + d then
-		return Vector3.new(outX, 0, outN - (at - w))
+		return Vector3.new(x1, 0, z1 - (at - w))
 	elseif at < w * 2 + d then
-		return Vector3.new(outX - (at - w - d), 0, outS)
+		return Vector3.new(x1 - (at - w - d), 0, z0)
 	end
-	return Vector3.new(-outX, 0, outS + (at - w * 2 - d))
+	return Vector3.new(x0, 0, z0 + (at - w * 2 - d))
 end
 
 local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, number) -> ())
@@ -4627,7 +4690,7 @@ local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, numbe
 	for i = 1, 300 do
 		local out = rng:NextNumber(26, 96)
 		local pos = onBoundary(i / 300 + rng:NextNumber(-0.001, 0.001),
-			WALL_W + out, WALL_N + out, WALL_S - out)
+			CORE_X0 - out, CORE_Z0 - out, CORE_X1 + out, CORE_Z1 + out)
 		local scale = rng:NextNumber(1.1, 2.3)
 		local blocked = false
 		for _, rect in NO_TREES do
@@ -4666,7 +4729,7 @@ local function buildRocks(parent: Instance)
 		-- 110..170, not 110..210: at 210 the ridge stepped outside the plot
 		local out = rng:NextNumber(110, 170)
 		local pos = onBoundary(i / 62 + rng:NextNumber(-0.002, 0.002),
-			WALL_W + out, WALL_N + out, WALL_S - out)
+			CORE_X0 - out, CORE_Z0 - out, CORE_X1 + out, CORE_Z1 + out)
 		local grade = rng:NextNumber(1.2, 2.4)
 		-- 48, not 26: buildRockOutcrop throws its boulders up to 21 studs
 		-- off the seed, so a seed cleared at 26 could still drop stone five
@@ -4692,24 +4755,66 @@ local function buildRocks(parent: Instance)
 	end
 end
 
-local function buildPerimeter(parent: Instance)
-	local W, D = WALL_W * 2, WALL_N - WALL_S
-	local midZ = (WALL_N + WALL_S) / 2
-	for _, spec in {
-		{ size = Vector3.new(W + 2, 6, 2), cf = CFrame.new(0, 3, WALL_S) },
-		{ size = Vector3.new(W + 2, 6, 2), cf = CFrame.new(0, 3, WALL_N) },
-		{ size = Vector3.new(2, 6, D), cf = CFrame.new(-WALL_W, 3, midZ) },
-		{ size = Vector3.new(2, 6, D), cf = CFrame.new(WALL_W, 3, midZ) },
-	} do
-		part({
-			Name = "PerimeterWall",
-			Size = spec.size,
-			CFrame = spec.cf,
-			Color = Color3.fromRGB(150, 100, 70),
-			Material = Enum.Material.Brick,
-			Parent = parent,
-		})
+-- THE ESTATE FENCE, on the drawn core boundary.
+--
+-- What used to be here was buildPerimeter: four brick slabs six studs high on
+-- that 840 x 840 square, in a colour nothing else on the campus uses -- and
+-- nothing ever called it. So the campus had no boundary at all: you walked off
+-- the Great Court, across the reserves and out to the edge of the world.
+--
+-- It is inset from the core by 2.2 studs so not one stud of it stands on
+-- reserved ground: a pier plinth is 3.6 wide and tools/build_check.py fails
+-- the build for a single built part overlapping a reserve.
+--
+-- The one opening is the main gate, which already has its own four piers on
+-- the axis. The fence stops 64 studs either side of it and turns in to meet
+-- them.
+local FENCE_INSET = 2.2
+-- how far short of a corner pier's centre a run stops. Inside the pier's
+-- 3.6-stud plinth, so no two runs meeting at a corner share a plane.
+local FENCE_CORNER = 1.1
+local FENCE_BAY = 60.0
+local function buildCoreFence(parent: Instance)
+	local ctx = { parent = parent, part = part :: any, tag = tag :: any }
+	local x0, z0 = CORE_X0 + FENCE_INSET, CORE_Z0 + FENCE_INSET
+	local x1, z1 = CORE_X1 - FENCE_INSET, CORE_Z1 - FENCE_INSET
+	local built: { [string]: boolean } = {}
+	local function run(ax: number, az: number, bx: number, bz: number, cutStart: number, cutEnd: number)
+		local dx, dz = bx - ax, bz - az
+		local length = math.sqrt(dx * dx + dz * dz)
+		if length < 8 then
+			return
+		end
+		local ux, uz = dx / length, dz / length
+		local bays = math.max(1, math.floor(length / FENCE_BAY + 0.5))
+		local step = length / bays
+		for i = 0, bays - 1 do
+			local a = i * step + (if i == 0 then cutStart else 0)
+			local b = (i + 1) * step - (if i == bays - 1 then cutEnd else 0)
+			Grounds.boundaryRun(ctx, ax + ux * a, az + uz * a, ax + ux * b, az + uz * b)
+		end
+		for i = 0, bays do
+			local at = i * step
+			local px, pz = ax + ux * at, az + uz * at
+			local key = ("%d|%d"):format(math.round(px), math.round(pz))
+			if not built[key] then
+				built[key] = true
+				Grounds.boundaryPier(ctx, px, pz)
+			end
+		end
 	end
+
+	local gap = 64.0
+	-- north, either side of the gate
+	run(x0, z1, -gap, z1, FENCE_CORNER, 0)
+	run(gap, z1, x1, z1, 0, FENCE_CORNER)
+	-- and the two returns that carry it in to the gate's own piers
+	run(-gap, z1, -gap, 546, 0, 0)
+	run(gap, z1, gap, 546, 0, 0)
+	-- south, west, east
+	run(x0, z0, x1, z0, FENCE_CORNER, FENCE_CORNER)
+	run(x0, z0, x0, z1, FENCE_CORNER, FENCE_CORNER)
+	run(x1, z0, x1, z1, FENCE_CORNER, FENCE_CORNER)
 end
 
 -- Real terrain: grass base under the campus + rolling hills outside the walls.
@@ -4753,8 +4858,22 @@ local function buildTerrain()
 	for _, region in {
 		{ cf = CFrame.new(0, -2.3, 0), size = Vector3.new(452, 5, 252) }, -- main building (plan footprint)
 		{ cf = CFrame.new(0, -2.3, -135), size = Vector3.new(104, 5, 26) }, -- gym protrusion
-		{ cf = CFrame.new(-176, -2.3, -232), size = Vector3.new(100, 5, 86) }, -- boys dorm
-		{ cf = CFrame.new(176, -2.3, -232), size = Vector3.new(100, 5, 86) }, -- girls dorm
+		-- The five buildings PlanBuilder draws from CampusPlan. None of them
+		-- had a carve, so terrain grass grew up through every floor in the
+		-- boarding house, the cafeteria, the detention hall, the gymnasium and
+		-- the rooftop block -- and the two entries that WERE here, at
+		-- (+-176, -232), were the two split dorms that the drawing replaced
+		-- with one range: a hundred by eighty-six studs of bare earth on each
+		-- flank of the Dorm Court where two buildings used to be. These are
+		-- the footprints the builder actually lays, measured off the dump,
+		-- not the drawn envelopes -- the Library's envelope is 200 x 96 and
+		-- its building is 92 x 68, so an envelope carve would strip the lawn
+		-- fifty studs clear of the walls.
+		{ cf = CFrame.new(0, -2.3, -310), size = Vector3.new(314, 5, 145) },      -- boarding house
+		{ cf = CFrame.new(320, -2.3, -297.5), size = Vector3.new(215, 5, 116) },  -- cafeteria
+		{ cf = CFrame.new(-397.5, -2.3, 20), size = Vector3.new(190, 5, 135) },   -- detention hall
+		{ cf = CFrame.new(422.5, -2.3, 405), size = Vector3.new(210, 5, 145) },   -- gymnasium
+		{ cf = CFrame.new(212.5, -2.3, 400), size = Vector3.new(130, 5, 125) },   -- secret rooftop block
 		{ cf = CFrame.new(-320, -2.3, -300), size = Vector3.new(96, 5, 72) }, -- library
 		-- the staff lodge, and the turret with the headmaster's spiral in it
 		{ cf = CFrame.new(-300, -2.3, -170), size = Vector3.new(96, 5, 76) },
@@ -9618,8 +9737,12 @@ local function buildPlanting(parent: Instance)
 	-- loose rock along the boundary, where the ridge meets the lawn
 	local rng = Random.new(4100)
 	for i = 1, 40 do
+		-- 18 to 44 studs inside the boundary, not 6 to 22: the estate fence
+		-- stands on that line now, and a boulder with an eleven-stud reach
+		-- thrown six studs off it is a boulder through the railings
 		local pos = onBoundary(i / 40 + rng:NextNumber(-0.004, 0.004),
-			WALL_W - rng:NextNumber(6, 22), WALL_N - rng:NextNumber(6, 22), WALL_S + rng:NextNumber(6, 22))
+			CORE_X0 + rng:NextNumber(18, 44), CORE_Z0 + rng:NextNumber(18, 44),
+			CORE_X1 - rng:NextNumber(18, 44), CORE_Z1 - rng:NextNumber(18, 44))
 		-- one of these landed on the ceremonial axis, between the gate and the
 		-- front doors, which is the one strip of ground on the campus that has
 		-- to stay clear; and three of them landed on the bike track, because
@@ -10566,7 +10689,10 @@ end
 		buildPath(folder, Vector3.new(0, 0, ROAD_Z + 10), Vector3.new(0, 0, gz + 4), 26)
 		tag(part({
 			Name = "GateApron",
-			Size = Vector3.new(half * 4 + 24, 0.4, 26),
+			-- half * 4 + 4, not + 24: at 144 wide it ran to x +-72 and the
+			-- estate fence's terminal piers stand at +-64. 124 covers the
+			-- four gate piers (outer edge +-59.5) and stops short of them.
+			Size = Vector3.new(half * 4 + 4, 0.4, 26),
 			CFrame = CFrame.new(0, 0.2, gz - 4),
 			Color = Color3.fromRGB(120, 120, 128),
 			Material = Enum.Material.Slate,
@@ -10713,6 +10839,7 @@ end
 	furnishDorms(folder, dormBeds)
 	buildHiddenAlley(folder)
 	buildFlagpole(folder)
+	buildCoreFence(folder)
 	buildTreeline(folder, meshTree)
 	buildRocks(folder)
 	-- Feature trees flanking the facade and the wings. The pair at +-58 moved

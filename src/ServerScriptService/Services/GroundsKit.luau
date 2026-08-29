@@ -497,6 +497,62 @@ function GroundsKit.railing(ctx: Ctx, x0: number, z0: number, x1: number, z1: nu
 	end
 end
 
+-- ------------------------------------------------------------- boundary --
+-- The estate fence. Four thousand two hundred studs of it round the built
+-- core, which is why it is not GroundsKit.railing: that one puts a bar every
+-- 2.6 studs, and round the whole core that is sixteen hundred bars before a
+-- single rail. This is the same fence written as bays -- a coursed dwarf wall
+-- with an ashlar coping, two rails and a spear every nine studs standing on
+-- it -- with a pier at every bay end.
+--
+-- The dwarf wall is the only part of it that collides. Railings are half a
+-- stud thick and a player walks straight between them, so each bay also
+-- carries one invisible guard slab: the fence keeps people in, which is the
+-- whole reason a school has one.
+function GroundsKit.boundaryPier(ctx: Ctx, x: number, z: number)
+	ctx.part({ Name = "BoundaryPierPlinth", Size = Vector3.new(3.6, 2.4, 3.6), CFrame = CFrame.new(x, 0.7, z), Color = GroundsKit.STONE_DEEP, Material = Enum.Material.Concrete, Parent = ctx.parent })
+	ctx.tag(ctx.part({ Name = "BoundaryPierShaft", Size = Vector3.new(2.8, 7.5, 2.8), CFrame = CFrame.new(x, 5.65, z), Color = GroundsKit.STONE, Material = Enum.Material.Slate, Parent = ctx.parent }), "TexCoursedStone")
+	ctx.part({ Name = "BoundaryPierCornice", Size = Vector3.new(3.4, 0.9, 3.4), CFrame = CFrame.new(x, 9.85, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "BoundaryPierCap", Size = Vector3.new(2.4, 1.5, 2.4), CFrame = CFrame.new(x, 11.05, z) * CFrame.Angles(0, math.rad(45), 0), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "BoundaryPierFinial", Size = Vector3.new(1.6, 1.6, 1.6), CFrame = CFrame.new(x, 12.6, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Shape = Enum.PartType.Ball, Parent = ctx.parent }).CanCollide = false
+end
+
+-- One bay of it, pier centre to pier centre. Everything laid here is narrower
+-- than the 2.8-stud pier shaft, so the wall, the coping and both rails run
+-- straight through a pier and come out the other side as one continuous line
+-- instead of stopping at every pier with a joint to hide.
+function GroundsKit.boundaryRun(ctx: Ctx, x0: number, z0: number, x1: number, z1: number)
+	local dx, dz = x1 - x0, z1 - z0
+	local length = math.sqrt(dx * dx + dz * dz)
+	if length < 4 then
+		return
+	end
+	local yaw = math.atan2(dx, dz)
+	local mid = CFrame.new((x0 + x1) / 2, 0, (z0 + z1) / 2) * CFrame.Angles(0, yaw, 0)
+	-- founded at -0.6 rather than on grade: the gate apron's own underside is
+	-- at y = 0 and the two runs of the fence pass over the ends of it
+	ctx.tag(ctx.part({ Name = "BoundaryWall", Size = Vector3.new(1.6, 3.2, length), CFrame = mid * CFrame.new(0, 1.0, 0), Color = GroundsKit.STONE_DEEP, Material = Enum.Material.Slate, Parent = ctx.parent }), "TexCoursedStone")
+	ctx.part({ Name = "BoundaryCoping", Size = Vector3.new(2.2, 0.5, length), CFrame = mid * CFrame.new(0, 2.85, 0), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({
+		Name = "BoundaryGuard",
+		Size = Vector3.new(1.0, 10.1, length),
+		CFrame = mid * CFrame.new(0, 5.55, 0),
+		Color = GroundsKit.IRON,
+		Material = Enum.Material.Metal,
+		Transparency = 1,
+		Parent = ctx.parent,
+	})
+	for _, y in { 4.6, 8.7 } do
+		ctx.part({ Name = "BoundaryRail", Size = Vector3.new(0.55, 0.45, length), CFrame = mid * CFrame.new(0, y, 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+	local bars = math.max(2, math.floor(length / 9 + 0.5))
+	for i = 0, bars - 1 do
+		local along = -length / 2 + (i + 0.5) * (length / bars)
+		ctx.part({ Name = "BoundaryBar", Size = Vector3.new(0.4, 6.0, 0.4), CFrame = mid * CFrame.new(0, 6.1, along), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.part({ Name = "BoundarySpear", Size = Vector3.new(0.72, 1.3, 0.72), CFrame = mid * CFrame.new(0, 9.75, along) * CFrame.Angles(0, math.rad(45), 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+end
+
 -- A gate pier: plinth, shaft, cornice and a ball finial.
 function GroundsKit.gatePier(ctx: Ctx, x: number, z: number, height: number)
 	ctx.part({ Name = "PierPlinth", Size = Vector3.new(7.0, 1.6, 7.0), CFrame = CFrame.new(x, 0.9, z), Color = GroundsKit.STONE, Material = Enum.Material.Concrete, Parent = ctx.parent })
