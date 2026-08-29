@@ -10761,6 +10761,76 @@ local function wallLantern(parent: Instance, at: CFrame)
 	lamp.Parent = core
 end
 
+-- Hang lanterns along one wall face. `yaw` turns the fitting's local +Z out
+-- of the wall; `inset` keeps them off the corners, where a quoin is.
+local function lanternRun(parent: Instance, ax: number, az: number, bx: number, bz: number, yaw: number, y: number, spacing: number, inset: number)
+	local dx, dz = bx - ax, bz - az
+	local run = math.sqrt(dx * dx + dz * dz)
+	local usable = run - inset * 2
+	if usable < spacing then
+		-- A short elevation still gets one, in the middle. Returning here left
+		-- the library's two 68-stud gable ends -- 1768 square studs each --
+		-- with nothing on them, because 68 less two 18-stud insets is 32 and
+		-- the spacing is 34.
+		if run >= 20 then
+			wallLantern(parent, CFrame.new(ax + dx * 0.5, y, az + dz * 0.5) * CFrame.Angles(0, math.rad(yaw), 0))
+		end
+		return
+	end
+	local n = math.max(1, math.floor(usable / spacing))
+	for i = 0, n do
+		local t = (inset + usable * i / n) / run
+		wallLantern(parent, CFrame.new(ax + dx * t, y, az + dz * t) * CFrame.Angles(0, math.rad(yaw), 0))
+	end
+end
+
+-- Every exterior elevation of the ring buildings, lit.
+--
+-- tools/elevation_check.py measures this the way nightlight_check measures the
+-- ground: it samples each exposed wall face and sums the light reaching it,
+-- cosine-weighted against the WALL's normal. Twenty-one elevations came back
+-- at 100% dark -- the back and both sides of the gymnasium, the cafeteria, the
+-- detention hall and the rooftop block. Every window in them was lit and every
+-- walk in front of them was lit, and they still read as silhouettes, because
+-- every fitting on this campus stands on the ground and throws its light away
+-- from the buildings.
+--
+-- Thirteen studs up, which is above the eleven-stud door height, so a run
+-- across an elevation never hangs a lantern in a doorway.
+local function ringLanterns(parent: Instance)
+	local specs = {
+		{ name = "Gymnasium", y = 13.0, skipNorth = false },
+		{ name = "Secret Rooftop", y = 13.0, skipNorth = false },
+		{ name = "Cafeteria", y = 13.0, skipNorth = false },
+		{ name = "Detention Hall", y = 13.0, skipNorth = false },
+		-- the dorms' courtyard face already carries the twelve bay lanterns
+		{ name = "Student Dorms", y = 13.0, skipNorth = true },
+	}
+	local o = CampusPlan.EXTERIOR_WALL / 2
+	for _, spec in specs do
+		local b = CampusPlan.building(spec.name)
+		if b then
+			local x0, z0, x1, z1 = b.rect[1], b.rect[2], b.rect[3], b.rect[4]
+			lanternRun(parent, x0, z0 - o, x1, z0 - o, 180, spec.y, 34, 20)
+			if not spec.skipNorth then
+				lanternRun(parent, x0, z1 + o, x1, z1 + o, 0, spec.y, 34, 20)
+			end
+			lanternRun(parent, x0 - o, z0, x0 - o, z1, -90, spec.y, 34, 20)
+			lanternRun(parent, x1 + o, z0, x1 + o, z1, 90, spec.y, 34, 20)
+		end
+	end
+	-- The library is NOT drawn by PlanBuilder, and its walls are nowhere near
+	-- the rectangle CampusPlan gives it: the drawing reserves 200 by 96 at
+	-- (-420, -348) to (-220, -252) and buildLibrary puts a 94 by 70 building
+	-- inside it, walls two studs thick at x -366 and -274 and z -334 and -266.
+	-- Running these off lib.rect hangs twelve lanterns in mid-air fifty studs
+	-- off the building, which is what the first version of this did.
+	lanternRun(parent, -366, -335, -274, -335, 180, 13.0, 34, 18)
+	lanternRun(parent, -366, -265, -274, -265, 0, 13.0, 34, 18)
+	lanternRun(parent, -367, -334, -367, -266, -90, 13.0, 34, 18)
+	lanternRun(parent, -273, -334, -273, -266, 90, 13.0, 34, 18)
+end
+
 -- Wainscot: a plinth, a panel field broken by stiles, and a dado rail on top.
 -- It is the cheapest honest way to stop an interior wall reading as one flat
 -- colour from floor to ceiling, and every room in the reference art has it.
@@ -12561,6 +12631,7 @@ end
 	for _, lx in { -138.4, -115.4, -92.3, -69.3, -46.2, -21.0, 21.0, 46.2, 69.3, 92.3, 115.4, 138.4 } do
 		wallLantern(folder, CFrame.new(lx, 12.4, -245.9))
 	end
+	ringLanterns(folder)
 	buildHiddenAlley(folder)
 	buildFlagpole(folder)
 	buildCoreFence(folder)
