@@ -153,19 +153,29 @@ def main():
                     continue
                 bad.append((pa["n"], pb["n"], round(area), [round(v) for v in pa["p"]]))
 
-    counts = defaultdict(lambda: [0, None])
+    # Ranked by AREA, not by how many pairs a name makes.
+    #
+    # Sorted by count, the worst thing on the campus was invisible: the upper
+    # floor's ceiling shared a plane with the floor above it across nearly
+    # sixty thousand square studs, and that is ONE pair per slab, so it sat
+    # below a dozen names that each make a handful of tiny ones. What a person
+    # sees flickering is area.
+    counts = defaultdict(lambda: [0, 0.0, None])
     for a, b, area, at in bad:
         pair = tuple(sorted((a, b)))
         counts[pair][0] += 1
-        if counts[pair][1] is None:
-            counts[pair][1] = (area, at)
+        counts[pair][1] += area
+        if counts[pair][2] is None:
+            counts[pair][2] = at
 
     print(f"{len(flats)} panels checked on all three axes")
     if not bad:
         print("PASS - nothing shares a plane")
         return 0
-    for pair, (n, (area, at)) in sorted(counts.items(), key=lambda kv: -kv[1][0])[:15]:
-        print(f"  {n:4d}x  {pair[0]} / {pair[1]}  ~{area} sq studs, e.g. at {at}")
+    total = sum(v[1] for v in counts.values())
+    for pair, (n, area, at) in sorted(counts.items(), key=lambda kv: -kv[1][1])[:15]:
+        print(f"  {area:10,.0f} sq studs  {n:4d}x  {pair[0]} / {pair[1]}  e.g. at {at}")
+    print(f"  {total:,.0f} square studs of surface fighting in total")
     print(f"FAIL - {len(bad)} overlapping coplanar pairs; these flicker")
     return 1
 

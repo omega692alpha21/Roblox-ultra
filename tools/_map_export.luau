@@ -2870,6 +2870,30 @@ local function claimGround(pos: Vector3, radius: number): boolean
 	return true
 end
 
+-- THE LAYER LADDER.
+--
+-- Every one of these was found by tools/zfight_check.py and every one was the
+-- same mistake: something drawn ON a surface given exactly that surface's
+-- height. The upper floor's ceiling against the deck above it -- sixty
+-- thousand square studs across the whole school. Eight carpets against the
+-- deck they lie on. The court paving against the plaza it covers. Two courts
+-- against their own playing surfaces. A corridor with three surfaces inside a
+-- fiftieth of a stud of each other.
+--
+-- A depth buffer cannot separate two faces closer than about a hundredth of a
+-- stud, and the result is not a small artefact: the two flicker against each
+-- other in bands as the camera moves. So there is a ladder, the rungs are far
+-- enough apart to be safe, and anything laid on a surface takes the next rung
+-- up rather than a number that looked about right.
+local Layer = {
+	ground = 0.20,   -- terrain-level: lawn, bare earth, the bed of everything
+	paving = 0.40,   -- slabs, plazas, aprons, court surfaces
+	path = 0.58,     -- walks and paths crossing paving
+	marking = 0.74,  -- lines, joints, stripes, painted bays
+	inlay = 0.90,    -- anything drawn on a marking
+}
+local _ = Layer
+
 local function insidePlot(pos: Vector3, margin: number): boolean
 	return pos.X > PLOT_MIN_X + margin and pos.X < PLOT_MAX_X - margin
 		and pos.Z > PLOT_MIN_Z + margin and pos.Z < PLOT_MAX_Z - margin
@@ -4841,7 +4865,11 @@ local function buildGrandFacade(parent: Instance)
 	end
 
 	-- ---- entrance plaza, lamps and planters ----
-	part({ Name = "EntrancePlaza", Size = Vector3.new(120, 0.5, 46), CFrame = CFrame.new(0, 0.15, Z + 40), Color = Color3.fromRGB(186, 182, 174), Material = Enum.Material.Concrete, Parent = parent })
+	-- Dropped from 0.15 to 0.05. The Great Court's paving is laid over this and
+	-- the two topped out at exactly 0.40, so 5,520 square studs of the walk up
+	-- to the front doors flickered. The plaza is the bed; the court paving lies
+	-- on it.
+	part({ Name = "EntrancePlaza", Size = Vector3.new(120, 0.5, 46), CFrame = CFrame.new(0, 0.05, Z + 40), Color = Color3.fromRGB(186, 182, 174), Material = Enum.Material.Concrete, Parent = parent })
 	tag(part({ Name = "PlazaWalk", Size = Vector3.new(26, 0.6, 34), CFrame = CFrame.new(0, 0.2, Z + 40), Color = Color3.fromRGB(206, 200, 190), Material = Enum.Material.Concrete, Parent = parent }), "TexBlueStone")
 	for _, lx in { -54, -30, 30, 54 } do
 		lampPost(parent, lx, Z + 34, { short = true, range = 40 })
@@ -5017,40 +5045,57 @@ local function buildFrontGrounds(parent: Instance)
 	local ASPHALT = Color3.fromRGB(64, 66, 72)
 	local CURB = Color3.fromRGB(198, 194, 186)
 
-	-- parking apron either side of the entrance plaza
-	for _, sgn in { -1, 1 } do
-		local px = sgn * 132
-		part({ Name = "ParkingLot", Size = Vector3.new(120, 0.5, 62), CFrame = CFrame.new(px, 0.15, Z + 46), Color = ASPHALT, Material = Enum.Material.Asphalt, Parent = parent })
-		part({ Name = "ParkingCurb", Size = Vector3.new(122, 1.1, 2), CFrame = CFrame.new(px, 0.5, Z + 15.4), Color = CURB, Material = Enum.Material.Concrete, Parent = parent })
-		-- painted bays
-		for i = 0, 7 do
-			part({ Name = "ParkingLine", Size = Vector3.new(0.6, 0.15, 26), CFrame = CFrame.new(px - 56 + i * 15, 0.42, Z + 34), Color = Color3.fromRGB(232, 228, 210), Material = Enum.Material.SmoothPlastic, Parent = parent })
-		end
-		-- parked cars: body, cabin, wheels
-		local carColors = {
-			Color3.fromRGB(196, 62, 58), Color3.fromRGB(52, 96, 176),
-			Color3.fromRGB(226, 226, 230), Color3.fromRGB(64, 148, 108),
-			Color3.fromRGB(228, 176, 66),
-		}
-		for i = 0, 4 do
-			local cx = px - 48 + i * 15
-			local col = carColors[(i + (sgn > 0 and 2 or 0)) % #carColors + 1]
-			part({ Name = "CarBody", Size = Vector3.new(7.4, 3.4, 15), CFrame = CFrame.new(cx, 2.4, Z + 34), Color = col, Material = Enum.Material.SmoothPlastic, Parent = parent })
-			part({ Name = "CarCabin", Size = Vector3.new(6.8, 3.2, 7.6), CFrame = CFrame.new(cx, 5.4, Z + 34.6), Color = col, Material = Enum.Material.SmoothPlastic, Parent = parent })
-			part({ Name = "CarGlass", Size = Vector3.new(6.9, 2.2, 6.4), CFrame = CFrame.new(cx, 5.8, Z + 34.6), Color = Color3.fromRGB(126, 158, 178), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
-			for _, wz in { Z + 28.4, Z + 39.6 } do
-				for _, wx in { cx - 3.5, cx + 3.5 } do
-					part({ Name = "CarWheel", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.2, 2.8, 2.8), CFrame = CFrame.new(wx, 1.4, wz) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.SmoothPlastic, Parent = parent })
-				end
+	-- THE CAR PARK, moved east to where it is drawn.
+	--
+	-- It was two aprons flanking the entrance plaza at x +-132, and they were
+	-- wrong twice over. A car park across the walk from the gate to the front
+	-- doors is the same fault as the bike racks and the wood: back-of-house on
+	-- the ceremonial approach. And it lay under the Great Court -- 4,216 square
+	-- yards of tarmac in exactly the plane of the court paving, the largest
+	-- single patch of flickering surface on the campus.
+	--
+	-- CampusPlan puts the Parking Lot at (430, 40), 190 x 150, which is where
+	-- the reference aerial has it: off to one side, reached from the road, out
+	-- of the view of the school.
+	do
+		local LOT_X, LOT_Z = 430, 40
+		part({ Name = "ParkingLot", Size = Vector3.new(180, 0.5, 140), CFrame = CFrame.new(LOT_X, 0.15, LOT_Z), Color = ASPHALT, Material = Enum.Material.Asphalt, Parent = parent })
+		tag(part({ Name = "ParkingCurb", Size = Vector3.new(182, 1.1, 2), CFrame = CFrame.new(LOT_X, 0.5, LOT_Z - 70), Color = CURB, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar")
+		tag(part({ Name = "ParkingCurb", Size = Vector3.new(182, 1.1, 2), CFrame = CFrame.new(LOT_X, 0.5, LOT_Z + 70), Color = CURB, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar")
+		-- two ranks of bays back to back, the way a car park is actually laid out
+		for _, rank in { -1, 1 } do
+			local rz = LOT_Z + rank * 34
+			for i = 0, 10 do
+				part({ Name = "ParkingLine", Size = Vector3.new(0.6, 0.15, 26), CFrame = CFrame.new(LOT_X - 75 + i * 15, 0.42, rz), Color = Color3.fromRGB(232, 228, 210), Material = Enum.Material.SmoothPlastic, Parent = parent })
 			end
-			part({ Name = "CarLight", Size = Vector3.new(5.6, 0.8, 0.4), CFrame = CFrame.new(cx, 2.8, Z + 26.6), Color = Color3.fromRGB(255, 246, 214), Material = Enum.Material.Neon, Parent = parent })
+			local carColors = {
+				Color3.fromRGB(196, 62, 58), Color3.fromRGB(52, 96, 176),
+				Color3.fromRGB(226, 226, 230), Color3.fromRGB(64, 148, 108),
+				Color3.fromRGB(228, 176, 66),
+			}
+			for i = 0, 5 do
+				local cx = LOT_X - 68 + i * 15
+				local col = carColors[(i + (rank > 0 and 2 or 0)) % #carColors + 1]
+				part({ Name = "CarBody", Size = Vector3.new(7.4, 3.4, 15), CFrame = CFrame.new(cx, 2.4, rz), Color = col, Material = Enum.Material.SmoothPlastic, Parent = parent })
+				part({ Name = "CarCabin", Size = Vector3.new(6.8, 3.2, 7.6), CFrame = CFrame.new(cx, 5.4, rz + rank * 0.6), Color = col, Material = Enum.Material.SmoothPlastic, Parent = parent })
+				part({ Name = "CarGlass", Size = Vector3.new(6.9, 2.2, 6.4), CFrame = CFrame.new(cx, 5.8, rz + rank * 0.6), Color = Color3.fromRGB(126, 158, 178), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+				for _, wz in { rz - 5.6, rz + 5.6 } do
+					for _, wx in { cx - 3.5, cx + 3.5 } do
+						part({ Name = "CarWheel", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.2, 2.8, 2.8), CFrame = CFrame.new(wx, 1.4, wz) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.SmoothPlastic, Parent = parent })
+					end
+				end
+				part({ Name = "CarLight", Size = Vector3.new(5.6, 0.8, 0.4), CFrame = CFrame.new(cx, 2.8, rz - rank * 7.4), Color = Color3.fromRGB(255, 246, 214), Material = Enum.Material.Neon, Parent = parent })
+			end
 		end
-		-- lamp standards in the lot
-		for _, lz in { Z + 26, Z + 60 } do
-			lampPost(parent, px + 58, lz, { range = 60, brightness = 2.6 })
-			part({ Name = "LotLampArm", Size = Vector3.new(5, 0.8, 0.8), CFrame = CFrame.new(px + 55, 21.6, lz), Color = Color3.fromRGB(72, 74, 80), Material = Enum.Material.Metal, Parent = parent })
-			part({ Name = "LotLampHead", Size = Vector3.new(3.4, 1, 2), CFrame = CFrame.new(px + 52.6, 21, lz), Color = Color3.fromRGB(255, 246, 220), Material = Enum.Material.Neon, Parent = parent })
+		-- Lamp masts INSIDE the lot. The far-side rank stood at LOT_X + 84,
+		-- which is four studs past the tarmac and into the boundary planting,
+		-- so one of them grew out of an oak.
+		for _, lz in { LOT_Z - 52, LOT_Z + 52 } do
+			for _, lx in { LOT_X - 62, LOT_X + 62 } do
+				lampPost(parent, lx, lz, { range = 62, brightness = 2.4 })
+			end
 		end
+		lampPost(parent, LOT_X, LOT_Z, { range = 58, brightness = 2.2 })
 	end
 
 	-- Bike racks OFF the ceremonial approach.
@@ -5198,7 +5243,7 @@ local function detailCorridor(parent: Instance)
 		part({ Name = "CeilingPanel", Size = Vector3.new(10, 0.3, 6), CFrame = CFrame.new(-208 + i * 16, 15.1, 65), Color = Color3.fromRGB(255, 250, 236), Material = Enum.Material.Neon, Parent = parent })
 	end
 	-- tiled centre band on the floor
-	tag(part({ Name = "CorridorTileBand", Size = Vector3.new(440, 0.12, 10), CFrame = CFrame.new(0, 0.08, 65), Color = Color3.fromRGB(212, 208, 198), Material = Enum.Material.CeramicTiles, Parent = parent }), "TexFloorTile")
+	tag(part({ Name = "CorridorTileBand", Size = Vector3.new(440, 0.12, 10), CFrame = CFrame.new(0, 0.09, 65), Color = Color3.fromRGB(212, 208, 198), Material = Enum.Material.CeramicTiles, Parent = parent }), "TexFloorTile")
 end
 
 -- ================= THE UPPER FLOOR =================
@@ -5387,7 +5432,13 @@ local function buildUpperFloor(parent: Instance)
 		tag(part({
 			Name = "UpperSoffit" .. index,
 			Size = Vector3.new(x1 - x0, 0.6, z1 - z0),
-			CFrame = CFrame.new((x0 + x1) / 2, UPPER_Y - 1.3, (z0 + z1) / 2),
+			-- 1.15, not 1.3. The deck spans UPPER_Y-1 to UPPER_Y and the soffit
+			-- spanned UPPER_Y-1.6 to UPPER_Y-1, so its top face landed EXACTLY
+			-- on the deck's underside: nearly sixty thousand square studs of
+			-- ceiling fighting the floor above it, over the whole school. It
+			-- was invisible in a list sorted by how MANY pairs each name makes,
+			-- because it is one enormous pair per slab.
+			CFrame = CFrame.new((x0 + x1) / 2, UPPER_Y - 1.15, (z0 + z1) / 2),
 			Color = Color3.fromRGB(238, 234, 224),
 			Parent = parent,
 		}), "TexCeiling")
@@ -5418,7 +5469,11 @@ local function buildUpperFloor(parent: Instance)
 		tag(part({
 			Name = room.name .. "Floor",
 			Size = Vector3.new(room.size.X, 0.4, room.size.Y),
-			CFrame = CFrame.new(room.center) * CFrame.new(0, 0.2, 0),
+			-- 0.08, not 0.2. At 0.2 the carpet's underside sat exactly on the
+			-- deck's top face and every upper room's floor fought the slab it
+			-- was laid on -- eight rooms, two to three thousand square studs
+			-- each. It is bedded INTO the deck now and still stands proud.
+			CFrame = CFrame.new(room.center) * CFrame.new(0, 0.08, 0),
 			Color = room.floor,
 			Material = Enum.Material.Carpet,
 			Parent = parent,
@@ -5664,7 +5719,9 @@ local function furnishSubjectRooms(parent: Instance)
 		tag(part({
 			Name = "GreenhouseGround",
 			Size = Vector3.new(34, 0.6, 32),
-			CFrame = CFrame.new(cx, 0.35, cz),
+			-- 0.28, not 0.35: the courtyard lawn tops out at 0.05 and this
+			-- began there, so the bed and the grass round it flickered
+			CFrame = CFrame.new(cx, 0.28, cz),
 			Color = Color3.fromRGB(96, 148, 74),
 			Material = Enum.Material.Grass,
 			Parent = parent,
@@ -7146,7 +7203,9 @@ local function buildCourt(parent: Instance, centre: Vector3, kind: string, surfa
 	local pad = part({
 		Name = kind .. "Court",
 		Size = Vector3.new(W + 6, 0.4, D + 6),
-		CFrame = CFrame.new(centre + Vector3.new(0, 0.2, 0)),
+		-- 0.14, not 0.2: the pad and the playing surface laid on it both
+		-- started at y 0, so 1,900 square studs of each court fought itself.
+		CFrame = CFrame.new(centre + Vector3.new(0, 0.14, 0)),
 		Color = accent,
 		Material = Enum.Material.SmoothPlastic,
 		Parent = parent,
@@ -7825,7 +7884,10 @@ end
 	part({
 		Name = "HallwayStripe",
 		Size = Vector3.new(440, 0.2, 2.4),
-		CFrame = CFrame.new(0, 0.11, 65),
+		-- 0.22, not 0.11. The floor tops out at 0, the tile band starts at
+		-- 0.02 and this started at 0.01, so a 440-stud run of corridor had
+		-- three surfaces inside a fiftieth of a stud of each other.
+		CFrame = CFrame.new(0, 0.22, 65),
 		Color = Palette.BusYellow,
 		Material = Enum.Material.Neon,
 		Parent = folder,

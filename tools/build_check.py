@@ -21,6 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # Back-of-house. None of it belongs anywhere on the ceremonial walk, at any
 # distance from the axis.
 BLOCKERS = (
+    "Parking", "Car", "Tarmac", "Asphalt",
     "Shed", "Skip", "Dumpster", "Compost", "Goal", "Hoop", "Bleacher", "Dugout",
     "Scoreboard", "TrackLane", "FieldTurf", "Bunting", "NetPost", "Crop",
 )
