@@ -10677,6 +10677,126 @@ local function barredScreen(parent: Instance, x0: number, x1: number, z: number,
 	end
 end
 
+-- Wainscot: a plinth, a panel field broken by stiles, and a dado rail on top.
+-- It is the cheapest honest way to stop an interior wall reading as one flat
+-- colour from floor to ceiling, and every room in the reference art has it.
+-- `out` is which way the wall faces: +1 means the room is at greater z (or x).
+local function wainscot(parent: Instance, x0: number, z0: number, x1: number, z1: number, out: number, height: number)
+	local alongX = math.abs(x1 - x0) > math.abs(z1 - z0)
+	local run = if alongX then x1 - x0 else z1 - z0
+	local mid = if alongX then (x0 + x1) / 2 else (z0 + z1) / 2
+	local at = if alongX then z0 else x0
+	local function place(name: string, thick: number, high: number, span: number, y: number, along: number, offset: number)
+		local px = if alongX then along else at + offset * out
+		local pz = if alongX then at + offset * out else along
+		part({
+			Name = name,
+			Size = if alongX then Vector3.new(span, high, thick) else Vector3.new(thick, high, span),
+			CFrame = CFrame.new(px, y, pz),
+			Color = if name == "WainscotField" then Color3.fromRGB(126, 92, 62) else Color3.fromRGB(96, 66, 44),
+			Material = Enum.Material.WoodPlanks,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	place("WainscotPlinth", 0.9, 0.9, math.abs(run), 0.45, mid, 0.45)
+	place("WainscotField", 0.6, height - 1.6, math.abs(run), height / 2, mid, 0.3)
+	place("WainscotRail", 1.1, 0.7, math.abs(run), height - 0.35, mid, 0.55)
+	local stiles = math.max(2, math.round(math.abs(run) / 9))
+	for i = 0, stiles do
+		local along = math.min(x0, x1) + math.abs(run) * i / stiles
+		if not alongX then
+			along = math.min(z0, z1) + math.abs(run) * i / stiles
+		end
+		place("WainscotStile", 0.9, height - 1.6, 1.2, height / 2, along, 0.45)
+	end
+end
+
+-- A radiator under a window: brackets, fins, a top rail and a valve. Twelve
+-- parts, and the one object that says a room is heated rather than modelled.
+local function radiator(parent: Instance, x: number, z: number, face: number)
+	local at = CFrame.new(x, 0, z) * CFrame.Angles(0, math.rad(face), 0)
+	for _, sx in { -3.4, 3.4 } do
+		part({ Name = "RadiatorBracket", Size = Vector3.new(0.6, 0.9, 1.6), CFrame = at * CFrame.new(sx, 0.45, 0), Color = Color3.fromRGB(58, 60, 64), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	for i = 0, 8 do
+		part({ Name = "RadiatorFin", Size = Vector3.new(0.6, 4.2, 1.4), CFrame = at * CFrame.new(-3.6 + i * 0.9, 3.0, 0), Color = Color3.fromRGB(206, 204, 196), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "RadiatorRail", Size = Vector3.new(8.4, 0.5, 1.6), CFrame = at * CFrame.new(0, 5.3, 0), Color = Color3.fromRGB(186, 184, 176), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "RadiatorValve", Size = Vector3.new(0.5, 1.4, 1.4), CFrame = at * CFrame.new(4.3, 1.4, 0) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(168, 122, 62), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "RadiatorPipe", Size = Vector3.new(0.5, 2.4, 0.5), CFrame = at * CFrame.new(-4.3, 1.2, 0), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(146, 150, 156), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+end
+
+-- A bowstring truss across the sports hall: bottom chord, cambered top chord
+-- in five segments, verticals and diagonals. A hall this size with a flat
+-- painted ceiling and nothing under it is a warehouse; the trusses are what
+-- make it a gym.
+local function roofTruss(parent: Instance, z: number, x0: number, x1: number, y: number)
+	local run = x1 - x0
+	local mid = (x0 + x1) / 2
+	part({ Name = "TrussChord", Size = Vector3.new(run, 1.0, 1.0), CFrame = CFrame.new(mid, y, z), Color = Color3.fromRGB(72, 78, 86), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	local N = 8
+	local function camber(t: number): number
+		return y + 3.4 * math.sin(t * math.pi)
+	end
+	for i = 0, N - 1 do
+		local t0, t1 = i / N, (i + 1) / N
+		local ax, az = x0 + run * t0, camber(t0)
+		local bx, bz = x0 + run * t1, camber(t1)
+		local dx, dy = bx - ax, bz - az
+		local len = math.sqrt(dx * dx + dy * dy)
+		part({
+			Name = "TrussTop",
+			Size = Vector3.new(len, 0.9, 0.9),
+			CFrame = CFrame.new((ax + bx) / 2, (az + bz) / 2, z) * CFrame.Angles(0, 0, math.atan2(dy, dx)),
+			Color = Color3.fromRGB(72, 78, 86),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	for i = 1, N - 1 do
+		local t = i / N
+		local px = x0 + run * t
+		local high = camber(t) - y
+		part({ Name = "TrussPost", Size = Vector3.new(0.6, high, 0.6), CFrame = CFrame.new(px, y + high / 2, z), Color = Color3.fromRGB(96, 102, 110), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		local nx = x0 + run * ((i + 1) / N)
+		local nh = camber((i + 1) / N) - y
+		local dx, dy = nx - px, nh
+		local len = math.sqrt(dx * dx + dy * dy)
+		part({
+			Name = "TrussWeb",
+			Size = Vector3.new(len, 0.45, 0.45),
+			CFrame = CFrame.new((px + nx) / 2, y + nh / 2, z) * CFrame.Angles(0, 0, math.atan2(dy, dx)),
+			Color = Color3.fromRGB(96, 102, 110),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
+	end
+end
+
+-- A hanging fitting that actually lights the room. The lamp KINDS in
+-- PropService are meshes and nothing else -- no PointLight, no emissive leaf
+-- -- so a room hung with twelve pendants was a room with twelve dark objects
+-- in it and one ceiling panel doing all the work. This drops the mesh, a lit
+-- shade under it and the light itself.
+local function hangLight(parent: Instance, kind: string, x: number, y: number, z: number, range: number)
+	prop(kind, CFrame.new(x, y, z), { hang = true })
+	local shade = part({
+		Name = "FittingGlow",
+		Size = Vector3.new(2.6, 0.5, 2.6),
+		CFrame = CFrame.new(x, y - 1.9, z),
+		Color = Color3.fromRGB(255, 226, 176),
+		Material = Enum.Material.Neon,
+		Transparency = 0.25,
+		Parent = parent,
+	})
+	shade.CanCollide = false
+	local lamp = Instance.new("PointLight")
+	lamp.Brightness = 1.5
+	lamp.Range = range
+	lamp.Color = Color3.fromRGB(255, 224, 178)
+	lamp.Parent = shade
+end
+
 local function furnishRingBuildings(parent: Instance)
 	----------------------------------------------------------------- cafeteria
 	-- Two dining halls either side of the partition at z -300, a kitchen and a
@@ -10699,10 +10819,19 @@ local function furnishRingBuildings(parent: Instance)
 	end
 	prop("BinLarge", CFrame.new(337, 0, -337))
 	prop("BinLarge", CFrame.new(337, 0, -263))
-	noticeBoard(parent, "CafeteriaBoard", CFrame.new(411.4, 9, -320) * CFrame.Angles(0, math.rad(-90), 0), 10, 6)
+	noticeBoard(parent, "CafeteriaBoard", CFrame.new(411.4, 11.5, -320) * CFrame.Angles(0, math.rad(-90), 0), 10, 6)
+	-- panelling and heating on the three walls of the halls, so a dining room
+	-- is not four flat colours and a floor
+	wainscot(parent, 336, -340, 408, -340, 1, 7)
+	wainscot(parent, 336, -260, 408, -260, -1, 7)
+	wainscot(parent, 412, -336, 412, -264, -1, 7)
+	for _, rx in { 344, 368, 392 } do
+		radiator(parent, rx, -338, 0)
+		radiator(parent, rx, -262, 180)
+	end
 	for _, lz in { -330, -312, -290, -272 } do
 		for _, lx in { 352, 372, 392 } do
-			prop("PendantLamp", CFrame.new(lx, 16.4, lz), { hang = true })
+			hangLight(parent, "PendantLamp", lx, 16.4, lz, 42)
 		end
 	end
 
@@ -10731,6 +10860,9 @@ local function furnishRingBuildings(parent: Instance)
 	prop("WoodenCuttingBoard", CFrame.new(271, 3.7, -318))
 	prop("BinLarge", CFrame.new(294, 0, -304))
 	prop("WetFloorSign", CFrame.new(296, 0, -318))
+	for _, lx in { 244, 264, 284 } do
+		hangLight(parent, "CeilingLampDisc", lx, 16.4, -320, 38)
+	end
 
 	-- the servery, on the corridor wall the queue stands against
 	serveryCounter(parent, 295, -296, -264)
@@ -10741,6 +10873,9 @@ local function furnishRingBuildings(parent: Instance)
 	prop("WoodenCrate", CFrame.new(246, 0, -264))
 	prop("HandTruck", CFrame.new(252, 0, -264))
 	prop("Extinguisher", CFrame.new(298, 0, -262))
+	for _, lx in { 244, 264, 284 } do
+		hangLight(parent, "CeilingLampDisc", lx, 16.4, -280, 38)
+	end
 
 	---------------------------------------------------------- detention hall
 	-- Rows of single desks facing the warden, the way a detention room is laid
@@ -10759,6 +10894,9 @@ local function furnishRingBuildings(parent: Instance)
 	prop("Clock", CFrame.new(-430, 12, -31.2))
 	prop("Bin", CFrame.new(-474, 0, -29))
 	noticeBoard(parent, "DetentionRules", CFrame.new(-455, 10, -31.4), 12, 7)
+	for _, lx in { -462, -438 } do
+		hangLight(parent, "CeilingLampDisc", lx, 14.4, -14, 40)
+	end
 
 	-- the holding room, behind bars
 	barredScreen(parent, -396, -374, -14, 18)
@@ -10773,18 +10911,28 @@ local function furnishRingBuildings(parent: Instance)
 	end
 	prop("Clock", CFrame.new(-360, 12, -30.2))
 	prop("Bin", CFrame.new(-328, 0, -28))
+	for _, lx in { -384, -350 } do
+		hangLight(parent, "CeilingLampDisc", lx, 14.4, -14, 40)
+	end
 
 	-- the corridors
 	for _, cx in { -462, -430 } do
 		trophyCase(parent, cx, 6.4, 0)
 	end
 	noticeBoard(parent, "DetentionNotices", CFrame.new(-446, 9, 34.4) * CFrame.Angles(0, math.pi, 0), 14, 7)
+	wainscot(parent, -473, 36, -327, 36, -1, 7)
+	for _, rx in { -416, -376, -344 } do
+		radiator(parent, rx, 33, 180)
+	end
 	for _, bx in { -390, -360, -332 } do
 		prop("Bench", CFrame.new(bx, 0, 7.4))
 	end
 	prop("Extinguisher", CFrame.new(-404, 0, 33))
 	prop("PottedPlant", CFrame.new(-326, 0, 32))
 	prop("WetFloorSign", CFrame.new(-410, 0, 20))
+	for _, lx in { -460, -424, -388, -352 } do
+		hangLight(parent, "CeilingLampBox", lx, 14.4, 20, 38)
+	end
 
 	-- the warden's office
 	prop("OfficeDesk", CFrame.new(-440, 0, 60) * CFrame.Angles(0, math.rad(90), 0))
@@ -10797,6 +10945,7 @@ local function furnishRingBuildings(parent: Instance)
 	prop("DeskLamp", CFrame.new(-441, 3.1, 63))
 	prop("Houseplant", CFrame.new(-406, 0, 66))
 	prop("RugRect", CFrame.new(-440, 0.1, 48))
+	hangLight(parent, "PendantLamp", -440, 14.4, 54, 40)
 
 	-- the confiscation store
 	for _, sz in { 40, 46 } do
@@ -10814,6 +10963,9 @@ local function furnishRingBuildings(parent: Instance)
 	prop("Barrel", CFrame.new(-330, 0, 62))
 	prop("SteelShelves", CFrame.new(-360, 0, 68) * CFrame.Angles(0, math.pi, 0))
 	prop("SteelShelves", CFrame.new(-352, 0, 68) * CFrame.Angles(0, math.pi, 0))
+	for _, lx in { -376, -344 } do
+		hangLight(parent, "CeilingLampBox", lx, 14.4, 54, 38)
+	end
 
 	------------------------------------------------------------------ gymnasium
 	-- The sports hall: a marked court, two goals, the bars along the long wall
@@ -10849,8 +11001,35 @@ local function furnishRingBuildings(parent: Instance)
 		local a = -math.pi / 2 + i * math.pi / 23
 		part({ Name = "CourtLine", Size = Vector3.new(0.9, 0.16, 0.9), CFrame = CFrame.new(425 + math.cos(a) * 8.0, 0.32, 437 + math.sin(a) * 8.0), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
 	end
-	basketballGoal(parent, 344, 437, 0)
-	basketballGoal(parent, 506, 437, 180)
+	-- Facing each other down the LONG axis. At yaw 0 the arm swings out along
+	-- +z, which put both backboards across the 44-stud width of a court that
+	-- is 168 long -- two goals looking at the side walls.
+	basketballGoal(parent, 344, 437, 90)
+	basketballGoal(parent, 506, 437, -90)
+	-- the roof structure, which is what a sports hall has instead of a ceiling
+	for _, tz in { 418, 428, 437, 446, 456 } do
+		roofTruss(parent, tz, 341, 509, 20)
+	end
+	-- the scoreboard, on the end wall
+	part({ Name = "ScoreboardCase", Size = Vector3.new(1.6, 8.0, 18.0), CFrame = CFrame.new(511.0, 18.0, 437), Color = Color3.fromRGB(28, 30, 34), Material = Enum.Material.Metal, Parent = parent })
+	part({ Name = "ScoreboardBezel", Size = Vector3.new(0.5, 9.0, 19.0), CFrame = CFrame.new(511.6, 18.0, 437), Color = Color3.fromRGB(217, 180, 92), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for i, sz in { -5.4, 0, 5.4 } do
+		local face = part({
+			Name = "ScoreboardDigits",
+			Size = Vector3.new(0.4, 4.2, if i == 2 then 2.2 else 6.0),
+			CFrame = CFrame.new(510.0, 18.4, 437 + sz),
+			Color = if i == 2 then Color3.fromRGB(255, 108, 72) else Color3.fromRGB(255, 196, 108),
+			Material = Enum.Material.Neon,
+			Parent = parent,
+		})
+		face.CanCollide = false
+		local lit = Instance.new("PointLight")
+		lit.Brightness = 0.8
+		lit.Range = 24
+		lit.Color = Color3.fromRGB(255, 206, 140)
+		lit.Parent = face
+	end
+	part({ Name = "ScoreboardLabel", Size = Vector3.new(0.4, 1.6, 16.0), CFrame = CFrame.new(510.0, 14.4, 437), Color = Color3.fromRGB(22, 35, 63), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
 	for _, bx in { 384, 400, 416, 432, 448, 464 } do
 		wallBars(parent, bx, 415.4, 0)
 	end
@@ -10861,7 +11040,9 @@ local function furnishRingBuildings(parent: Instance)
 	prop("BinLarge", CFrame.new(500, 0, 459))
 	prop("Extinguisher", CFrame.new(342, 0, 459))
 	for _, lx in { 360, 392, 425, 458, 490 } do
-		prop("CeilingLampBox", CFrame.new(lx, 22.4, 437), { hang = true })
+		for _, lz in { 424, 450 } do
+			hangLight(parent, "CeilingLampBox", lx, 24.2, lz, 54)
+		end
 	end
 
 	-- the changing rooms
@@ -10882,6 +11063,9 @@ local function furnishRingBuildings(parent: Instance)
 	prop("Toilet", CFrame.new(496, 0, 376) * CFrame.Angles(0, math.pi, 0))
 	prop("Bin", CFrame.new(506, 0, 376))
 	prop("WetFloorSign", CFrame.new(482, 0, 370))
+	for _, lx in { 366, 402, 438, 474 } do
+		hangLight(parent, "CeilingLampBox", lx, 22.4, 364, 44)
+	end
 
 	-- the corridor between them
 	for _, cx in { 358, 392 } do
@@ -10893,6 +11077,9 @@ local function furnishRingBuildings(parent: Instance)
 	end
 	prop("PottedPlant", CFrame.new(342, 0, 408))
 	prop("PottedPlant", CFrame.new(506, 0, 408))
+	for _, lx in { 366, 402, 438, 474 } do
+		hangLight(parent, "CeilingLampBox", lx, 22.4, 396, 44)
+	end
 
 	------------------------------------------------------- secret rooftop block
 	-- The plant room, which is what a fire escape and a walkable roof hang off.
@@ -10906,6 +11093,9 @@ local function furnishRingBuildings(parent: Instance)
 	prop("MetalToolChest", CFrame.new(200, 0, 380))
 	prop("WoodenLadder", CFrame.new(194, 0, 382) * CFrame.Angles(0, math.rad(20), 0))
 	prop("Barrel", CFrame.new(166, 0, 382))
+	for _, lx in { 172, 198 } do
+		hangLight(parent, "CeilingLampBox", lx, 12.4, 369, 34)
+	end
 
 	-- the store
 	for _, sx in { 214, 220, 226, 232 } do
@@ -10920,6 +11110,9 @@ local function furnishRingBuildings(parent: Instance)
 	prop("HandTruck", CFrame.new(226, 0, 380))
 	prop("Barrel", CFrame.new(252, 0, 380))
 	prop("WornMetalRack", CFrame.new(238, 0, 370))
+	for _, lx in { 222, 246 } do
+		hangLight(parent, "CeilingLampBox", lx, 12.4, 369, 34)
+	end
 
 	-- the corridors and the way up
 	pipeRun(parent, 200, 13.0, 388, 414, Color3.fromRGB(78, 92, 104))
@@ -10931,6 +11124,10 @@ local function furnishRingBuildings(parent: Instance)
 	prop("WoodenCrate", CFrame.new(220, 0, 444))
 	prop("Barrel", CFrame.new(214, 0, 440))
 	prop("BinLarge", CFrame.new(168, 0, 444))
+	for _, lx in { 186, 232 } do
+		hangLight(parent, "CeilingLampBox", lx, 12.4, 401, 34)
+		hangLight(parent, "CeilingLampBox", lx, 12.4, 432, 34)
+	end
 	noticeBoard(parent, "PlantRoomWarning", CFrame.new(208, 9, 419) * CFrame.Angles(0, math.pi, 0), 8, 5)
 end
 

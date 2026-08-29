@@ -964,6 +964,17 @@ shots = [
     ("rooftopblk", (120, 30, 300),   (210, 14, 400)),
     ("alleyeye",   (300, 5, 350),    (290, 12, 400)),
     ("roofedge",   (-142, 44, 260),  (-142, 46, 130)),
+    # Inside the four buildings that were shells until build 190. Nothing has
+    # ever pointed a camera at them, which is a large part of why nobody
+    # noticed they were empty: every shot in this list was taken outdoors.
+    ("dininghall", (338, 7, -336),    (410, 5, -276)),
+    ("servery",    (326, 7, -272),    (292, 5, -282)),
+    ("kitchen",    (296, 7, -304),    (234, 5, -332)),
+    ("sportshall", (350, 8, 458),     (500, 12, 430)),
+    ("changing",   (342, 7, 366),     (500, 5, 360)),
+    ("detention",  (-476, 7, 2),      (-436, 5, -28)),
+    ("holding",    (-330, 7, -28),    (-396, 6, -14)),
+    ("boilerroom", (206, 7, 382),     (170, 6, 362)),
     # The Great Court, which is where the game starts and where every player
     # walks in from. These four look AT it rather than past it: the old
     # eyecourt shot aims at the clock tower 25 studs up, so everything on the
