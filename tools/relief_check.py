@@ -32,7 +32,9 @@ DRESSING = ("Plinth", "StringCourse", "Cornice", "Quoin", "Gutter", "Downpipe",
             # the dressing round an opening is relief too: a surround flush
             # with its wall is a rectangle painted on stone
             "Surround", "Sill", "Hood", "Jamb", "Keystone", "Lintel",
-            "Reveal", "Apron", "Cill")
+            "Reveal", "Apron", "Cill",
+            # an arch over a hole in flat stone is not an entrance bay
+            "Arch", "Voussoir", "Springer", "DoorJamb", "DoorHead")
 WALLS = ("Wall", "Facade", "Brick", "Shell", "Range", "Tower", "Gable")
 NOT_WALL = ("Inner", "Partition", "Cavern", "Tunnel", "Boundary", "Retain",
             "Head", "Upper", "Lower")

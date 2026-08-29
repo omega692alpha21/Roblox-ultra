@@ -649,8 +649,17 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 	for _, e in b.entrances or {} do
 		local vertical = e.facing == "east" or e.facing == "west"
 		local outward = if e.facing == "east" or e.facing == "north" then 1 else -1
+		-- The entrance point is ON the building line and the exterior wall
+		-- straddles it eight studs thick, so its face is four studs out. 1.6
+		-- puts the leaf in the reveal, which is right for a door; it is wrong
+		-- for everything hung round the door, and the arch, the lanterns and
+		-- the surround were all pushed to 1.6 or 3.4 and so ended up inside
+		-- the masonry. FACE is where the wall actually is.
+		local FACE = CampusPlan.EXTERIOR_WALL / 2
 		local ex = if vertical then e.at.x + outward * 1.6 else e.at.x
 		local ez = if vertical then e.at.z else e.at.z + outward * 1.6
+		local ax = if vertical then e.at.x + outward * (FACE + 0.4) else e.at.x
+		local az = if vertical then e.at.z else e.at.z + outward * (FACE + 0.4)
 		local doorH = CampusPlan.DOOR_HEIGHT + 2
 
 		local leafSize = if vertical
@@ -666,9 +675,9 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 		-- Turned to face the wall it is in, not transposed. Swapping x and z
 		-- does not rotate an arch; it puts it somewhere else on the map.
 		Kit.pointedArch(K, {
-			x = ex,
+			x = ax,
 			y = doorH + 0.4,
-			z = ez,
+			z = az,
 			yaw = if vertical then math.rad(90) else 0,
 			span = span,
 			rise = span * 0.75,
@@ -676,6 +685,32 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 			ring = 2.2,
 			segments = 8,
 		})
+		-- jambs and a head round the opening, standing proud of the wall: an
+		-- arch over a hole in flat stone is not an entrance bay.
+		for _, jamb in { -1, 1 } do
+			local jSize = if vertical
+				then Vector3.new(2.6, doorH + 2.4, 2.4)
+				else Vector3.new(2.4, doorH + 2.4, 2.6)
+			local jx = if vertical then e.at.x + outward * (FACE + 0.3) else e.at.x + jamb * (e.width / 2 + 1.2)
+			local jz = if vertical then e.at.z + jamb * (e.width / 2 + 1.2) else e.at.z + outward * (FACE + 0.3)
+			ctx.tag(ctx.part({ Name = "PlanDoorJamb", Size = jSize, CFrame = CFrame.new(jx, (doorH + 2.4) / 2, jz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		end
+		local hSize = if vertical
+			then Vector3.new(2.6, 2.0, e.width + 4.8)
+			else Vector3.new(e.width + 4.8, 2.0, 2.6)
+		local hx = if vertical then e.at.x + outward * (FACE + 0.3) else e.at.x
+		local hz = if vertical then e.at.z else e.at.z + outward * (FACE + 0.3)
+		ctx.tag(ctx.part({ Name = "PlanDoorHead", Size = hSize, CFrame = CFrame.new(hx, doorH + 1.4, hz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		-- cheek walls to the steps, which is what the plan asks the entrance
+		-- bay for and what stops three slabs reading as a ramp
+		for _, cheek in { -1, 1 } do
+			local cSize = if vertical
+				then Vector3.new(7.4, 3.4, 1.8)
+				else Vector3.new(1.8, 3.4, 7.4)
+			local ccx = if vertical then e.at.x + outward * (FACE + 3.4) else e.at.x + cheek * (e.width / 2 + 3.4)
+			local ccz = if vertical then e.at.z + cheek * (e.width / 2 + 3.4) else e.at.z + outward * (FACE + 3.4)
+			ctx.tag(ctx.part({ Name = "PlanStepCheek", Size = cSize, CFrame = CFrame.new(ccx, 1.0, ccz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar")
+		end
 		for _, step in { 0, 1, 2 } do
 			local sw = e.width + 8 - step * 2
 			local size = if vertical then Vector3.new(6 - step * 1.2, 1, sw) else Vector3.new(sw, 1, 6 - step * 1.2)
@@ -687,8 +722,8 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 			-- clear of the wall face. The entrance point is on the building line
 			-- and the wall is eight studs thick, so a lantern half a stud out
 			-- from there is inside the masonry.
-			local lx = if vertical then ex + outward * 3.4 else ex + half * (e.width / 2 + 1.5)
-			local lz = if vertical then ez + half * (e.width / 2 + 1.5) else ez + outward * 3.4
+			local lx = if vertical then e.at.x + outward * (FACE + 1.8) else e.at.x + half * (e.width / 2 + 1.5)
+			local lz = if vertical then e.at.z + half * (e.width / 2 + 1.5) else e.at.z + outward * (FACE + 1.8)
 			local glow = ctx.part({ Name = "PlanPorchGlow", Size = Vector3.new(1.2, 1.2, 1.2), CFrame = CFrame.new(lx, 13, lz), Color = Kit.LANTERN, Material = Enum.Material.Neon, Transparency = 0.4, Parent = ctx.parent })
 			glow.CanCollide = false
 			glow.CastShadow = false
