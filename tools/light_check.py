@@ -56,15 +56,46 @@ ROOMS = [
 ]
 
 STEP = 8.0
+# Below this the floor is not lit. Same figure and same falloff as
+# nightlight_check, so indoors and outdoors are held to one standard.
+DARK = 0.045
+SHARE = 0.5
+HOLE = 700.0        # square studs of contiguous dark floor
+
+
+def plan_rooms():
+    """Every room the drawing knows about.
+
+    The list above is thirty rooms typed out by hand. CampusPlan draws far
+    more than thirty -- the Academy alone has fifty-odd cells over three
+    storeys -- and every one not on the list went unchecked. That is why the
+    Academy's corridors, its labs and the headmaster's own office could sit at
+    a hundred per cent dark with this check reporting every room lit.
+    """
+    path = os.path.join(HERE, "_campus_plan.json")
+    if not os.path.exists(path):
+        return []
+    plan = json.load(open(path))
+    out = []
+    for b in plan.get("buildings", ()):
+        for st in b.get("storeys", ()):
+            for c in st.get("cells", ()):
+                x0, z0, x1, z1 = c["rect"]
+                out.append((f"{b['name']}/{c['name']} L{st['index']}",
+                            (x0 + x1) / 2, (z0 + z1) / 2,
+                            (x1 - x0) / 2, (z1 - z0) / 2, st["y"] + 1.0))
+    return out
 
 
 def main():
     parts = json.load(open(DUMP))
-    lights = [
-        (p["p"], float(p.get("lit") or 0))
-        for p in parts
-        if float(p.get("lit") or 0) > 0
-    ]
+    # Real PointLights with their range AND brightness, not a list of points
+    # each of which "covers" a sphere of its range. A range-34 fitting does not
+    # light the floor thirty studs away; it puts about six thousandths on it.
+    lights = []
+    for p in parts:
+        for lamp in p.get("lamps") or ():
+            lights.append((p["p"][0], p["p"][1], p["p"][2], float(lamp[0]), float(lamp[1])))
     print(f"{len(lights)} light sources in the map")
 
     # Roofs, so an open courtyard is not reported as a dark room: daylight is
@@ -90,8 +121,21 @@ def main():
             for x0, x1, z0, z1, base in roofs
         )
 
-    bad = []
-    for name, cx, cz, hx, hz, y in ROOMS:
+    def landing(x, y, z):
+        total = 0.0
+        for lx, ly, lz, rng, bright in lights:
+            dx, dy, dz = lx - x, ly - y, lz - z
+            d2 = dx * dx + dy * dy + dz * dz
+            if d2 >= rng * rng or dy <= 0:
+                continue
+            d = math.sqrt(d2) or 1e-6
+            fall = 1.0 - d / rng
+            total += bright * (dy / d) * fall * fall
+        return total
+
+    rooms = ROOMS + plan_rooms()
+    bad, dark_cells = [], set()
+    for name, cx, cz, hx, hz, y in rooms:
         samples = dark = 0
         for i in range(int(hx * 2 / STEP) + 1):
             for j in range(int(hz * 2 / STEP) + 1):
@@ -100,24 +144,45 @@ def main():
                 if not roofed(x, z, y):
                     continue  # open to the sky; the sun does this one
                 samples += 1
-                # a light reaches a spot if the spot is inside its range
-                if not any(
-                    (px - x) ** 2 + (py - y) ** 2 + (pz - z) ** 2 < rng * rng
-                    for (px, py, pz), rng in lights
-                ):
+                if landing(x, y, z) < DARK:
                     dark += 1
+                    dark_cells.add((int(x // STEP), int(z // STEP), round(y)))
         if samples == 0:
             continue
         share = dark / samples
-        if share > 0.5:
+        if share > SHARE:
             bad.append((name, share, samples))
 
-    for name, share, samples in bad:
-        print(f"  {name:22s} {share * 100:3.0f}% of its floor is out of reach of any light "
-              f"({samples} samples)")
-    print(f"{'FAIL' if bad else 'PASS'} - {len(ROOMS)} rooms, "
-          + (f"{len(bad)} in the dark" if bad else "every one lit"))
-    return 1 if bad else 0
+    holes, seen = [], set()
+    for c in dark_cells:
+        if c in seen:
+            continue
+        stack, grp = [c], [c]
+        seen.add(c)
+        while stack:
+            cx_, cz_, cy = stack.pop()
+            for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nb = (cx_ + d[0], cz_ + d[1], cy)
+                if nb in dark_cells and nb not in seen:
+                    seen.add(nb)
+                    stack.append(nb)
+                    grp.append(nb)
+        if len(grp) * STEP * STEP >= HOLE:
+            holes.append((len(grp) * STEP * STEP,
+                          round(sum(g[0] for g in grp) / len(grp) * STEP),
+                          round(sum(g[1] for g in grp) / len(grp) * STEP),
+                          grp[0][2]))
+
+    bad.sort(key=lambda r: -r[1])
+    for name, share, samples in bad[:16]:
+        print(f"  {name:34s} {share * 100:3.0f}% of its floor is unlit ({samples} samples)")
+    holes.sort(reverse=True)
+    for area, hx_, hz_, hy in holes[:8]:
+        print(f"  {area:6.0f} sq studs of unbroken dark at ({hx_}, {hy}, {hz_})")
+    print(f"{'FAIL' if (bad or holes) else 'PASS'} - {len(rooms)} rooms, "
+          + (f"{len(bad)} in the dark, {len(holes)} dark holes"
+             if (bad or holes) else "every one lit"))
+    return 1 if (bad or holes) else 0
 
 
 if __name__ == "__main__":

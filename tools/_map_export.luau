@@ -11552,6 +11552,90 @@ local function buildRidgeCresting(parent: Instance)
 	end
 end
 
+-- A lit fitting over every room the drawing knows about.
+--
+-- light_check reported every room lit for the whole life of this project, on
+-- a list of THIRTY rooms typed out by hand and a test that asked only whether
+-- a spot was inside some fitting's range. CampusPlan draws a hundred and
+-- sixty-nine. Measured properly -- inverse falloff, the same figure the
+-- outdoor check uses -- thirty-nine of them were dark, the Academy's whole
+-- middle floor among them: 34,240 square studs of unbroken black, which is a
+-- fifth of the building the game is set in.
+--
+-- One fitting every twenty-two studs, at the head of each storey, skipping
+-- anywhere a light already reaches so the rooms that were done by hand keep
+-- their own fittings.
+local function buildRoomLights(parent: Instance)
+	-- Seed the skip list with the fittings that are ALREADY hanging. Tracking
+	-- only its own panels put a RoomLightSurround flat against thirteen
+	-- existing CeilingPanels -- 816 square studs of coplanar flicker -- and
+	-- doubled the light in the rooms that were done by hand, which is what
+	-- pushed glare_check over its wash-out line.
+	local placed: { Vector3 } = {}
+	for _, d in parent:GetDescendants() do
+		if d:IsA("PointLight") and d.Parent and d.Parent:IsA("BasePart") then
+			local at = (d.Parent :: BasePart).Position
+			if at.Y > 4 then
+				table.insert(placed, at)
+			end
+		end
+	end
+	for _, name in { "Academy", "Student Dorms", "Library", "Cafeteria", "Detention Hall", "Gymnasium", "Secret Rooftop" } do
+		local b = CampusPlan.building(name)
+		if not b then
+			continue
+		end
+		for level, storey in b.storeys do
+			-- CampusPlan.cells reads b.storeyCorridors[level], and that table
+			-- is keyed by the storey's POSITION in the list. Passing
+			-- storey.index instead threw "attempt to index nil with 'cols'"
+			-- and took the whole export down with it.
+			if not b.storeyCorridors or not b.storeyCorridors[level] then
+				continue
+			end
+			local ceil = storey.y + storey.height - 1.4
+			for _, cell in CampusPlan.cells(b, level) do
+				local x0, z0, x1, z1 = cell.rect[1], cell.rect[2], cell.rect[3], cell.rect[4]
+				local nx = math.max(1, math.round((x1 - x0) / 22))
+				local nz = math.max(1, math.round((z1 - z0) / 22))
+				for i = 1, nx do
+					for j = 1, nz do
+						local px = x0 + (x1 - x0) * (i - 0.5) / nx
+						local pz = z0 + (z1 - z0) * (j - 0.5) / nz
+						local near = false
+						for _, q in placed do
+							if math.abs(q.X - px) < 16 and math.abs(q.Z - pz) < 16 and math.abs(q.Y - ceil) < 6 then
+								near = true
+								break
+							end
+						end
+						if not near then
+							table.insert(placed, Vector3.new(px, ceil, pz))
+							local pan = part({
+								Name = "RoomLightPanel",
+								Size = Vector3.new(9.0, 0.4, 5.0),
+								CFrame = CFrame.new(px, ceil, pz),
+								Color = Color3.fromRGB(255, 240, 214),
+								Material = Enum.Material.Neon,
+								Parent = parent,
+							})
+							pan.CanCollide = false
+							pan.CastShadow = false
+							part({ Name = "RoomLightSurround", Size = Vector3.new(10.4, 0.5, 6.4), CFrame = CFrame.new(px, ceil + 0.4, pz), Color = Color3.fromRGB(226, 224, 216), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+							local lamp = Instance.new("PointLight")
+							lamp.Brightness = 1.2
+							lamp.Range = 32
+							lamp.Color = Color3.fromRGB(255, 238, 210)
+							lamp.Shadows = false
+							lamp.Parent = pan
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 local function furnishRingBuildings(parent: Instance)
 	----------------------------------------------------------------- cafeteria
 	-- Two dining halls either side of the partition at z -300, a kitchen and a
@@ -13520,6 +13604,10 @@ end
 	buildBackCampus(folder)
 	buildPlanting(folder)
 	buildInteriorLights(folder)
+	-- AFTER buildInteriorLights, not before. It seeds its skip list from the
+	-- fittings already hanging in the map, and run first it saw none of them:
+	-- thirteen of its surrounds landed flat against existing CeilingPanels.
+	buildRoomLights(folder)
 	local secretDoors = buildSanctum(folder)
 	furnishProps()
 
