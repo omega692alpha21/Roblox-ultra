@@ -8319,6 +8319,17 @@ local function dressCorridors(parent: Instance)
 					if i == stations then
 						prop("Bin", CFrame.new(px, y, pz))
 					end
+					-- Something ABOVE the radiators. The dorm corridor came out
+					-- as a row of radiators down two bare walls: the one thing
+					-- in it at eye level was the notice board at station one.
+					-- These hang where a radiator already proves there is wall
+					-- and no doorway.
+					if i ~= 1 then
+						prop("FramedPicture", CFrame.new(px, y + 9.0, pz) * CFrame.Angles(0, math.rad(yaw), 0))
+					end
+					if i == stations - 1 then
+						prop("Clock", CFrame.new(px, y + 12.0, pz) * CFrame.Angles(0, math.rad(yaw), 0))
+					end
 				end
 			end
 		end

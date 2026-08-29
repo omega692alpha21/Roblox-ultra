@@ -988,6 +988,10 @@ shots = [
     ("atrium",     (-40, 9, 40),      (30, 6, 5)),
     ("greatstair", (0, 8, 44),        (0, 22, -10)),
     ("upperhall",  (-190, 22, 65),    (190, 23, 65)),
+    # A drawn building's corridor. The dorm range has ten of them at eighteen
+    # hundred square studs each and they were empty until build 220; no camera
+    # in this list could see one.
+    ("dormcorridor", (-140, 7, -310),  (140, 6, -310)),
     ("dininghall", (338, 7, -336),    (410, 5, -276)),
     ("servery",    (326, 7, -272),    (292, 5, -282)),
     ("kitchen",    (296, 7, -304),    (234, 5, -332)),
