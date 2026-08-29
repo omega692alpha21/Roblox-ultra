@@ -3392,6 +3392,7 @@ local function buildGrandFacade(parent: Instance)
 	-- 168 x 2.4 board in exactly the same plane, so the joint flickered along
 	-- its whole length. The board belongs to the block whose roof is visible
 	-- there, which is the one that does not stop at the joint.
+	local kit = kitFor(parent)
 	local function pitchedRoof(cx: number, cz: number, w: number, d: number, h: number, baseY: number, eaves: { boolean }?)
 		for _, side in { -1, 1 } do
 			local wedge = Instance.new("WedgePart")
@@ -3405,6 +3406,7 @@ local function buildGrandFacade(parent: Instance)
 			wedge.Parent = parent
 			tag(wedge, "TexSlateRoof")
 		end
+		Kit.slateCourses(kit, { x = cx, z = cz, width = w, depth = d, eaves = baseY, rise = h })
 		-- eaves overhang + carved brackets underneath
 		local north = if eaves then eaves[1] else true
 		local south = if eaves then eaves[2] else true

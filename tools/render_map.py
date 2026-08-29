@@ -1025,7 +1025,10 @@ shots = [
     ("gate",       (0, 12, 620),     (0, 14, 520)),
     ("gatedrive",  (0, 8, 500),      (0, 20, 200)),
     ("biketrack",  (-430, 130, 520),  (-430, 4, 330)),
-    ("dormcourt",  (0, 115, -148),    (0, 6, -292)),
+    # was (0,115,-148) -> (0,6,-292): a camera twenty studs off the ridge,
+    # which gave over half the frame to roof and cropped the range's ends. The
+    # reference is taken from across the court with the whole U in frame.
+    ("dormcourt",  (0, 52, -128),     (0, 26, -292)),
     ("dormcourteye",(-58, 6, -166),   (10, 12, -252)),
     # The estate fence, and the whole core from the air at the angle the
     # labelled site plan is drawn at.
@@ -1044,9 +1047,15 @@ else:
     # interior nobody looks at, and this suite found two of them only by
     # measuring the largest flat colour in every frame afterwards. Measure it
     # here instead, and say so.
+    # ONLY=name1,name2 renders just those cameras. A full pass is sixty
+    # pictures and four minutes; when the question is "did that camera move to
+    # the right place", one picture answers it.
+    only = set(filter(None, os.environ.get("ONLY", "").split(",")))
     from collections import Counter as _Counter
     blind = []
     for name, cam, target in shots:
+        if only and name not in only:
+            continue
         path = os.path.join(OUT, f"shot_{name}.png")
         render(cam, target, path)
         small = Image.open(path).convert("RGB").resize((160, 90))
@@ -1062,6 +1071,8 @@ else:
     # art direction is written for.
     for name in ("spawnview", "eyegate", "entrance", "courtnorth", "dormcourteye", "siteplan",
                  "overview", "dormcourt", "library"):
+        if only and name not in only:
+            continue
         cam, target = next(((c, t) for n, c, t in shots if n == name), (None, None))
         if cam:
             render(cam, target, os.path.join(OUT, f"night_{name}.png"), night=True)

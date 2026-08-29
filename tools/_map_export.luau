@@ -1592,6 +1592,72 @@ function CollegiateKit.spire(ctx: Ctx, o: { x: number, z: number, base: number, 
 end
 
 -- ---------------------------------------------------------------------------
+-- SLATE COURSING
+-- ---------------------------------------------------------------------------
+-- A slate roof is not a smooth plane. It is forty courses of slate, each one
+-- lapped over the last, and the shadow line under every lap is what makes a
+-- roof read as a roof from the far side of a court instead of as a grey
+-- triangle. Every pitched roof on this campus was a single flat wedge: from
+-- the dorm court the whole three-hundred-stud range came out as one unbroken
+-- field of one colour, and the dormers standing on it looked like they were
+-- floating in the sky.
+--
+-- These are the laps: bands lying IN the slope, bedded a little into it so
+-- nothing shares a plane with the wedge under it, alternating between two
+-- slates so the coursing reads even where the light does not fall.
+function CollegiateKit.slateCourses(ctx: Ctx, o: { x: number, z: number, width: number, depth: number, eaves: number, rise: number, runsX: boolean?, colour: Color3? })
+	local runsX = o.runsX ~= false
+	local run = if runsX then o.width else o.depth   -- along the ridge
+	local span = if runsX then o.depth else o.width  -- across, eaves to eaves
+	local halfSpan = span / 2
+	if halfSpan <= 0 or o.rise <= 0 or run <= 0 then
+		return
+	end
+	local slope = math.sqrt(o.rise * o.rise + halfSpan * halfSpan)
+	local courses = math.clamp(math.floor(slope / 7), 2, 14)
+	local pitch = math.atan2(o.rise, halfSpan)
+	local band = slope / courses * 0.5
+	local base = o.colour or CollegiateKit.SLATE
+	local dark = CollegiateKit.RIDGE
+	for _, side in { -1, 1 } do
+		for i = 1, courses - 1 do
+			local t = i / courses
+			local y = o.eaves + t * o.rise
+			local across = side * (1 - t) * halfSpan
+			-- the outward normal of this slope, and 0.12 along it so the band
+			-- is bedded into the wedge rather than sitting on its face
+			local ny, na = halfSpan / slope, side * o.rise / slope
+			local colour = if i % 2 == 0 then base else dark
+			local piece
+			if runsX then
+				piece = ctx.part({
+					Name = "RoofSlateLap",
+					Size = Vector3.new(run + 0.6, 0.5, band),
+					CFrame = CFrame.new(o.x, y + ny * 0.12, o.z + across + na * 0.12)
+						* CFrame.Angles(side * pitch, 0, 0),
+					Color = colour,
+					Material = Enum.Material.Slate,
+					Parent = ctx.parent,
+				})
+			else
+				piece = ctx.part({
+					Name = "RoofSlateLap",
+					Size = Vector3.new(band, 0.5, run + 0.6),
+					CFrame = CFrame.new(o.x + across + na * 0.12, y + ny * 0.12, o.z)
+						* CFrame.Angles(0, 0, -side * pitch),
+					Color = colour,
+					Material = Enum.Material.Slate,
+					Parent = ctx.parent,
+				})
+			end
+			piece.CanCollide = false
+			piece.CastShadow = false
+			ctx.tag(piece, "TexSlateRoof")
+		end
+	end
+end
+
+-- ---------------------------------------------------------------------------
 -- GABLE ROOF
 -- ---------------------------------------------------------------------------
 -- Two slate planes, a ridge capping along the top, a verge board down each
@@ -1627,6 +1693,7 @@ function CollegiateKit.gableRoof(ctx: Ctx, o: { x: number, z: number, width: num
 		local at = if runsX then CFrame.new(o.x, o.eaves - 0.4, o.z + side * d / 2) else CFrame.new(o.x + side * d / 2, o.eaves - 0.4, o.z)
 		ctx.tag(ctx.part({ Name = "RoofEaves", Size = size, CFrame = at, Color = CollegiateKit.ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 	end
+	CollegiateKit.slateCourses(ctx, o)
 end
 
 -- ---------------------------------------------------------------------------
@@ -6735,6 +6802,7 @@ local function buildGrandFacade(parent: Instance)
 	-- 168 x 2.4 board in exactly the same plane, so the joint flickered along
 	-- its whole length. The board belongs to the block whose roof is visible
 	-- there, which is the one that does not stop at the joint.
+	local kit = kitFor(parent)
 	local function pitchedRoof(cx: number, cz: number, w: number, d: number, h: number, baseY: number, eaves: { boolean }?)
 		for _, side in { -1, 1 } do
 			local wedge = Instance.new("WedgePart")
@@ -6748,6 +6816,7 @@ local function buildGrandFacade(parent: Instance)
 			wedge.Parent = parent
 			tag(wedge, "TexSlateRoof")
 		end
+		Kit.slateCourses(kit, { x = cx, z = cz, width = w, depth = d, eaves = baseY, rise = h })
 		-- eaves overhang + carved brackets underneath
 		local north = if eaves then eaves[1] else true
 		local south = if eaves then eaves[2] else true
