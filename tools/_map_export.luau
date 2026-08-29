@@ -3505,6 +3505,30 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 	wall("DormWallW", Vector3.new(2, SHELL, D), Vector3.new(-halfW, SHELL / 2 + 2, 0))
 	wall("DormWallE", Vector3.new(2, SHELL, D), Vector3.new(halfW, SHELL / 2 + 2, 0))
 
+	-- Give the elevations something. These were four flat panels of stone from
+	-- the ground to the eaves -- the dormitories the user called out by name --
+	-- and what a building of this kind actually has is a plinth it stands on, a
+	-- string course marking the floor inside, and dressed quoins turning every
+	-- corner. Three courses and eight quoins per building, and it stops reading
+	-- as a box with windows drawn on it.
+	local ASHLAR = Color3.fromRGB(201, 191, 169)
+	local function band(nm: string, y: number, grow: number, thick: number)
+		tag(part({ Name = nm, Size = Vector3.new(W + grow, thick, D + grow), CFrame = at(0, y, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
+	band("DormPlinth", 3.4, 3.0, 2.8)
+	band("DormStringCourse", 17.0, 1.6, 1.5)
+	band("DormCornice", SHELL + 1.2, 3.4, 2.2)
+	for _, corner in { Vector3.new(-1, 0, -1), Vector3.new(1, 0, -1), Vector3.new(-1, 0, 1), Vector3.new(1, 0, 1) } do
+		tag(part({
+			Name = "DormQuoin",
+			Size = Vector3.new(4.4, SHELL - 2, 4.4),
+			CFrame = at(corner.X * (halfW - 0.6), SHELL / 2 + 2.6, corner.Z * (halfD - 0.6)),
+			Color = ASHLAR,
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		}), "TexAshlar").CanCollide = false
+	end
+
 	-- windows: a band on each storey, both long faces
 	for _, spec in { { z = halfD, n = 1 }, { z = -halfD, n = -1 } } do
 		for _, wx in { -36, -24, 24, 36 } do
@@ -3529,14 +3553,21 @@ local function buildDorm(parent: Instance, center: Vector3, name: string, accent
 		part({ Name = "DormPorchPost", Size = Vector3.new(1.6, 13, 1.6), CFrame = at(side * 10, 8.5, halfD + 6), Color = TRIM, Material = Enum.Material.WoodPlanks, Parent = parent })
 	end
 	part({ Name = "DormPorchBeam", Size = Vector3.new(24, 1.6, 9), CFrame = at(0, 15.6, halfD + 4), Color = TRIM, Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
+	-- The two halves of this canopy did not MEET. Each was 12.6 long, centred
+	-- at x +-6.2 and raked 26 degrees, so its inner end reached only x +-0.54
+	-- and the porch had a stud-wide slot down the middle of its own ridge with
+	-- daylight through it. Fourteen long from +-5.9 crosses the centre line,
+	-- and a ridge board covers the joint -- the same fault the dormers had, in
+	-- a different builder.
 	for _, side in { -1, 1 } do
-		part({
+		tag(part({
 			Name = "DormPorchGable",
-			Size = Vector3.new(12.6, 1.2, 9),
-			CFrame = at(side * 6.2, 17.4, halfD + 4) * CFrame.Angles(0, 0, math.rad(-side * 26)),
+			Size = Vector3.new(14, 1.2, 9),
+			CFrame = at(side * 5.9, 17.4, halfD + 4) * CFrame.Angles(0, 0, math.rad(-side * 26)),
 			Color = SLATE, Material = Enum.Material.Slate, Parent = parent,
-		}).CanCollide = false
+		}), "TexSlateRoof").CanCollide = false
 	end
+	part({ Name = "DormPorchRidge", Size = Vector3.new(2.2, 1.0, 9.6), CFrame = at(0, 20.7, halfD + 4), Color = Color3.fromRGB(74, 82, 94), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
 	-- On the front of the porch beam, which is where a house puts its name.
 	-- It used to hang four studs proud of the porch gable as a black bar
 	-- across the door; then behind the beam, where nobody could read it.
@@ -7583,6 +7614,26 @@ local LANTERN = Color3.fromRGB(255, 220, 160)
 
 local function litWindows(root: Instance)
 	local lit, lights = 0, 0
+
+	-- Some windows are lit already. The staff quarters build their own
+	-- QuartersWinGlow panes, and this pass put a WindowLeaf in exactly the same
+	-- plane over twenty-four of them: two emissive surfaces fighting for the
+	-- same pixels, which at night flickers hard. Anything already glowing is
+	-- left alone.
+	local alreadyLit: { BasePart } = {}
+	for _, existing in root:GetDescendants() do
+		if existing:IsA("BasePart") and existing.Material == Enum.Material.Neon then
+			table.insert(alreadyLit, existing)
+		end
+	end
+	local function isAlreadyLit(at: Vector3): boolean
+		for _, glow in alreadyLit do
+			if (glow.Position - at).Magnitude < 2.5 then
+				return true
+			end
+		end
+		return false
+	end
 	for _, glass in root:GetDescendants() do
 		if not glass:IsA("BasePart") or glass.Material ~= Enum.Material.Glass then
 			continue
@@ -7598,6 +7649,9 @@ local function litWindows(root: Instance)
 		end
 		local size = glass.Size
 		if size.X * size.Y * size.Z < 1.2 then
+			continue
+		end
+		if isAlreadyLit(glass.Position) then
 			continue
 		end
 		local leafFor: BasePart? = nil

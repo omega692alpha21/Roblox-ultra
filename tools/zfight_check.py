@@ -95,17 +95,27 @@ def main():
     out = sys.argv[1] if len(sys.argv) > 1 else HERE
     parts = json.load(open(os.path.join(out, "_map_export.json")))
 
+    # Any thin panel, on any axis -- not just floors.
+    #
+    # This looked only for things thin in Y, so it checked the floors and the
+    # roofs and nothing else. Walls z-fight exactly as readily, and the dorm
+    # porch had two vertical surfaces speckling against each other that this
+    # tool reported as clean. A part is a panel if it is thin on ANY axis, and
+    # the pair only matters if they are thin on the SAME axis.
     flats = []
     for p in parts:
         if p["t"] >= 0.9:
             continue
         b = aabb(p)
-        thick = b[1][1] - b[1][0]
-        w, d = b[0][1] - b[0][0], b[2][1] - b[2][0]
-        # a floor-ish thing: thin in y, broad in plan
-        if thick > 1.6 or w * d < MIN_AREA:
+        span = [b[i][1] - b[i][0] for i in range(3)]
+        axis = min(range(3), key=lambda i: span[i])
+        if span[axis] > 1.6:
             continue
-        flats.append((p, b, w * d))
+        face = [i for i in range(3) if i != axis]
+        area = span[face[0]] * span[face[1]]
+        if area < MIN_AREA:
+            continue
+        flats.append((p, b, axis, area))
 
     grid = defaultdict(list)
     for item in flats:
@@ -116,25 +126,32 @@ def main():
 
     seen, bad = set(), []
     for cell in grid.values():
-        for i, (pa, ba, aa) in enumerate(cell):
-            for pb, bb, ab in cell[i + 1:]:
+        for i, (pa, ba, axa, aa) in enumerate(cell):
+            for pb, bb, axb, ab in cell[i + 1:]:
+                if axa != axb:
+                    continue
                 key = (id(pa), id(pb))
                 if key in seen:
                     continue
                 seen.add(key)
-                # the two faces that could fight are the tops and the bottoms
-                if not (abs(ba[1][1] - bb[1][1]) < SAME or abs(ba[1][0] - bb[1][0]) < SAME
-                        or abs(ba[1][1] - bb[1][0]) < SAME or abs(ba[1][0] - bb[1][1]) < SAME):
+                ax = axa
+                if not any(abs(ba[ax][u] - bb[ax][v]) < SAME for u in (0, 1) for v in (0, 1)):
                     continue
-                # cheap reject on the boxes first, then the real footprints
-                if (min(ba[0][1], bb[0][1]) - max(ba[0][0], bb[0][0]) <= 0
-                        or min(ba[2][1], bb[2][1]) - max(ba[2][0], bb[2][0]) <= 0):
+                face = [i for i in range(3) if i != ax]
+                laps = [min(ba[f][1], bb[f][1]) - max(ba[f][0], bb[f][0]) for f in face]
+                if laps[0] <= 0.2 or laps[1] <= 0.2:
                     continue
-                area = overlap_area(footprint(pa), footprint(pb))
+                if ax == 1:
+                    # horizontal: use the real oriented footprints, because an
+                    # axis-aligned box round a rotated rectangle is much bigger
+                    # than the rectangle and the running track showed 136 pairs
+                    # it does not have
+                    area = overlap_area(footprint(pa), footprint(pb))
+                else:
+                    area = laps[0] * laps[1]
                 if area < MIN_AREA:
                     continue
-                bad.append((pa["n"], pb["n"], round(area),
-                            [round(v) for v in pa["p"]]))
+                bad.append((pa["n"], pb["n"], round(area), [round(v) for v in pa["p"]]))
 
     counts = defaultdict(lambda: [0, None])
     for a, b, area, at in bad:
@@ -143,7 +160,7 @@ def main():
         if counts[pair][1] is None:
             counts[pair][1] = (area, at)
 
-    print(f"{len(flats)} flat surfaces checked")
+    print(f"{len(flats)} panels checked on all three axes")
     if not bad:
         print("PASS - nothing shares a plane")
         return 0
