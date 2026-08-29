@@ -496,9 +496,19 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
         R = [[r[0], r[1], r[2]], [r[3], r[4], r[5]], [r[6], r[7], r[8]]]
         if part["t"] >= 0.95:
             continue
-        # cull tiny far parts cheaply
+        # cull tiny far parts cheaply. Size-aware, not a flat 900: the core is
+        # 1150 x 980, so no camera that can hold the whole campus in a frame is
+        # within 900 studs of it, and a flat cut drew the aerial as an empty
+        # green field. A wall a hundred studs long is worth drawing from any
+        # distance; a baluster is not.
         dist = math.sqrt((px - cam[0]) ** 2 + (py - cam[1]) ** 2 + (pz - cam[2]) ** 2)
-        if dist > 900:
+        if dist > 900 and max(sx, sy, sz) < 20:
+            continue
+        # Nothing underground. There is no terrain in the dump, so the pyramid
+        # sanctum's cavern roof -- 286 x 148 studs of near-black slate eighteen
+        # studs down -- painted itself straight over the west lawn in every
+        # aerial, and read as a hole in the campus.
+        if py + sy < -6 and cam[1] > 0:
             continue
         def world(local):
             return (px + R[0][0]*local[0] + R[0][1]*local[1] + R[0][2]*local[2],
@@ -712,7 +722,7 @@ shots = [
     # other camera here is a director's shot from forty studs in the air; this
     # is the one that matches what somebody standing in the game actually sees,
     # and it is the one the complaints have always been about.
-    ("eyecourt",   (0, 5, 250),      (0, 24, 130)),
+    ("eyecourt",   (0, 5, 272),      (0, 24, 130)),
     ("eyewalk",    (-90, 5, 200),    (10, 20, 130)),
     ("eyegate",    (0, 5, 420),      (0, 30, 130)),
     ("eyeback",    (0, 5, -170),     (0, 26, -60)),
@@ -734,13 +744,13 @@ shots = [
     ("gate",       (0, 12, 620),     (0, 14, 520)),
     ("gatedrive",  (0, 8, 500),      (0, 20, 200)),
     ("biketrack",  (-430, 130, 520),  (-430, 4, 330)),
-    ("dormcourt",  (0, 70, -110),     (0, 6, -230)),
-    ("dormcourteye",(0, 6, -160),     (0, 10, -250)),
+    ("dormcourt",  (0, 115, -148),    (0, 6, -292)),
+    ("dormcourteye",(-58, 6, -166),   (10, 12, -252)),
     # The estate fence, and the whole core from the air at the angle the
     # labelled site plan is drawn at.
     ("fencewest",  (-640, 22, 60),    (-480, 6, 20)),
     ("fencenorth", (-260, 20, 660),   (-120, 6, 520)),
-    ("siteplan",   (90, 980, 1180),   (15, 0, 40)),
+    ("siteplan",   (60, 620, 900),    (15, 0, 40)),
 ]
 # SKIP_SHOTS=1 exports the part dump and stops. The dump takes a few seconds;
 # drawing sixty z-buffered PNGs takes minutes, and the check suite only ever

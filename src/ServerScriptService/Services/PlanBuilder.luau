@@ -404,7 +404,14 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 
 	-- ---- the roof, ridged along the long axis ----
 	local runsX = width >= depth
-	local rise = math.min(if runsX then depth else width, 90) * 0.30
+	-- STEEP slate, which is what the reference art is: 35 degrees or so, with
+	-- the dormers standing well up the slope. span * 0.30 put a 24-degree roof
+	-- on a range 120 studs deep, and from the Dorm Court the boarding house
+	-- read as a hundred studs of empty grey between the dormer heads and the
+	-- ridge. Clamped at 44 so a wide building does not grow a roof taller than
+	-- the building under it.
+	local span = if runsX then depth else width
+	local rise = math.clamp(span * 0.36, 12, 44)
 	Kit.gableRoof(K, {
 		x = cx,
 		z = cz,
@@ -469,9 +476,17 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 			end
 		end
 	end
-	for _, side in { -1, 1 } do
-		local chx = if runsX then cx + side * (width / 2 - 8) else cx
-		local chz = if runsX then cz else cz + side * (depth / 2 - 8)
+	-- Chimney stacks ALONG the ridge, not one at each gable end. A range three
+	-- hundred studs long with two stacks reads as a shed with a fire at either
+	-- end of it; a boarding house has one over every pair of rooms, and the
+	-- stacks are half of what makes a collegiate roofline read as one.
+	local ridgeRun = if runsX then width else depth
+	local stacks = math.max(2, math.round(ridgeRun / 70))
+	for i = 0, stacks - 1 do
+		local t = i / (stacks - 1)
+		local along = (if runsX then x0 else z0) + 8 + t * (ridgeRun - 16)
+		local chx = if runsX then along else cx
+		local chz = if runsX then cz else along
 		Kit.chimney(K, { x = chx, z = chz, base = eaves, height = rise + 10, width = 6 })
 	end
 

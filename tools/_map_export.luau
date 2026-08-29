@@ -2886,7 +2886,14 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 
 	-- ---- the roof, ridged along the long axis ----
 	local runsX = width >= depth
-	local rise = math.min(if runsX then depth else width, 90) * 0.30
+	-- STEEP slate, which is what the reference art is: 35 degrees or so, with
+	-- the dormers standing well up the slope. span * 0.30 put a 24-degree roof
+	-- on a range 120 studs deep, and from the Dorm Court the boarding house
+	-- read as a hundred studs of empty grey between the dormer heads and the
+	-- ridge. Clamped at 44 so a wide building does not grow a roof taller than
+	-- the building under it.
+	local span = if runsX then depth else width
+	local rise = math.clamp(span * 0.36, 12, 44)
 	Kit.gableRoof(K, {
 		x = cx,
 		z = cz,
@@ -2951,9 +2958,17 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 			end
 		end
 	end
-	for _, side in { -1, 1 } do
-		local chx = if runsX then cx + side * (width / 2 - 8) else cx
-		local chz = if runsX then cz else cz + side * (depth / 2 - 8)
+	-- Chimney stacks ALONG the ridge, not one at each gable end. A range three
+	-- hundred studs long with two stacks reads as a shed with a fire at either
+	-- end of it; a boarding house has one over every pair of rooms, and the
+	-- stacks are half of what makes a collegiate roofline read as one.
+	local ridgeRun = if runsX then width else depth
+	local stacks = math.max(2, math.round(ridgeRun / 70))
+	for i = 0, stacks - 1 do
+		local t = i / (stacks - 1)
+		local along = (if runsX then x0 else z0) + 8 + t * (ridgeRun - 16)
+		local chx = if runsX then along else cx
+		local chz = if runsX then cz else along
 		Kit.chimney(K, { x = chx, z = chz, base = eaves, height = rise + 10, width = 6 })
 	end
 
@@ -6752,6 +6767,30 @@ local function buildBikeTrack(parent: Instance)
 		return cx + math.cos(t) * A * wobbleX, cz + math.sin(t) * B * wobbleZ
 	end
 
+	-- How hard the ribbon is turning at segment i: the change in heading from
+	-- the run before it to the run after it. A berm belongs on a BEND, and
+	-- built on every other segment regardless of the geometry the loop came
+	-- out as a cog -- twenty-four banks evenly spaced round it, half of them
+	-- on dead-straight tarmac.
+	local function turnAt(i: number): number
+		local function heading(k: number): number
+			local ax, az = at(k)
+			local bx, bz = at(k + 1)
+			return math.atan2(bx - ax, bz - az)
+		end
+		local turn = heading(i + 1) - heading(i - 1)
+		while turn > math.pi do
+			turn -= math.pi * 2
+		end
+		while turn < -math.pi do
+			turn += math.pi * 2
+		end
+		return math.abs(turn)
+	end
+	-- 0.30 radians over two runs. The median segment turns 0.25, so this is
+	-- the eighteen that are actually cornering, in four contiguous runs.
+	local BERM_TURN = 0.30
+
 	for i = 0, SEGMENTS - 1 do
 		local x0, z0 = at(i)
 		local x1, z1 = at(i + 1)
@@ -6774,7 +6813,7 @@ local function buildBikeTrack(parent: Instance)
 		-- the banking: a wedge on the OUTSIDE of the curve, so a bend is a
 		-- berm. Which side that is depends on which way the ribbon is turning,
 		-- and the ribbon turns both ways -- it winds.
-		if i % 2 == 0 then
+		if turnAt(i) > BERM_TURN then
 			-- The berm goes on the side AWAY from the middle of the loop.
 			-- Deciding that from which way the ribbon is turning gets it wrong
 			-- wherever the wobble reverses the curve, and the first version
@@ -6788,8 +6827,13 @@ local function buildBikeTrack(parent: Instance)
 			berm.Anchored = true
 			berm.CanCollide = false
 			berm.Size = Vector3.new(length + 1.4, 3.6, 6.5)
+			-- Alternating courses, like the ribbon. Berms stand in contiguous
+			-- runs round a bend now instead of every other segment, and each
+			-- is overlength by 1.4 so the joints close -- which at one height
+			-- is nine square studs of two wedges sharing their underside.
+			local course = if i % 2 == 0 then 0.0 else 0.06
 			berm.CFrame = mid
-				* CFrame.new(outward * (HALF_W + 3.0), 1.8, 0)
+				* CFrame.new(outward * (HALF_W + 3.0), 1.8 + course, 0)
 				* CFrame.Angles(0, math.rad(if outward > 0 then -90 else 90), 0)
 			berm.Color = Color3.fromRGB(66, 68, 74)
 			berm.Material = Enum.Material.Asphalt
@@ -6799,7 +6843,7 @@ local function buildBikeTrack(parent: Instance)
 			part({
 				Name = "TrackBermFill",
 				Size = Vector3.new(4.0, 1.2, length + 1.4),
-				CFrame = mid * CFrame.new(outward * (HALF_W + 7.6), 0.5, 0),
+				CFrame = mid * CFrame.new(outward * (HALF_W + 7.6), 0.5 + course, 0),
 				Color = Color3.fromRGB(74, 62, 48),
 				Material = Enum.Material.Ground,
 				Parent = parent,
@@ -9372,8 +9416,13 @@ local function buildCourtyards(parent: Instance)
 	local courts = CampusPlan.site("Ball Courts")
 	local ccz = (courts.rect[2] + courts.rect[4]) / 2
 	local courtX = { courts.rect[1] + 70, courts.rect[3] - 70 }
-	buildCourt(parent, Vector3.new(courtX[1], 0, ccz), "Basketball", Color3.fromRGB(58, 104, 190), Color3.fromRGB(196, 86, 128))
-	buildCourt(parent, Vector3.new(courtX[2], 0, ccz), "Volleyball", Color3.fromRGB(176, 74, 116), Color3.fromRGB(58, 104, 190))
+	-- Muted, on the palette. They were painted a hot pink surround round an
+	-- electric blue floor and the other way about: from the air they read as
+	-- two decals dropped on the lawn, the only saturated colour anywhere on a
+	-- campus of stone, slate and deep green. A school court is acrylic over
+	-- tarmac -- a slate blue and a clay, inside a dark green apron.
+	buildCourt(parent, Vector3.new(courtX[1], 0, ccz), "Basketball", Color3.fromRGB(74, 106, 128), Color3.fromRGB(52, 76, 60))
+	buildCourt(parent, Vector3.new(courtX[2], 0, ccz), "Volleyball", Color3.fromRGB(140, 92, 70), Color3.fromRGB(52, 76, 60))
 
 	for _, cx in courtX do
 		for _, bz in { ccz - 18, ccz, ccz + 18 } do
@@ -9390,7 +9439,10 @@ local function buildCourtyards(parent: Instance)
 			Name = "QuadLawn",
 			Size = Vector3.new(104, 0.4, 92),
 			CFrame = CFrame.new(cx, 0.2, -2),
-			Color = Color3.fromRGB(104, 168, 72),
+			-- the palette's grass, 62/107/58. At 104/168/72 the two
+			-- quadrangles were the brightest thing in an aerial of the whole
+			-- campus, a daylight green inside a night-lit school.
+			Color = Color3.fromRGB(62, 107, 58),
 			Material = Enum.Material.Grass,
 			Parent = parent,
 		}), "TexGrass").CanCollide = false
