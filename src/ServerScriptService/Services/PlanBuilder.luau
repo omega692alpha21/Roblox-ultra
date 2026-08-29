@@ -391,6 +391,84 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 		end
 	end
 	ctx.tag(ctx.part({ Name = "PlanCornice", Size = Vector3.new(width + 3.4, 2.2, depth + 3.4), CFrame = CFrame.new(cx, eaves + 1.1, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+
+	-- ---- rainwater goods ----
+	-- Ranking every roof on the campus by the kinds of part on it says the
+	-- same thing about all eight buildings: no Gutter, no Downpipe anywhere.
+	-- A collegiate stone building carries a gutter along every eave and a
+	-- downpipe at the corners and the third points, and in the reference
+	-- elevations those downpipes are the dark verticals that break up a long
+	-- wall. Ours had eaves boards over nothing.
+	local GOODS = Color3.fromRGB(58, 62, 68)
+	local hw, hd = width / 2 + 2.3, depth / 2 + 2.3
+	local gy = eaves - 0.4
+	for _, run in
+		{
+			{ len = width + 4.6, sx = 0.0, sz = -hd, alongX = true },
+			{ len = width + 4.6, sx = 0.0, sz = hd, alongX = true },
+			{ len = depth + 4.6, sx = -hw, sz = 0.0, alongX = false },
+			{ len = depth + 4.6, sx = hw, sz = 0.0, alongX = false },
+		}
+	do
+		ctx.part({
+			Name = "PlanGutter",
+			Size = if run.alongX then Vector3.new(run.len, 1.2, 1.7) else Vector3.new(1.7, 1.2, run.len),
+			CFrame = CFrame.new(cx + run.sx, gy, cz + run.sz),
+			Color = GOODS,
+			Material = Enum.Material.Metal,
+			Parent = ctx.parent,
+		}).CanCollide = false
+		local n = math.max(3, math.round(run.len / 15))
+		for i = 0, n do
+			local t = -0.5 + i / n
+			ctx.part({
+				Name = "PlanGutterBracket",
+				Size = Vector3.new(0.5, 0.7, 0.5),
+				CFrame = CFrame.new(
+					cx + (if run.alongX then run.len * t else run.sx),
+					gy - 0.95,
+					cz + (if run.alongX then run.sz else run.len * t)
+				),
+				Color = GOODS,
+				Material = Enum.Material.Metal,
+				Parent = ctx.parent,
+			}).CanCollide = false
+		end
+	end
+	for _, dp in
+		{
+			Vector2.new(-hw + 1.2, -hd + 1.2),
+			Vector2.new(hw - 1.2, -hd + 1.2),
+			Vector2.new(-hw + 1.2, hd - 1.2),
+			Vector2.new(hw - 1.2, hd - 1.2),
+			Vector2.new(-width / 6, -hd + 0.5),
+			Vector2.new(width / 6, -hd + 0.5),
+			Vector2.new(-width / 6, hd - 0.5),
+			Vector2.new(width / 6, hd - 0.5),
+		}
+	do
+		local px, pz = cx + dp.X, cz + dp.Y
+		ctx.part({ Name = "PlanHopper", Size = Vector3.new(2.2, 2.4, 2.2), CFrame = CFrame.new(px, gy - 1.7, pz), Color = GOODS, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		local runLen = gy - 4.2
+		-- A cylinder spins about its LOCAL X, so a vertical pipe is a length
+		-- along X turned a quarter turn about Z.
+		ctx.part({
+			Name = "PlanDownpipe",
+			Size = Vector3.new(runLen, 1.2, 1.2),
+			CFrame = CFrame.new(px, 1.2 + runLen / 2, pz) * CFrame.Angles(0, 0, math.pi / 2),
+			Shape = Enum.PartType.Cylinder,
+			Color = GOODS,
+			Material = Enum.Material.Metal,
+			Parent = ctx.parent,
+		}).CanCollide = false
+		local clips = math.max(2, math.floor(runLen / 13))
+		for i = 1, clips do
+			ctx.part({ Name = "PlanPipeClip", Size = Vector3.new(1.9, 0.7, 1.9), CFrame = CFrame.new(px, 1.2 + runLen * i / (clips + 1), pz), Color = GOODS, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		end
+		ctx.part({ Name = "PlanPipeShoe", Size = Vector3.new(1.6, 2.2, 1.6), CFrame = CFrame.new(px, 1.4, pz) * CFrame.Angles(math.rad(if dp.Y < 0 then -16 else 16), 0, 0), Color = GOODS, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.part({ Name = "PlanPipeGully", Size = Vector3.new(3.0, 0.5, 3.0), CFrame = CFrame.new(px, 0.35, pz + (if dp.Y < 0 then -1.0 else 1.0)), Color = Color3.fromRGB(96, 96, 100), Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	end
+
 	for _, corner in { Vector3.new(-1, 0, -1), Vector3.new(1, 0, -1), Vector3.new(-1, 0, 1), Vector3.new(1, 0, 1) } do
 		ctx.tag(ctx.part({
 			Name = "PlanQuoin",
