@@ -4034,18 +4034,50 @@ local function buildRoof(parent: Instance, center: Vector3, size: Vector2)
 end
 
 -- Concrete walkway between two points.
-local function buildPath(parent: Instance, from: Vector3, to: Vector3, width: number)
+local function buildPath(parent: Instance, from: Vector3, to: Vector3, width: number, dressed: boolean?)
 	local flat = Vector3.new(to.X - from.X, 0, to.Z - from.Z)
 	local length = flat.Magnitude
 	local mid = (from + to) / 2
+	local at = CFrame.lookAt(Vector3.new(mid.X, 0.05, mid.Z), Vector3.new(to.X, 0.05, to.Z))
 	part({
 		Name = "Walkway",
 		Size = Vector3.new(width, 0.3, length),
-		CFrame = CFrame.lookAt(Vector3.new(mid.X, 0.05, mid.Z), Vector3.new(to.X, 0.05, to.Z)),
+		CFrame = at,
 		Color = Color3.fromRGB(178, 172, 160),
 		Material = Enum.Material.Concrete,
 		Parent = parent,
 	})
+	if not dressed then
+		return
+	end
+	-- The drive is the first thing anybody arriving looks at, and standing at
+	-- the gate it filled the bottom third of the frame as one unbroken tan
+	-- rectangle two hundred and twenty studs long. A kerb down each side and a
+	-- joint every twelve studs is the whole difference between a paved drive
+	-- and a ramp.
+	for _, side in { -1, 1 } do
+		part({
+			Name = "WalkwayKerb",
+			Size = Vector3.new(1.1, 0.7, length),
+			CFrame = at * CFrame.new(side * (width / 2 + 0.55), 0.10, 0),
+			Color = Color3.fromRGB(206, 200, 186),
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	local bays = math.max(1, math.floor(length / 12))
+	for i = 1, bays - 1 do
+		part({
+			Name = "WalkwayJoint",
+			Size = Vector3.new(width - 1.4, 0.14, 0.7),
+			-- sitting ON the slab, not floating over it: the walk's top face
+			-- is at 0.20 and this starts there
+			CFrame = at * CFrame.new(0, 0.22, -length / 2 + i * (length / bays)),
+			Color = Color3.fromRGB(150, 146, 138),
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		}).CanCollide = false
+	end
 end
 
 -- Courtyard fountain: stone basin, water, spray.
@@ -10727,7 +10759,7 @@ end
 	end
 	-- the drive off the road onto the court's axis, and the link from the
 	-- bus stop down onto the west flank walk
-	buildPath(folder, Vector3.new(0, 0, ROAD_Z - 10), Vector3.new(0, 0, 285), 26)
+	buildPath(folder, Vector3.new(0, 0, ROAD_Z - 10), Vector3.new(0, 0, 285), 26, true)
 	buildPath(folder, Vector3.new(-96, 0, ROAD_Z - 10), Vector3.new(-96, 0, 285), 14)
 
 	-- ---------------- the main gate ----------------
@@ -10743,7 +10775,7 @@ end
 		-- the drive up to it, and the sweep inside the piers
 		-- up to the gate, and no further: the North Reserve starts at z = 560
 		-- and the drawing keeps it clear of anything built
-		buildPath(folder, Vector3.new(0, 0, ROAD_Z + 10), Vector3.new(0, 0, gz + 4), 26)
+		buildPath(folder, Vector3.new(0, 0, ROAD_Z + 10), Vector3.new(0, 0, gz + 4), 26, true)
 		tag(part({
 			Name = "GateApron",
 			-- half * 4 + 4, not + 24: at 144 wide it ran to x +-72 and the

@@ -12,6 +12,12 @@ SP = os.path.dirname(os.path.abspath(__file__))
 # the luau CLI is not checked in; point LUAU_BIN at it, or leave it on PATH
 LUAU = os.environ.get("LUAU_BIN") or shutil.which("luau") or os.path.join(SP, "luau")
 
+# The plot, from the drawing, for the ground quad the shots stand on.
+try:
+    PLOT = json.load(open(os.path.join(SP, "_campus_plan.json")))["plot"]
+except Exception:
+    PLOT = [-800, -640, 840, 780]
+
 SHIM = r'''
 -- ===== datatype + instance shims =====
 local function v3mt()
@@ -481,8 +487,13 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                 out.append(tuple(a[k] + (b[k] - a[k]) * t for k in range(3)))
         return out
 
-    # ground plane (grass) — draw as a huge quad
-    ground = [(-600, 0, -600), (600, 0, -600), (600, 0, 600), (-600, 0, 600)]
+    # ground plane (grass) -- the PLOT, from the drawing. Hard-coded as a
+    # 1200-stud square it stopped at x = 600 while the plot runs to 840 and
+    # z = 780, so every aerial showed the north-east corner of the estate --
+    # the rock ridge, the tree belt, a third of the East Reserve -- hanging in
+    # empty sky beyond the edge of the grass.
+    ground = [(PLOT[0], 0, PLOT[1]), (PLOT[2], 0, PLOT[1]),
+              (PLOT[2], 0, PLOT[3]), (PLOT[0], 0, PLOT[3])]
     gp = [project(g) for g in ground]
     if all(gp):
         d.polygon([(p[0], p[1]) for p in gp], fill=(104, 148, 88))
