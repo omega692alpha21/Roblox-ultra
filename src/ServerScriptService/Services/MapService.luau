@@ -703,22 +703,37 @@ local function buildLibrary(parent: Instance, center: Vector3)
 				Material = Enum.Material.WoodPlanks,
 				Parent = parent,
 			})
-			-- a band of spines so the shelves are not brown slabs
+			-- BOOKS, not a band. This was one part thirty-eight studs long in
+			-- one colour per shelf -- and a player stands a stud from it, so
+			-- what the library's whole west end read as was three stripes of
+			-- solid green. A shelf of books is spines: each its own width,
+			-- its own height, its own colour, with the gaps a real shelf has.
+			-- The arithmetic is deterministic off the shelf's own indices, so
+			-- the same book is the same book every build.
 			for shelfLevel = 1, 4 do
-				part({
-					Name = "LibraryBooks",
-					Size = Vector3.new(6, 1.8, 38),
-					CFrame = CFrame.new(center) * CFrame.new(x, shelfLevel * 2.7, -8),
-					-- spines, not mud: a wider spread so a wall of books reads
-					-- as many books rather than one brown mass
-					Color = Color3.fromRGB(
-						math.clamp(150 + (row + 1) * 34 + side * 26, 60, 250),
-						math.clamp(96 + shelfLevel * 30 - side * 18, 50, 245),
-						math.clamp(104 + side * 52 - shelfLevel * 12, 50, 240)
-					),
-					Material = Enum.Material.Fabric,
-					Parent = parent,
-				})
+				local seed = (row + 2) * 131 + side * 57 + shelfLevel * 19
+				local zAt, i = -27.0, 0
+				while zAt < 10.0 do
+					i += 1
+					local n = seed + i * 37
+					local thick = 0.9 + (n % 9) * 0.21
+					local high = 1.5 + ((n // 9) % 5) * 0.24
+					local out = 5.9 + ((n // 3) % 4) * 0.22
+					part({
+						Name = "LibraryBook",
+						Size = Vector3.new(out, high, thick),
+						CFrame = CFrame.new(center) * CFrame.new(x, shelfLevel * 2.7 - 0.9 + high / 2, zAt + thick / 2),
+						Color = Color3.fromRGB(
+							math.clamp(70 + (n % 11) * 17 + side * 20, 45, 235),
+							math.clamp(58 + ((n // 5) % 9) * 19 + shelfLevel * 6, 40, 220),
+							math.clamp(52 + ((n // 7) % 8) * 21, 38, 215)
+						),
+						Material = Enum.Material.Fabric,
+						Parent = parent,
+					}).CanCollide = false
+					-- a gap, so no two spines share a face
+					zAt += thick + 0.14 + (n % 3) * 0.06
+				end
 			end
 		end
 	end
