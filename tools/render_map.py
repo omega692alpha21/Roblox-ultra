@@ -859,7 +859,17 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                     # colour's own level. Raised to 0.175 with OutdoorAmbient, which went to
                     # #28345 2 for the same reason: at 0.115 every roof on the campus
                     # rendered black and the whole roofscape vanished.
-                    shade = max(shade * 0.16, 0.175) + min(1.05, lamplight(fcx, fcy, fcz, nx, ny_, nz_) * 0.42)
+                    # MOONLIGHT on the upward faces. Ambient alone put the
+                    # roofs at almost exactly the value of the night sky
+                    # behind them, so raising it from 0.115 to 0.175 changed
+                    # nothing you could see: the roofscape was not black, it
+                    # was the same colour as what it was silhouetted against.
+                    # What separates a slate roof from the sky at night is the
+                    # moon catching it, and that is a term on the face's own
+                    # up-component, not a constant.
+                    skyward = max(0.0, ny_)
+                    shade = max(shade * 0.16, 0.175) + skyward * 0.26 \
+                        + min(1.05, lamplight(fcx, fcy, fcz, nx, ny_, nz_) * 0.42)
             col = tuple(min(255, int(ch * shade)) for ch in c)
             faces.append((corners, col))
 
