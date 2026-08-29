@@ -2938,6 +2938,52 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 			then CFrame.new(cx + side * (endAt + 0.6), eaves + 2.6, cz)
 			else CFrame.new(cx, eaves + 2.6, cz + side * (endAt + 0.6))
 		ctx.tag(ctx.part({ Name = "PlanVerge", Size = vSize, CFrame = vAt, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+
+		-- A GABLE IS NOT A BLANK TRIANGLE. Steepening the roofs made these the
+		-- least articulated surfaces on the campus: forty-three studs tall and
+		-- up to sixty-seven across, with a verge board down each slope and
+		-- nothing else on them -- and every one of them faces open ground. A
+		-- gable end carries a window, a kneeler where it meets the eaves, and
+		-- a coping block at the apex.
+		--
+		-- `out` is the outward normal in the axis the gable faces, so the same
+		-- code serves a range running east-west and one running north-south.
+		local function atGable(outward: number, up: number, across: number): CFrame
+			return if runsX
+				then CFrame.new(cx + side * (endAt + outward), eaves + 2.2 + up, cz + across)
+				else CFrame.new(cx + across, eaves + 2.2 + up, cz + side * (endAt + outward))
+		end
+		local function facing(thick: number, height: number, wide: number): Vector3
+			return if runsX
+				then Vector3.new(thick, height, wide)
+				else Vector3.new(wide, height, thick)
+		end
+
+		local gw = math.min(10.0, span * 0.16)
+		local gh = math.min(14.0, rise * 0.42)
+		local gy = rise * 0.26
+		ctx.tag(ctx.part({ Name = "PlanGableSurround", Size = facing(1.6, gh + 3.4, gw + 3.4), CFrame = atGable(1.6, gy, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		-- PROUD of the surround, not inside it. The surround is 1.6 of opaque
+		-- ashlar reaching to 2.4; a pane at 2.0 sits wholly behind its own
+		-- frame, which from outside is a stone slab with a lit window nobody
+		-- can see. tools/window_check.py calls that buried, and it is.
+		local pane = ctx.part({ Name = "PlanGableWindow", Size = facing(0.7, gh, gw), CFrame = atGable(2.6, gy, 0), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Parent = ctx.parent })
+		pane.CanCollide = false
+		pane.CastShadow = false
+		ctx.part({ Name = "PlanGableMullion", Size = facing(1.0, gh, 0.6), CFrame = atGable(2.9, gy, 0), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.tag(ctx.part({ Name = "PlanGableSill", Size = facing(2.4, 0.9, gw + 5.0), CFrame = atGable(1.4, gy - gh / 2 - 2.1, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		local glow = Instance.new("PointLight")
+		glow.Color = Color3.fromRGB(255, 220, 160)
+		glow.Brightness = 0.8
+		glow.Range = 22
+		glow.Shadows = false
+		glow.Parent = pane
+
+		-- kneelers where the verge meets the eaves, and a coping at the apex
+		for _, foot in { -1, 1 } do
+			ctx.tag(ctx.part({ Name = "PlanGableKneeler", Size = facing(4.6, 2.8, 5.4), CFrame = atGable(0.6, 0.4, foot * (span / 2 - 0.4)), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		end
+		ctx.tag(ctx.part({ Name = "PlanGableCoping", Size = facing(4.4, 2.2, 4.4), CFrame = atGable(0.6, rise + 0.7, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 	end
 
 	-- dormers down the long slopes, and a chimney on each gable end
