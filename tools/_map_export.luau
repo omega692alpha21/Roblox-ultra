@@ -11802,7 +11802,23 @@ local function furnishRingBuildings(parent: Instance)
 	end
 
 	-- the holding room, behind bars
-	barredScreen(parent, -396, -374, -14, 18)
+	-- WALL TO WALL, with a gate in it. This was a 22-stud screen standing in
+	-- the middle of a 77-stud room: bars you walk round, which is not a
+	-- holding room, it is a railing. The room runs x -398 to -325; the gate is
+	-- the twelve studs in the middle of that.
+	barredScreen(parent, -398, -365, -14, 18)
+	barredScreen(parent, -353, -325, -14, 18)
+	for _, gx in { -365, -353 } do
+		part({ Name = "CageGatePost", Size = Vector3.new(2.0, 18, 2.0), CFrame = CFrame.new(gx, 9, -14), Color = Color3.fromRGB(38, 40, 44), Material = Enum.Material.Metal, Parent = parent })
+	end
+	-- the leaf, swung back against the bars so the room stays walkable
+	for i = 0, 5 do
+		part({ Name = "CageGateBar", Size = Vector3.new(0.5, 16.4, 0.5), CFrame = CFrame.new(-352.4, 8.8, -14) * CFrame.Angles(0, math.rad(-78), 0) * CFrame.new(0, 0, -1.4 - i * 2.0), Color = Color3.fromRGB(58, 60, 64), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	for _, ry in { 1.0, 16.6 } do
+		part({ Name = "CageGateRail", Size = Vector3.new(0.9, 0.9, 11.6), CFrame = CFrame.new(-352.4, ry, -14) * CFrame.Angles(0, math.rad(-78), 0) * CFrame.new(0, 0, -6.2), Color = Color3.fromRGB(46, 48, 52), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "CageGateLock", Size = Vector3.new(1.4, 2.2, 1.0), CFrame = CFrame.new(-352.4, 8.8, -14) * CFrame.Angles(0, math.rad(-78), 0) * CFrame.new(0, 0, -11.4), Color = Color3.fromRGB(168, 132, 62), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 	for _, bz in { -28, -22 } do
 		prop("Bench", CFrame.new(-386, 0, bz))
 	end
