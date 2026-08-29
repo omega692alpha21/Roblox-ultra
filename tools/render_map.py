@@ -20,6 +20,7 @@ except Exception:
 
 SHIM = r'''
 -- ===== datatype + instance shims =====
+local SCATTER_SHIFT = "__SCATTER_SHIFT__"
 local function v3mt()
   local mt = {}
   mt.__index = function(v, k)
@@ -187,8 +188,19 @@ NumberSequenceKeypoint = { new = function(t, v) return { Time = t, Value = v } e
 -- Deterministic Random (LCG)
 Random = {}
 Random.__index = Random
+-- SCATTER_SHIFT offsets every seed in the map at once.
+--
+-- This shim's Random is a Lehmer LCG; Roblox's is not. So every scatter on the
+-- campus -- the tree belt, the parkland, the rock ridge, the loose boundary
+-- stone, the clutter in every room -- lands somewhere OFFLINE that it will not
+-- land in the game. The checks have still been worth running, because what
+-- they ask is statistical: if three hundred seeds over a belt place cleanly,
+-- another three hundred will. But a map that is only clean for one arbitrary
+-- sequence is a map that got lucky, so the suite can be run again under a
+-- different one and has to pass that too.
+local SEED_SHIFT = tonumber(SCATTER_SHIFT) or 0
 function Random.new(seed)
-  return setmetatable({ state = (seed or 42) % 2147483647 }, Random)
+  return setmetatable({ state = ((seed or 42) + SEED_SHIFT * 7919) % 2147483647 }, Random)
 end
 function Random.NextNumber(self, lo, hi)
   self.state = (self.state * 48271) % 2147483647
@@ -409,7 +421,7 @@ print("[" .. table.concat(out, ",") .. "]")
 '''
 
 program = (
-    SHIM
+    SHIM.replace("__SCATTER_SHIFT__", os.environ.get("SCATTER_SHIFT", "0"))
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Shared/Palette.luau"), "Palette")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/GameConfig.luau"), "GameConfig")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/Cliques.luau"), "__Cliques")
