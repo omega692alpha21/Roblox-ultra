@@ -875,13 +875,13 @@ shots = [
     ("greenhouse", (-116, 6, 20),    (-116, 6, -40)),
     ("eastlab",    (116, 6, 20),     (116, 6, -40)),
     ("wingcorr",   (-178, 6, -20),   (-178, 6, -60)),
-    ("plotroom",   (-190, 7, 66),    (-190, 6, 104)),
+    ("office2",    (-200, 7, 56),    (-207, 6, 18)),
     ("gym",        (0, 9, -70),      (0, 8, -130)),
     ("room101",    (-74, 6, -70),    (-74, 6, -120)),
     ("library",    (-320, 16, -220),  (-320, 14, -300)),
     ("libinside",  (-320, 7, -264),   (-320, 9, -330)),
     ("dorms",      (0, 9, -206),     (0, 9, -280)),
-    ("northquad",  (0, 72, -132),    (0, 10, -240)),
+    ("westquad",   (-116, 24, 44),   (-116, 4, -10)),
     ("office",     (-190, 6, 34),    (-214, 6, 26)),
     # the headmaster's office on the lodge's top floor, and the way down
     ("head",       (-266, 41, -170),  (-320, 39, -170)),
@@ -944,8 +944,24 @@ shots = [
 if os.environ.get("SKIP_SHOTS"):
     print("done (dump only)")
 else:
+    # A camera pointed at a wall costs more than a wasted picture: it is an
+    # interior nobody looks at, and this suite found two of them only by
+    # measuring the largest flat colour in every frame afterwards. Measure it
+    # here instead, and say so.
+    from collections import Counter as _Counter
+    blind = []
     for name, cam, target in shots:
-        render(cam, target, os.path.join(OUT, f"shot_{name}.png"))
+        path = os.path.join(OUT, f"shot_{name}.png")
+        render(cam, target, path)
+        small = Image.open(path).convert("RGB").resize((160, 90))
+        top = _Counter(small.getdata()).most_common(1)[0][1] / (160 * 90)
+        if top > 0.80:
+            blind.append((top, name))
+    if blind:
+        blind.sort(reverse=True)
+        print("cameras looking at almost nothing:")
+        for share, name in blind:
+            print(f"  {share:.0%} one colour  {name}")
     # The four reference angles again, at night, which is the only light the
     # art direction is written for.
     for name in ("eyegate", "entrance", "courtnorth", "dormcourteye", "siteplan",
