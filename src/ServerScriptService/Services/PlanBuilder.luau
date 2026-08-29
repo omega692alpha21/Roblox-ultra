@@ -383,14 +383,25 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 	end
 
 	-- ---- the storey bands and the corners, so it is the same school ----
+	--
+	-- `width` and `depth` are the rectangle CampusPlan draws, and the exterior
+	-- WALL straddles that line: eight studs thick, centred on it, so the face
+	-- a player sees stands four studs further out. Every band here was sized
+	-- off the rectangle instead -- plinth at width + 3.0, string at + 1.6,
+	-- cornice at + 3.4 -- which put all of them between two and a half studs
+	-- INSIDE the masonry they are supposed to dress. Five buildings with a
+	-- plinth, a string course, a cornice and four quoins each, and not one of
+	-- those members visible from outside: flat walls, no relief, exactly the
+	-- "reads as a warehouse" the staff lodge was rebuilt for.
+	local FACE = CampusPlan.EXTERIOR_WALL
 	for index, storey in b.storeys do
 		if index == 1 then
-			ctx.tag(ctx.part({ Name = "PlanPlinth", Size = Vector3.new(width + 3.0, 3.0, depth + 3.0), CFrame = CFrame.new(cx, 1.5, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+			ctx.tag(ctx.part({ Name = "PlanPlinth", Size = Vector3.new(width + FACE + 3.0, 3.0, depth + FACE + 3.0), CFrame = CFrame.new(cx, 1.5, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 		else
-			ctx.tag(ctx.part({ Name = "PlanStringCourse", Size = Vector3.new(width + 1.6, 1.5, depth + 1.6), CFrame = CFrame.new(cx, storey.y, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+			ctx.tag(ctx.part({ Name = "PlanStringCourse", Size = Vector3.new(width + FACE + 1.6, 1.5, depth + FACE + 1.6), CFrame = CFrame.new(cx, storey.y, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 		end
 	end
-	ctx.tag(ctx.part({ Name = "PlanCornice", Size = Vector3.new(width + 3.4, 2.2, depth + 3.4), CFrame = CFrame.new(cx, eaves + 1.1, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+	ctx.tag(ctx.part({ Name = "PlanCornice", Size = Vector3.new(width + FACE + 3.4, 2.2, depth + FACE + 3.4), CFrame = CFrame.new(cx, eaves + 1.1, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 
 	-- ---- rainwater goods ----
 	-- Ranking every roof on the campus by the kinds of part on it says the
@@ -400,14 +411,14 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 	-- elevations those downpipes are the dark verticals that break up a long
 	-- wall. Ours had eaves boards over nothing.
 	local GOODS = Color3.fromRGB(58, 62, 68)
-	local hw, hd = width / 2 + 2.3, depth / 2 + 2.3
+	local hw, hd = width / 2 + FACE / 2 + 2.3, depth / 2 + FACE / 2 + 2.3
 	local gy = eaves - 0.4
 	for _, run in
 		{
-			{ len = width + 4.6, sx = 0.0, sz = -hd, alongX = true },
-			{ len = width + 4.6, sx = 0.0, sz = hd, alongX = true },
-			{ len = depth + 4.6, sx = -hw, sz = 0.0, alongX = false },
-			{ len = depth + 4.6, sx = hw, sz = 0.0, alongX = false },
+			{ len = width + FACE + 4.6, sx = 0.0, sz = -hd, alongX = true },
+			{ len = width + FACE + 4.6, sx = 0.0, sz = hd, alongX = true },
+			{ len = depth + FACE + 4.6, sx = -hw, sz = 0.0, alongX = false },
+			{ len = depth + FACE + 4.6, sx = hw, sz = 0.0, alongX = false },
 		}
 	do
 		ctx.part({
@@ -473,7 +484,7 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 		ctx.tag(ctx.part({
 			Name = "PlanQuoin",
 			Size = Vector3.new(5.0, eaves - 1.0, 5.0),
-			CFrame = CFrame.new(cx + corner.X * (width / 2 - 1.0), (eaves + 1.0) / 2, cz + corner.Z * (depth / 2 - 1.0)),
+			CFrame = CFrame.new(cx + corner.X * (width / 2 + FACE / 2 - 1.0), (eaves + 1.0) / 2, cz + corner.Z * (depth / 2 + FACE / 2 - 1.0)),
 			Color = ASHLAR,
 			Material = Enum.Material.Concrete,
 			Parent = ctx.parent,

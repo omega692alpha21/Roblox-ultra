@@ -2922,14 +2922,25 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 	end
 
 	-- ---- the storey bands and the corners, so it is the same school ----
+	--
+	-- `width` and `depth` are the rectangle CampusPlan draws, and the exterior
+	-- WALL straddles that line: eight studs thick, centred on it, so the face
+	-- a player sees stands four studs further out. Every band here was sized
+	-- off the rectangle instead -- plinth at width + 3.0, string at + 1.6,
+	-- cornice at + 3.4 -- which put all of them between two and a half studs
+	-- INSIDE the masonry they are supposed to dress. Five buildings with a
+	-- plinth, a string course, a cornice and four quoins each, and not one of
+	-- those members visible from outside: flat walls, no relief, exactly the
+	-- "reads as a warehouse" the staff lodge was rebuilt for.
+	local FACE = CampusPlan.EXTERIOR_WALL
 	for index, storey in b.storeys do
 		if index == 1 then
-			ctx.tag(ctx.part({ Name = "PlanPlinth", Size = Vector3.new(width + 3.0, 3.0, depth + 3.0), CFrame = CFrame.new(cx, 1.5, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+			ctx.tag(ctx.part({ Name = "PlanPlinth", Size = Vector3.new(width + FACE + 3.0, 3.0, depth + FACE + 3.0), CFrame = CFrame.new(cx, 1.5, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 		else
-			ctx.tag(ctx.part({ Name = "PlanStringCourse", Size = Vector3.new(width + 1.6, 1.5, depth + 1.6), CFrame = CFrame.new(cx, storey.y, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+			ctx.tag(ctx.part({ Name = "PlanStringCourse", Size = Vector3.new(width + FACE + 1.6, 1.5, depth + FACE + 1.6), CFrame = CFrame.new(cx, storey.y, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 		end
 	end
-	ctx.tag(ctx.part({ Name = "PlanCornice", Size = Vector3.new(width + 3.4, 2.2, depth + 3.4), CFrame = CFrame.new(cx, eaves + 1.1, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+	ctx.tag(ctx.part({ Name = "PlanCornice", Size = Vector3.new(width + FACE + 3.4, 2.2, depth + FACE + 3.4), CFrame = CFrame.new(cx, eaves + 1.1, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 
 	-- ---- rainwater goods ----
 	-- Ranking every roof on the campus by the kinds of part on it says the
@@ -2939,14 +2950,14 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 	-- elevations those downpipes are the dark verticals that break up a long
 	-- wall. Ours had eaves boards over nothing.
 	local GOODS = Color3.fromRGB(58, 62, 68)
-	local hw, hd = width / 2 + 2.3, depth / 2 + 2.3
+	local hw, hd = width / 2 + FACE / 2 + 2.3, depth / 2 + FACE / 2 + 2.3
 	local gy = eaves - 0.4
 	for _, run in
 		{
-			{ len = width + 4.6, sx = 0.0, sz = -hd, alongX = true },
-			{ len = width + 4.6, sx = 0.0, sz = hd, alongX = true },
-			{ len = depth + 4.6, sx = -hw, sz = 0.0, alongX = false },
-			{ len = depth + 4.6, sx = hw, sz = 0.0, alongX = false },
+			{ len = width + FACE + 4.6, sx = 0.0, sz = -hd, alongX = true },
+			{ len = width + FACE + 4.6, sx = 0.0, sz = hd, alongX = true },
+			{ len = depth + FACE + 4.6, sx = -hw, sz = 0.0, alongX = false },
+			{ len = depth + FACE + 4.6, sx = hw, sz = 0.0, alongX = false },
 		}
 	do
 		ctx.part({
@@ -3012,7 +3023,7 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 		ctx.tag(ctx.part({
 			Name = "PlanQuoin",
 			Size = Vector3.new(5.0, eaves - 1.0, 5.0),
-			CFrame = CFrame.new(cx + corner.X * (width / 2 - 1.0), (eaves + 1.0) / 2, cz + corner.Z * (depth / 2 - 1.0)),
+			CFrame = CFrame.new(cx + corner.X * (width / 2 + FACE / 2 - 1.0), (eaves + 1.0) / 2, cz + corner.Z * (depth / 2 + FACE / 2 - 1.0)),
 			Color = ASHLAR,
 			Material = Enum.Material.Concrete,
 			Parent = ctx.parent,
@@ -6818,10 +6829,12 @@ local function buildGrandFacade(parent: Instance)
 	local bayFace = Z + 12.2
 	-- outboard of the portico columns at +/-11, not on top of them
 	for _, px in { -25, -38, 25, 38 } do
-		part({ Name = "EntryPilaster", Size = Vector3.new(4.4, 40, 1.6), CFrame = CFrame.new(px, 21, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		-- Two tenths of a stud proud of the bay it stands on is not a pilaster,
+		-- it is a painted stripe. relief_check measures exactly this.
+		part({ Name = "EntryPilaster", Size = Vector3.new(4.4, 40, 2.6), CFrame = CFrame.new(px, 21, bayFace + 0.7), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 		-- a capital block so the pilaster lands somewhere
-		part({ Name = "EntryPilasterCap", Size = Vector3.new(5.6, 1.8, 2.2), CFrame = CFrame.new(px, 41.6, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
-		part({ Name = "EntryPilasterBase", Size = Vector3.new(5.6, 2.2, 2.2), CFrame = CFrame.new(px, 2.1, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryPilasterCap", Size = Vector3.new(5.6, 1.8, 3.4), CFrame = CFrame.new(px, 41.6, bayFace + 0.7), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryPilasterBase", Size = Vector3.new(5.6, 2.2, 3.4), CFrame = CFrame.new(px, 2.1, bayFace + 0.7), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	end
 	-- Brick to the first string course, stone above. The bay was one uniform
 	-- slab of trim concrete from the pavement to the pediment, which reads as
@@ -10955,10 +10968,14 @@ local function ringNameBoards(parent: Instance)
 	-- the gymnasium's west door
 	nameBoard(parent, "GymNameBoard", "SPORTS HALL", 325.4, 15.4, 396, -90, 24, 4.4)
 	-- the detention hall's east door
-	nameBoard(parent, "DetentionNameBoard", "DETENTION HALL", -310.4, 15.4, 20, 90, 24, 4.4)
+	-- Clear of the gutter, which now runs where the board used to sit: the
+	-- detention hall's eaves are at 18 and its gutter hangs at 17.6.
+	nameBoard(parent, "DetentionNameBoard", "DETENTION HALL", -310.4, 13.4, 20, 90, 24, 4.4)
 	-- and the block by the alley, which is a boiler house as far as anyone
 	-- reading the sign is concerned
-	nameBoard(parent, "BoilerNameBoard", "BOILER HOUSE", 269.6, 13.6, 400, 90, 20, 3.6)
+	-- Sixteen studs of wall, an eleven-stud door under it and a gutter at
+	-- fifteen: this one is smaller because there is only four studs of stone.
+	nameBoard(parent, "BoilerNameBoard", "BOILER HOUSE", 269.6, 13.0, 400, 90, 20, 3.0)
 end
 
 -- Hang lanterns along one wall face. `yaw` turns the fitting's local +Z out

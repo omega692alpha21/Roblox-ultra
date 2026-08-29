@@ -3566,10 +3566,12 @@ local function buildGrandFacade(parent: Instance)
 	local bayFace = Z + 12.2
 	-- outboard of the portico columns at +/-11, not on top of them
 	for _, px in { -25, -38, 25, 38 } do
-		part({ Name = "EntryPilaster", Size = Vector3.new(4.4, 40, 1.6), CFrame = CFrame.new(px, 21, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		-- Two tenths of a stud proud of the bay it stands on is not a pilaster,
+		-- it is a painted stripe. relief_check measures exactly this.
+		part({ Name = "EntryPilaster", Size = Vector3.new(4.4, 40, 2.6), CFrame = CFrame.new(px, 21, bayFace + 0.7), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 		-- a capital block so the pilaster lands somewhere
-		part({ Name = "EntryPilasterCap", Size = Vector3.new(5.6, 1.8, 2.2), CFrame = CFrame.new(px, 41.6, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
-		part({ Name = "EntryPilasterBase", Size = Vector3.new(5.6, 2.2, 2.2), CFrame = CFrame.new(px, 2.1, bayFace), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryPilasterCap", Size = Vector3.new(5.6, 1.8, 3.4), CFrame = CFrame.new(px, 41.6, bayFace + 0.7), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryPilasterBase", Size = Vector3.new(5.6, 2.2, 3.4), CFrame = CFrame.new(px, 2.1, bayFace + 0.7), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	end
 	-- Brick to the first string course, stone above. The bay was one uniform
 	-- slab of trim concrete from the pavement to the pediment, which reads as
@@ -7703,10 +7705,14 @@ local function ringNameBoards(parent: Instance)
 	-- the gymnasium's west door
 	nameBoard(parent, "GymNameBoard", "SPORTS HALL", 325.4, 15.4, 396, -90, 24, 4.4)
 	-- the detention hall's east door
-	nameBoard(parent, "DetentionNameBoard", "DETENTION HALL", -310.4, 15.4, 20, 90, 24, 4.4)
+	-- Clear of the gutter, which now runs where the board used to sit: the
+	-- detention hall's eaves are at 18 and its gutter hangs at 17.6.
+	nameBoard(parent, "DetentionNameBoard", "DETENTION HALL", -310.4, 13.4, 20, 90, 24, 4.4)
 	-- and the block by the alley, which is a boiler house as far as anyone
 	-- reading the sign is concerned
-	nameBoard(parent, "BoilerNameBoard", "BOILER HOUSE", 269.6, 13.6, 400, 90, 20, 3.6)
+	-- Sixteen studs of wall, an eleven-stud door under it and a gutter at
+	-- fifteen: this one is smaller because there is only four studs of stone.
+	nameBoard(parent, "BoilerNameBoard", "BOILER HOUSE", 269.6, 13.0, 400, 90, 20, 3.0)
 end
 
 -- Hang lanterns along one wall face. `yaw` turns the fitting's local +Z out
