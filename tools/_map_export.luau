@@ -9753,6 +9753,72 @@ local function buildSanctum(parent: Instance): { BasePart }
 	tag(part({ Name = "TurretWall", Size = Vector3.new(2, TURRET_TOP - headY, 14), CFrame = CFrame.new(TURRET.X - turretHalf - 1, (headY + TURRET_TOP) / 2, TURRET.Z), Color = Color3.fromRGB(138, 128, 114), Material = Enum.Material.Brick, Parent = parent }), "TexCoursedStone")
 	tag(part({ Name = "TurretWall", Size = Vector3.new(2, OFFICE_Y, 14), CFrame = CFrame.new(TURRET.X - turretHalf - 1, OFFICE_Y / 2, TURRET.Z), Color = Color3.fromRGB(138, 128, 114), Material = Enum.Material.Brick, Parent = parent }), "TexCoursedStone")
 	part({ Name = "TurretCap", Size = Vector3.new(turretHalf * 2 + 8, 2, turretHalf * 2 + 8), CFrame = CFrame.new(TURRET.X, TURRET_TOP + 1, TURRET.Z), Color = Color3.fromRGB(96, 90, 84), Material = Enum.Material.Slate, Parent = parent })
+	-- ---- the turret's own elevation ----
+	-- Twenty-six by sixty-two studs of blank coursed stone on every face, and
+	-- the east one looks straight out over the campus. A stair turret is lit
+	-- by a slit at every turn of the spiral, banded with a string course at
+	-- each stage, and corbelled out under its cap; this had none of it, and
+	-- the blank-face sweep ranked it as the largest bare wall left standing
+	-- above ground.
+	--
+	-- The slits climb round the turret the way the stair inside does: east,
+	-- south, west, north, east, south.
+	for stage, spec in
+		{
+			{ y = 10, face = 0 },
+			{ y = 19, face = 1 },
+			{ y = 28, face = 2 },
+			{ y = 37, face = 3 },
+			{ y = 46, face = 0 },
+			{ y = 55, face = 1 },
+		}
+	do
+		local dir = ({ Vector2.new(1, 0), Vector2.new(0, -1), Vector2.new(-1, 0), Vector2.new(0, 1) })[spec.face + 1]
+		local sx = TURRET.X + dir.X * (turretHalf + 1)
+		local sz = TURRET.Z + dir.Y * (turretHalf + 1)
+		local acrossX = if dir.X ~= 0 then 0 else 1
+		local function slit(name: string, w: number, h: number, out: number, dy: number, colour: Color3, mat: Enum.Material)
+			local size = if acrossX == 1 then Vector3.new(w, h, out) else Vector3.new(out, h, w)
+			part({
+				Name = name,
+				Size = size,
+				CFrame = CFrame.new(sx + dir.X * out * 0.35, spec.y + dy, sz + dir.Y * out * 0.35),
+				Color = colour,
+				Material = mat,
+				Parent = parent,
+			}).CanCollide = false
+		end
+		-- an ashlar surround, then the slit itself lit from inside
+		slit("TurretSlitSurround", 4.2, 9.0, 2.2, 0, Color3.fromRGB(201, 191, 169), Enum.Material.Concrete)
+		slit("TurretSlitSill", 5.6, 0.8, 2.8, -5.0, Color3.fromRGB(224, 218, 204), Enum.Material.Concrete)
+		slit("TurretSlitHead", 5.6, 1.0, 2.6, 5.0, Color3.fromRGB(201, 191, 169), Enum.Material.Concrete)
+		local glow = part({
+			Name = "TurretSlitGlow",
+			Size = if acrossX == 1 then Vector3.new(1.4, 6.4, 0.6) else Vector3.new(0.6, 6.4, 1.4),
+			CFrame = CFrame.new(sx + dir.X * 1.4, spec.y, sz + dir.Y * 1.4),
+			Color = Color3.fromRGB(255, 214, 150),
+			Material = Enum.Material.Neon,
+			Transparency = 0.3,
+			Parent = parent,
+		})
+		glow.CanCollide = false
+		glow.CastShadow = false
+		local lamp = Instance.new("PointLight")
+		lamp.Brightness = 0.9
+		lamp.Range = 24
+		lamp.Color = Color3.fromRGB(255, 214, 150)
+		lamp.Shadows = false
+		lamp.Parent = glow
+		local _ = stage
+	end
+	-- a plinth, a band at each stage and a corbel course under the cap
+	tag(part({ Name = "TurretPlinth", Size = Vector3.new(turretHalf * 2 + 5, 3.4, turretHalf * 2 + 5), CFrame = CFrame.new(TURRET.X, 1.7, TURRET.Z), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	for _, by in { 15.0, 33.0, 51.0 } do
+		tag(part({ Name = "TurretBand", Size = Vector3.new(turretHalf * 2 + 3.4, 1.4, turretHalf * 2 + 3.4), CFrame = CFrame.new(TURRET.X, by, TURRET.Z), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
+	for i, corbel in { 0.0, 1.4, 2.8 } do
+		tag(part({ Name = "TurretCorbel", Size = Vector3.new(turretHalf * 2 + 3.0 + corbel * 1.6, 1.4, turretHalf * 2 + 3.0 + corbel * 1.6), CFrame = CFrame.new(TURRET.X, TURRET_TOP - 4.2 + (i - 1) * 1.5, TURRET.Z), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
 	-- No landing slab. One used to cover the whole turret at office level,
 	-- which put a stone lid two studs above the second tread: you stepped
 	-- through the shelf and could not stand up. The spiral's own top tread is
