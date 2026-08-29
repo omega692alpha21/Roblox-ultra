@@ -1350,18 +1350,6 @@
        "row": 1
       },
       {
-       "col": 4,
-       "kind": "room",
-       "name": "Assembly gallery",
-       "rect": [
-        -56,
-        -116,
-        56,
-        -52
-       ],
-       "row": 1
-      },
-      {
        "col": 5,
        "kind": "room",
        "name": "Homeroom 2E",
@@ -1506,18 +1494,6 @@
        "row": 3
       },
       {
-       "col": 3,
-       "kind": "room",
-       "name": "Biology lab",
-       "rect": [
-        -120,
-        -20,
-        -56,
-        44
-       ],
-       "row": 3
-      },
-      {
        "col": 4,
        "kind": "room",
        "name": "Great stair",
@@ -1525,18 +1501,6 @@
         -56,
         -20,
         56,
-        44
-       ],
-       "row": 3
-      },
-      {
-       "col": 5,
-       "kind": "room",
-       "name": "Homeroom 2A",
-       "rect": [
-        56,
-        -20,
-        120,
         44
        ],
        "row": 3
@@ -1745,16 +1709,6 @@
       },
       {
        "axis": "z",
-       "col": 4,
-       "height": 11,
-       "room": "Assembly gallery",
-       "row": 1,
-       "width": 12,
-       "x": 0,
-       "z": -52
-      },
-      {
-       "axis": "z",
        "col": 5,
        "height": 11,
        "room": "Homeroom 2E",
@@ -1785,32 +1739,12 @@
       },
       {
        "axis": "z",
-       "col": 3,
-       "height": 11,
-       "room": "Biology lab",
-       "row": 3,
-       "width": 12,
-       "x": -88,
-       "z": 44
-      },
-      {
-       "axis": "z",
        "col": 4,
        "height": 11,
        "room": "Great stair",
        "row": 3,
        "width": 12,
        "x": 0,
-       "z": 44
-      },
-      {
-       "axis": "z",
-       "col": 5,
-       "height": 11,
-       "room": "Homeroom 2A",
-       "row": 3,
-       "width": 12,
-       "x": 88,
        "z": 44
       },
       {
@@ -1975,19 +1909,6 @@
       {
        "from": [
         -120,
-        -20
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        -120,
-        44
-       ]
-      },
-      {
-       "from": [
-        -120,
         76
        ],
        "kind": "partition",
@@ -2000,58 +1921,6 @@
       },
       {
        "from": [
-        -56,
-        -116
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        -56,
-        -52
-       ]
-      },
-      {
-       "from": [
-        -56,
-        -20
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        -56,
-        44
-       ]
-      },
-      {
-       "from": [
-        56,
-        -116
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        56,
-        -52
-       ]
-      },
-      {
-       "from": [
-        56,
-        -20
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        56,
-        44
-       ]
-      },
-      {
-       "from": [
         120,
         -116
        ],
@@ -2061,19 +1930,6 @@
        "to": [
         120,
         -52
-       ]
-      },
-      {
-       "from": [
-        120,
-        -20
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        120,
-        44
        ]
       },
       {
@@ -2151,19 +2007,6 @@
        "thickness": 3,
        "to": [
         -56,
-        -52
-       ]
-      },
-      {
-       "from": [
-        -56,
-        -52
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        56,
         -52
        ]
       },
@@ -2208,19 +2051,6 @@
       },
       {
        "from": [
-        -120,
-        -20
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        -56,
-        -20
-       ]
-      },
-      {
-       "from": [
         -56,
         -20
        ],
@@ -2229,19 +2059,6 @@
        "thickness": 3,
        "to": [
         56,
-        -20
-       ]
-      },
-      {
-       "from": [
-        56,
-        -20
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        120,
         -20
        ]
       },
@@ -2273,19 +2090,6 @@
       },
       {
        "from": [
-        -120,
-        44
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        -56,
-        44
-       ]
-      },
-      {
-       "from": [
         -56,
         44
        ],
@@ -2294,19 +2098,6 @@
        "thickness": 3,
        "to": [
         56,
-        44
-       ]
-      },
-      {
-       "from": [
-        56,
-        44
-       ],
-       "kind": "partition",
-       "storey": 2,
-       "thickness": 3,
-       "to": [
-        120,
         44
        ]
       },

@@ -1080,9 +1080,21 @@ Plan.BUILDINGS = {
 				{ "Infirmary", false, "Reception", "Entrance hall", "Trophy hall", false, "Principal's office" },
 			},
 			{ -- Upper
-				{ "Homeroom 2C", false, "Homeroom 2D", "Assembly gallery", "Homeroom 2E", false, "Homeroom 2F" },
+				-- Col 4 of row 1 is over the entrance hall's double-height
+				-- void, and cols 3, 4 and 5 of row 3 are over the two
+				-- courtyards and the atrium. The build leaves all of them
+				-- open, correctly -- UpperFloor covers z 81..124, z 49..81
+				-- and z -124..-64 and stops at x +-172 across the middle
+				-- band -- and the drawing called them rooms anyway. Four
+				-- named rooms and the storey's middle corridors had no floor
+				-- under them at all, and light_check was hanging fittings in
+				-- them.
+				{ "Homeroom 2C", false, "Homeroom 2D", false, "Homeroom 2E", false, "Homeroom 2F" },
 				{},
-				{ "Physics lab", false, "Biology lab", "Great stair", "Homeroom 2A", false, "Homeroom 2B" },
+				-- The Great stair keeps its cell: its landing IS the floor
+				-- there, which is why plan_check asks for one -- the stair
+				-- lands on it and the Top storey's stair head sits over it.
+				{ "Physics lab", false, false, "Great stair", false, false, "Homeroom 2B" },
 				{},
 				{ "Art studio", false, "Language room", false, "Staff room", false, "Geography room" },
 			},
