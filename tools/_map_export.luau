@@ -9878,6 +9878,55 @@ local function buildSanctum(parent: Instance): { BasePart }
 	tag(part({ Name = "LibraryVestryWall", Size = Vector3.new(2, 15, 20), CFrame = CFrame.new(VX - 13, 7.5, LIB_SHAFT.Z), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Sandstone, Parent = parent }), "TexCoursedStone")
 	part({ Name = "LibraryVestryRoof", Size = Vector3.new(30, 1.8, 24), CFrame = CFrame.new(VX, 15.9, LIB_SHAFT.Z), Color = Color3.fromRGB(88, 96, 106), Material = Enum.Material.Slate, Parent = parent })
 	part({ Name = "LibraryVestryCap", Size = Vector3.new(31, 1, 25), CFrame = CFrame.new(VX, 17, LIB_SHAFT.Z), Color = Color3.fromRGB(224, 218, 204), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+	-- A PITCH on it. The vestry stands right beside the library on the walk in
+	-- from the campus and it was a 26 by 20 box with a flat white lid: the one
+	-- thing on this side of the grounds that reads as a modern extension. Two
+	-- slate planes, verges, a ridge and a pair of lancets in the west wall.
+	do
+		local RISE, HALF = 7.0, 12.0
+		local slope = math.sqrt(HALF * HALF + RISE * RISE)
+		local pitch = math.atan2(RISE, HALF)
+		for _, side in { -1, 1 } do
+			tag(part({
+				Name = "LibraryVestryPitch",
+				Size = Vector3.new(31.0, 1.6, slope + 1.6),
+				CFrame = CFrame.new(VX, 17.5 + RISE / 2, LIB_SHAFT.Z + side * HALF / 2) * CFrame.Angles(-side * pitch, 0, 0),
+				Color = Color3.fromRGB(88, 96, 106),
+				Material = Enum.Material.Slate,
+				Parent = parent,
+			}), "TexSlateRoof").CanCollide = false
+		end
+		part({ Name = "LibraryVestryRidge", Size = Vector3.new(31.6, 1.4, 2.4), CFrame = CFrame.new(VX, 17.5 + RISE + 0.4, LIB_SHAFT.Z), Color = Color3.fromRGB(64, 72, 82), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+		for _, ex in { -15.8, 15.8 } do
+			-- a stepped verge, which is what the library's own gables have
+			for step = 0, 3 do
+				local h = RISE * (1 - step / 4)
+				tag(part({
+					Name = "LibraryVestryVerge",
+					Size = Vector3.new(1.6, 2.2, HALF * 2 * (1 - step / 4) + 1.0),
+					CFrame = CFrame.new(VX + ex, 17.6 + h * 0.5 + 0.6, LIB_SHAFT.Z),
+					Color = Color3.fromRGB(214, 206, 190),
+					Material = Enum.Material.Sandstone,
+					Parent = parent,
+				}), "TexAshlar").CanCollide = false
+			end
+		end
+		for _, lz in { -6.0, 6.0 } do
+			local wx = VX - 13.6
+			tag(part({ Name = "LibraryVestrySurround", Size = Vector3.new(1.6, 9.4, 6.2), CFrame = CFrame.new(wx - 0.5, 9.0, LIB_SHAFT.Z + lz), Color = Color3.fromRGB(214, 206, 190), Material = Enum.Material.Sandstone, Parent = parent }), "TexAshlar").CanCollide = false
+			local glass = part({ Name = "LibraryVestryGlass", Size = Vector3.new(0.6, 7.0, 3.4), CFrame = CFrame.new(wx - 1.4, 9.0, LIB_SHAFT.Z + lz), Color = Color3.fromRGB(255, 214, 150), Material = Enum.Material.Neon, Transparency = 0.32, Parent = parent })
+			glass.CanCollide = false
+			glass.CastShadow = false
+			part({ Name = "LibraryVestryMullion", Size = Vector3.new(0.8, 7.0, 0.5), CFrame = CFrame.new(wx - 1.6, 9.0, LIB_SHAFT.Z + lz), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+			tag(part({ Name = "LibraryVestrySill", Size = Vector3.new(2.8, 0.9, 8.0), CFrame = CFrame.new(wx - 1.0, 4.0, LIB_SHAFT.Z + lz), Color = Color3.fromRGB(224, 218, 204), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+			local lamp = Instance.new("PointLight")
+			lamp.Brightness = 0.8
+			lamp.Range = 22
+			lamp.Color = Color3.fromRGB(255, 214, 150)
+			lamp.Shadows = false
+			lamp.Parent = glass
+		end
+	end
 	for _, corner in { Vector3.new(-12, 0, -9), Vector3.new(-12, 0, 9), Vector3.new(11, 0, -9), Vector3.new(11, 0, 9) } do
 		tag(part({ Name = "LibraryVestryButtress", Size = Vector3.new(3.4, 13, 3.4), CFrame = CFrame.new(VX + corner.X, 6.5, LIB_SHAFT.Z + corner.Z), Color = Color3.fromRGB(214, 206, 190), Material = Enum.Material.Sandstone, Parent = parent }), "TexCoursedStone")
 	end
