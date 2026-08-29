@@ -10728,6 +10728,39 @@ local function barredScreen(parent: Instance, x0: number, x1: number, z: number,
 	end
 end
 
+-- A wall lantern on a bracket: backplate, scrolled arm, hook, a glazed box on
+-- four corner posts, a capping, a finial, and the light itself.
+--
+-- The night reference of the dorm courtyard has one of these between every
+-- pair of ground-floor windows, and that is what lights the lower storey in
+-- it. Ours had none: the range's ground floor read as a black band under a
+-- lit first floor, because every fitting in that courtyard stands out on the
+-- lawn and throws its light AWAY from the building.
+--
+-- `at` stands at the wall face with its local +Z pointing out of the wall.
+local function wallLantern(parent: Instance, at: CFrame)
+	part({ Name = "LanternPlate", Size = Vector3.new(2.2, 3.4, 0.5), CFrame = at * CFrame.new(0, 1.6, 0.25), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "LanternArm", Size = Vector3.new(0.5, 0.5, 3.2), CFrame = at * CFrame.new(0, 2.9, 1.8), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "LanternStay", Size = Vector3.new(0.4, 2.6, 0.4), CFrame = at * CFrame.new(0, 1.5, 1.6) * CFrame.Angles(math.rad(38), 0, 0), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "LanternHook", Size = Vector3.new(0.4, 1.2, 0.4), CFrame = at * CFrame.new(0, 2.4, 3.3), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for _, corner in { Vector3.new(-0.85, 0, -0.85), Vector3.new(0.85, 0, -0.85), Vector3.new(-0.85, 0, 0.85), Vector3.new(0.85, 0, 0.85) } do
+		part({ Name = "LanternPost", Size = Vector3.new(0.3, 2.8, 0.3), CFrame = at * CFrame.new(corner.X, 0.6, 3.3 + corner.Z), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "LanternGlass", Size = Vector3.new(1.6, 2.6, 1.6), CFrame = at * CFrame.new(0, 0.6, 3.3), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Glass, Transparency = 0.42, Parent = parent }).CanCollide = false
+	local core = part({ Name = "LanternCore", Size = Vector3.new(0.9, 1.6, 0.9), CFrame = at * CFrame.new(0, 0.6, 3.3), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Neon, Parent = parent })
+	core.CanCollide = false
+	core.CastShadow = false
+	part({ Name = "LanternCap", Size = Vector3.new(2.6, 0.9, 2.6), CFrame = at * CFrame.new(0, 2.2, 3.3) * CFrame.Angles(0, math.rad(45), 0), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "LanternFinial", Size = Vector3.new(0.7, 1.1, 0.7), CFrame = at * CFrame.new(0, 3.0, 3.3), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "LanternBase", Size = Vector3.new(2.0, 0.5, 2.0), CFrame = at * CFrame.new(0, -0.9, 3.3), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	local lamp = Instance.new("PointLight")
+	lamp.Brightness = 1.7
+	lamp.Range = 34
+	lamp.Color = Color3.fromRGB(255, 220, 164)
+	lamp.Shadows = false
+	lamp.Parent = core
+end
+
 -- Wainscot: a plinth, a panel field broken by stiles, and a dado rail on top.
 -- It is the cheapest honest way to stop an interior wall reading as one flat
 -- colour from floor to ceiling, and every room in the reference art has it.
@@ -12521,6 +12554,13 @@ end
 	-- beds, the kitchen, the washroom and the study in the rooms it names.
 	PlanBuilder.build(planCtx, "Student Dorms")
 	furnishDorms(folder, dormBeds)
+	-- Wall lanterns between the ground-floor bays of the courtyard elevation,
+	-- which is what lights the lower storey in the night reference. The bays
+	-- sit at +-34.6, 57.7, 80.8, 103.8 and 126.9; these hang on the piers
+	-- between them, and two more flank the entrance arch.
+	for _, lx in { -138.4, -115.4, -92.3, -69.3, -46.2, -21.0, 21.0, 46.2, 69.3, 92.3, 115.4, 138.4 } do
+		wallLantern(folder, CFrame.new(lx, 12.4, -245.9))
+	end
 	buildHiddenAlley(folder)
 	buildFlagpole(folder)
 	buildCoreFence(folder)

@@ -849,7 +849,15 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                     # moonlight, then whatever the lamps and the windows put
                     # on this surface
                     c = (c[0] * 0.80, c[1] * 0.88, c[2] * 1.10)
-                    shade = shade * 0.16 + min(1.05, lamplight(fcx, fcy, fcz, nx, ny_, nz_) * 0.42)
+                    # AMBIENT. Roblox lights every surface by OutdoorAmbient
+                    # regardless of which way it faces -- EffectsService sets
+                    # it to #1A2238 -- and this had no ambient term at all, so
+                    # a face turned away from the moon fell to pure black. The
+                    # whole roofscape of the school rendered as a void in
+                    # every night shot, and I twice went looking for missing
+                    # geometry that was there and simply unlit. 0.115 is that
+                    # colour's own level.
+                    shade = max(shade * 0.16, 0.115) + min(1.05, lamplight(fcx, fcy, fcz, nx, ny_, nz_) * 0.42)
             col = tuple(min(255, int(ch * shade)) for ch in c)
             faces.append((corners, col))
 
