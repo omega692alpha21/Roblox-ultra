@@ -11749,10 +11749,31 @@ local function furnishRingBuildings(parent: Instance)
 	tag(part({ Name = "KitchenIslandBase", Size = Vector3.new(22.0, 3.2, 6.4), CFrame = CFrame.new(262, 1.6, -318), Color = Color3.fromRGB(150, 156, 162), Material = Enum.Material.Metal, Parent = parent }), "TexAshlar")
 	part({ Name = "KitchenIslandTop", Size = Vector3.new(23.0, 0.5, 7.4), CFrame = CFrame.new(262, 3.45, -318), Color = Color3.fromRGB(206, 210, 214), Material = Enum.Material.Metal, Parent = parent })
 	part({ Name = "KitchenIslandRail", Size = Vector3.new(23.0, 0.35, 0.35), CFrame = CFrame.new(262, 3.9, -321.4), Color = Color3.fromRGB(120, 126, 134), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-	for i = 0, 5 do
-		part({ Name = "KitchenPotRackHook", Size = Vector3.new(0.3, 2.2, 0.3), CFrame = CFrame.new(254 + i * 3.2, 12.6, -318), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	-- The rack hangs OVER the island, not ten studs above it under the
+	-- ceiling. It was at y 13.8 with the island top at 3.7 -- a bar of hooks
+	-- floating in the middle of the room with nothing under reach of it.
+	for _, rx in { 253.0, 271.0 } do
+		for _, rz in { -319.0, -317.0 } do
+			part({ Name = "KitchenRackRod", Size = Vector3.new(0.4, 11.2, 0.4), CFrame = CFrame.new(rx, 14.0, rz), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		end
 	end
-	part({ Name = "KitchenPotRack", Size = Vector3.new(20.0, 0.5, 1.4), CFrame = CFrame.new(262, 13.8, -318), Color = Color3.fromRGB(78, 82, 88), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "KitchenPotRack", Size = Vector3.new(20.0, 0.5, 1.4), CFrame = CFrame.new(262, 8.4, -318), Color = Color3.fromRGB(78, 82, 88), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for i = 0, 5 do
+		local hx = 254 + i * 3.2
+		part({ Name = "KitchenPotRackHook", Size = Vector3.new(0.3, 1.8, 0.3), CFrame = CFrame.new(hx, 7.3, -318), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		-- and something hanging on it, or it is a bar of hooks holding nothing
+		local pan = part({
+			Name = "KitchenHangingPan",
+			Size = Vector3.new(2.6, 0.4, 2.6),
+			CFrame = CFrame.new(hx, 6.3, -318),
+			Color = if i % 2 == 0 then Color3.fromRGB(168, 122, 62) else Color3.fromRGB(176, 180, 186),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+		pan.CanCollide = false
+		part({ Name = "KitchenPanWall", Size = Vector3.new(2.6, 1.4, 2.6), CFrame = CFrame.new(hx, 5.6, -318), Color = pan.Color, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "KitchenPanHandle", Size = Vector3.new(0.5, 0.5, 3.0), CFrame = CFrame.new(hx, 6.2, -320.6), Color = Color3.fromRGB(46, 48, 52), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
 	for _, px in { 255, 261, 267 } do
 		prop("BrassPot", CFrame.new(px, 3.7, -318))
 	end
