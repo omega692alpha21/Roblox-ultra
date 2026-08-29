@@ -202,6 +202,19 @@ local function windowsAlong(
 			local bSize, bCf = at3(bar.w, bar.h, 2.2, 0.5, bar.along, bar.dy)
 			ctx.tag(ctx.part({ Name = "PlanWindowSurround", Size = bSize, CFrame = bCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 		end
+		-- A hood over the head and a keystone in the middle of it. The Academy's
+		-- windows carry both -- WindowHood, Keystone, HoodStop -- and the five
+		-- drawn buildings carried neither, so their openings read as plain
+		-- rectangles beside the Academy's moulded ones. Same kit, same school.
+		local hSize, hCf = at3(WINDOW_W + SUR * 2 + 2.6, 1.3, 3.0, 0.9, 0.0, wh / 2 + SUR + 0.65)
+		ctx.tag(ctx.part({ Name = "PlanWindowHood", Size = hSize, CFrame = hCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		local kSize, kCf = at3(2.2, 2.6, 3.2, 1.0, 0.0, wh / 2 + SUR + 0.2)
+		ctx.tag(ctx.part({ Name = "PlanKeystone", Size = kSize, CFrame = kCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		for _, stop in { -1, 1 } do
+			local stSize, stCf = at3(1.4, 1.9, 3.1, 0.95, stop * (WINDOW_W / 2 + SUR + 1.3), wh / 2 + SUR + 0.3)
+			ctx.tag(ctx.part({ Name = "PlanHoodStop", Size = stSize, CFrame = stCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		end
+
 		-- the pane sits in the reveal the frame makes, not out in front of it
 		local gSize, gCf = at3(WINDOW_W, wh, 0.6, 0.2)
 		local pane = ctx.part({ Name = "PlanWindowGlass", Size = gSize, CFrame = gCf, Color = GLASS_LIT, Material = Enum.Material.Neon, Transparency = 0.34, Parent = ctx.parent })
