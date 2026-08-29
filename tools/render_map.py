@@ -523,7 +523,12 @@ LIGHT = (0.45, 0.8, 0.35)
 lm = math.sqrt(sum(c * c for c in LIGHT))
 LIGHT = tuple(c / lm for c in LIGHT)
 
-def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 235), (208, 226, 240)), interior=False):
+NIGHT_SKY = ((14, 20, 40), (30, 40, 68))
+
+
+def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 235), (208, 226, 240)), interior=False, night=False):
+    if night:
+        sky = NIGHT_SKY
     img = Image.new("RGB", (width, height))
     d = ImageDraw.Draw(img)
     for y in range(height):
@@ -591,7 +596,7 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
         gp = [to_screen(c) for c in gpoly]
         d.polygon([(max(-20000.0, min(20000.0, p[0])),
                     max(-20000.0, min(20000.0, p[1]))) for p in gp],
-                  fill=(104, 148, 88))
+                  fill=(26, 40, 30) if night else (104, 148, 88))
 
     faces = []
     AXES = [((1, 0, 0), (0, 1, 0), (0, 0, 1)), ((0, 1, 0), (1, 0, 0), (0, 0, 1)), ((0, 0, 1), (1, 0, 0), (0, 1, 0))]
@@ -734,6 +739,19 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
             c = part["c"]
             if part["m"] == "Neon":
                 shade = 1.25
+            if night:
+                # The game runs at ClockTime 21.2 and every reference image is
+                # a night picture, but every shot here was drawn in flat
+                # daylight -- so the one thing the art direction is actually
+                # about was the one thing the renderer could not show. Emissive
+                # surfaces keep their own colour; everything else drops to a
+                # cool sliver of it, which is what a wall lit by nothing but
+                # the windows next to it looks like.
+                if part["m"] == "Neon" or float(part.get("lit") or 0) > 0:
+                    shade = 1.30
+                else:
+                    shade *= 0.30
+                    c = (c[0] * 0.80, c[1] * 0.88, c[2] * 1.10)
             col = tuple(min(255, int(ch * shade)) for ch in c)
             faces.append((corners, col))
 
@@ -872,4 +890,11 @@ if os.environ.get("SKIP_SHOTS"):
 else:
     for name, cam, target in shots:
         render(cam, target, os.path.join(OUT, f"shot_{name}.png"))
+    # The four reference angles again, at night, which is the only light the
+    # art direction is written for.
+    for name in ("eyegate", "entrance", "courtnorth", "dormcourteye", "siteplan",
+                 "overview", "dormcourt", "library"):
+        cam, target = next(((c, t) for n, c, t in shots if n == name), (None, None))
+        if cam:
+            render(cam, target, os.path.join(OUT, f"night_{name}.png"), night=True)
     print("done")

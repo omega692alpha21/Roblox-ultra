@@ -6866,7 +6866,17 @@ local function buildGrandFacade(parent: Instance)
 		{ z = towerZ + 12.6, n = Enum.NormalId.Front },
 		{ z = towerZ - 12.6, n = Enum.NormalId.Back },
 	} do
-		local face = part({ Name = "ClockFace", Size = Vector3.new(11, 11, 0.5), CFrame = CFrame.new(0, 80, spec.z), Color = Color3.fromRGB(244, 240, 230), Material = Enum.Material.SmoothPlastic, Parent = parent })
+		-- LIT. At night the tower was a black silhouette with a grey square on
+		-- it: the one thing that reads against the sky from anywhere on the
+		-- grounds, and the reference art has it glowing. A clock face is a
+		-- lit dial behind glass -- it is the only thing on a tower that is.
+		local face = part({ Name = "ClockFace", Size = Vector3.new(11, 11, 0.5), CFrame = CFrame.new(0, 80, spec.z), Color = Color3.fromRGB(255, 240, 206), Material = Enum.Material.Neon, Transparency = 0.12, Parent = parent })
+		local dialGlow = Instance.new("PointLight")
+		dialGlow.Color = Color3.fromRGB(255, 226, 172)
+		dialGlow.Brightness = 1.1
+		dialGlow.Range = 30
+		dialGlow.Shadows = false
+		dialGlow.Parent = face
 		local dir = spec.n == Enum.NormalId.Front and 1 or -1
 		part({ Name = "ClockRing", Size = Vector3.new(12.6, 12.6, 0.3), CFrame = CFrame.new(0, 80, spec.z - dir * 0.2), Color = Color3.fromRGB(120, 90, 40), Material = Enum.Material.Metal, Parent = parent })
 		part({ Name = "ClockHour", Size = Vector3.new(0.8, 3.2, 0.25), CFrame = CFrame.new(0, 81.4, spec.z + dir * 0.35), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
@@ -11221,6 +11231,25 @@ end
 		-- up to the gate, and no further: the North Reserve starts at z = 560
 		-- and the drawing keeps it clear of anything built
 		buildPath(folder, Vector3.new(0, 0, ROAD_Z + 10), Vector3.new(0, 0, gz + 4), 26, true)
+		-- THE APPROACH, LIT AND LINED. Two hundred and twenty-four studs from
+		-- the road to the gate with two lanterns on the piers and nothing else
+		-- on it: at night the first thing anybody arriving sees was a dark
+		-- empty ramp. Every reference has the walk up to the school lined --
+		-- and build_check's own comment says so: "an avenue of trees DOWN an
+		-- approach is what an approach is for".
+		--
+		-- Lamps at +-20, just off the drive's kerb; limes at +-56, outside the
+		-- 44-stud sight corridor build_check keeps clear so the doors stay
+		-- visible from the gate.
+		for i = 0, 5 do
+			local lz = 352 + i * 38
+			for _, lx in { -20, 20 } do
+				courtLamp(folder, lx, lz)
+			end
+			for _, tx in { -56, 56 } do
+				meshTree(folder, Vector3.new(tx, 0, lz + 19), 1.2)
+			end
+		end
 		tag(part({
 			Name = "GateApron",
 			-- half * 4 + 4, not + 24: at 144 wide it ran to x +-72 and the
