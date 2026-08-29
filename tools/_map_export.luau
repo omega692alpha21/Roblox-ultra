@@ -10299,17 +10299,24 @@ end
 -- and they are the three things real buildings use: a board at the door that
 -- lists everything, a sign hanging over every room you might be looking for,
 -- and a line on the floor you can follow without reading anything at all.
+-- Every route used to start at (0, 0, 104), which is the middle of the lobby
+-- runner: five pastel stripes fanned across the entrance hall floor, the
+-- loudest thing in the first interior anybody walks into and visible from the
+-- Great Court through the open doors. They start at the lobby's south doorway
+-- now (the wall is at z = 81 with a 22-wide opening), which is where you pick
+-- a line up anyway -- when you leave the hall, not while you are standing in
+-- it. The colours stay: telling five routes apart is the whole job.
 local ROUTES = {
 	{ id = "math", label = "ROOM 101 · MATHS", icon = "➗", color = Color3.fromRGB(120, 176, 255),
-	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(-74, 0, 65), Vector3.new(-74, 0, -60) } },
+	  path = { Vector3.new(0, 0, 79), Vector3.new(0, 0, 65), Vector3.new(-74, 0, 65), Vector3.new(-74, 0, -60) } },
 	{ id = "music", label = "MUSIC ROOM", icon = "🎵", color = Color3.fromRGB(212, 160, 240),
-	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(74, 0, 65), Vector3.new(74, 0, -60) } },
+	  path = { Vector3.new(0, 0, 79), Vector3.new(0, 0, 65), Vector3.new(74, 0, 65), Vector3.new(74, 0, -60) } },
 	{ id = "biology", label = "GREENHOUSE · BIOLOGY", icon = "🧬", color = Color3.fromRGB(150, 220, 130),
-	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(-116, 0, 65), Vector3.new(-116, 0, -8) } },
+	  path = { Vector3.new(0, 0, 79), Vector3.new(0, 0, 65), Vector3.new(-116, 0, 65), Vector3.new(-116, 0, -8) } },
 	{ id = "chemistry", label = "EAST LAB · CHEMISTRY", icon = "⚗️", color = Color3.fromRGB(150, 240, 190),
-	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(116, 0, 65), Vector3.new(116, 0, -8) } },
+	  path = { Vector3.new(0, 0, 79), Vector3.new(0, 0, 65), Vector3.new(116, 0, 65), Vector3.new(116, 0, -8) } },
 	{ id = "assembly", label = "ASSEMBLY HALL", icon = "🎭", color = Color3.fromRGB(255, 176, 88),
-	  path = { Vector3.new(0, 0, 104), Vector3.new(0, 0, 65), Vector3.new(0, 0, -60) } },
+	  path = { Vector3.new(0, 0, 79), Vector3.new(0, 0, 65), Vector3.new(0, 0, -60) } },
 }
 
 -- Doors worth signposting from the hall, and what to call them.
