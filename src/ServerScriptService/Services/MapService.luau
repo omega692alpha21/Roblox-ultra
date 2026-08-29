@@ -317,6 +317,34 @@ local function buildPavilion(
 			Parent = parent,
 		})
 		pane.Reflectance = 0.08
+		-- Glazing bars. A glasshouse is a grid of astragals; this was three
+		-- fourteen-stud sheets of glass with a post at each corner and nothing
+		-- crossing them, which tools/window_check.py calls what it is -- a
+		-- rectangle painted on a wall. Bars stand 1.4 deep through 1.0 of
+		-- glass and stop short of the head and the cill, so no two faces of
+		-- this assembly ever share a plane.
+		local runsX = wall.size.X > wall.size.Z
+		local along = if runsX then wall.size.X else wall.size.Z
+		local bays = math.max(2, math.floor(along / 7))
+		for b = 1, bays - 1 do
+			local slide = -along / 2 + b * (along / bays)
+			part({
+				Name = name .. "GlazingBar",
+				Size = if runsX then Vector3.new(0.5, 13.4, 1.4) else Vector3.new(1.4, 13.4, 0.5),
+				CFrame = CFrame.new(center) * CFrame.new(wall.pos + (if runsX then Vector3.new(slide, 0, 0) else Vector3.new(0, 0, slide))),
+				Color = accent,
+				Material = Enum.Material.Metal,
+				Parent = parent,
+			}).CanCollide = false
+		end
+		part({
+			Name = name .. "GlazingTransom",
+			Size = if runsX then Vector3.new(wall.size.X - 1.2, 0.5, 1.4) else Vector3.new(1.4, 0.5, wall.size.Z - 1.2),
+			CFrame = CFrame.new(center) * CFrame.new(wall.pos),
+			Color = accent,
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
 	end
 	-- frame posts at the corners and either side of the opening
 	for _, corner in { Vector3.new(-half.X, 0, -half.Y), Vector3.new(half.X, 0, -half.Y), Vector3.new(-half.X, 0, half.Y), Vector3.new(half.X, 0, half.Y) } do
@@ -2936,6 +2964,23 @@ end
 -- white trim banding between floors, dentil cornice at the top. This is what
 -- makes the school read as a civic academy instead of a strip mall.
 local FACADE_H = 38
+-- The four corner towers. Each is 32 x 32 of solid masonry at a corner of the
+-- school, and the facade's window rows ran straight through all four of them:
+-- twenty-four panes with their frames, muntins, sills, hoods and jambs -- some
+-- two hundred parts -- built entirely inside the stone, where nothing can see
+-- them. buildFacadeWall skips a bay that lands in one.
+local CORNER_TOWERS = { { -224, 124 }, { 224, 124 }, { -224, -124 }, { 224, -124 } }
+local CORNER_TOWER_HALF = 17.5 -- the tower's 16, and a stud and a half of jamb
+
+local function insideCornerTower(x: number, z: number): boolean
+	for _, t in CORNER_TOWERS do
+		if math.abs(x - t[1]) < CORNER_TOWER_HALF and math.abs(z - t[2]) < CORNER_TOWER_HALF then
+			return true
+		end
+	end
+	return false
+end
+
 local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gaps: { { at: number, width: number } })
 	local BRICK = Color3.fromRGB(138, 128, 114)
 	local TRIM = Color3.fromRGB(238, 236, 228)
@@ -2985,6 +3030,10 @@ local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gap
 			local winW = math.min(7.5, pitch * 0.5)
 			for m = 0, bays - 1 do
 				local wx = -segLen / 2 + (m + 0.5) * pitch
+				local spot = (cf * CFrame.new(wx, 0, 0)).Position
+				if insideCornerTower(spot.X, spot.Z) then
+					continue
+				end
 				-- A window is LAYERS, each one proud of the last. The frame,
 				-- the pane and both muntins used to be concentric boxes on the
 				-- same centre -- 2.6, 2.9 and 3.0 deep through a 2.2 brick wall
@@ -2999,7 +3048,44 @@ local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gap
 				-- head, its keystone and the string course between storeys all
 				-- wanted the same three studs of an eleven-and-a-half stud
 				-- floor, and all three got them.
-				local pane = part({ Name = "FacadeWindow", Size = Vector3.new(winW, 6.6, 2.4), CFrame = cf * CFrame.new(wx, y0 + 5.6, 0) , Color = Color3.fromRGB(96, 138, 170), Material = Enum.Material.SmoothPlastic, Reflectance = 0.3, Parent = parent })
+				-- LIT. These 264 -- every window on all three storeys of the
+				-- Academy, which is the elevation the whole game opens on --
+				-- were SmoothPlastic with Reflectance, and litWindows only
+				-- looks at panes whose Material is Glass, so it skipped every
+				-- one of them: the school's own front stood dark at night
+				-- while its dormers and the whole boarding house glowed. The
+				-- reference art has every window lit warm gold.
+				--
+				-- Lit HERE rather than by a leaf behind the glass, because the
+				-- pane is 2.4 deep in a 2.2 brick band and a leaf goes at the
+				-- pane's centre: it would sit a stud inside the wall, where
+				-- nothing outside the building can see it. The pane is the
+				-- lit surface. One in nine stays dark -- a school where every
+				-- window without exception is burning reads as a render, not
+				-- as a building people live in.
+				local wSeed = math.floor(math.abs(wx) * 13.7 + y0 * 5.3 + m * 29)
+				local wDark = wSeed % 9 == 0
+				local pane = part({
+					Name = "FacadeWindow",
+					Size = Vector3.new(winW, 6.6, 2.4),
+					CFrame = cf * CFrame.new(wx, y0 + 5.6, 0),
+					Color = if wDark then Color3.fromRGB(58, 68, 80) else Color3.fromRGB(255, 196, 107),
+					Material = if wDark then Enum.Material.SmoothPlastic else Enum.Material.Neon,
+					Transparency = if wDark then 0.15 else 0.3,
+					Reflectance = if wDark then 0.3 else 0,
+					Parent = parent,
+				})
+				-- one light per SIX bays, not per window: three hundred point
+				-- lights on one elevation is a slideshow, and the eye reads a
+				-- lit row the same either way
+				if not wDark and wSeed % 6 == 0 then
+					local glow = Instance.new("PointLight")
+					glow.Color = Color3.fromRGB(255, 220, 160)
+					glow.Brightness = 0.8
+					glow.Range = 18
+					glow.Shadows = false
+					glow.Parent = pane
+				end
 				tag(pane, "TexWindow")
 				-- the frame, as four bars round the opening
 				local jamb = 1.0
@@ -3505,7 +3591,7 @@ local function buildGrandFacade(parent: Instance)
 	signText(sign, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Front)
 
 	-- ---- corner towers with crenellations ----
-	for _, corner in { { -224, 124 }, { 224, 124 }, { -224, -124 }, { 224, -124 } } do
+	for _, corner in CORNER_TOWERS do
 		local cx, cz = corner[1], corner[2]
 		tag(part({ Name = "CornerTower", Size = Vector3.new(32, 52, 32), CFrame = CFrame.new(cx, 26, cz), Color = BRICK, Material = Enum.Material.Brick, Parent = parent }), "TexCoursedStone")
 		trimBand(cx, 52.8, cz, 35, 35, 2.0)
@@ -5291,6 +5377,25 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		part({ Name = "QuartersDormer", Size = Vector3.new(10, 9, 11), CFrame = at(dx, RIDGE + 3, halfD - 8), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent })
 		local pane = part({ Name = "QuartersDormerGlass", Size = Vector3.new(6.6, 5.6, 0.5), CFrame = at(dx, RIDGE + 3.2, halfD - 2.6), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Neon, Parent = parent })
 		pane.CanCollide = false
+		-- Head, cill and two jambs, proud of the dormer's front face. The
+		-- pane was a lit slab set flush in a timber box: on the one elevation
+		-- of the lodge anybody sees, four windows with no dressing at all.
+		local DRESS = Color3.fromRGB(206, 200, 186)
+		for _, bar in {
+			{ Vector3.new(8.2, 0.9, 0.6), Vector3.new(0, 3.25, 0.25) },
+			{ Vector3.new(8.6, 0.9, 0.9), Vector3.new(0, -3.25, 0.30) },
+			{ Vector3.new(0.8, 6.4, 0.6), Vector3.new(-3.7, 0, 0.25) },
+			{ Vector3.new(0.8, 6.4, 0.6), Vector3.new(3.7, 0, 0.25) },
+		} do
+			part({
+				Name = "QuartersDormerSurround",
+				Size = bar[1],
+				CFrame = at(dx + bar[2].X, RIDGE + 3.2 + bar[2].Y, halfD - 2.6 + bar[2].Z),
+				Color = DRESS,
+				Material = Enum.Material.Concrete,
+				Parent = parent,
+			}).CanCollide = false
+		end
 		local warm = Instance.new("PointLight")
 		warm.Brightness = 1.4
 		warm.Range = 26
