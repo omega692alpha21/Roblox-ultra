@@ -9266,15 +9266,20 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		local plaque = part({
 			Name = "StudyPlaque",
 			Size = Vector3.new(11, 2.6, 0.5),
-			-- On the wall beside the door, not floating past the end of it:
-			-- at doorX + 1.6 the plaque stood 4.4 studs off the landing
-			-- stair's treads, which is not room to stand and read.
-			CFrame = at(doorX - 2.0, GROUND + 12, sz - 6),
+			-- ON the partition, flat against it, beside the door.
+			--
+			-- This plaque has hung six studs clear of the wall it names since
+			-- it was written: the partition runs along x at z = sz, and the
+			-- plaque sat at sz - 6, floating in the middle of the landing,
+			-- edge-on to anyone walking up to it and reading off its +X face.
+			-- A probe for fittings named as wall-mounted with no wall within
+			-- three studs behind them found all five of them.
+			CFrame = at(doorX - 8, GROUND + 12, sz - 1.6),
 			Color = Palette.Blackboard,
 			Parent = parent,
 		})
 		plaque.CanCollide = false
-		signText(plaque, teacher.name .. "\n" .. teacher.subject, teacher.color, Enum.NormalId.Right)
+		signText(plaque, teacher.name .. "\n" .. teacher.subject, teacher.color, Enum.NormalId.Front)
 
 		-- a bed, a desk and a lamp: a study is a room somebody lives in
 		part({ Name = "StudyBed", Size = Vector3.new(7, 2.6, 12), CFrame = at(-halfW + 8, GROUND + 4.3, sz - 6), Color = Color3.fromRGB(128, 92, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
