@@ -89,6 +89,18 @@ def main():
             bad.append((part["n"], "/".join(f for f, _ in blocked_faces),
                         [round(v) for v in part["p"]], blocked_faces[0][1]))
 
+    # ------------------------------------------------------------- DOUBLED
+    # Two SurfaceGuis on ONE face draw over each other. The library's portico
+    # plaque carried three: the name on the face turned back at its own wall,
+    # and the name AND "SILENCE, PLEASE" both on the face the campus sees.
+    doubled = []
+    for part in parts:
+        faces = list(part.get("gui") or ())
+        for name in set(faces):
+            if faces.count(name) > 1:
+                doubled.append((part["n"], name, faces.count(name),
+                                [round(v) for v in part["p"]]))
+
     # ---------------------------------------------------------------- SIGHT
     # A face can be clear at a stud and a half and still be unreadable: the
     # school's own name board had a SECOND sign hung three studs in front of
@@ -169,9 +181,12 @@ def main():
         print(f"      {name:24s} {face:6s} at {at} reads into {blocker}")
     for name, face, at, blocker, share in hidden[:20]:
         print(f"      {name:24s} {face:6s} at {at} {share:.0%} hidden behind {blocker}")
-    print(f"{'FAIL' if bad or hidden else 'PASS'} - {checked} sign faces, "
-          f"{len(bad)} facing into something, {len(hidden)} standing behind something")
-    return 1 if (bad or hidden) else 0
+    for name, face, n, at in doubled[:20]:
+        print(f"      {name:24s} {face:6s} at {at} carries {n} guis on one face")
+    print(f"{'FAIL' if bad or hidden or doubled else 'PASS'} - {checked} sign faces, "
+          f"{len(bad)} facing into something, {len(hidden)} standing behind something, "
+          f"{len(doubled)} doubled")
+    return 1 if (bad or hidden or doubled) else 0
 
 
 if __name__ == "__main__":

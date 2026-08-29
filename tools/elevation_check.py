@@ -30,7 +30,7 @@ WALLS = ("Wall", "Facade", "Brick", "Range", "Shell", "Block")
 # Interiors, retaining walls and things that merely have "Wall" in the name.
 NOT = ("Inner", "Partition", "Wainscot", "Cavern", "Shaft", "Sanctum", "Tunnel",
        "Boundary", "Retain", "Kerb", "Lamp", "Light", "Head", "Base", "Upper",
-       "Stone", "Fence", "Pier", "Alley", "Turret", "Quarters")
+       "Stone", "Fence", "Pier", "Alley", "Turret")
 
 STEP = 9.0            # sample spacing across the face
 MIN_AREA = 700.0      # square studs -- a small panel is dressing, not elevation

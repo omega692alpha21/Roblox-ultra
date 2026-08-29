@@ -604,9 +604,12 @@ local function buildLibrary(parent: Instance, center: Vector3)
 		Color = Palette.Blackboard,
 		Parent = parent,
 	})
-	signText(plaque, "CRUMBWORTH LIBRARY", Palette.BusYellow, Enum.NormalId.Front)
+	-- ONE gui per face. There used to be three on this plaque: the name on the
+	-- Front, which is the face turned back at the library's own wall fourteen
+	-- studs behind the portico, and then the name AND "SILENCE, PLEASE" both
+	-- on the Back -- two SurfaceGuis stacked on the same face, drawing over
+	-- each other. Back is the face the campus sees, so Back carries the name.
 	signText(plaque, "CRUMBWORTH LIBRARY", Palette.BusYellow, Enum.NormalId.Back)
-	signText(plaque, "SILENCE, PLEASE", Palette.BusYellow, Enum.NormalId.Back)
 
 	-- THE ROOF, and the dressing that goes with it.
 	--
@@ -7587,6 +7590,72 @@ local function wallLantern(parent: Instance, at: CFrame)
 	lamp.Parent = core
 end
 
+-- A name board over an entrance: ashlar surround, navy ground, gold lettering
+-- and two small uplights under it. `yaw` turns the reading face outward.
+--
+-- The Gymnasium, the Cafeteria, the Detention Hall, the Student Dorms and the
+-- boiler house had no name anywhere on them. Each is a hundred to a hundred
+-- and ninety studs long, each has a door, and a player crossing sixteen
+-- hundred studs of campus at night had nothing to tell one from another. The
+-- reference site plan labels every building on it; the reference elevations
+-- carry the name over the door.
+local function nameBoard(parent: Instance, id: string, text: string, x: number, y: number, z: number, yaw: number, wide: number, high: number)
+	local at = CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yaw), 0)
+	tag(part({
+		Name = id .. "Surround",
+		Size = Vector3.new(wide + 2.4, high + 2.4, 0.5),
+		CFrame = at * CFrame.new(0, 0, -0.15),
+		Color = Color3.fromRGB(201, 191, 169),
+		Material = Enum.Material.Concrete,
+		Parent = parent,
+	}), "TexAshlar").CanCollide = false
+	local board = part({
+		Name = id,
+		Size = Vector3.new(wide, high, 0.7),
+		CFrame = at,
+		Color = Color3.fromRGB(22, 35, 63),
+		Material = Enum.Material.SmoothPlastic,
+		Parent = parent,
+	})
+	board.CanCollide = false
+	signText(board, text, Color3.fromRGB(217, 180, 92), Enum.NormalId.Back)
+	part({
+		Name = id .. "Cornice",
+		Size = Vector3.new(wide + 3.4, 0.8, 1.6),
+		CFrame = at * CFrame.new(0, high / 2 + 1.6, 0.3),
+		Color = Color3.fromRGB(201, 191, 169),
+		Material = Enum.Material.Concrete,
+		Parent = parent,
+	}).CanCollide = false
+	for _, side in { -1, 1 } do
+		local sx = side * (wide / 2 - 3.0)
+		part({ Name = id .. "LampBracket", Size = Vector3.new(1.0, 0.6, 1.4), CFrame = at * CFrame.new(sx, -high / 2 - 1.4, 0.7), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		local glow = part({ Name = id .. "LampGlow", Size = Vector3.new(1.8, 0.4, 0.9), CFrame = at * CFrame.new(sx, -high / 2 - 1.0, 0.9), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Neon, Parent = parent })
+		glow.CanCollide = false
+		glow.CastShadow = false
+		local lamp = Instance.new("PointLight")
+		lamp.Brightness = 1.3
+		lamp.Range = 26
+		lamp.Color = Color3.fromRGB(255, 224, 178)
+		lamp.Shadows = false
+		lamp.Parent = glow
+	end
+end
+
+local function ringNameBoards(parent: Instance)
+	-- over the entrance arch, which springs at 13 and closes at 27.5
+	nameBoard(parent, "DormNameBoard", "STUDENT DORMS", 0, 33.0, -245.4, 0, 32, 5.0)
+	-- the cafeteria's north door, at the corridor between the two halls
+	nameBoard(parent, "CafeteriaNameBoard", "REFECTORY", 316, 15.4, -247.4, 0, 24, 4.4)
+	-- the gymnasium's west door
+	nameBoard(parent, "GymNameBoard", "SPORTS HALL", 325.4, 15.4, 396, -90, 24, 4.4)
+	-- the detention hall's east door
+	nameBoard(parent, "DetentionNameBoard", "DETENTION HALL", -310.4, 15.4, 20, 90, 24, 4.4)
+	-- and the block by the alley, which is a boiler house as far as anyone
+	-- reading the sign is concerned
+	nameBoard(parent, "BoilerNameBoard", "BOILER HOUSE", 269.6, 13.6, 400, 90, 20, 3.6)
+end
+
 -- Hang lanterns along one wall face. `yaw` turns the fitting's local +Z out
 -- of the wall; `inset` keeps them off the corners, where a quoin is.
 local function lanternRun(parent: Instance, ax: number, az: number, bx: number, bz: number, yaw: number, y: number, spacing: number, inset: number)
@@ -9458,6 +9527,7 @@ end
 		wallLantern(folder, CFrame.new(lx, 12.4, -245.9))
 	end
 	ringLanterns(folder)
+	ringNameBoards(folder)
 	buildHiddenAlley(folder)
 	buildFlagpole(folder)
 	buildCoreFence(folder)
