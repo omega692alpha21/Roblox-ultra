@@ -4657,7 +4657,25 @@ local function buildFrontGrounds(parent: Instance)
 	-- other, and only the road could read it
 	signText(board, "DETENTION\nCRUMBWORTH HIGH", Color3.fromRGB(255, 208, 96), Enum.NormalId.Front)
 	signText(board, "DETENTION\nCRUMBWORTH HIGH", Color3.fromRGB(255, 208, 96), Enum.NormalId.Back)
-	part({ Name = "SignBoardTrim", Size = Vector3.new(29.4, 10.4, 0.6), CFrame = CFrame.new(70, 11, ROAD_Z - 15.5), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent })
+	-- A FRAME, four bars, not a plate. This was a 29.4 by 10.4 sheet half a
+	-- stud in front of the board, which is a lid over the writing on the road
+	-- side -- and sign_check stepped over it, because its probe started 0.4
+	-- studs out and the plate is 0.6 thick sitting 0.2 out.
+	for _, bar in
+		{
+			{ w = 29.4, h = 1.4, dy = 5.5 },
+			{ w = 29.4, h = 1.4, dy = -5.5 },
+			{ w = 1.4, h = 12.4, dy = 0.0 },
+		}
+	do
+		if bar.w > 2 then
+			part({ Name = "SignBoardTrim", Size = Vector3.new(bar.w, bar.h, 2.0), CFrame = CFrame.new(70, 11 + bar.dy, ROAD_Z - 16), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		else
+			for _, side in { -1, 1 } do
+				part({ Name = "SignBoardTrim", Size = Vector3.new(bar.w, bar.h, 2.0), CFrame = CFrame.new(70 + side * 14.7, 11, ROAD_Z - 16), Color = Color3.fromRGB(232, 228, 218), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+			end
+		end
+	end
 end
 
 
@@ -5909,7 +5927,10 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		local plaque = part({
 			Name = "StudyPlaque",
 			Size = Vector3.new(11, 2.6, 0.5),
-			CFrame = at(doorX + 1.6, GROUND + 12, sz - 6),
+			-- On the wall beside the door, not floating past the end of it:
+			-- at doorX + 1.6 the plaque stood 4.4 studs off the landing
+			-- stair's treads, which is not room to stand and read.
+			CFrame = at(doorX - 2.0, GROUND + 12, sz - 6),
 			Color = Palette.Blackboard,
 			Parent = parent,
 		})
@@ -7822,18 +7843,23 @@ local function ringNameBoards(parent: Instance)
 	-- over the entrance arch, which springs at 13 and closes at 27.5
 	nameBoard(parent, "DormNameBoard", "STUDENT DORMS", 0, 33.0, -245.4, 0, 32, 5.0)
 	-- the cafeteria's north door, at the corridor between the two halls
-	nameBoard(parent, "CafeteriaNameBoard", "REFECTORY", 316, 15.4, -247.4, 0, 24, 4.4)
+	-- BESIDE the door, not over it. Pushing the entrance arches out of the
+	-- masonry put a voussoir ring 1.9 studs proud of the wall and up to 25
+	-- studs tall, straight in front of every one of these boards -- 78% of
+	-- the cafeteria's covered, 89% of the boiler house's. The arch reaches
+	-- +-8.5 studs either side of the opening, so 24 clears it.
+	nameBoard(parent, "CafeteriaNameBoard", "REFECTORY", 340, 15.4, -247.4, 0, 24, 4.4)
 	-- the gymnasium's west door
-	nameBoard(parent, "GymNameBoard", "SPORTS HALL", 325.4, 15.4, 396, -90, 24, 4.4)
+	nameBoard(parent, "GymNameBoard", "SPORTS HALL", 325.4, 15.4, 420, -90, 24, 4.4)
 	-- the detention hall's east door
 	-- Clear of the gutter, which now runs where the board used to sit: the
 	-- detention hall's eaves are at 18 and its gutter hangs at 17.6.
-	nameBoard(parent, "DetentionNameBoard", "DETENTION HALL", -310.4, 13.4, 20, 90, 24, 4.4)
+	nameBoard(parent, "DetentionNameBoard", "DETENTION HALL", -310.4, 13.4, 46, 90, 24, 4.4)
 	-- and the block by the alley, which is a boiler house as far as anyone
 	-- reading the sign is concerned
 	-- Sixteen studs of wall, an eleven-stud door under it and a gutter at
 	-- fifteen: this one is smaller because there is only four studs of stone.
-	nameBoard(parent, "BoilerNameBoard", "BOILER HOUSE", 269.6, 13.0, 400, 90, 20, 3.0)
+	nameBoard(parent, "BoilerNameBoard", "BOILER HOUSE", 269.6, 13.0, 424, 90, 20, 3.0)
 end
 
 -- Hang lanterns along one wall face. `yaw` turns the fitting's local +Z out

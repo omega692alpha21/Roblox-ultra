@@ -126,7 +126,7 @@ def main():
                 view[(cx, cz)].append(q)
 
     SIGHT = 4.5
-    STEP = 1.0
+    STEP = 0.4
     OCCLUDED = 0.5        # of the face's sight lines blocked
     hidden = []
     for part in parts:
@@ -150,7 +150,11 @@ def main():
                         part["p"][i]
                         + us[0][i] * half[0] * du
                         + us[1][i] * half[1] * dv
-                        + normal[i] * (sz[axis] / 2 + 0.4)
+                        # 0.05, not 0.4. The school's own name board is faced
+                        # with a trim plate 0.6 thick sitting 0.2 studs in
+                        # front of it, and a probe that starts 0.4 out steps
+                        # straight over the thing covering the sign.
+                        + normal[i] * (sz[axis] / 2 + 0.05)
                         for i in range(3)
                     ]
                     total += 1
