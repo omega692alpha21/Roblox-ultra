@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Palette = require(ReplicatedStorage.Shared.Palette)
 local Kit = require(script.Parent.CollegiateKit)
+local PlanBuilder = require(script.Parent.PlanBuilder)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local PropSizes = require(ReplicatedStorage.Config.PropSizes)
 
@@ -1702,6 +1703,14 @@ local NO_TREES = {
 	{ -334, -274, -266, -226 },  -- the two courts, behind the school
 	{ 266, -274, 334, -226 },
 	{ -392, -258, -356, -166 },  -- the groundsman's yard
+	-- The three structures that come out of the drawing. The treeline knew
+	-- nothing about them because they did not exist when this list was written,
+	-- so it planted an oak inside the hidden alley.
+	{ 330, 340, 520, 470 },      -- the gymnasium
+	{ 155, 345, 265, 455 },      -- the secret rooftop block
+	{ 265, 390, 330, 410 },      -- the alley between them
+	{ 300, 150, 580, 320 },      -- the sports field, in its drawn place
+	{ 335, -35, 525, 115 },      -- the car park
 	-- THE CEREMONIAL APPROACH. Standing at the main gate on the axis, the
 	-- school was completely hidden behind a wall of trees: 178 canopies, 58
 	-- branches, 29 trunks and sixteen boulders between the gate and the front
@@ -2056,6 +2065,52 @@ type Zone = {
 -- against Roblox's cap of ten thousand per MeshPart. Kenney's nature kit is
 -- CC0, already uploaded, and built at game scale -- four species, real
 -- silhouettes, one mesh each. Ten parts becomes one, and it looks like a tree.
+-- The Hidden Alley: the dark slot between the gymnasium and the rooftop block.
+--
+-- CampusPlan gives it as grounds at (265, 390) to (330, 410) linking the two,
+-- which is all it needs to be -- sixty-five studs of wet paving with a wall
+-- either side, one lamp, and a fire escape at the far end. It is the only lit
+-- thing back there and the only way onto the rooftop block, so it wants to read
+-- as somewhere you are not supposed to be rather than as a gap between two
+-- buildings.
+local function buildHiddenAlley(parent: Instance)
+	local X0, Z0, X1, Z1 = 265, 390, 330, 410
+	local cx, cz = (X0 + X1) / 2, (Z0 + Z1) / 2
+	local width = X1 - X0
+
+	tag(part({ Name = "AlleyPaving", Size = Vector3.new(width, 0.5, Z1 - Z0), CFrame = CFrame.new(cx, 0.25, cz), Color = Color3.fromRGB(58, 58, 62), Material = Enum.Material.Slate, Parent = parent }), "TexCourtPaving")
+	for _, side in { -1, 1 } do
+		tag(part({ Name = "AlleyWall", Size = Vector3.new(width + 2, 22, 2), CFrame = CFrame.new(cx, 11, cz + side * ((Z1 - Z0) / 2)), Color = Color3.fromRGB(111, 103, 92), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone")
+		tag(part({ Name = "AlleyCoping", Size = Vector3.new(width + 3, 1.2, 3), CFrame = CFrame.new(cx, 22.6, cz + side * ((Z1 - Z0) / 2)), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
+	-- the one lamp, bracketed off the gymnasium wall
+	local glow = part({ Name = "AlleyLampGlow", Size = Vector3.new(1.4, 1.4, 1.4), CFrame = CFrame.new(X1 - 6, 15, cz), Color = Color3.fromRGB(255, 220, 160), Material = Enum.Material.Neon, Transparency = 0.35, Parent = parent })
+	glow.CanCollide = false
+	glow.CastShadow = false
+	part({ Name = "AlleyLampBracket", Size = Vector3.new(5, 0.5, 0.5), CFrame = CFrame.new(X1 - 3.4, 15.8, cz), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	local lamp = Instance.new("PointLight")
+	lamp.Color = Color3.fromRGB(255, 220, 160)
+	lamp.Brightness = 1.6
+	lamp.Range = 44
+	lamp.Shadows = false
+	lamp.Parent = glow
+	prop("WallLantern", CFrame.new(X1 - 6, 15, cz))
+
+	-- the fire escape up the rooftop block, which is what the alley is FOR
+	for i = 0, 11 do
+		part({ Name = "FireEscapeTread", Size = Vector3.new(5, 0.4, 1.4), CFrame = CFrame.new(X0 + 4, 1.4 + i * 1.3, cz - 6 + i * 1.1), Color = Color3.fromRGB(64, 66, 74), Material = Enum.Material.DiamondPlate, Parent = parent })
+	end
+	part({ Name = "FireEscapeRail", Size = Vector3.new(0.4, 12, 0.4), CFrame = CFrame.new(X0 + 6.4, 8, cz), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "FireEscapePlatform", Size = Vector3.new(9, 0.5, 7), CFrame = CFrame.new(X0 + 3, 16.4, cz + 7), Color = Color3.fromRGB(64, 66, 74), Material = Enum.Material.DiamondPlate, Parent = parent })
+	-- back-of-house dressing: this is where the bins live
+	-- inside the alley walls, not out in the boundary planting
+	prop("Bin", CFrame.new(X0 + 22, 0, cz + 4))
+	prop("Bin", CFrame.new(X0 + 30, 0, cz - 4))
+	local sign = part({ Name = "AlleySign", Size = Vector3.new(9, 3, 0.4), CFrame = CFrame.new(cx, 13, Z0 + 1.4), Color = Color3.fromRGB(22, 35, 63), Parent = parent })
+	sign.CanCollide = false
+	signText(sign, "NO ENTRY", Color3.fromRGB(217, 180, 92), Enum.NormalId.Back)
+end
+
 local TREE_KINDS = { "KTreeOak", "KTree", "KTreeTall", "KTreeThin" }
 
 local function meshTree(parent: Instance, pos: Vector3, scale: number)
@@ -6114,10 +6169,21 @@ end
 -- This is that land. It is walked to down an avenue from the gym, and it is
 -- the reason the plot is now half as long again as it is wide.
 local function buildBackCampus(parent: Instance)
-	local FIELD = Vector3.new(0, 0, -400)
+	-- THE SPORTS FIELD, moved to its drawn ground.
+	--
+	-- It sat at (0, -400) with the track's outer lane reaching z -486, which is
+	-- sixty-six studs into the South Reserve -- land the drawing holds clear so
+	-- a future building has somewhere to go. build_check has been reporting 164
+	-- TrackLane parts standing on it. CampusPlan puts the Sports Field at
+	-- (300, 150) to (580, 320): centre (440, 235), which is where the reference
+	-- aerial has it, east of the school beyond the car park.
+	local FIELD = Vector3.new(440, 0, 235)
 
 	-- ---- the running track: an oval of six lanes round a grass infield ----
-	local RX, RZ = 150, 86
+	-- 136 x 80, not 150 x 86: the drawn Sports Field is 280 x 170 and the old
+	-- oval was 300 x 172, so it would have hung over both ends of its own
+	-- ground the moment it moved.
+	local RX, RZ = 136, 80
 	for lane = 0, 5 do
 		local rx, rz = RX - lane * 5.5, RZ - lane * 5.5
 		local segments = 64
@@ -7165,6 +7231,19 @@ end
 	buildCampusPath(folder, Vector3.new(52, 0, -196), Vector3.new(142, 0, -196), 12)
 	buildPath(folder, Vector3.new(-60, 0, 150), Vector3.new(-130, 0, 192), 8)
 	buildPath(folder, Vector3.new(60, 0, 150), Vector3.new(130, 0, 192), 8)
+	-- ---- the buildings that come out of the DRAWING ----
+	--
+	-- These are the first two structures on the campus that MapService did not
+	-- author. CampusPlan says where the Gymnasium and the Secret Rooftop block
+	-- stand, what rooms they hold, where their corridors and doors are and how
+	-- their stairs run; PlanBuilder turns that into floors, cut walls, windows,
+	-- a roof, dormers, chimneys and a porch. Nothing here chooses a coordinate.
+	--
+	-- tools/build_check.py has been reporting both as "drawn and only 0 parts
+	-- stand there" since the drawing was made.
+	PlanBuilder.build({ parent = folder, part = part :: any, tag = tag :: any, prop = prop :: any }, "Gymnasium")
+	PlanBuilder.build({ parent = folder, part = part :: any, tag = tag :: any, prop = prop :: any }, "Secret Rooftop")
+	buildHiddenAlley(folder)
 	buildFlagpole(folder)
 	buildTreeline(folder, meshTree)
 	buildRocks(folder)

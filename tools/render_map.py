@@ -266,6 +266,12 @@ game = { GetService = function(_, name) return Instance.new(name) end }
 def load_module(path, localname):
     src = open(path).read()
     src = src.replace("--!strict", "")
+    # Modules that require each other by path have to be re-pointed at the
+    # locals this harness already loaded, or the shim tries to resolve a real
+    # Roblox instance tree that does not exist here.
+    src = src.replace('local ReplicatedStorage = game:GetService("ReplicatedStorage")', "")
+    src = src.replace("local CampusPlan = require(ReplicatedStorage.Shared.CampusPlan)", "local CampusPlan = __CampusPlan")
+    src = src.replace("local Kit = require(script.Parent.CollegiateKit)", "local Kit = __Kit")
     return f"local {localname} = (function()\n{src}\nend)()\n"
 
 map_src = open(os.path.join(REPO, "src/ServerScriptService/Services/MapService.luau")).read()
@@ -273,6 +279,7 @@ map_src = map_src.replace("--!strict", "")
 map_src = map_src.replace('local ReplicatedStorage = game:GetService("ReplicatedStorage")', "")
 map_src = map_src.replace("local Palette = require(ReplicatedStorage.Shared.Palette)", "")
 map_src = map_src.replace("local Kit = require(script.Parent.CollegiateKit)", "local Kit = __Kit")
+map_src = map_src.replace("local PlanBuilder = require(script.Parent.PlanBuilder)", "local PlanBuilder = __PlanBuilder")
 map_src = map_src.replace("local GameConfig = require(ReplicatedStorage.Config.GameConfig)", "")
 map_src = map_src.replace("local PropSizes = require(ReplicatedStorage.Config.PropSizes)", "local PropSizes = __PropSizes")
 map_src = map_src.replace("local Cliques = require(ReplicatedStorage.Config.Cliques)", "local Cliques = __Cliques")
@@ -381,7 +388,9 @@ program = (
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/GameConfig.luau"), "GameConfig")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/Cliques.luau"), "__Cliques")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/PropSizes.luau"), "__PropSizes")
+    + load_module(os.path.join(REPO, "src/ReplicatedStorage/Shared/CampusPlan.luau"), "__CampusPlan")
     + load_module(os.path.join(REPO, "src/ServerScriptService/Services/CollegiateKit.luau"), "__Kit")
+    + load_module(os.path.join(REPO, "src/ServerScriptService/Services/PlanBuilder.luau"), "__PlanBuilder")
     + "local __MapService\n"
     + map_src
     + EXPORT
@@ -667,6 +676,9 @@ shots = [
     ("eyegate",    (0, 5, 420),      (0, 30, 130)),
     ("eyeback",    (0, 5, -170),     (0, 26, -60)),
     ("dormerclose",(-110, 46, 190),  (-110, 46, 118)),
+    ("newgym",     (250, 40, 300),   (425, 20, 405)),
+    ("rooftopblk", (120, 30, 300),   (210, 14, 400)),
+    ("alleyeye",   (300, 5, 350),    (290, 12, 400)),
     ("roofedge",   (-142, 44, 200),  (-142, 46, 100)),
 ]
 for name, cam, target in shots:

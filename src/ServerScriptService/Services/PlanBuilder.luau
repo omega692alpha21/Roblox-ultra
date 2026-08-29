@@ -1,0 +1,499 @@
+--!strict
+-- Build a building FROM THE DRAWING.
+--
+-- This is the step the whole plan was written around. Until now MapService has
+-- been the author of the campus: every wall, every door, every stair was a
+-- number typed into a seven-thousand-line file by whoever was adding that
+-- feature, and CampusPlan could only be checked against the result afterwards.
+--
+-- Here the drawing is the input. Give this a building's name and it emits the
+-- floors, the walls, the openings, the windows, the roof and the entrances that
+-- CampusPlan says that building has -- and nothing else. A wall that is not
+-- drawn cannot be built, which is the property the last several months of
+-- whack-a-mole were missing.
+--
+-- It takes its part maker, its tagger and its prop placer from the caller
+-- rather than requiring MapService back, so it stays a leaf module the way
+-- CollegiateKit does.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local CampusPlan = require(ReplicatedStorage.Shared.CampusPlan)
+local Kit = require(script.Parent.CollegiateKit)
+
+local PlanBuilder = {}
+
+export type Ctx = {
+	parent: Instance,
+	part: (props: { [string]: any }) -> BasePart,
+	tag: (part: Instance, tag: string) -> (),
+	prop: ((kind: string, cf: CFrame, options: any?) -> ())?,
+}
+
+local FLOOR = Color3.fromRGB(196, 194, 188)
+local CEILING = Color3.fromRGB(238, 234, 224)
+local STONE = Kit.STONE
+local ASHLAR = Kit.ASHLAR
+local GLASS_LIT = Kit.GLASS_LIT
+local FRAME = Kit.FRAME
+local TIMBER = Kit.TIMBER
+
+-- The layer ladder, same as MapService's: a thing drawn ON a surface takes the
+-- next rung up, never that surface's own height.
+local FLOOR_THICK = 1.0
+local CEIL_THICK = 0.6
+local WINDOW_PITCH = 22.0
+local WINDOW_W = 8.0
+local WINDOW_H = 11.0
+local SILL = 5.0
+
+local function kit(ctx: Ctx): Kit.Ctx
+	return { parent = ctx.parent, part = ctx.part :: any, tag = ctx.tag :: any }
+end
+
+-- ---------------------------------------------------------------------------
+-- WALLS
+-- ---------------------------------------------------------------------------
+-- A wall run minus the openings drawn in it. The gaps are cut, not painted
+-- over: the two stubs either side of a doorway are separate parts, and the head
+-- above it is a third, so a door is a hole you can walk through rather than a
+-- dark rectangle on a solid wall.
+local function wallRun(
+	ctx: Ctx,
+	name: string,
+	from: { number },
+	to: { number },
+	baseY: number,
+	height: number,
+	thickness: number,
+	gaps: { { at: number, width: number, height: number } },
+	tagName: string
+)
+	local dx, dz = to[1] - from[1], to[2] - from[2]
+	local length = math.sqrt(dx * dx + dz * dz)
+	if length < 0.1 then
+		return
+	end
+	local alongX = math.abs(dx) > math.abs(dz)
+	local dir = if alongX then (if dx > 0 then 1 else -1) else (if dz > 0 then 1 else -1)
+	local originAlong = if alongX then from[1] else from[2]
+	local across = if alongX then from[2] else from[1]
+
+	local function slab(nm: string, startAt: number, endAt: number, y0: number, y1: number)
+		local span = endAt - startAt
+		if span <= 0.05 or y1 - y0 <= 0.05 then
+			return
+		end
+		local mid = (startAt + endAt) / 2
+		local size = if alongX
+			then Vector3.new(span, y1 - y0, thickness)
+			else Vector3.new(thickness, y1 - y0, span)
+		local cf = if alongX
+			then CFrame.new(mid, (y0 + y1) / 2, across)
+			else CFrame.new(across, (y0 + y1) / 2, mid)
+		ctx.tag(ctx.part({ Name = nm, Size = size, CFrame = cf, Color = STONE, Material = Enum.Material.Slate, Parent = ctx.parent }), tagName)
+	end
+
+	-- put the gaps in order along the run
+	local sorted = table.clone(gaps)
+	table.sort(sorted, function(a, b)
+		return a.at < b.at
+	end)
+
+	local lo = math.min(originAlong, originAlong + dir * length)
+	local hi = math.max(originAlong, originAlong + dir * length)
+	local cursor = lo
+	for _, gap in sorted do
+		local g0 = gap.at - gap.width / 2
+		local g1 = gap.at + gap.width / 2
+		if g1 <= lo or g0 >= hi then
+			continue
+		end
+		g0 = math.max(g0, lo)
+		g1 = math.min(g1, hi)
+		slab(name, cursor, g0, baseY, baseY + height)
+		-- the head over the opening
+		slab(name .. "Head", g0, g1, baseY + gap.height, baseY + height)
+		cursor = g1
+	end
+	slab(name, cursor, hi, baseY, baseY + height)
+end
+
+-- ---------------------------------------------------------------------------
+-- WINDOWS
+-- ---------------------------------------------------------------------------
+-- Bays down an exterior wall at a fixed pitch, skipping anywhere an opening is
+-- already drawn. Each is a stone surround, a lit leaf and a mullion -- the same
+-- vocabulary as the Academy, so the ring buildings read as the same school.
+local function windowsAlong(
+	ctx: Ctx,
+	from: { number },
+	to: { number },
+	baseY: number,
+	height: number,
+	gaps: { { at: number, width: number, height: number } },
+	outward: number,
+	thickness: number
+)
+	local dx, dz = to[1] - from[1], to[2] - from[2]
+	local length = math.sqrt(dx * dx + dz * dz)
+	local alongX = math.abs(dx) > math.abs(dz)
+	local lo = if alongX then math.min(from[1], to[1]) else math.min(from[2], to[2])
+	local across = if alongX then from[2] else from[1]
+
+	local count = math.max(1, math.floor((length - WINDOW_PITCH) / WINDOW_PITCH))
+	local spacing = length / (count + 1)
+	for i = 1, count do
+		local at = lo + i * spacing
+		local blocked = false
+		for _, gap in gaps do
+			if at > gap.at - gap.width / 2 - WINDOW_W and at < gap.at + gap.width / 2 + WINDOW_W then
+				blocked = true
+				break
+			end
+		end
+		if blocked then
+			continue
+		end
+		local y = baseY + SILL + WINDOW_H / 2
+		if y + WINDOW_H / 2 > baseY + height - 1.5 then
+			continue
+		end
+		-- An exterior wall is eight studs thick and centred on the building
+		-- line, so its outer face is four studs out from the centreline. The
+		-- first version pushed windows out by one or two studs, which put every
+		-- one of them INSIDE the masonry: twenty-one windows on the gymnasium,
+		-- none of them visible from anywhere.
+		local face = thickness / 2
+		local function at3(w: number, h: number, d: number, push: number)
+			local size = if alongX then Vector3.new(w, h, d) else Vector3.new(d, h, w)
+			local cf = if alongX
+				then CFrame.new(at, y, across + outward * (face + push))
+				else CFrame.new(across + outward * (face + push), y, at)
+			return size, cf
+		end
+		local sSize, sCf = at3(WINDOW_W + 3.0, WINDOW_H + 3.0, 1.4, -0.5)
+		ctx.tag(ctx.part({ Name = "PlanWindowSurround", Size = sSize, CFrame = sCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		local gSize, gCf = at3(WINDOW_W, WINDOW_H, 0.6, 0.4)
+		local pane = ctx.part({ Name = "PlanWindowGlass", Size = gSize, CFrame = gCf, Color = GLASS_LIT, Material = Enum.Material.Neon, Transparency = 0.34, Parent = ctx.parent })
+		pane.CanCollide = false
+		pane.CastShadow = false
+		local mSize, mCf = at3(0.5, WINDOW_H, 0.8, 0.7)
+		ctx.part({ Name = "PlanWindowMullion", Size = mSize, CFrame = mCf, Color = FRAME, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		local silSize, silCf = at3(WINDOW_W + 4.0, 0.7, 2.2, 0.1)
+		local sill = ctx.part({ Name = "PlanWindowSill", Size = silSize, CFrame = silCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent })
+		sill.CFrame = silCf - Vector3.new(0, WINDOW_H / 2 + 0.4, 0)
+		sill.CanCollide = false
+		ctx.tag(sill, "TexAshlar")
+		if i % 2 == 1 then
+			local light = Instance.new("PointLight")
+			light.Color = Kit.LANTERN
+			light.Brightness = 0.8
+			light.Range = 22
+			light.Shadows = false
+			light.Parent = pane
+		end
+	end
+end
+
+-- ---------------------------------------------------------------------------
+-- BUILD
+-- ---------------------------------------------------------------------------
+function PlanBuilder.build(ctx: Ctx, name: string)
+	local b = CampusPlan.building(name)
+	if not b then
+		warn("[PlanBuilder] no drawing for " .. name)
+		return
+	end
+	local K = kit(ctx)
+	local rect = b.rect
+	local x0, z0, x1, z1 = rect[1], rect[2], rect[3], rect[4]
+	local width, depth = x1 - x0, z1 - z0
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	local top = b.storeys[#b.storeys]
+	local eaves = top.y + top.height
+
+	-- ---- doorways, gathered per storey so the walls can be cut for them ----
+	local openings: { [number]: { { at: number, width: number, height: number, axis: string, across: number } } } = {}
+	for i in b.storeys do
+		openings[i] = {}
+		for _, door in CampusPlan.doors(b, i) do
+			if not door.orphan then
+				table.insert(openings[i], {
+					at = if door.axis == "z" then door.x else door.z,
+					width = door.width,
+					height = door.height,
+					axis = door.axis,
+					across = if door.axis == "z" then door.z else door.x,
+				})
+			end
+		end
+	end
+	-- the ways in from outside are openings in the exterior wall
+	for _, e in b.entrances or {} do
+		local vertical = e.facing == "east" or e.facing == "west"
+		table.insert(openings[1], {
+			at = if vertical then e.at.z else e.at.x,
+			width = e.width,
+			height = CampusPlan.DOOR_HEIGHT + 2,
+			axis = if vertical then "x" else "z",
+			across = if vertical then e.at.x else e.at.z,
+		})
+	end
+
+	for index, storey in b.storeys do
+		local cells = CampusPlan.cells(b, index)
+		if #cells == 0 then
+			continue
+		end
+
+		-- ---- floor under every cell, ceiling over it ----
+		for _, cell in cells do
+			local r = cell.rect
+			local w, d = r[3] - r[1], r[4] - r[2]
+			local mx, mz = (r[1] + r[3]) / 2, (r[2] + r[4]) / 2
+			ctx.tag(ctx.part({
+				Name = "PlanFloor",
+				Size = Vector3.new(w, FLOOR_THICK, d),
+				CFrame = CFrame.new(mx, storey.y - FLOOR_THICK / 2, mz),
+				Color = FLOOR,
+				Parent = ctx.parent,
+			}), "TexFloorTile")
+			local ceil = ctx.part({
+				Name = "PlanCeiling",
+				Size = Vector3.new(w, CEIL_THICK, d),
+				-- bedded UP into the storey above rather than flush with it:
+				-- flush is what put sixty thousand square studs of the Academy's
+				-- ceiling in the same plane as its own floor
+				CFrame = CFrame.new(mx, storey.y + storey.height - CEIL_THICK / 2 + 0.15, mz),
+				Color = CEILING,
+				Parent = ctx.parent,
+			})
+			ceil.CanCollide = false
+			ctx.tag(ceil, "TexCeiling")
+
+			-- a light in every room, so light_check has something to find
+			if cell.kind == "room" or (cell.row == 2 and cell.col == 1) then
+				local lamp = ctx.part({
+					Name = "PlanRoomLight",
+					Size = Vector3.new(math.min(w * 0.4, 10), 0.4, math.min(d * 0.3, 6)),
+					CFrame = CFrame.new(mx, storey.y + storey.height - 1.6, mz),
+					Color = Color3.fromRGB(255, 248, 230),
+					Material = Enum.Material.Neon,
+					Parent = ctx.parent,
+				})
+				lamp.CanCollide = false
+				lamp.CastShadow = false
+				local light = Instance.new("PointLight")
+				light.Brightness = 1.3
+				light.Range = math.max(w, d) * 0.9
+				light.Color = Color3.fromRGB(255, 244, 218)
+				light.Shadows = false
+				light.Parent = lamp
+			end
+		end
+
+		-- ---- the walls the drawing says exist, cut for the drawn openings ----
+		for _, wall in CampusPlan.walls(b, index) do
+			local vertical = math.abs(wall.to[1] - wall.from[1]) < 0.01
+			local axis = if vertical then "x" else "z"
+			local across = if vertical then wall.from[1] else wall.from[2]
+			local gaps = {}
+			for _, o in openings[index] do
+				if o.axis == axis and math.abs(o.across - across) < wall.thickness / 2 + 0.6 then
+					table.insert(gaps, { at = o.at, width = o.width, height = o.height })
+				end
+			end
+			local nm = if wall.kind == "exterior" then "PlanWall" else "PlanPartition"
+			local tagName = if wall.kind == "exterior" then "TexCoursedStone" else "TexPlaster"
+			wallRun(ctx, nm, wall.from, wall.to, storey.y, storey.height, wall.thickness, gaps, tagName)
+
+			if wall.kind == "exterior" then
+				local outward = if vertical then (if across > cx then 1 else -1) else (if across > cz then 1 else -1)
+				windowsAlong(ctx, wall.from, wall.to, storey.y, storey.height, gaps, outward, wall.thickness)
+			end
+		end
+	end
+
+	-- ---- the storey bands and the corners, so it is the same school ----
+	for index, storey in b.storeys do
+		if index == 1 then
+			ctx.tag(ctx.part({ Name = "PlanPlinth", Size = Vector3.new(width + 3.0, 3.0, depth + 3.0), CFrame = CFrame.new(cx, 1.5, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		else
+			ctx.tag(ctx.part({ Name = "PlanStringCourse", Size = Vector3.new(width + 1.6, 1.5, depth + 1.6), CFrame = CFrame.new(cx, storey.y, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		end
+	end
+	ctx.tag(ctx.part({ Name = "PlanCornice", Size = Vector3.new(width + 3.4, 2.2, depth + 3.4), CFrame = CFrame.new(cx, eaves + 1.1, cz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+	for _, corner in { Vector3.new(-1, 0, -1), Vector3.new(1, 0, -1), Vector3.new(-1, 0, 1), Vector3.new(1, 0, 1) } do
+		ctx.tag(ctx.part({
+			Name = "PlanQuoin",
+			Size = Vector3.new(5.0, eaves - 1.0, 5.0),
+			CFrame = CFrame.new(cx + corner.X * (width / 2 - 1.0), (eaves + 1.0) / 2, cz + corner.Z * (depth / 2 - 1.0)),
+			Color = ASHLAR,
+			Material = Enum.Material.Concrete,
+			Parent = ctx.parent,
+		}), "TexAshlar").CanCollide = false
+	end
+
+	-- ---- the roof, ridged along the long axis ----
+	local runsX = width >= depth
+	local rise = math.min(if runsX then depth else width, 90) * 0.30
+	Kit.gableRoof(K, {
+		x = cx,
+		z = cz,
+		width = if runsX then width + 4 else depth + 4,
+		depth = if runsX then depth + 4 else width + 4,
+		eaves = eaves + 2.2,
+		rise = rise,
+		runsX = runsX,
+	})
+	-- Gable walls closing the ends, or the roof is two planes over open air.
+	--
+	-- A gable is a TRIANGLE. Built as a rectangle -- which is what this was --
+	-- it stands the full ridge height across the whole end of the building and
+	-- reads as an enormous blank slab towering over its own roof, which is
+	-- exactly what the first gymnasium looked like. Two mirrored wedges make
+	-- the triangle: each is tall at the ridge and falls away to the eaves.
+	local span = if runsX then depth + 4 else width + 4
+	local endAt = if runsX then width / 2 + 1 else depth / 2 + 1
+	for _, side in { -1, 1 } do
+		for _, half in { -1, 1 } do
+			local piece = Instance.new("WedgePart")
+			piece.Name = "PlanGableEnd"
+			piece.Anchored = true
+			piece.CanCollide = false
+			piece.Size = Vector3.new(2.0, rise, span / 2)
+			-- yaw 180 puts the wedge's tall face at +Z, so the half on the -Z
+			-- side of the ridge rises TOWARD the ridge instead of away from it
+			local spin = if half > 0 then 0 else math.rad(180)
+			local along = half * span / 4
+			piece.CFrame = (if runsX
+				then CFrame.new(cx + side * endAt, eaves + 2.2 + rise / 2, cz + along)
+				else CFrame.new(cx + along, eaves + 2.2 + rise / 2, cz + side * endAt))
+				* CFrame.Angles(0, spin + (if runsX then 0 else math.rad(90)), 0)
+			piece.Color = STONE
+			piece.Material = Enum.Material.Slate
+			piece.Parent = ctx.parent
+			ctx.tag(piece, "TexCoursedStone")
+		end
+		-- a verge board down each slope of the gable
+		local vSize = if runsX then Vector3.new(3.2, 1.2, span + 1) else Vector3.new(span + 1, 1.2, 3.2)
+		local vAt = if runsX
+			then CFrame.new(cx + side * (endAt + 0.6), eaves + 2.6, cz)
+			else CFrame.new(cx, eaves + 2.6, cz + side * (endAt + 0.6))
+		ctx.tag(ctx.part({ Name = "PlanVerge", Size = vSize, CFrame = vAt, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+	end
+
+	-- dormers down the long slopes, and a chimney on each gable end
+	local slopeCount = math.max(2, math.floor((if runsX then width else depth) / 46))
+	for i = 1, slopeCount do
+		local t = (i - 0.5) / slopeCount
+		local along = (if runsX then x0 else z0) + t * (if runsX then width else depth)
+		local halfSpan = (if runsX then depth else width) / 2 + 2
+		local dormerBase = eaves + 2.2 + rise * 0.34
+		local set = halfSpan * 0.62
+		-- both slopes. A pitched roof has two, and putting dormers on only one
+		-- of them gives a building that looks finished from one side.
+		for _, slope in { -1, 1 } do
+			if runsX then
+				Kit.dormer(K, { x = along, y = dormerBase, z = cz + slope * set, facing = if slope > 0 then 0 else 180, width = 7, height = 6 })
+			else
+				Kit.dormer(K, { x = cx + slope * set, y = dormerBase, z = along, facing = if slope > 0 then 90 else 270, width = 7, height = 6 })
+			end
+		end
+	end
+	for _, side in { -1, 1 } do
+		local chx = if runsX then cx + side * (width / 2 - 8) else cx
+		local chz = if runsX then cz else cz + side * (depth / 2 - 8)
+		Kit.chimney(K, { x = chx, z = chz, base = eaves, height = rise + 10, width = 6 })
+	end
+
+	-- ---- the way in ----
+	for _, e in b.entrances or {} do
+		local vertical = e.facing == "east" or e.facing == "west"
+		local outward = if e.facing == "east" or e.facing == "north" then 1 else -1
+		local ex = if vertical then e.at.x + outward * 1.6 else e.at.x
+		local ez = if vertical then e.at.z else e.at.z + outward * 1.6
+		local doorH = CampusPlan.DOOR_HEIGHT + 2
+
+		local leafSize = if vertical
+			then Vector3.new(1.2, doorH - 1, e.width / 2 - 0.4)
+			else Vector3.new(e.width / 2 - 0.4, doorH - 1, 1.2)
+		for _, half in { -1, 1 } do
+			local lx = if vertical then ex else ex + half * e.width / 4
+			local lz = if vertical then ez + half * e.width / 4 else ez
+			ctx.part({ Name = "PlanDoorLeaf", Size = leafSize, CFrame = CFrame.new(lx, (doorH - 1) / 2, lz), Color = TIMBER, Material = Enum.Material.WoodPlanks, Parent = ctx.parent }).CanCollide = false
+		end
+		-- an arch over it, and a name board over that
+		local span = e.width + 4
+		Kit.pointedArch(K, {
+			x = if vertical then ez else ex,
+			y = doorH + 0.4,
+			z = if vertical then ex else ez,
+			span = span,
+			rise = span * 0.75,
+			depth = 3.0,
+			ring = 2.2,
+			segments = 8,
+		})
+		for _, step in { 0, 1, 2 } do
+			local sw = e.width + 8 - step * 2
+			local size = if vertical then Vector3.new(6 - step * 1.2, 1, sw) else Vector3.new(sw, 1, 6 - step * 1.2)
+			local px = if vertical then ex + outward * (2.4 + step * 2.2) else ex
+			local pz = if vertical then ez else ez + outward * (2.4 + step * 2.2)
+			ctx.tag(ctx.part({ Name = "PlanStep", Size = size, CFrame = CFrame.new(px, 0.5 - step * 0.34, pz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar")
+		end
+		for _, half in { -1, 1 } do
+			-- clear of the wall face. The entrance point is on the building line
+			-- and the wall is eight studs thick, so a lantern half a stud out
+			-- from there is inside the masonry.
+			local lx = if vertical then ex + outward * 3.4 else ex + half * (e.width / 2 + 1.5)
+			local lz = if vertical then ez + half * (e.width / 2 + 1.5) else ez + outward * 3.4
+			local glow = ctx.part({ Name = "PlanPorchGlow", Size = Vector3.new(1.2, 1.2, 1.2), CFrame = CFrame.new(lx, 13, lz), Color = Kit.LANTERN, Material = Enum.Material.Neon, Transparency = 0.4, Parent = ctx.parent })
+			glow.CanCollide = false
+			glow.CastShadow = false
+			local lamp = Instance.new("PointLight")
+			lamp.Color = Kit.LANTERN
+			lamp.Brightness = 1.1
+			lamp.Range = 26
+			lamp.Shadows = false
+			lamp.Parent = glow
+			if ctx.prop then
+				(ctx.prop :: any)("WallLantern", CFrame.new(lx, 13, lz))
+			end
+		end
+	end
+
+	-- ---- the stairs, exactly as drawn ----
+	for _, st in b.stairs or {} do
+		for _, flight in st.flights do
+			local a, c = flight.from, flight.to
+			local rise2 = c[2] - a[2]
+			local steps = math.max(2, math.floor(rise2 / CampusPlan.STAIR_RISE))
+			for i = 1, steps do
+				local t = i / steps
+				local tx = a[1] + (c[1] - a[1]) * t
+				local tz = a[3] + (c[3] - a[3]) * t
+				local ty = a[2] + rise2 * t
+				local runAxis = math.abs(c[1] - a[1]) > math.abs(c[3] - a[3])
+				local tread = if runAxis
+					then Vector3.new(math.abs(c[1] - a[1]) / steps + 0.2, 0.6, st.width)
+					else Vector3.new(st.width, 0.6, math.abs(c[3] - a[3]) / steps + 0.2)
+				ctx.tag(ctx.part({ Name = "PlanTread", Size = tread, CFrame = CFrame.new(tx, ty - 0.3, tz), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar")
+			end
+		end
+		for _, pad in st.landings or {} do
+			local r = pad.rect
+			ctx.tag(ctx.part({
+				Name = "PlanLanding",
+				Size = Vector3.new(r[3] - r[1], 0.8, r[4] - r[2]),
+				CFrame = CFrame.new((r[1] + r[3]) / 2, pad.y - 0.4, (r[2] + r[4]) / 2),
+				Color = ASHLAR,
+				Material = Enum.Material.Concrete,
+				Parent = ctx.parent,
+			}), "TexAshlar")
+		end
+	end
+end
+
+return PlanBuilder
