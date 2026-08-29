@@ -4901,6 +4901,15 @@ local function buildTerrain()
 	-- hard rule: nothing rises above ground level anywhere inside the walls
 	terrain:FillBlock(CFrame.new(PLOT_MID_X, 34, PLOT_MID), Vector3.new(PLOT_W, 64, PLOT_D), Enum.Material.Air)
 
+	-- THE POOL'S WATER. buildPool filled terrain water from y = -12 up to
+	-- y = -0.6 at (-340, -20) and the builder is gone, but a Terrain write is
+	-- not undone by deleting the code that made it: any place file saved while
+	-- the old builder ran still has that water baked in, and the grass slab
+	-- above only reaches down to -4.1, so it would never be overwritten. This
+	-- clears the volume underneath it. It stops at -4.2, clear of the slab's
+	-- underside, so on a fresh build it removes nothing.
+	terrain:FillBlock(CFrame.new(-340, -9.2, -20), Vector3.new(140, 10, 100), Enum.Material.Air)
+
 	-- no terrain under any interior floor (air-carved, so no grass blades either)
 	for _, region in {
 		{ cf = CFrame.new(0, -2.3, 0), size = Vector3.new(452, 5, 252) }, -- main building (plan footprint)
@@ -11086,9 +11095,11 @@ end
 	-- neither elbow is sixty-four square studs of two slabs sharing a plane
 	buildCampusPath(folder, Vector3.new(-180, 0, -256), LIBRARY + Vector3.new(0, 0, 44), 16, true)
 
-	-- The treeline predates the pool and the tennis stadium, so it plants
-	-- trees inside both. Rather than teach every scatter about every venue,
-	-- clear the venues afterwards: one list to extend when a venue is added.
+	-- The treeline is written before any venue is, so it plants trees inside
+	-- them. Rather than teach every scatter about every venue, clear the
+	-- venues afterwards: one list, extended when a venue is added. It used to
+	-- name the pool and the tennis stadium, both retired, and read as though
+	-- two entries had gone missing rather than been taken out on purpose.
 	local KEEP_CLEAR = {
 		{ c = LIBRARY, rx = 52, rz = 42, what = "the library" },
 	}

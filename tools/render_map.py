@@ -494,9 +494,18 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
     # empty sky beyond the edge of the grass.
     ground = [(PLOT[0], 0, PLOT[1]), (PLOT[2], 0, PLOT[1]),
               (PLOT[2], 0, PLOT[3]), (PLOT[0], 0, PLOT[3])]
-    gp = [project(g) for g in ground]
-    if all(gp):
-        d.polygon([(p[0], p[1]) for p in gp], fill=(104, 148, 88))
+    # Clipped against the near plane, not dropped. Any camera standing ON the
+    # campus has two of the plot's four corners behind it, so `all(project(g))`
+    # was false for nearly every shot in the list and the ground was simply not
+    # drawn: forty of the sixty pictures showed the school floating in an empty
+    # blue sky, and every judgement about how the place looked was made without
+    # the thing it stands on.
+    gpoly = near_clip([to_cam(g) for g in ground])
+    if len(gpoly) >= 3:
+        gp = [to_screen(c) for c in gpoly]
+        d.polygon([(max(-20000.0, min(20000.0, p[0])),
+                    max(-20000.0, min(20000.0, p[1]))) for p in gp],
+                  fill=(104, 148, 88))
 
     faces = []
     AXES = [((1, 0, 0), (0, 1, 0), (0, 0, 1)), ((0, 1, 0), (1, 0, 0), (0, 0, 1)), ((0, 0, 1), (1, 0, 0), (0, 1, 0))]
