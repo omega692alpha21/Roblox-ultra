@@ -1663,9 +1663,16 @@ end
 
 local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, number) -> ())
 	local rng = Random.new(2026)
-	for i = 1, 300 do
-		local out = rng:NextNumber(26, 96)
-		local pos = onBoundary(i / 300 + rng:NextNumber(-0.001, 0.001),
+	-- 720 seeds in a band 112 studs deep, not 300 in a band of 70. The
+	-- boundary is 4,260 studs long now that it follows the core rather than an
+	-- 840-stud square, and 300 attempts round it -- of which claimGround
+	-- placed about 150 -- is one tree every twenty-seven studs: a dotted line,
+	-- not the woodland the reference art closes its horizon with. This is the
+	-- belt OUTSIDE the estate fence, so it is on reserved ground by design and
+	-- gets cleared the day anything is built there.
+	for i = 1, 720 do
+		local out = rng:NextNumber(18, 130)
+		local pos = onBoundary(i / 720 + rng:NextNumber(-0.001, 0.001),
 			CORE_X0 - out, CORE_Z0 - out, CORE_X1 + out, CORE_Z1 + out)
 		local scale = rng:NextNumber(1.1, 2.3)
 		local blocked = false
@@ -1702,11 +1709,17 @@ local function buildRocks(parent: Instance)
 
 	-- the far ridge: big, out past the treeline, closing the horizon
 	for i = 1, 62 do
-		-- 110..170, not 110..210: at 210 the ridge stepped outside the plot
-		local out = rng:NextNumber(110, 170)
+		-- 150..185, out past the tree belt and close in to the plot edge, and
+		-- graded down: at 110..170 with a grade of up to 2.4 the far ridge
+		-- stood in the middle of the reserves as a handful of grey monoliths
+		-- twenty-six studs tall on flat open lawn, with nothing round them.
+		-- buildRockOutcrop throws stone 21 studs off the seed and insidePlot
+		-- clears the seed by 24, so 185 still leaves every boulder 35 studs
+		-- inside the boundary on the tightest side.
+		local out = rng:NextNumber(150, 185)
 		local pos = onBoundary(i / 62 + rng:NextNumber(-0.002, 0.002),
 			CORE_X0 - out, CORE_Z0 - out, CORE_X1 + out, CORE_Z1 + out)
-		local grade = rng:NextNumber(1.2, 2.4)
+		local grade = rng:NextNumber(1.0, 1.7)
 		-- 48, not 26: buildRockOutcrop throws its boulders up to 21 studs
 		-- off the seed, so a seed cleared at 26 could still drop stone five
 		-- studs inside a rectangle the drawing had spoken for
