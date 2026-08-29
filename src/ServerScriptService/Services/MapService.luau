@@ -3998,6 +3998,12 @@ local function buildDormCourt(parent: Instance)
 		Grounds.lawnPanel(kit, cx + side * (AXIS_HALF + panelHalfX), cz, panelHalfX, panelHalfZ)
 	end
 
+	-- standards down the two cross walks as well as at their corners: at four
+	-- lamps for the whole court, fifteen per cent of the two walks every
+	-- boarder crosses twice a day was unlit ground
+	for _, wz in { cz - (depth / 2 - WALK), cz + (depth / 2 - WALK) } do
+		lampWalk(parent, cx - 110, wz, cx + 110, wz, 11, 62)
+	end
 	-- the dial on the crossing, and lamps at the four corners of the walks
 	Grounds.dial(kit, cx, cz, upLight :: any)
 	for _, corner in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
@@ -7877,9 +7883,14 @@ end
 		Name = "Skylight",
 		Size = Vector3.new(44, 0.6, 44),
 		CFrame = CFrame.new(0, 32.8, 6),
-		Color = Color3.fromRGB(170, 215, 240),
-		Material = Enum.Material.Glass,
-		Transparency = 0.45,
+		-- Warm and LIT. Forty-four by forty-four studs of cold pale blue glass
+		-- on the middle of the Academy's roof: from the air -- one of the four
+		-- reference views -- the brightest thing on the whole building and the
+		-- only cold colour on it, reading as a swimming pool up there. It is a
+		-- skylight over a lit atrium, so it glows the colour the atrium does.
+		Color = Color3.fromRGB(255, 226, 176),
+		Material = Enum.Material.Neon,
+		Transparency = 0.5,
 		Parent = folder,
 	})
 
