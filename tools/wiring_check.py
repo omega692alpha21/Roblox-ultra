@@ -82,7 +82,11 @@ def main():
 
     # --- every module that should be started, is ---
     # Libraries other services require rather than boot in their own right.
-    LIBRARIES = {"ClassGames", "SanctumMap", "StudentGen"}
+    # (CollegiateKit, GroundsKit and PlanBuilder are the building and grounds
+    # vocabularies MapService renders the drawing with -- modules of builders,
+    # not services with a lifecycle.)
+    LIBRARIES = {"ClassGames", "SanctumMap", "StudentGen",
+                 "CollegiateKit", "GroundsKit", "PlanBuilder"}
     # Booted by name before the named list, in a fixed order the map needs.
     EARLY = {"DataService", "MapService", "PlotService", "EconomyService"}
     services = {n[:-5] for n in os.listdir(os.path.join(ROOT, "ServerScriptService", "Services"))

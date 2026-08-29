@@ -37,13 +37,22 @@ local SHAPES: { Shape } = {
 	{ x = 116, z = 0, w = 112, d = 104, color = Color3.fromRGB(86, 132, 74) }, -- east courtyard
 	{ x = 0, z = 70, w = 448, d = 22, color = Color3.fromRGB(148, 154, 168) }, -- main corridor
 	{ x = 0, z = 100, w = 120, d = 48, color = Color3.fromRGB(120, 126, 142) }, -- lobby
-	{ x = 0, z = 164, w = 26, d = 80, color = Color3.fromRGB(176, 172, 160) }, -- entrance walk
-	{ x = -132, z = 170, w = 120, d = 62, color = Color3.fromRGB(58, 60, 66) }, -- west lot
-	{ x = 132, z = 170, w = 120, d = 62, color = Color3.fromRGB(58, 60, 66) }, -- east lot
-	{ x = 0, z = 208, w = 520, d = 22, color = Color3.fromRGB(48, 50, 56) }, -- road
-	{ x = -176, z = -232, w = 90, d = 76, color = Color3.fromRGB(92, 76, 68) }, -- boys dorm
-	{ x = 176, z = -232, w = 90, d = 76, color = Color3.fromRGB(92, 76, 68) }, -- girls dorm
-	{ x = 0, z = -232, w = 92, d = 68, color = Color3.fromRGB(150, 142, 128) }, -- library
+	-- The front of the campus, as drawn: the Great Court is 300 x 150 centred
+	-- on (0, 210) with the road behind it at z = 320 and the main gate at 550.
+	-- These were the entrance walk, two car parks either side of it and a road
+	-- at z = 208 -- the layout that stood here before the court was built, so
+	-- the minimap showed a campus the player could not walk out of the door
+	-- into.
+	{ x = 0, z = 210, w = 300, d = 150, color = Color3.fromRGB(96, 98, 108) }, -- great court
+	{ x = 0, z = 210, w = 26, d = 150, color = Color3.fromRGB(176, 172, 160) }, -- entrance walk
+	{ x = 0, z = 210, w = 300, d = 26, color = Color3.fromRGB(176, 172, 160) }, -- cross walk
+	{ x = 430, z = 40, w = 180, d = 140, color = Color3.fromRGB(58, 60, 66) }, -- car park
+	{ x = 0, z = 320, w = 520, d = 22, color = Color3.fromRGB(48, 50, 56) }, -- road
+	{ x = 0, z = 550, w = 100, d = 26, color = Color3.fromRGB(120, 118, 112) }, -- main gate
+	{ x = -430, z = 330, w = 240, d = 200, color = Color3.fromRGB(52, 54, 60) }, -- bike track
+	{ x = 440, z = 235, w = 280, d = 170, color = Color3.fromRGB(74, 118, 66) }, -- sports field
+	{ x = 0, z = -310, w = 300, d = 120, color = Color3.fromRGB(92, 76, 68) }, -- boarding house
+	{ x = 390, z = -160, w = 280, d = 120, color = Color3.fromRGB(70, 96, 74) }, -- ball courts
 	{ x = 340, z = -20, w = 190, d = 110, color = Color3.fromRGB(58, 104, 88) }, -- tennis
 	{ x = -340, z = -20, w = 120, d = 88, color = Color3.fromRGB(96, 168, 200) }, -- pool
 }
@@ -58,14 +67,16 @@ local MARKERS: { Marker } = {
 	{ x = -74, z = -94, icon = "➗", color = Color3.fromRGB(120, 176, 255) },
 	{ x = 74, z = -94, icon = "🎵", color = Color3.fromRGB(212, 160, 240) },
 	{ x = -116, z = -28, icon = "🧬", color = Color3.fromRGB(150, 220, 130) },
-	{ x = 0, z = -232, icon = "📚", color = Color3.fromRGB(240, 226, 190) },
+	{ x = -320, z = -300, icon = "📚", color = Color3.fromRGB(240, 226, 190) },
 	{ x = 340, z = -20, icon = "🎾", color = Color3.fromRGB(200, 240, 120) },
 	{ x = -340, z = -20, icon = "🏊", color = Color3.fromRGB(140, 216, 240) },
 	{ x = 116, z = -28, icon = "⚗️", color = Color3.fromRGB(150, 240, 190) },
 	{ x = -116, z = 0, icon = "👥", color = Color3.fromRGB(180, 255, 200) },
 	{ x = -300, z = -170, icon = "🎓", color = Color3.fromRGB(226, 186, 120) }, -- teachers' quarters
-	{ x = -176, z = -232, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
-	{ x = 176, z = -232, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
+	{ x = 0, z = -310, icon = "🛏️", color = Color3.fromRGB(200, 190, 240) },
+	{ x = 0, z = 210, icon = "⛲", color = Color3.fromRGB(180, 220, 255) },
+	{ x = -430, z = 330, icon = "🚲", color = Color3.fromRGB(230, 210, 150) },
+	{ x = 0, z = 550, icon = "🚏", color = Color3.fromRGB(240, 220, 160) },
 }
 
 function MinimapController.Init(gui: ScreenGui)
