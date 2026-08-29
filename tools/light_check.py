@@ -33,8 +33,21 @@ ROOMS = [
     ("music room", 74, -95, 12, 26, 1),
     ("east lab", 116, -28, 16, 15, 1),
     ("greenhouse", -116, -28, 16, 15, 1),
-    ("west dorm", -176, -212, 28, 24, 1),
-    ("east dorm", 176, -212, 28, 24, 1),
+    # The boarding house, room by room off CampusPlan's grid. What used to be
+    # here was ("west dorm", -176, -212) and ("east dorm", 176, -212) -- the
+    # two blocks the drawing replaced with one range -- so the check was
+    # sampling open grass on the Dorm Court's flanks and the range itself, the
+    # building every boarder sleeps in, was never looked at.
+    ("dorm common room", 0, -344, 26, 15, 1),
+    ("dorm 1", -114, -344, 24, 15, 1),
+    ("dorm 4", 114, -344, 24, 15, 1),
+    ("dorm corridor", 0, -310, 130, 12, 1),
+    ("dorm lobby", 0, -276, 26, 15, 1),
+    ("warden's flat", -114, -276, 24, 15, 1),
+    ("laundry", 114, -276, 24, 15, 1),
+    ("dorm study", 0, -344, 26, 15, 16),
+    ("upper landing", 0, -276, 26, 15, 16),
+    ("rooftop block", 210, 400, 48, 48, 1),
     ("staff common room", -300, -170, 38, 28, 4),
     ("staff studies", -300, -170, 38, 28, 20),
     ("headmaster office", -300, -170, 38, 28, 36),

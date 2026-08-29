@@ -6005,8 +6005,13 @@ local LIT_ROOMS: { LitRoom } = {
 	{ name = "MusicRoom", x = 74, z = -95, hx = 11, hz = 25, y = 13.6, step = 20, warm = true , lamp = "CeilingLampDisc" },
 	{ name = "EastLab", x = 116, z = -28, hx = 15, hz = 14, y = 13.6, step = 18 , lamp = "CeilingLampDisc" },
 	{ name = "Greenhouse", x = -116, z = -28, hx = 15, hz = 14, y = 13.6, step = 18 , lamp = "CeilingLampDisc" },
-	{ name = "WestDorm", x = -176, z = -212, hx = 26, hz = 22, y = 15, step = 22, warm = true , lamp = "CeilingLampBox" },
-	{ name = "EastDorm", x = 176, z = -212, hx = 26, hz = 22, y = 15, step = 22, warm = true , lamp = "CeilingLampBox" },
+	-- WestDorm and EastDorm used to be here, at (+-176, -212). They were the
+	-- two split dorm blocks the drawing replaced with one range at (0, -310),
+	-- and when the blocks went the fixtures did not: eight ceiling panels and
+	-- eight lamps hanging fifteen studs up in open air on both flanks of the
+	-- Dorm Court, lighting nothing. The boarding house's own rooms are lit by
+	-- PlanBuilder, one PlanRoomLight per drawn room, so there is nothing to
+	-- replace them with here.
 	{ name = "StaffCommon", x = -300, z = -170, hx = 36, hz = 26, y = 17, step = 22, warm = true , lamp = "PendantLamp" },
 	{ name = "StaffStudies", x = -300, z = -170, hx = 36, hz = 26, y = 33, step = 22, warm = true , lamp = "PendantLamp" },
 	{ name = "LibraryPassage", x = -393, z = -290, hx = 25, hz = 4, y = 10, step = 22 },
