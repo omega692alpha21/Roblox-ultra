@@ -68,12 +68,6 @@ local function tag(p: BasePart, tagName: string): BasePart
 	return p
 end
 
--- GROUND THE SCATTERS MAY NOT USE.
---
--- Declared up here rather than eight hundred lines down, so that the two path
--- builders can register their own footprints: a scatter that does not know
--- where the walks are plants trees on them, and no check but prop_check can
--- see it -- as a tree clipping a slab, three hundred lines from the cause.
 -- The ten cloths a bound book is actually covered in. The library's stacks and
 -- the shelf that opens the pyramid draw from the same palette, so a book in
 -- one reads as the same object as a book in the other.
@@ -83,6 +77,12 @@ local BOOK_CLOTH = {
 	{ 96, 40, 52 }, { 58, 82, 60 },
 }
 
+-- GROUND THE SCATTERS MAY NOT USE.
+--
+-- Declared up here rather than eight hundred lines down, so that the two path
+-- builders can register their own footprints: a scatter that does not know
+-- where the walks are plants trees on them, and no check but prop_check can
+-- see it -- as a tree clipping a slab, three hundred lines from the cause.
 local scatterBlocks: { { number } } = {}
 
 local function blockScatter(x: number, z: number, halfX: number, halfZ: number)
@@ -7129,6 +7129,637 @@ end
 --
 -- Every rect comes from CampusPlan.rooms, so nothing here holds a coordinate:
 -- move a partition in the drawing and the beds move with it.
+-- ================= THE RING BUILDINGS, INSIDE =================
+-- The Cafeteria, the Detention Hall, the Gymnasium and the Secret Rooftop
+-- block were shells. PlanBuilder gave each of them walls, a floor, a ceiling
+-- and a light, and then nothing put anything in them: four buildings, ninety
+-- thousand square studs of interior, twenty-one named rooms, and a player who
+-- opens any of those doors walks into an empty box with a lit ceiling panel.
+--
+-- The measurement that found it counts parts inside each building's rectangle
+-- that are not shell: the Academy has twenty-nine per thousand square studs,
+-- the library thirty-one, the dorms fifteen -- and these four had zero.
+--
+-- Everything below is placed against the room rectangles CampusPlan draws, so
+-- a room that moves in the drawing takes its furniture with it, and nothing
+-- here invents a coordinate the plan does not already own.
+
+-- A serving counter: plinth, carcass, worktop, fascia band, four heated
+-- wells, a tray rail on brackets and a sneeze guard. This is what a servery
+-- IS from the queue side, and it is the only thing in the cafeteria a player
+-- stands close enough to touch.
+local function serveryCounter(parent: Instance, x: number, z0: number, z1: number)
+	local mid = (z0 + z1) / 2
+	local run = z1 - z0
+	tag(part({
+		Name = "ServeryPlinth",
+		Size = Vector3.new(3.4, 0.6, run),
+		CFrame = CFrame.new(x, 0.3, mid),
+		Color = Color3.fromRGB(58, 60, 64),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}), "TexAshlar")
+	part({
+		Name = "ServeryCarcass",
+		Size = Vector3.new(3.0, 3.0, run - 0.4),
+		CFrame = CFrame.new(x, 2.1, mid),
+		Color = Color3.fromRGB(176, 180, 186),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	})
+	part({
+		Name = "ServeryFascia",
+		Size = Vector3.new(3.2, 0.5, run - 0.2),
+		CFrame = CFrame.new(x, 3.4, mid),
+		Color = Color3.fromRGB(120, 126, 134),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}).CanCollide = false
+	part({
+		Name = "ServeryWorktop",
+		Size = Vector3.new(3.8, 0.4, run),
+		CFrame = CFrame.new(x, 3.8, mid),
+		Color = Color3.fromRGB(206, 210, 214),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	})
+	-- the wells, lit from inside like a bain-marie
+	for i = 0, 3 do
+		local wz = z0 + run * (i + 0.5) / 4
+		part({
+			Name = "ServeryWell",
+			Size = Vector3.new(2.4, 0.5, 4.4),
+			CFrame = CFrame.new(x, 4.0, wz),
+			Color = Color3.fromRGB(255, 206, 132),
+			Material = Enum.Material.Neon,
+			Transparency = 0.35,
+			Parent = parent,
+		}).CanCollide = false
+		part({
+			Name = "ServeryWellRim",
+			Size = Vector3.new(3.0, 0.3, 5.0),
+			CFrame = CFrame.new(x, 4.15, wz),
+			Color = Color3.fromRGB(146, 152, 158),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	-- tray rail on brackets, on the queue side
+	for i = 0, 3 do
+		part({
+			Name = "ServeryRailBracket",
+			Size = Vector3.new(1.6, 0.4, 0.4),
+			CFrame = CFrame.new(x + 2.6, 3.4, z0 + run * (i + 0.5) / 4),
+			Color = Color3.fromRGB(96, 100, 106),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	part({
+		Name = "ServeryTrayRail",
+		Size = Vector3.new(0.5, 0.5, run),
+		CFrame = CFrame.new(x + 3.2, 3.6, mid),
+		Color = Color3.fromRGB(176, 180, 186),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}).CanCollide = false
+	-- sneeze guard: two posts and a pane, not a wall
+	for _, pz in { z0 + 1.4, mid, z1 - 1.4 } do
+		part({
+			Name = "ServeryGuardPost",
+			Size = Vector3.new(0.4, 3.2, 0.4),
+			CFrame = CFrame.new(x + 1.2, 5.6, pz),
+			Color = Color3.fromRGB(96, 100, 106),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	part({
+		Name = "ServeryGuardScreen",
+		Size = Vector3.new(0.3, 2.6, run - 1.2),
+		CFrame = CFrame.new(x + 1.2, 6.2, mid),
+		Color = Color3.fromRGB(214, 228, 236),
+		Material = Enum.Material.Glass,
+		Transparency = 0.72,
+		Parent = parent,
+	}).CanCollide = false
+	-- a warming lamp over the wells, so the counter reads lit from above too
+	local strip = part({
+		Name = "ServeryHeatLamp",
+		Size = Vector3.new(1.0, 0.4, run - 2.0),
+		CFrame = CFrame.new(x - 0.4, 7.4, mid),
+		Color = Color3.fromRGB(255, 172, 96),
+		Material = Enum.Material.Neon,
+		Parent = parent,
+	})
+	strip.CanCollide = false
+	local heat = Instance.new("PointLight")
+	heat.Brightness = 1.4
+	heat.Range = 26
+	heat.Color = Color3.fromRGB(255, 190, 130)
+	heat.Parent = strip
+end
+
+-- A board with a navy ground and a gold frame: the school's own signage,
+-- hung where a room needs telling apart from the next one along.
+local function noticeBoard(parent: Instance, name: string, at: CFrame, wide: number, high: number)
+	part({
+		Name = name .. "Frame",
+		Size = Vector3.new(wide + 1.0, high + 1.0, 0.4),
+		CFrame = at,
+		Color = Color3.fromRGB(217, 180, 92),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}).CanCollide = false
+	part({
+		Name = name,
+		Size = Vector3.new(wide, high, 0.5),
+		CFrame = at * CFrame.new(0, 0, 0.1),
+		Color = Color3.fromRGB(22, 35, 63),
+		Material = Enum.Material.Fabric,
+		Parent = parent,
+	}).CanCollide = false
+	for i = 0, 3 do
+		part({
+			Name = name .. "Notice",
+			Size = Vector3.new(wide * 0.2, high * 0.34, 0.2),
+			CFrame = at * CFrame.new(wide * (-0.34 + 0.23 * i), high * (if i % 2 == 0 then 0.16 else -0.16), 0.35),
+			Color = Color3.fromRGB(238, 234, 222),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		}).CanCollide = false
+	end
+end
+
+-- A basketball goal: post, cranked arm, backboard with its border and target
+-- square, the ring, and a net of twelve strands. The gym reference is a hall
+-- with two of these at its ends; a hall without them is a warehouse.
+local function basketballGoal(parent: Instance, x: number, z: number, face: number)
+	local yaw = CFrame.Angles(0, math.rad(face), 0)
+	local at = CFrame.new(x, 0, z) * yaw
+	part({
+		Name = "GoalPost",
+		Size = Vector3.new(1.6, 17.0, 1.6),
+		CFrame = at * CFrame.new(0, 8.5, 0),
+		Color = Color3.fromRGB(28, 28, 32),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	})
+	part({
+		Name = "GoalPadding",
+		Size = Vector3.new(2.6, 6.0, 2.6),
+		CFrame = at * CFrame.new(0, 3.0, 0),
+		Color = Color3.fromRGB(64, 90, 128),
+		Material = Enum.Material.Fabric,
+		Parent = parent,
+	})
+	part({
+		Name = "GoalArm",
+		Size = Vector3.new(1.0, 1.0, 7.0),
+		CFrame = at * CFrame.new(0, 16.6, 3.5),
+		Color = Color3.fromRGB(28, 28, 32),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}).CanCollide = false
+	part({
+		Name = "GoalBrace",
+		Size = Vector3.new(0.7, 0.7, 6.4),
+		CFrame = at * CFrame.new(0, 13.6, 3.0) * CFrame.Angles(math.rad(-26), 0, 0),
+		Color = Color3.fromRGB(28, 28, 32),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}).CanCollide = false
+	part({
+		Name = "GoalBackboard",
+		Size = Vector3.new(11.0, 6.4, 0.4),
+		CFrame = at * CFrame.new(0, 15.4, 7.0),
+		Color = Color3.fromRGB(228, 232, 238),
+		Material = Enum.Material.Glass,
+		Transparency = 0.35,
+		Parent = parent,
+	})
+	for _, edge in
+		{
+			{ Vector3.new(11.6, 0.6, 0.6), CFrame.new(0, 18.9, 7.0) },
+			{ Vector3.new(11.6, 0.6, 0.6), CFrame.new(0, 12.2, 7.0) },
+			{ Vector3.new(0.6, 7.0, 0.6), CFrame.new(-5.5, 15.55, 7.0) },
+			{ Vector3.new(0.6, 7.0, 0.6), CFrame.new(5.5, 15.55, 7.0) },
+		}
+	do
+		part({
+			Name = "GoalBoardEdge",
+			Size = edge[1] :: Vector3,
+			CFrame = at * (edge[2] :: CFrame),
+			Color = Color3.fromRGB(196, 60, 52),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	for _, mark in
+		{
+			{ Vector3.new(4.4, 0.4, 0.3), CFrame.new(0, 16.4, 6.75) },
+			{ Vector3.new(4.4, 0.4, 0.3), CFrame.new(0, 13.4, 6.75) },
+			{ Vector3.new(0.4, 3.4, 0.3), CFrame.new(-2.2, 14.9, 6.75) },
+			{ Vector3.new(0.4, 3.4, 0.3), CFrame.new(2.2, 14.9, 6.75) },
+		}
+	do
+		part({
+			Name = "GoalTarget",
+			Size = mark[1] :: Vector3,
+			CFrame = at * (mark[2] :: CFrame),
+			Color = Color3.fromRGB(196, 60, 52),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	part({
+		Name = "GoalRing",
+		Size = Vector3.new(5.4, 0.4, 5.4),
+		CFrame = at * CFrame.new(0, 12.9, 4.2),
+		Shape = Enum.PartType.Cylinder,
+		Color = Color3.fromRGB(224, 96, 40),
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}).CanCollide = false
+	for i = 0, 11 do
+		local a = i * math.pi / 6
+		part({
+			Name = "GoalNet",
+			Size = Vector3.new(0.24, 3.4, 0.24),
+			CFrame = at * CFrame.new(math.cos(a) * 2.2, 11.2, 4.2 + math.sin(a) * 2.2) * CFrame.Angles(math.rad(-math.sin(a) * 12), 0, math.rad(math.cos(a) * 12)),
+			Color = Color3.fromRGB(238, 236, 228),
+			Material = Enum.Material.Fabric,
+			Parent = parent,
+		}).CanCollide = false
+	end
+end
+
+-- Wall bars: two stiles and ten rungs, the one piece of gym equipment that is
+-- always bolted to a hall wall and the cheapest way to stop that wall reading
+-- as a blank forty-nine-hundred-square-stud slab.
+local function wallBars(parent: Instance, x: number, z: number, face: number)
+	local at = CFrame.new(x, 0, z) * CFrame.Angles(0, math.rad(face), 0)
+	for _, sx in { -4.0, 4.0 } do
+		part({
+			Name = "WallBarStile",
+			Size = Vector3.new(1.0, 15.0, 1.2),
+			CFrame = at * CFrame.new(sx, 8.0, 0),
+			Color = Color3.fromRGB(158, 118, 76),
+			Material = Enum.Material.Wood,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	for i = 0, 9 do
+		part({
+			Name = "WallBarRung",
+			Size = Vector3.new(8.4, 0.7, 0.7),
+			CFrame = at * CFrame.new(0, 2.2 + i * 1.5, 0),
+			Shape = Enum.PartType.Cylinder,
+			Color = Color3.fromRGB(196, 156, 104),
+			Material = Enum.Material.Wood,
+			Parent = parent,
+		}).CanCollide = false
+	end
+end
+
+-- A trophy case: plinth, carcass, three glass-fronted shelves with a cup on
+-- each, a cornice. It goes in the corridors, which is where a school puts
+-- them and where a corridor otherwise has nothing at all in it.
+local function trophyCase(parent: Instance, x: number, z: number, face: number)
+	local at = CFrame.new(x, 0, z) * CFrame.Angles(0, math.rad(face), 0)
+	part({ Name = "TrophyPlinth", Size = Vector3.new(9.0, 1.0, 3.4), CFrame = at * CFrame.new(0, 0.5, 0), Color = Color3.fromRGB(88, 60, 42), Material = Enum.Material.WoodPlanks, Parent = parent })
+	part({ Name = "TrophyCarcass", Size = Vector3.new(8.4, 11.0, 3.0), CFrame = at * CFrame.new(0, 6.5, -0.2), Color = Color3.fromRGB(112, 78, 52), Material = Enum.Material.WoodPlanks, Parent = parent })
+	part({ Name = "TrophyCornice", Size = Vector3.new(9.4, 0.9, 3.8), CFrame = at * CFrame.new(0, 12.4, 0), Color = Color3.fromRGB(88, 60, 42), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
+	part({ Name = "TrophyGlass", Size = Vector3.new(7.6, 10.0, 0.3), CFrame = at * CFrame.new(0, 6.5, 1.4), Color = Color3.fromRGB(214, 228, 236), Material = Enum.Material.Glass, Transparency = 0.74, Parent = parent }).CanCollide = false
+	for level = 0, 2 do
+		local y = 2.6 + level * 3.3
+		part({ Name = "TrophyShelf", Size = Vector3.new(7.8, 0.35, 2.6), CFrame = at * CFrame.new(0, y, 0), Color = Color3.fromRGB(146, 106, 72), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
+		for _, tx in { -2.4, 0, 2.4 } do
+			local cup = part({
+				Name = "TrophyCup",
+				Size = Vector3.new(1.1, 1.9 + ((level + math.abs(tx)) % 2) * 0.5, 1.1),
+				CFrame = at * CFrame.new(tx, y + 1.2, 0),
+				Color = if (level + tx) % 2 == 0 then Color3.fromRGB(217, 180, 92) else Color3.fromRGB(192, 196, 202),
+				Material = Enum.Material.Metal,
+				Parent = parent,
+			})
+			cup.CanCollide = false
+			part({ Name = "TrophyCupFoot", Size = Vector3.new(1.7, 0.4, 1.7), CFrame = at * CFrame.new(tx, y + 0.35, 0), Color = Color3.fromRGB(72, 48, 34), Material = Enum.Material.Wood, Parent = parent }).CanCollide = false
+		end
+	end
+end
+
+-- A boiler: shell, dished ends, a firing door, a pressure gauge, a valve
+-- wheel, the flue and its flanges. The plant room is the one room in the game
+-- whose whole point is machinery, and it had a light in it and nothing else.
+local function boiler(parent: Instance, x: number, z: number)
+	part({ Name = "BoilerShell", Size = Vector3.new(9.0, 6.4, 6.4), CFrame = CFrame.new(x, 3.6, z) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(78, 92, 104), Material = Enum.Material.Metal, Parent = parent })
+	for _, sy in { -4.6, 4.6 } do
+		part({ Name = "BoilerEnd", Size = Vector3.new(0.8, 6.8, 6.8), CFrame = CFrame.new(x, 3.6, z + sy) * CFrame.Angles(math.pi / 2, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(58, 70, 82), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "BoilerSaddle", Size = Vector3.new(5.4, 1.2, 8.0), CFrame = CFrame.new(x, 0.6, z), Color = Color3.fromRGB(46, 48, 52), Material = Enum.Material.Metal, Parent = parent })
+	local door = part({ Name = "BoilerDoor", Size = Vector3.new(0.5, 3.2, 3.2), CFrame = CFrame.new(x - 3.2, 3.6, z), Color = Color3.fromRGB(52, 40, 36), Material = Enum.Material.Metal, Parent = parent })
+	door.CanCollide = false
+	local fire = part({ Name = "BoilerFire", Size = Vector3.new(0.3, 1.6, 1.6), CFrame = CFrame.new(x - 3.4, 3.6, z), Color = Color3.fromRGB(255, 132, 52), Material = Enum.Material.Neon, Parent = parent })
+	fire.CanCollide = false
+	local glow = Instance.new("PointLight")
+	glow.Brightness = 1.6
+	glow.Range = 22
+	glow.Color = Color3.fromRGB(255, 140, 70)
+	glow.Parent = fire
+	part({ Name = "BoilerGauge", Size = Vector3.new(0.4, 1.4, 1.4), CFrame = CFrame.new(x - 3.3, 6.0, z - 1.8) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(226, 224, 214), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+	part({ Name = "BoilerValve", Size = Vector3.new(0.4, 2.2, 2.2), CFrame = CFrame.new(x - 3.3, 6.0, z + 1.8) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(168, 62, 48), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "BoilerFlue", Size = Vector3.new(1.8, 9.0, 1.8), CFrame = CFrame.new(x + 2.6, 10.0, z), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(64, 66, 70), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for _, fy in { 7.6, 12.6 } do
+		part({ Name = "BoilerFlange", Size = Vector3.new(0.6, 2.6, 2.6), CFrame = CFrame.new(x + 2.6, fy, z) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(46, 48, 52), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+end
+
+-- A run of service pipe with its brackets and a valve, hung under a ceiling.
+local function pipeRun(parent: Instance, x: number, y: number, z0: number, z1: number, colour: Color3)
+	local mid, run = (z0 + z1) / 2, z1 - z0
+	part({ Name = "ServicePipe", Size = Vector3.new(run, 1.1, 1.1), CFrame = CFrame.new(x, y, mid) * CFrame.Angles(0, math.pi / 2, 0), Shape = Enum.PartType.Cylinder, Color = colour, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	local n = math.max(2, math.floor(run / 16))
+	for i = 0, n do
+		part({ Name = "PipeBracket", Size = Vector3.new(0.5, 1.8, 1.8), CFrame = CFrame.new(x, y + 0.9, z0 + run * i / n), Color = Color3.fromRGB(58, 60, 64), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "PipeValve", Size = Vector3.new(0.5, 2.4, 2.4), CFrame = CFrame.new(x, y, mid) * CFrame.Angles(0, math.pi / 2, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(168, 62, 48), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+end
+
+-- The bars across the holding room: a frame, uprights every two and a half
+-- studs, and a rail top and bottom. It is a detention hall; something in it
+-- has to say so.
+local function barredScreen(parent: Instance, x0: number, x1: number, z: number, height: number)
+	local mid, run = (x0 + x1) / 2, x1 - x0
+	for _, y in { 0.6, height - 0.6 } do
+		part({ Name = "CageRail", Size = Vector3.new(run, 1.2, 1.2), CFrame = CFrame.new(mid, y, z), Color = Color3.fromRGB(46, 48, 52), Material = Enum.Material.Metal, Parent = parent })
+	end
+	local n = math.floor(run / 2.5)
+	for i = 0, n do
+		part({ Name = "CageBar", Size = Vector3.new(0.55, height - 1.2, 0.55), CFrame = CFrame.new(x0 + run * i / n, height / 2, z), Color = Color3.fromRGB(58, 60, 64), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	for _, sx in { x0, x1 } do
+		part({ Name = "CagePost", Size = Vector3.new(1.4, height, 1.4), CFrame = CFrame.new(sx, height / 2, z), Color = Color3.fromRGB(38, 40, 44), Material = Enum.Material.Metal, Parent = parent })
+	end
+end
+
+local function furnishRingBuildings(parent: Instance)
+	----------------------------------------------------------------- cafeteria
+	-- Two dining halls either side of the partition at z -300, a kitchen and a
+	-- servery behind the corridor. Refectory tables run along z (they are 5.9
+	-- by 11.5), so the rows step across x.
+	for _, hall in { { -330, -312 }, { -290, -272 } } do
+		for _, tx in { 346, 362, 378, 394 } do
+			for _, tz in hall do
+				prop("RefectoryTable", CFrame.new(tx, 0, tz))
+				for _, sx in { -5.4, 5.4 } do
+					for _, dz in { -3.2, 3.2 } do
+						prop("Bench", CFrame.new(tx + sx, 0, tz + dz) * CFrame.Angles(0, math.rad(90), 0))
+					end
+				end
+			end
+		end
+	end
+	for _, pz in { -336, -306, -294, -264 } do
+		prop("PottedPlant", CFrame.new(408, 0, pz))
+	end
+	prop("BinLarge", CFrame.new(337, 0, -337))
+	prop("BinLarge", CFrame.new(337, 0, -263))
+	noticeBoard(parent, "CafeteriaBoard", CFrame.new(411.4, 9, -320) * CFrame.Angles(0, math.rad(-90), 0), 10, 6)
+	for _, lz in { -330, -312, -290, -272 } do
+		for _, lx in { 352, 372, 392 } do
+			prop("PendantLamp", CFrame.new(lx, 16.4, lz), { hang = true })
+		end
+	end
+
+	-- the kitchen: a run of appliances down the far wall and an island to work
+	-- at, rather than a room named Kitchen with nothing in it
+	prop("Fridge", CFrame.new(232, 0, -336) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Fridge2", CFrame.new(232, 0, -328) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Oven", CFrame.new(240, 0, -337))
+	prop("Stove2", CFrame.new(248, 0, -337))
+	prop("KitchenSink", CFrame.new(256, 0, -337))
+	prop("KitchenCabinet", CFrame.new(264, 0, -337))
+	prop("KitchenDrawers", CFrame.new(272, 0, -337))
+	prop("SteelShelves", CFrame.new(284, 0, -337))
+	prop("SteelShelves", CFrame.new(292, 0, -337))
+	-- the island
+	tag(part({ Name = "KitchenIslandBase", Size = Vector3.new(22.0, 3.2, 6.4), CFrame = CFrame.new(262, 1.6, -318), Color = Color3.fromRGB(150, 156, 162), Material = Enum.Material.Metal, Parent = parent }), "TexAshlar")
+	part({ Name = "KitchenIslandTop", Size = Vector3.new(23.0, 0.5, 7.4), CFrame = CFrame.new(262, 3.45, -318), Color = Color3.fromRGB(206, 210, 214), Material = Enum.Material.Metal, Parent = parent })
+	part({ Name = "KitchenIslandRail", Size = Vector3.new(23.0, 0.35, 0.35), CFrame = CFrame.new(262, 3.9, -321.4), Color = Color3.fromRGB(120, 126, 134), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for i = 0, 5 do
+		part({ Name = "KitchenPotRackHook", Size = Vector3.new(0.3, 2.2, 0.3), CFrame = CFrame.new(254 + i * 3.2, 12.6, -318), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "KitchenPotRack", Size = Vector3.new(20.0, 0.5, 1.4), CFrame = CFrame.new(262, 13.8, -318), Color = Color3.fromRGB(78, 82, 88), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for _, px in { 255, 261, 267 } do
+		prop("BrassPot", CFrame.new(px, 3.7, -318))
+	end
+	prop("WoodenCuttingBoard", CFrame.new(271, 3.7, -318))
+	prop("BinLarge", CFrame.new(294, 0, -304))
+	prop("WetFloorSign", CFrame.new(296, 0, -318))
+
+	-- the servery, on the corridor wall the queue stands against
+	serveryCounter(parent, 295, -296, -264)
+	noticeBoard(parent, "ServeryMenu", CFrame.new(231.4, 10, -280) * CFrame.Angles(0, math.rad(90), 0), 12, 7)
+	prop("SteelShelves", CFrame.new(236, 0, -296) * CFrame.Angles(0, math.rad(90), 0))
+	prop("SteelShelves", CFrame.new(236, 0, -288) * CFrame.Angles(0, math.rad(90), 0))
+	prop("WoodenCrate", CFrame.new(242, 0, -264))
+	prop("WoodenCrate", CFrame.new(246, 0, -264))
+	prop("HandTruck", CFrame.new(252, 0, -264))
+	prop("Extinguisher", CFrame.new(298, 0, -262))
+
+	---------------------------------------------------------- detention hall
+	-- Rows of single desks facing the warden, the way a detention room is laid
+	-- out and the way none of the classrooms in the Academy are.
+	for row = 0, 3 do
+		for col = 0, 5 do
+			local dx = -470 + col * 12
+			local dz = -24 + row * 8
+			prop("SchoolDesk", CFrame.new(dx, 0, dz))
+			prop("SchoolChair", CFrame.new(dx, 0, dz + 2.8) * CFrame.Angles(0, math.pi, 0))
+		end
+	end
+	prop("OfficeDesk", CFrame.new(-438, 0, -28))
+	prop("HeadmasterChair", CFrame.new(-438, 0, -30.6) * CFrame.Angles(0, math.pi, 0))
+	prop("Chalkboard", CFrame.new(-446, 0, -31.4), { scale = 2.2 })
+	prop("Clock", CFrame.new(-430, 12, -31.2))
+	prop("Bin", CFrame.new(-474, 0, -29))
+	noticeBoard(parent, "DetentionRules", CFrame.new(-455, 10, -31.4), 12, 7)
+
+	-- the holding room, behind bars
+	barredScreen(parent, -396, -374, -14, 18)
+	for _, bz in { -28, -22 } do
+		prop("Bench", CFrame.new(-386, 0, bz))
+	end
+	prop("Toilet", CFrame.new(-394, 0, -4) * CFrame.Angles(0, math.pi, 0))
+	prop("Washbasin", CFrame.new(-386, 0, -3.4) * CFrame.Angles(0, math.pi, 0))
+	for _, bx in { -366, -352, -338 } do
+		prop("Bench", CFrame.new(bx, 0, -29))
+		prop("Bench", CFrame.new(bx, 0, 0) * CFrame.Angles(0, math.pi, 0))
+	end
+	prop("Clock", CFrame.new(-360, 12, -30.2))
+	prop("Bin", CFrame.new(-328, 0, -28))
+
+	-- the corridors
+	for _, cx in { -462, -430 } do
+		trophyCase(parent, cx, 6.4, 0)
+	end
+	noticeBoard(parent, "DetentionNotices", CFrame.new(-446, 9, 34.4) * CFrame.Angles(0, math.pi, 0), 14, 7)
+	for _, bx in { -390, -360, -332 } do
+		prop("Bench", CFrame.new(bx, 0, 7.4))
+	end
+	prop("Extinguisher", CFrame.new(-404, 0, 33))
+	prop("PottedPlant", CFrame.new(-326, 0, 32))
+	prop("WetFloorSign", CFrame.new(-410, 0, 20))
+
+	-- the warden's office
+	prop("OfficeDesk", CFrame.new(-440, 0, 60) * CFrame.Angles(0, math.rad(90), 0))
+	prop("StudyChair", CFrame.new(-444, 0, 60) * CFrame.Angles(0, math.rad(90), 0))
+	prop("StudyChair", CFrame.new(-434, 0, 56) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("TallBookcase", CFrame.new(-472, 0, 69.4))
+	prop("Cabinet", CFrame.new(-464, 0, 69.4))
+	prop("Cabinet", CFrame.new(-458, 0, 69.4))
+	prop("FramedPicture", CFrame.new(-450, 10, 70.4))
+	prop("DeskLamp", CFrame.new(-441, 3.1, 63))
+	prop("Houseplant", CFrame.new(-406, 0, 66))
+	prop("RugRect", CFrame.new(-440, 0.1, 48))
+
+	-- the confiscation store
+	for _, sz in { 40, 46 } do
+		for _, sx in { -394, -386, -378, -370 } do
+			prop("SteelShelves", CFrame.new(sx, 0, sz))
+		end
+	end
+	for _, cx in { -360, -354, -348 } do
+		prop("WoodenCrate", CFrame.new(cx, 0, 40))
+		prop("PlasticCrate", CFrame.new(cx, 1.9, 40))
+	end
+	prop("MetalToolChest", CFrame.new(-338, 0, 40))
+	prop("Boombox", CFrame.new(-338, 2.6, 44))
+	prop("OldTyre", CFrame.new(-330, 0, 50))
+	prop("Barrel", CFrame.new(-330, 0, 62))
+	prop("SteelShelves", CFrame.new(-360, 0, 68) * CFrame.Angles(0, math.pi, 0))
+	prop("SteelShelves", CFrame.new(-352, 0, 68) * CFrame.Angles(0, math.pi, 0))
+
+	------------------------------------------------------------------ gymnasium
+	-- The sports hall: a marked court, two goals, the bars along the long wall
+	-- and a bench run down the other. The hall is 174 by 50 and had nothing in
+	-- it at all.
+	local COURT = Color3.fromRGB(196, 148, 96)
+	tag(part({ Name = "CourtDeck", Size = Vector3.new(168.0, 0.24, 44.0), CFrame = CFrame.new(425, 0.12, 437), Color = COURT, Material = Enum.Material.WoodPlanks, Parent = parent }), "TexAshlar")
+	for _, line in
+		{
+			{ Vector3.new(160.0, 0.16, 0.7), Vector3.new(425, 0.32, 416.0) },
+			{ Vector3.new(160.0, 0.16, 0.7), Vector3.new(425, 0.32, 458.0) },
+			{ Vector3.new(0.7, 0.16, 42.7), Vector3.new(345, 0.32, 437) },
+			{ Vector3.new(0.7, 0.16, 42.7), Vector3.new(505, 0.32, 437) },
+			{ Vector3.new(0.7, 0.16, 42.7), Vector3.new(425, 0.32, 437) },
+			{ Vector3.new(19.0, 0.16, 0.7), Vector3.new(354, 0.32, 425.0) },
+			{ Vector3.new(19.0, 0.16, 0.7), Vector3.new(354, 0.32, 449.0) },
+			{ Vector3.new(0.7, 0.16, 24.7), Vector3.new(363.5, 0.32, 437) },
+			{ Vector3.new(19.0, 0.16, 0.7), Vector3.new(496, 0.32, 425.0) },
+			{ Vector3.new(19.0, 0.16, 0.7), Vector3.new(496, 0.32, 449.0) },
+			{ Vector3.new(0.7, 0.16, 24.7), Vector3.new(486.5, 0.32, 437) },
+		}
+	do
+		part({
+			Name = "CourtLine",
+			Size = line[1] :: Vector3,
+			CFrame = CFrame.new(line[2] :: Vector3),
+			Color = Color3.fromRGB(238, 236, 228),
+			Material = Enum.Material.SmoothPlastic,
+			Parent = parent,
+		}).CanCollide = false
+	end
+	for i = 0, 23 do
+		local a = -math.pi / 2 + i * math.pi / 23
+		part({ Name = "CourtLine", Size = Vector3.new(0.9, 0.16, 0.9), CFrame = CFrame.new(425 + math.cos(a) * 8.0, 0.32, 437 + math.sin(a) * 8.0), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+	end
+	basketballGoal(parent, 344, 437, 0)
+	basketballGoal(parent, 506, 437, 180)
+	for _, bx in { 384, 400, 416, 432, 448, 464 } do
+		wallBars(parent, bx, 415.4, 0)
+	end
+	for _, bx in { 372, 392, 412, 432, 452, 472 } do
+		prop("Bench", CFrame.new(bx, 0, 459.4))
+	end
+	noticeBoard(parent, "GymHonours", CFrame.new(340.4, 14, 437) * CFrame.Angles(0, math.rad(90), 0), 14, 9)
+	prop("BinLarge", CFrame.new(500, 0, 459))
+	prop("Extinguisher", CFrame.new(342, 0, 459))
+	for _, lx in { 360, 392, 425, 458, 490 } do
+		prop("CeilingLampBox", CFrame.new(lx, 22.4, 437), { hang = true })
+	end
+
+	-- the changing rooms
+	for _, lz in { 351.4, 377.4 } do
+		for i = 0, 15 do
+			prop("QuartersLocker", CFrame.new(346 + i * 11, 0, lz) * CFrame.Angles(0, if lz < 364 then 0 else math.pi, 0))
+		end
+	end
+	for _, bx in { 356, 376, 396, 416, 436, 456, 476, 496 } do
+		prop("Bench", CFrame.new(bx, 0, 364))
+	end
+	for _, wx in { 342, 348 } do
+		prop("Washbasin", CFrame.new(wx, 0, 358) * CFrame.Angles(0, math.rad(90), 0))
+	end
+	prop("WashroomMirror", CFrame.new(340.4, 7, 358) * CFrame.Angles(0, math.rad(90), 0))
+	prop("Shower", CFrame.new(504, 0, 356))
+	prop("Shower", CFrame.new(504, 0, 366))
+	prop("Toilet", CFrame.new(496, 0, 376) * CFrame.Angles(0, math.pi, 0))
+	prop("Bin", CFrame.new(506, 0, 376))
+	prop("WetFloorSign", CFrame.new(482, 0, 370))
+
+	-- the corridor between them
+	for _, cx in { 358, 392 } do
+		trophyCase(parent, cx, 382.4, 0)
+	end
+	noticeBoard(parent, "GymNotices", CFrame.new(440, 10, 382.4), 14, 7)
+	for _, bx in { 470, 496 } do
+		prop("Bench", CFrame.new(bx, 0, 383))
+	end
+	prop("PottedPlant", CFrame.new(342, 0, 408))
+	prop("PottedPlant", CFrame.new(506, 0, 408))
+
+	------------------------------------------------------- secret rooftop block
+	-- The plant room, which is what a fire escape and a walkable roof hang off.
+	boiler(parent, 174, 362)
+	boiler(parent, 174, 376)
+	pipeRun(parent, 182, 13.0, 356, 384, Color3.fromRGB(78, 92, 104))
+	pipeRun(parent, 186, 13.0, 356, 384, Color3.fromRGB(120, 74, 54))
+	prop("UtilityBox", CFrame.new(206, 6, 356.4))
+	prop("UtilityBox", CFrame.new(206, 6, 362.4))
+	prop("IndustrialLamp", CFrame.new(166, 12, 356.4))
+	prop("MetalToolChest", CFrame.new(200, 0, 380))
+	prop("WoodenLadder", CFrame.new(194, 0, 382) * CFrame.Angles(0, math.rad(20), 0))
+	prop("Barrel", CFrame.new(166, 0, 382))
+
+	-- the store
+	for _, sx in { 214, 220, 226, 232 } do
+		prop("SteelShelves", CFrame.new(sx, 0, 356.4))
+	end
+	for _, cx in { 240, 245, 250 } do
+		prop("WoodenCrate", CFrame.new(cx, 0, 357))
+		prop("PlasticCrate", CFrame.new(cx, 1.9, 357))
+	end
+	prop("Trashbag", CFrame.new(214, 0, 382))
+	prop("Trashbag", CFrame.new(218, 0, 381))
+	prop("HandTruck", CFrame.new(226, 0, 380))
+	prop("Barrel", CFrame.new(252, 0, 380))
+	prop("WornMetalRack", CFrame.new(238, 0, 370))
+
+	-- the corridors and the way up
+	pipeRun(parent, 200, 13.0, 388, 414, Color3.fromRGB(78, 92, 104))
+	prop("IndustrialWallSconce", CFrame.new(164.4, 10, 400) * CFrame.Angles(0, math.rad(90), 0))
+	prop("IndustrialWallSconce", CFrame.new(255.6, 10, 400) * CFrame.Angles(0, math.rad(-90), 0))
+	prop("PlasticCrate", CFrame.new(170, 0, 412))
+	prop("WoodenCrate", CFrame.new(248, 0, 390))
+	prop("WoodenLadder2", CFrame.new(232, 0, 444) * CFrame.Angles(0, math.pi, 0))
+	prop("WoodenCrate", CFrame.new(220, 0, 444))
+	prop("Barrel", CFrame.new(214, 0, 440))
+	prop("BinLarge", CFrame.new(168, 0, 444))
+	noticeBoard(parent, "PlantRoomWarning", CFrame.new(208, 9, 419) * CFrame.Angles(0, math.pi, 0), 8, 5)
+end
+
 local function furnishDorms(parent: Instance, beds: { BasePart })
 	local b = CampusPlan.building("Student Dorms")
 	if not b then
@@ -8436,6 +9067,7 @@ end
 	PlanBuilder.build(planCtx, "Secret Rooftop")
 	PlanBuilder.build(planCtx, "Cafeteria")
 	PlanBuilder.build(planCtx, "Detention Hall")
+	furnishRingBuildings(folder)
 	-- THE BOARDING HOUSE, on its drawn ground.
 	--
 	-- There were two blocks at (+-176, -232), which is 26 studs outside the
