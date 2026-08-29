@@ -7941,9 +7941,13 @@ end
 	-- lawn's -- the whole court flickered and none of it was visible.
 	-- 0.30 .. 0.60, so the slab straddles the lawn's top face (0.40) instead of
 	-- sharing a plane with it, and the key straddles the court's top (0.60).
-	local courtBase = part({ Name = "BasketballCourt", Size = Vector3.new(34, 0.3, 22), CFrame = CFrame.new(96, 0.57, -14), Color = Color3.fromRGB(52, 118, 190), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	-- On the palette, like the two courts on the drawn Ball Courts ground. An
+	-- electric blue court with a hot orange key and a pink one beside it, seen
+	-- from above through the open quadrangle, were the only saturated colour
+	-- anywhere on a campus of stone, slate and deep green.
+	local courtBase = part({ Name = "BasketballCourt", Size = Vector3.new(34, 0.3, 22), CFrame = CFrame.new(96, 0.57, -14), Color = Color3.fromRGB(74, 106, 128), Material = Enum.Material.SmoothPlastic, Parent = folder })
 	local _cb = courtBase
-	part({ Name = "CourtKey", Size = Vector3.new(10, 0.22, 22), CFrame = CFrame.new(96, 0.83, -14), Color = Color3.fromRGB(226, 130, 62), Material = Enum.Material.SmoothPlastic, Parent = folder }).CanCollide = false
+	part({ Name = "CourtKey", Size = Vector3.new(10, 0.22, 22), CFrame = CFrame.new(96, 0.83, -14), Color = Color3.fromRGB(158, 116, 76), Material = Enum.Material.SmoothPlastic, Parent = folder }).CanCollide = false
 	-- Hoops, not posts. These were two bare uprights at each end of a painted
 	-- court: no backboard, no rim, nothing to aim at.
 	for _, hoop in { { x = 80, dir = 1 }, { x = 112, dir = -1 } } do
@@ -7959,7 +7963,7 @@ end
 		local net = part({ Name = "HoopNet", Size = Vector3.new(2.6, 2.4, 2.6), CFrame = CFrame.new(hx + dir * 5.2, 8.8, -14), Color = Color3.fromRGB(240, 242, 246), Material = Enum.Material.Fabric, Transparency = 0.45, Parent = folder })
 		net.CanCollide = false
 	end
-	local volleyBase = part({ Name = "VolleyballCourt", Size = Vector3.new(30, 0.3, 18), CFrame = CFrame.new(136, 0.57, 24), Color = Color3.fromRGB(226, 148, 168), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	local volleyBase = part({ Name = "VolleyballCourt", Size = Vector3.new(30, 0.3, 18), CFrame = CFrame.new(136, 0.57, 24), Color = Color3.fromRGB(140, 92, 70), Material = Enum.Material.SmoothPlastic, Parent = folder })
 	local _vb = volleyBase
 	part({ Name = "VolleyNet", Size = Vector3.new(0.2, 2.4, 17), CFrame = CFrame.new(136, 6.4, 24), Color = Color3.fromRGB(235, 235, 235), Material = Enum.Material.Fabric, Transparency = 0.35, Parent = folder })
 
