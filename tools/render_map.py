@@ -736,7 +736,16 @@ shots = [
     ("gate",       (0, 12, 620),     (0, 14, 520)),
     ("gatedrive",  (0, 8, 500),      (0, 20, 200)),
     ("biketrack",  (-430, 130, 520),  (-430, 4, 330)),
+    ("dormcourt",  (0, 70, -110),     (0, 6, -230)),
+    ("dormcourteye",(0, 6, -160),     (0, 10, -250)),
 ]
-for name, cam, target in shots:
-    render(cam, target, os.path.join(OUT, f"shot_{name}.png"))
-print("done")
+# SKIP_SHOTS=1 exports the part dump and stops. The dump takes a few seconds;
+# drawing sixty z-buffered PNGs takes minutes, and the check suite only ever
+# reads the dump. Set it when you are iterating on geometry and looking at
+# check output rather than pictures.
+if os.environ.get("SKIP_SHOTS"):
+    print("done (dump only)")
+else:
+    for name, cam, target in shots:
+        render(cam, target, os.path.join(OUT, f"shot_{name}.png"))
+    print("done")

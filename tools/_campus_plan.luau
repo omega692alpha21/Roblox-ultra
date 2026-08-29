@@ -68,6 +68,11 @@ Plan.SITE = {
 	{ name = "Academy", rect = { -224, -124, 224, 124 }, kind = "building" },
 	{ name = "Great Court", rect = { -150, 135, 150, 285 }, kind = "grounds", ceremonial = true },
 	{ name = "Student Dorms", rect = { -150, -370, 150, -250 }, kind = "building" },
+	-- The courtyard between the school's back and the boarding house's front.
+	-- 320 x 126 studs of open grass with one walk down the middle of it: the
+	-- second-largest empty rectangle on the campus after the Great Court, and
+	-- the one every boarder crosses twice a day.
+	{ name = "Dorm Court", rect = { -140, -246, 140, -152 }, kind = "grounds" },
 	{ name = "Library", rect = { -420, -348, -220, -252 }, kind = "building" },
 	{ name = "Cafeteria", rect = { 220, -348, 420, -252 }, kind = "building" },
 	{ name = "Detention Hall", rect = { -485, -40, -315, 80 }, kind = "building" },

@@ -5475,6 +5475,16 @@
    ]
   },
   {
+   "kind": "grounds",
+   "name": "Dorm Court",
+   "rect": [
+    -140,
+    -246,
+    140,
+    -152
+   ]
+  },
+  {
    "kind": "building",
    "name": "Library",
    "rect": [

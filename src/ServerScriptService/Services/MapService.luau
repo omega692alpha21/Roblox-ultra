@@ -3737,6 +3737,85 @@ local function upLight(parent: Instance, x: number, z: number, colour: Color3?)
 	light.Parent = lens
 end
 
+-- ================= THE DORM COURT =================
+-- The ground between the school's back wall and the boarding house's front.
+-- CampusPlan draws it at (-140, -246) to (140, -152): 280 x 94 studs that the
+-- boarders cross twice a day and that the campus spent on nothing -- open
+-- terrain with one walk down the middle of it, and the second-largest empty
+-- rectangle on the estate after the Great Court was built.
+--
+-- It is the quiet counterpart to the Great Court, so it is lawn rather than
+-- paving: two mown panels inside clipped box, a walk round and across them, an
+-- avenue of limes down both sides, benches facing in, and a stone dial on the
+-- crossing.
+local function buildDormCourt(parent: Instance)
+	local site = CampusPlan.site("Dorm Court")
+	local rx0, rz0, rx1, rz1 = site.rect[1], site.rect[2], site.rect[3], site.rect[4]
+	local cx, cz = (rx0 + rx1) / 2, (rz0 + rz1) / 2
+	local width, depth = rx1 - rx0, rz1 - rz0
+	local kit = { parent = parent, part = part :: any, tag = tag :: any }
+	local AXIS_HALF = 13
+	local WALK = 7
+
+	-- the paved perimeter walk and the two that cross it
+	local PAVE = Color3.fromRGB(120, 120, 128)
+	for _, run in {
+		{ w = width, d = WALK * 2, dx = 0, dz = -depth / 2 + WALK },
+		{ w = width, d = WALK * 2, dx = 0, dz = depth / 2 - WALK },
+		{ w = WALK * 2, d = depth - WALK * 4, dx = -width / 2 + WALK, dz = 0 },
+		{ w = WALK * 2, d = depth - WALK * 4, dx = width / 2 - WALK, dz = 0 },
+		{ w = AXIS_HALF * 2, d = depth - WALK * 4, dx = 0, dz = 0 },
+	} do
+		tag(part({
+			Name = "DormCourtWalk",
+			-- -0.2 .. 0.4, so the walk's underside clears the boarding house's
+			-- entrance steps, which start at 0 where the north walk meets them
+			Size = Vector3.new(run.w, 0.6, run.d),
+			CFrame = CFrame.new(cx + run.dx, 0.1, cz + run.dz),
+			Color = PAVE,
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		}), "TexCourtPaving").CanCollide = false
+	end
+
+	-- two mown lawn panels either side of the axis walk
+	local panelHalfX = (width / 2 - WALK * 2 - AXIS_HALF) / 2
+	local panelHalfZ = (depth / 2 - WALK * 2)
+	for _, side in { -1, 1 } do
+		Grounds.lawnPanel(kit, cx + side * (AXIS_HALF + panelHalfX), cz, panelHalfX, panelHalfZ)
+	end
+
+	-- the dial on the crossing, and lamps at the four corners of the walks
+	Grounds.dial(kit, cx, cz, upLight :: any)
+	for _, corner in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+		courtLamp(parent, cx + corner[1] * (AXIS_HALF + 5), cz + corner[2] * (panelHalfZ + 2))
+		courtLamp(parent, cx + corner[1] * (width / 2 - WALK), cz + corner[2] * (panelHalfZ + 2))
+	end
+
+	-- benches on the axis walk, backs to the lawn, facing each other
+	for _, seat in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+		Grounds.bench(
+			kit,
+			cx + seat[1] * (AXIS_HALF - 2),
+			cz + seat[2] * 22,
+			if seat[1] > 0 then -math.pi / 2 else math.pi / 2
+		)
+	end
+
+	-- a lime avenue outside the perimeter walk, down both long sides
+	for _, side in { -1, 1 } do
+		for i = -1, 1 do
+			meshTree(parent, Vector3.new(cx + side * (width / 2 + 12), 0.5, cz + i * 30), 1.1)
+		end
+	end
+	-- and a pair of urns marking the head of the axis walk at each end
+	for _, side in { -1, 1 } do
+		for _, endz in { -1, 1 } do
+			Grounds.urn(kit, cx + side * (AXIS_HALF + 4), cz + endz * (depth / 2 - WALK * 2 - 4), 0.9)
+		end
+	end
+end
+
 -- ================= THE BIKE TRACK =================
 -- CampusPlan draws it at (-550, 230) to (-310, 430) and nothing has ever
 -- stood there: 48,000 square studs of the campus that the drawing spends on a
@@ -6530,23 +6609,12 @@ local function buildBackCampus(parent: Instance)
 	-- into the library's own pediment at z = -193: the building is ninety-two
 	-- studs wide and sits squarely on the centre line, so the way to the back
 	-- of the plot goes round it.
-	-- It STOPS at the boarding houses' front, at z = -250, instead of running
-	-- on to -344. CampusPlan draws the Student Dorms at (-150, -370) to
-	-- (150, -250) and the avenue ran the length of that rectangle down the
-	-- middle of it, with six trees and six lamps standing where the range
-	-- will be. An avenue to a building ends at the building.
-	local AV = 100
-	local AV_END = -250
-	part({ Name = "BackAvenueLink", Size = Vector3.new(AV - 10, 0.3, 18), CFrame = CFrame.new((AV - 10) / 2, 0.2, -158), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
-	part({ Name = "BackAvenue", Size = Vector3.new(20, 0.3, -158 - AV_END + 20), CFrame = CFrame.new(AV, 0.2, (AV_END - 168) / 2), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
-	part({ Name = "BackAvenueFoot", Size = Vector3.new(AV - 10, 0.3, 18), CFrame = CFrame.new((AV - 10) / 2, 0.2, AV_END + 8), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
-	for _, side in { -1, 1 } do
-		for i = 0, 2 do
-			prop(if i % 2 == 0 then "KTreeTall" else "KTree",
-				CFrame.new(AV + side * 22, 0, -176 - i * 24) * CFrame.Angles(0, i * 1.1, 0))
-			lampPost(parent, AV + side * 14, -188 - i * 24, { short = true, range = 44, brightness = 1.9 })
-		end
-	end
+	-- The back avenue is gone. It ran at x = 100 from z = -158 to the boarding
+	-- houses with a lime either side of it, and the Dorm Court is now drawn
+	-- over that ground -- (-140, -246) to (140, -152) -- so the avenue crossed
+	-- the court's east lawn panel and six of its trees stood on it. The court's
+	-- own axis walk is the way to the boarding house, and its perimeter walk is
+	-- the way round.
 
 	-- ---- the orchard, SOUTH of the library, in rows ----
 	-- It began at z = -318 and ran five rows of oaks straight through the
@@ -7675,6 +7743,7 @@ end
 	buildFrontGrounds(folder)
 	buildGreatCourt(folder)
 	buildBikeTrack(folder)
+	buildDormCourt(folder)
 	detailCorridor(folder)
 
 	-- ---------------- outside: entrance, dorms, grounds ----------------

@@ -579,4 +579,81 @@ function GroundsKit.goal(ctx: Ctx, x: number, z: number, width: number, height: 
 	end
 end
 
+-- ------------------------------------------------------------ lawn panel --
+-- A panel of mown grass inside a clipped box edge and a stone kerb, with the
+-- mowing stripes a groundsman actually leaves. The thing a college court is
+-- mostly made of, and what "an empty rectangle of terrain" is not.
+function GroundsKit.lawnPanel(ctx: Ctx, x: number, z: number, hw: number, hd: number)
+	ctx.tag(ctx.part({
+		Name = "CourtLawn",
+		Size = Vector3.new(hw * 2, 0.36, hd * 2),
+		CFrame = CFrame.new(x, 0.72, z),
+		Color = Color3.fromRGB(62, 107, 58),
+		Material = Enum.Material.Grass,
+		Parent = ctx.parent,
+	}), "TexGrass").CanCollide = false
+	-- the stripes: alternating cut, lighter where the mower ran towards you
+	local stripes = math.max(3, math.floor(hw / 5))
+	for i = 0, stripes - 1 do
+		if i % 2 == 0 then
+			ctx.part({
+				Name = "LawnStripe",
+				Size = Vector3.new((hw * 2 - 2) / stripes, 0.2, hd * 2 - 2),
+				CFrame = CFrame.new(x - hw + 1 + (i + 0.5) * ((hw * 2 - 2) / stripes), 0.95, z),
+				Color = Color3.fromRGB(76, 124, 68),
+				Material = Enum.Material.Grass,
+				Parent = ctx.parent,
+			}).CanCollide = false
+		end
+	end
+	-- a stone kerb round it, and a clipped box edge inside that
+	for _, run in {
+		{ x - hw, z - hd, x + hw, z - hd },
+		{ x - hw, z + hd, x + hw, z + hd },
+		{ x - hw, z - hd, x - hw, z + hd },
+		{ x + hw, z - hd, x + hw, z + hd },
+	} do
+		ctx.part({
+			Name = "LawnKerb",
+			Size = Vector3.new(math.max(math.abs(run[3] - run[1]) + 1.6, 1.6), 1.0, math.max(math.abs(run[4] - run[2]) + 1.6, 1.6)),
+			CFrame = CFrame.new((run[1] + run[3]) / 2, 0.7, (run[2] + run[4]) / 2),
+			Color = GroundsKit.STONE_PALE,
+			Material = Enum.Material.Concrete,
+			Parent = ctx.parent,
+		})
+	end
+	GroundsKit.hedgeRun(ctx, x - hw + 3, z - hd + 3, x + hw - 3, z - hd + 3, 1.6, 2.2)
+	GroundsKit.hedgeRun(ctx, x - hw + 3, z + hd - 3, x + hw - 3, z + hd - 3, 1.6, 2.2)
+	GroundsKit.hedgeRun(ctx, x - hw + 3, z - hd + 3, x - hw + 3, z + hd - 3, 1.6, 2.2)
+	GroundsKit.hedgeRun(ctx, x + hw - 3, z - hd + 3, x + hw - 3, z + hd - 3, 1.6, 2.2)
+end
+
+-- ---------------------------------------------------------------- sundial --
+-- A stone drinking fountain and dial on a plinth: something small to close a
+-- vista on that is not another statue.
+function GroundsKit.dial(ctx: Ctx, x: number, z: number, upLight: ((parent: Instance, x: number, z: number, colour: Color3?) -> ())?)
+	-- radius 9 with a 5-thick ring reaches 11.5, which keeps it inside the
+	-- thirteen-stud half-width of the axis walk it stands on
+	octagonRing(ctx, "DialApron", x, z, 9.0, 5.0, 0.9, 0.45, GroundsKit.STONE_PALE, Enum.Material.Concrete)
+	octagonSlab(ctx, "DialStep", x, z, 5.4, 0.6, 1.2, GroundsKit.STONE_PALE, Enum.Material.Concrete)
+	ctx.part({ Name = "DialPlinth", Size = Vector3.new(6.4, 5.2, 6.4), CFrame = CFrame.new(x, 4.1, z), Color = GroundsKit.STONE, Material = Enum.Material.Marble, Parent = ctx.parent })
+	ctx.part({ Name = "DialMoulding", Size = Vector3.new(7.4, 0.8, 7.4), CFrame = CFrame.new(x, 7.1, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "DialBowl", Size = Vector3.new(5.0, 1.4, 5.0), CFrame = CFrame.new(x, 8.2, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Parent = ctx.parent }).CanCollide = false
+	local water = ctx.part({ Name = "DialWater", Size = Vector3.new(3.6, 0.3, 3.6), CFrame = CFrame.new(x, 8.7, z), Color = GroundsKit.WATER, Material = Enum.Material.Glass, Transparency = 0.4, Parent = ctx.parent })
+	water.CanCollide = false
+	water.Reflectance = 0.4
+	ctx.part({ Name = "DialFace", Size = Vector3.new(4.4, 0.3, 4.4), CFrame = CFrame.new(x, 9.1, z), Color = Color3.fromRGB(168, 132, 58), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "DialGnomon", Size = Vector3.new(0.35, 3.4, 0.35), CFrame = CFrame.new(x, 10.6, z) * CFrame.Angles(math.rad(38), 0, 0), Color = Color3.fromRGB(168, 132, 58), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	for i = 0, 3 do
+		local a = i * math.pi / 2 + math.pi / 4
+		ctx.part({ Name = "DialSpout", Size = Vector3.new(0.9, 0.9, 1.6), CFrame = CFrame.new(x + math.cos(a) * 2.6, 8.5, z + math.sin(a) * 2.6) * CFrame.Angles(0, -a, 0), Color = Color3.fromRGB(168, 132, 58), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+	if upLight then
+		for i = 0, 3 do
+			local a = i * math.pi / 2
+			upLight(ctx.parent, x + math.cos(a) * 8.0, z + math.sin(a) * 8.0, Color3.fromRGB(255, 224, 172))
+		end
+	end
+end
+
 return GroundsKit
