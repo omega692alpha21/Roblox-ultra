@@ -7823,6 +7823,39 @@ end
 		Parent = folder,
 	})
 
+	-- THE LEADED FLAT. A hundred and twenty by a hundred and twenty-eight
+	-- studs of it over the middle of the school, behind the parapet, with one
+	-- skylight in it: from the air -- which is one of the four reference
+	-- views -- the centre of the Academy read as a blank grey field between
+	-- four pitched ranges. A roof this size carries lanterns over the rooms
+	-- below it and stacks for their fires.
+	do
+		local kit = kitFor(folder)
+		for _, lx in { -42, 42 } do
+			for _, lz in { -44, 0, 44 } do
+				part({ Name = "RoofLanternKerb", Size = Vector3.new(11.0, 1.2, 11.0), CFrame = CFrame.new(lx, 34.2, lz), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = folder }).CanCollide = false
+				local drum = part({ Name = "RoofLanternGlass", Size = Vector3.new(8.4, 3.6, 8.4), CFrame = CFrame.new(lx, 36.6, lz), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.42, Parent = folder })
+				drum.CanCollide = false
+				drum.CastShadow = false
+				for _, bar in { Vector3.new(0.5, 3.6, 8.6), Vector3.new(8.6, 3.6, 0.5) } do
+					part({ Name = "RoofLanternBar", Size = bar, CFrame = CFrame.new(lx, 36.6, lz), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+				end
+				part({ Name = "RoofLanternCap", Size = Vector3.new(9.6, 2.0, 9.6), CFrame = CFrame.new(lx, 39.4, lz) * CFrame.Angles(0, math.rad(45), 0), Color = Color3.fromRGB(90, 100, 114), Material = Enum.Material.Slate, Parent = folder }).CanCollide = false
+				local glow = Instance.new("PointLight")
+				glow.Color = Color3.fromRGB(255, 220, 160)
+				glow.Brightness = 0.7
+				glow.Range = 20
+				glow.Shadows = false
+				glow.Parent = drum
+			end
+		end
+		for _, sx in { -48, 48 } do
+			for _, sz in { -52, 52 } do
+				Kit.chimney(kit, { x = sx, z = sz, base = 33.4, height = 13, width = 5.0 })
+			end
+		end
+	end
+
 	-- ---------------- signature interiors ----------------
 	buildFountain(folder, Vector3.new(0, 0, 6)) -- atrium centerpiece
 	buildGymMarkings(folder, Vector3.new(0, 0, -105))
