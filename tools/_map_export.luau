@@ -11624,17 +11624,48 @@ local function buildRoomLights(parent: Instance)
 						end
 						if not near then
 							table.insert(placed, Vector3.new(px, ceil, pz))
-							local pan = part({
-								Name = "RoomLightPanel",
-								Size = Vector3.new(9.0, 0.4, 5.0),
-								CFrame = CFrame.new(px, ceil, pz),
-								Color = Color3.fromRGB(255, 240, 214),
-								Material = Enum.Material.Neon,
-								Parent = parent,
-							})
+							-- A corridor in a collegiate building is hung with
+							-- lanterns, not tiled with office panels. The flat
+							-- panel is right over a classroom or a lab; down a
+							-- corridor it is the one thing in the interior that
+							-- reads as a modern office ceiling.
+							local pan
+							if cell.kind == "corridor" then
+								part({ Name = "RoomLightRose", Size = Vector3.new(2.6, 0.5, 2.6), CFrame = CFrame.new(px, ceil + 0.2, pz), Color = Color3.fromRGB(58, 60, 66), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+								part({ Name = "RoomLightRod", Size = Vector3.new(0.4, 3.0, 0.4), CFrame = CFrame.new(px, ceil - 1.3, pz), Color = Color3.fromRGB(58, 60, 66), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+								-- Rib and Shade, not Post and Glass. asset_audit stems a
+								-- name on its last object word, so four "...Post"
+								-- parts became an object called Post with four parts
+								-- in it, and window_check counts anything with
+								-- "Glass" in its name as a window -- 81 lantern
+								-- shades reported as unlit windows.
+								for _, corner in { Vector2.new(-1, -1), Vector2.new(1, -1), Vector2.new(-1, 1), Vector2.new(1, 1) } do
+									part({ Name = "RoomLightRib", Size = Vector3.new(0.3, 3.2, 0.3), CFrame = CFrame.new(px + corner.X * 1.5, ceil - 4.2, pz + corner.Y * 1.5), Color = Color3.fromRGB(58, 60, 66), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+								end
+								part({ Name = "RoomLightShade", Size = Vector3.new(3.0, 3.0, 3.0), CFrame = CFrame.new(px, ceil - 4.2, pz), Color = Color3.fromRGB(255, 238, 210), Material = Enum.Material.Glass, Transparency = 0.45, Parent = parent }).CanCollide = false
+								part({ Name = "RoomLightCap", Size = Vector3.new(4.0, 1.0, 4.0), CFrame = CFrame.new(px, ceil - 2.4, pz) * CFrame.Angles(0, math.rad(45), 0), Color = Color3.fromRGB(58, 60, 66), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+								part({ Name = "RoomLightFinial", Size = Vector3.new(0.8, 1.0, 0.8), CFrame = CFrame.new(px, ceil - 6.1, pz), Color = Color3.fromRGB(58, 60, 66), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+								pan = part({
+									Name = "RoomLightCore",
+									Size = Vector3.new(1.6, 1.8, 1.6),
+									CFrame = CFrame.new(px, ceil - 4.2, pz),
+									Color = Color3.fromRGB(255, 238, 210),
+									Material = Enum.Material.Neon,
+									Parent = parent,
+								})
+							else
+								pan = part({
+									Name = "RoomLightPanel",
+									Size = Vector3.new(9.0, 0.4, 5.0),
+									CFrame = CFrame.new(px, ceil, pz),
+									Color = Color3.fromRGB(255, 240, 214),
+									Material = Enum.Material.Neon,
+									Parent = parent,
+								})
+								part({ Name = "RoomLightSurround", Size = Vector3.new(10.4, 0.5, 6.4), CFrame = CFrame.new(px, ceil + 0.4, pz), Color = Color3.fromRGB(226, 224, 216), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+							end
 							pan.CanCollide = false
 							pan.CastShadow = false
-							part({ Name = "RoomLightSurround", Size = Vector3.new(10.4, 0.5, 6.4), CFrame = CFrame.new(px, ceil + 0.4, pz), Color = Color3.fromRGB(226, 224, 216), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
 							local lamp = Instance.new("PointLight")
 							-- Range 38, not 32. At 32 a 26-stud grid left the far
 							-- ends of the top-floor offices dark: the panels sit
