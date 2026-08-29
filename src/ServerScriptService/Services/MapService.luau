@@ -9780,6 +9780,57 @@ end
 	buildCampusPath(folder, Vector3.new(-232, 0, -60), Vector3.new(-232, 0, -170), 14)
 	lampWalk(folder, -232, -72, -232, -160, 12, 42)
 	buildCampusPath(folder, Vector3.new(-239, 0, -170), Vector3.new(-258, 0, -170), 14)
+
+	-- ---- THE WALKS THAT JOIN THE CAMPUS UP ----
+	--
+	-- Flood-filling the paving four studs to a cell and counting connected
+	-- components gives 7,956 cells in SEVENTY-EIGHT pieces. Two of them are
+	-- the campus: 72,240 square studs north of the Academy (the court, the
+	-- drive and the gate) and 24,368 south of it (the dorm forecourt and the
+	-- library walk) -- and they touch nowhere, so the only paved way from the
+	-- front doors to the dorms is straight through the building. Everything
+	-- else is an island: the gymnasium's apron, the rooftop block's apron, the
+	-- cafeteria's own doorstep at 320 square studs, the dorms' south door at
+	-- 368. A player leaving any of those doors is on grass.
+	--
+	-- The reference site plan is a walk network first and a set of buildings
+	-- second. These are the missing links: round the Academy on both sides,
+	-- out to the cafeteria, up the east side to the alley and the gym, and
+	-- round the back of the dorm range.
+	local function link(ax: number, az: number, bx: number, bz: number, over: boolean?)
+		buildCampusPath(folder, Vector3.new(ax, 0, az), Vector3.new(bx, 0, bz), 14, over)
+	end
+	-- The Great Court's paving reaches x +-140 and no further, and only from
+	-- z 150 north; at z 130 it is twenty studs wide. So a spine that stops at
+	-- z 128 stops in grass eleven studs short of anything, which is what the
+	-- first version of these did -- 74 components, still two campuses.
+	link(-250, 150, -250, -152)
+	link(-250, -152, -180, -152, true)
+	link(-250, 140, -140, 140, true)
+	link(250, 150, 250, -152)
+	link(250, -152, 140, -152, true)
+	link(250, 140, 140, 140, true)
+	link(250, -152, 316, -152, true)
+	link(316, -246, 316, -152)
+	-- the detention hall, whose door apron was 288 square studs of island
+	link(-310, 20, -250, 20, true)
+	link(270, 250, 270, 396)
+	link(270, 396, 346, 396, true)
+	link(0, -378, 170, -378, true)
+	link(170, -378, 170, -152)
+	-- and light them, so elevation_check and nightlight_check stay honest
+	lampWalk(folder, -250, 110, -250, -140, 11, 60)
+	lampWalk(folder, 250, 110, 250, -140, 11, 60)
+	lampWalk(folder, 270, 262, 270, 384, 11, 60)
+	lampWalk(folder, 20, -378, 158, -378, 11, 60)
+	lampWalk(folder, 170, -366, 170, -164, 11, 60)
+	lampWalk(folder, -298, 20, -262, 20, 11, 60)
+	lampWalk(folder, -238, 140, -152, 140, 11, 60)
+	lampWalk(folder, 152, 140, 238, 140, 11, 60)
+	lampWalk(folder, -238, -152, -192, -152, 11, 60)
+	lampWalk(folder, 152, -152, 238, -152, 11, 60)
+	lampWalk(folder, 262, -152, 308, -152, 11, 60)
+
 	buildWayfinding(folder)
 	-- last, so every room it lights already exists
 	buildLockerIslands(folder)
