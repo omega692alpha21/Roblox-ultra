@@ -858,6 +858,12 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
 
 # eye height 6 for anything meant to be seen on foot: a shot from 50 studs up
 # flatters massing and hides everything a player actually walks past
+# Four of these were pointed at nothing. A sweep for the largest single flat
+# colour in each frame found turret at 100 per cent and libshaft at 94 -- both
+# staring at a blank wall from a stud away -- and a test for cameras standing
+# inside solid geometry found plotroom inside a locker body and northquad
+# inside a roof wedge. Four interiors nobody had looked at all session, because
+# the pictures of them were pictures of stone.
 shots = [
     ("entrance",   (0, 55, 300),     (0, 26, 110)),
     ("approach",   (0, 6, 190),      (0, 12, 120)),
@@ -869,19 +875,19 @@ shots = [
     ("greenhouse", (-116, 6, 20),    (-116, 6, -40)),
     ("eastlab",    (116, 6, 20),     (116, 6, -40)),
     ("wingcorr",   (-178, 6, -20),   (-178, 6, -60)),
-    ("plotroom",   (-190, 7, 78),    (-190, 5, 110)),
+    ("plotroom",   (-190, 7, 66),    (-190, 6, 104)),
     ("gym",        (0, 9, -70),      (0, 8, -130)),
     ("room101",    (-74, 6, -70),    (-74, 6, -120)),
     ("library",    (-320, 16, -220),  (-320, 14, -300)),
     ("libinside",  (-320, 7, -264),   (-320, 9, -330)),
     ("dorms",      (0, 9, -206),     (0, 9, -280)),
-    ("northquad",  (0, 40, -120),    (0, 10, -220)),
+    ("northquad",  (0, 72, -132),    (0, 10, -240)),
     ("office",     (-190, 6, 34),    (-214, 6, 26)),
     # the headmaster's office on the lodge's top floor, and the way down
     ("head",       (-266, 41, -170),  (-320, 39, -170)),
     ("headdesk",   (-330, 42, -170),  (-280, 40, -170)),
-    ("turret",     (-249, 40, -170),  (-249, 34, -190)),
-    ("libshaft",   (-380, 6, -290),   (-424, 2, -290)),
+    ("turret",     (-249, 30, -176),  (-249, 20, -190)),
+    ("libshaft",   (-338, 8, -290),   (-370, 7, -290)),
     ("dorm",       (0, 7, -276),      (0, 7, -352)),
     ("cafeteria",  (372, 8, -230),    (372, 4, -300)),
     ("libinterior",(-320, 10, -268),  (-320, 6, -318)),
