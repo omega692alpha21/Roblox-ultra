@@ -975,6 +975,12 @@ shots = [
     # Inside the four buildings that were shells until build 190. Nothing has
     # ever pointed a camera at them, which is a large part of why nobody
     # noticed they were empty: every shot in this list was taken outdoors.
+    # WHERE THE PLAYER APPEARS. Every camera in this list was chosen to look
+    # at something; not one of them was the first frame of the game. Players
+    # spawn under the bus shelter at (-114, 0, 320) and turn to face the gate,
+    # so this is the view the school actually opens on.
+    ("spawnview",  (-114, 15, 322),   (-90, 10, 240)),
+    ("spawnwalk",  (-84, 14, 268),    (-10, 16, 170)),
     ("dininghall", (338, 7, -336),    (410, 5, -276)),
     ("servery",    (326, 7, -272),    (292, 5, -282)),
     ("kitchen",    (296, 7, -304),    (234, 5, -332)),
@@ -1031,7 +1037,7 @@ else:
             print(f"  {share:.0%} one colour  {name}")
     # The four reference angles again, at night, which is the only light the
     # art direction is written for.
-    for name in ("eyegate", "entrance", "courtnorth", "dormcourteye", "siteplan",
+    for name in ("spawnview", "eyegate", "entrance", "courtnorth", "dormcourteye", "siteplan",
                  "overview", "dormcourt", "library"):
         cam, target = next(((c, t) for n, c, t in shots if n == name), (None, None))
         if cam:

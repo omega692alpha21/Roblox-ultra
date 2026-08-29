@@ -13236,6 +13236,23 @@ end
 	end
 	ringLanterns(folder)
 	ringNameBoards(folder)
+	-- The walk a player takes FIRST. Sampling the light along the line from
+	-- the bus shelter to the fountain finds a valley in the middle of it: 0.80
+	-- at the stop, 0.86 at the fountain, and 0.009 at (-57, 254) -- a fifth of
+	-- the level nightlight_check calls dark. That check could not see it,
+	-- because CourtPaving is one enormous surface and a thirty-stud hole in a
+	-- three-hundred-stud court is a small share of it.
+	for _, at in { Vector2.new(-72, 268), Vector2.new(-58, 257), Vector2.new(-44, 246) } do
+		courtLamp(folder, at.X + 7, at.Y + 7)
+		courtLamp(folder, at.X - 7, at.Y - 7)
+	end
+	-- And the three holes the new rule found in the Great Court itself, each
+	-- of them bigger than a tennis court. A hole's centre is by definition the
+	-- point furthest from every standard already on the court, so that is
+	-- where the standard goes.
+	for _, at in { Vector2.new(-154, 205), Vector2.new(130, 192), Vector2.new(48, 215) } do
+		courtLamp(folder, at.X, at.Y)
+	end
 	buildRainwaterGoods(folder)
 	buildRidgeCresting(folder)
 	buildHiddenAlley(folder)

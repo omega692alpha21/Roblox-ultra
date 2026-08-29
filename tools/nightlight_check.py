@@ -104,6 +104,15 @@ def main():
         print("FAIL - no walked ground found; the name list is wrong")
         return 1
 
+    # A HOLE. A surface fails above only when DARK_SHARE of the WHOLE of it is
+    # unlit, and CourtPaving is the entire Great Court -- so a thirty-stud
+    # black valley in the middle of the first walk a player takes, at a fifth
+    # of the dark level, was a small share of a big number and passed. Dark
+    # patches are collected across every surface and flood-filled together:
+    # a hole is a hole whatever it is a hole in.
+    dark_cells = set()
+    HOLE = 900.0        # square studs of contiguous dark ground
+
     bad, sampled, dark_total = [], 0, 0
     for p, b, top, area in surfaces:
         pts = dark = 0
@@ -114,6 +123,7 @@ def main():
                 pts += 1
                 if landing(x, top + 0.5, z) < DARK:
                     dark += 1
+                    dark_cells.add((int(x // STEP), int(z // STEP)))
                 z += STEP
             x += STEP
         if not pts:
@@ -123,15 +133,40 @@ def main():
         if dark / pts > DARK_SHARE:
             bad.append((dark / pts, p["n"], [round(v) for v in p["p"]], round(area)))
 
+    holes = []
+    seen = set()
+    for c in dark_cells:
+        if c in seen:
+            continue
+        stack, grp = [c], [c]
+        seen.add(c)
+        while stack:
+            cx, cz = stack.pop()
+            for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nb = (cx + d[0], cz + d[1])
+                if nb in dark_cells and nb not in seen:
+                    seen.add(nb)
+                    stack.append(nb)
+                    grp.append(nb)
+        if len(grp) * STEP * STEP >= HOLE:
+            xs = [g[0] * STEP for g in grp]
+            zs = [g[1] * STEP for g in grp]
+            holes.append((len(grp) * STEP * STEP, round(sum(xs) / len(xs)), round(sum(zs) / len(zs))))
+
     print(f"{len(surfaces)} walked surfaces, {sampled} patches sampled, "
           f"{dark_total} of them dark ({dark_total / max(sampled, 1):.0%})")
+    if holes:
+        holes.sort(reverse=True)
+        for area, hx, hz in holes[:8]:
+            print(f"  {area:6.0f} sq studs of unbroken dark centred on ({hx}, {hz})")
     if bad:
         bad.sort(reverse=True)
         for share, name, pos, area in bad[:12]:
             print(f"  {share:.0%} dark  {name:22} at {pos}  {area} sq studs")
-        print(f"FAIL - {len(bad)} surfaces are unlit ground a player walks on")
+    if bad or holes:
+        print(f"FAIL - {len(bad)} unlit surfaces, {len(holes)} dark holes in lit ones")
         return 1
-    print("PASS - every walked surface outdoors has light on it")
+    print("PASS - every walked surface outdoors has light on it, with no dark holes")
     return 0
 
 
