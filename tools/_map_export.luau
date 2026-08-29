@@ -11000,17 +11000,17 @@ local function furnishRingBuildings(parent: Instance)
 	tag(part({ Name = "CourtDeck", Size = Vector3.new(168.0, 0.24, 44.0), CFrame = CFrame.new(425, 0.12, 437), Color = COURT, Material = Enum.Material.WoodPlanks, Parent = parent }), "TexAshlar")
 	for _, line in
 		{
-			{ Vector3.new(160.0, 0.16, 0.7), Vector3.new(425, 0.32, 416.0) },
-			{ Vector3.new(160.0, 0.16, 0.7), Vector3.new(425, 0.32, 458.0) },
-			{ Vector3.new(0.7, 0.16, 42.7), Vector3.new(345, 0.32, 437) },
-			{ Vector3.new(0.7, 0.16, 42.7), Vector3.new(505, 0.32, 437) },
-			{ Vector3.new(0.7, 0.16, 42.7), Vector3.new(425, 0.32, 437) },
-			{ Vector3.new(19.0, 0.16, 0.7), Vector3.new(354, 0.32, 425.0) },
-			{ Vector3.new(19.0, 0.16, 0.7), Vector3.new(354, 0.32, 449.0) },
-			{ Vector3.new(0.7, 0.16, 24.7), Vector3.new(363.5, 0.32, 437) },
-			{ Vector3.new(19.0, 0.16, 0.7), Vector3.new(496, 0.32, 425.0) },
-			{ Vector3.new(19.0, 0.16, 0.7), Vector3.new(496, 0.32, 449.0) },
-			{ Vector3.new(0.7, 0.16, 24.7), Vector3.new(486.5, 0.32, 437) },
+			{ Vector3.new(160.0, 0.16, 1.2), Vector3.new(425, 0.32, 416.0) },
+			{ Vector3.new(160.0, 0.16, 1.2), Vector3.new(425, 0.32, 458.0) },
+			{ Vector3.new(1.2, 0.16, 42.7), Vector3.new(345, 0.32, 437) },
+			{ Vector3.new(1.2, 0.16, 42.7), Vector3.new(505, 0.32, 437) },
+			{ Vector3.new(1.2, 0.16, 42.7), Vector3.new(425, 0.32, 437) },
+			{ Vector3.new(19.0, 0.16, 1.2), Vector3.new(354, 0.32, 425.0) },
+			{ Vector3.new(19.0, 0.16, 1.2), Vector3.new(354, 0.32, 449.0) },
+			{ Vector3.new(1.2, 0.16, 24.7), Vector3.new(363.5, 0.32, 437) },
+			{ Vector3.new(19.0, 0.16, 1.2), Vector3.new(496, 0.32, 425.0) },
+			{ Vector3.new(19.0, 0.16, 1.2), Vector3.new(496, 0.32, 449.0) },
+			{ Vector3.new(1.2, 0.16, 24.7), Vector3.new(486.5, 0.32, 437) },
 		}
 	do
 		part({
@@ -11024,7 +11024,20 @@ local function furnishRingBuildings(parent: Instance)
 	end
 	for i = 0, 23 do
 		local a = -math.pi / 2 + i * math.pi / 23
-		part({ Name = "CourtLine", Size = Vector3.new(0.9, 0.16, 0.9), CFrame = CFrame.new(425 + math.cos(a) * 8.0, 0.32, 437 + math.sin(a) * 8.0), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+		part({ Name = "CourtLine", Size = Vector3.new(1.2, 0.16, 1.2), CFrame = CFrame.new(425 + math.cos(a) * 8.0, 0.32, 437 + math.sin(a) * 8.0), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+	end
+	-- The painted keys and the centre circle. Lines alone are 0.7 studs wide
+	-- and 0.16 proud of a deck you look along at four degrees from the far
+	-- baseline: from the doors, a marked court and an unmarked one are the
+	-- same picture. What tells them apart at any angle is the paint.
+	-- Inside the outline, not under it: paint and line share a bottom face at
+	-- the deck, and two solids on the SAME side of a plane are what z-fights.
+	for _, key in { Vector3.new(354, 0.32, 437), Vector3.new(496, 0.32, 437) } do
+		part({ Name = "CourtKeyPaint", Size = Vector3.new(17.0, 0.16, 22.0), CFrame = CFrame.new(key), Color = Color3.fromRGB(74, 106, 128), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+	end
+	for i = 0, 35 do
+		local a = i * math.pi / 18
+		part({ Name = "CourtCirclePaint", Size = Vector3.new(1.4, 0.16, 1.4), CFrame = CFrame.new(425 + math.cos(a) * 6.6, 0.32, 437 + math.sin(a) * 6.6), Color = Color3.fromRGB(74, 106, 128), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
 	end
 	-- Facing each other down the LONG axis. At yaw 0 the arm swings out along
 	-- +z, which put both backboards across the 44-stud width of a court that
