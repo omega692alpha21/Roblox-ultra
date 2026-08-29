@@ -3919,6 +3919,25 @@ local function courtLamp(parent: Instance, x: number, z: number)
 	lampPost(parent, x, z, { range = 52, brightness = 2.4 })
 end
 
+-- Lamps down a walk, alternating sides. A path with no standards on it is a
+-- strip of paving nobody can see after dark, and tools/nightlight_check.py is
+-- what found them -- the whole three-legged route to the library among them.
+local function lampWalk(parent: Instance, x0: number, z0: number, x1: number, z1: number, offset: number, spacing: number)
+	local dx, dz = x1 - x0, z1 - z0
+	local length = math.sqrt(dx * dx + dz * dz)
+	if length < spacing then
+		return
+	end
+	local ux, uz = dx / length, dz / length
+	local px, pz = -uz, ux -- the walk's own left
+	local n = math.max(1, math.floor(length / spacing))
+	for i = 1, n do
+		local t = (i - 0.5) * (length / n)
+		local side = if i % 2 == 0 then 1 else -1
+		courtLamp(parent, x0 + ux * t + px * offset * side, z0 + uz * t + pz * offset * side)
+	end
+end
+
 -- a light set into the paving, aimed up. The reference is full of these and
 -- they are most of why its ground reads as wet stone rather than as a floor.
 local function upLight(parent: Instance, x: number, z: number, colour: Color3?)
@@ -6750,6 +6769,14 @@ local function buildCourtyards(parent: Instance)
 		for _, bz in { ccz - 18, ccz, ccz + 18 } do
 			bunting(parent, Vector3.new(cx - 52, 21, bz), Vector3.new(cx + 52, 21, bz), 5)
 		end
+		-- a standard at each corner. Both courts were a hundred per cent dark:
+		-- painted tarmac nobody can play on after nine, on a campus whose
+		-- whole look is a night one.
+		for _, ox in { -36, 36 } do
+			for _, oz in { -26, 26 } do
+				courtLamp(parent, cx + ox, ccz + oz)
+			end
+		end
 	end
 
 	-- and the quadrangles become quadrangles: lawn, a path across, a bench
@@ -7996,6 +8023,9 @@ end
 		local net = part({ Name = "HoopNet", Size = Vector3.new(2.6, 2.4, 2.6), CFrame = CFrame.new(hx + dir * 5.2, 8.8, -14), Color = Color3.fromRGB(240, 242, 246), Material = Enum.Material.Fabric, Transparency = 0.45, Parent = folder })
 		net.CanCollide = false
 	end
+	for _, spot in { Vector3.new(78, 0, 2), Vector3.new(114, 0, -30), Vector3.new(118, 0, 40), Vector3.new(154, 0, 8) } do
+		courtLamp(folder, spot.X, spot.Z)
+	end
 	local volleyBase = part({ Name = "VolleyballCourt", Size = Vector3.new(30, 0.3, 18), CFrame = CFrame.new(136, 0.57, 24), Color = Color3.fromRGB(140, 92, 70), Material = Enum.Material.SmoothPlastic, Parent = folder })
 	local _vb = volleyBase
 	part({ Name = "VolleyNet", Size = Vector3.new(0.2, 2.4, 17), CFrame = CFrame.new(136, 6.4, 24), Color = Color3.fromRGB(235, 235, 235), Material = Enum.Material.Fabric, Transparency = 0.35, Parent = folder })
@@ -8092,6 +8122,9 @@ end
 	-- of the north-west parterre.
 	buildBus(folder, CFrame.new(-96, 0, ROAD_Z) * CFrame.Angles(0, math.rad(-2), 0))
 	part({ Name = "FrontRoad", Size = Vector3.new(520, 0.4, 22), CFrame = CFrame.new(0, 0.05, ROAD_Z), Color = Color3.fromRGB(70, 72, 78), Material = Enum.Material.Asphalt, Parent = folder })
+	-- street lighting. Five hundred and twenty studs of road with a bus stop on
+	-- it and not one standard: eighty-eight per cent of it unlit.
+	lampWalk(folder, -240, ROAD_Z, 240, ROAD_Z, 17, 58)
 	for _, dash in { -220, -180, -140, 140, 180, 220 } do
 		part({ Name = "RoadMarking", Size = Vector3.new(18, 0.15, 0.9), CFrame = CFrame.new(dash, 0.3, ROAD_Z), Color = Color3.fromRGB(226, 222, 206), Material = Enum.Material.SmoothPlastic, Parent = folder }).CanCollide = false
 	end
@@ -8442,6 +8475,12 @@ end
 	-- the court's rect (x -140..140, z -246..-152).
 	buildCampusPath(folder, Vector3.new(0, 0, -140), Vector3.new(-180, 0, -140), 16, true)
 	buildCampusPath(folder, Vector3.new(-180, 0, -140), Vector3.new(-180, 0, -256), 16)
+	-- and standards down all three legs of it. Unlit, this was three hundred
+	-- and eighty studs of walk to the library that a player crosses in the
+	-- dark, and nothing could see it: light_check only ever asked about rooms.
+	lampWalk(folder, -20, -140, -170, -140, 13, 46)
+	lampWalk(folder, -180, -152, -180, -246, 13, 42)
+	lampWalk(folder, -192, -256, -300, -256, 13, 46)
 	-- the two legs either side of the flank run are laid a course higher, so
 	-- neither elbow is sixty-four square studs of two slabs sharing a plane
 	buildCampusPath(folder, Vector3.new(-180, 0, -256), LIBRARY + Vector3.new(0, 0, 44), 16, true)
@@ -8482,6 +8521,7 @@ end
 	buildTeachersQuarters(folder, Vector3.new(-300, 0, -170))
 	-- the walk out to the lodge, from the west side of the campus
 	buildCampusPath(folder, Vector3.new(-232, 0, -60), Vector3.new(-232, 0, -170), 14)
+	lampWalk(folder, -232, -72, -232, -160, 12, 42)
 	buildCampusPath(folder, Vector3.new(-239, 0, -170), Vector3.new(-258, 0, -170), 14)
 	buildWayfinding(folder)
 	-- last, so every room it lights already exists
