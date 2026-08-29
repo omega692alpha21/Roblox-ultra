@@ -856,8 +856,10 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                     # whole roofscape of the school rendered as a void in
                     # every night shot, and I twice went looking for missing
                     # geometry that was there and simply unlit. 0.115 is that
-                    # colour's own level.
-                    shade = max(shade * 0.16, 0.115) + min(1.05, lamplight(fcx, fcy, fcz, nx, ny_, nz_) * 0.42)
+                    # colour's own level. Raised to 0.175 with OutdoorAmbient, which went to
+                    # #28345 2 for the same reason: at 0.115 every roof on the campus
+                    # rendered black and the whole roofscape vanished.
+                    shade = max(shade * 0.16, 0.175) + min(1.05, lamplight(fcx, fcy, fcz, nx, ny_, nz_) * 0.42)
             col = tuple(min(255, int(ch * shade)) for ch in c)
             faces.append((corners, col))
 

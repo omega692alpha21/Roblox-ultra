@@ -142,8 +142,20 @@ local function setupLighting()
 	-- threshold at once. At night the interesting range is already at the top
 	-- of the scale; it does not need lifting into it.
 	Lighting.ExposureCompensation = 0.0
-	Lighting.Ambient = Color3.fromRGB(20, 26, 42)
-	Lighting.OutdoorAmbient = Color3.fromRGB(26, 34, 56)
+	-- Lifted from (20,26,42) and (26,34,56).
+	--
+	-- The aerial night shot of the dorm range is the clearest read on this:
+	-- every roof on the campus renders as pure black against a night sky that
+	-- is itself dark blue, so the whole roofscape -- the ridges, the hips, the
+	-- dormer cheeks, the cresting added in build 209 -- disappears. The
+	-- reference elevations have a roof you can SEE: dark blue-grey slate, read
+	-- against the sky, with the lit windows sitting in it.
+	--
+	-- Ambient lights every surface whichever way it faces, so this is the only
+	-- control that reaches a roof plane. The windows and the lamps are Neon and
+	-- unaffected, so the contrast that carries the night look is untouched.
+	Lighting.Ambient = Color3.fromRGB(28, 36, 56)
+	Lighting.OutdoorAmbient = Color3.fromRGB(40, 52, 82)
 
 	local atmosphere = Instance.new("Atmosphere")
 	-- thicker than the day pass and with the glare off. Density is what turns
