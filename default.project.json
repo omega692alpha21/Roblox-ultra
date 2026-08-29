@@ -18,7 +18,14 @@
       }
     },
     "Workspace": {
-      "$ignoreUnknownInstances": true
+      "$ignoreUnknownInstances": true,
+      "$properties": {
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 256,
+        "StreamingTargetRadius": 768,
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingIntegrityMode": "MinimumRadiusPause"
+      }
     },
     "Lighting": {
       "$ignoreUnknownInstances": true,
