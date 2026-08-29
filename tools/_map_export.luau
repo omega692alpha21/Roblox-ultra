@@ -6406,6 +6406,29 @@ local function buildGrandFacade(parent: Instance)
 	-- gym: taller, its own ridge
 	pitchedRoof(0, -105, 104, 86, 18, 38.0)
 
+	-- CHIMNEY STACKS. The Academy had a hundred and twenty dormers, a clock
+	-- tower, a spire and four crenellated corner towers, and not one chimney:
+	-- an inventory of collegiate work per building is what found it, because
+	-- an absence is the one thing no geometry check can see. Every reference
+	-- image has stacks breaking the roofline, and they are half of what makes
+	-- a collegiate roof read as one rather than as a slate plane.
+	--
+	-- One per ridge, on the ridge, clear of the corner towers at (+-224,
+	-- +-124) and of the dormers, which sit down the slopes.
+	do
+		local kit = kitFor(parent)
+		for _, ridge in {
+			{ z = 100, base = 44.0, xs = { -204, -142, -80, 80, 142, 204 } },   -- front ranges, ridge 52
+			{ z = -94, base = 45.0, xs = { -204, -142, -80, 80, 142, 204 } },   -- back ranges, ridge 53
+			{ z = 0, base = 42.0, xs = { -198, 198 } },                          -- the two wings, ridge 50
+			{ z = -105, base = 48.0, xs = { -36, 36 } },                         -- the centre range, ridge 56
+		} do
+			for _, cx in ridge.xs do
+				Kit.chimney(kit, { x = cx, z = ridge.z, base = ridge.base, height = 16, width = 5.4 })
+			end
+		end
+	end
+
 	-- ---- central block: portico, clock tower, grand steps ----
 	-- projecting entrance bay (the white stone block in the reference)
 	-- the bay is a frame, not a plug: piers each side, header above, so the
