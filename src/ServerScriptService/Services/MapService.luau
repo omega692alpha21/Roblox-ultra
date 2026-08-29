@@ -5663,6 +5663,51 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 		end
 	end
 
+
+	-- The END elevations. Every one of those windows was on a LONG face: the
+	-- lodge is three storeys with twenty-four windows and both of its 64-stud
+	-- end walls had not one opening in them -- fourteen hundred square studs
+	-- of blank brick a side, in the building that stands between the library
+	-- and the Great Court. tools/elevation_check.py's blank rule is what
+	-- finally said it out loud; window_check never could, because it can only
+	-- measure the windows that exist.
+	--
+	-- Two a row rather than six: the west wall carries the hearth up its
+	-- middle at local z -10..10, and the top storey is the headmaster's
+	-- office, panelled across its whole width.
+	for _, sx in { -1, 1 } do
+		for _, wz in { -24, 24 } do
+			for _, wy in { 11, 26, 43 } do
+				local face = sx * (halfW + 1.45)
+				local bars: { { h: number, across: number, dz: number, dy: number } } = {
+					{ h = 1.1, across = 9.6, dz = 0, dy = 4.75 },
+					{ h = 1.1, across = 9.6, dz = 0, dy = -4.75 },
+					{ h = 10.6, across = 1.1, dz = -4.25, dy = 0 },
+					{ h = 10.6, across = 1.1, dz = 4.25, dy = 0 },
+				}
+				for _, bar in bars do
+					part({
+						Name = "QuartersWinReveal",
+						Size = Vector3.new(1.2, bar.h, bar.across),
+						CFrame = at(face, wy + bar.dy, wz + bar.dz),
+						Color = Color3.fromRGB(238, 236, 228),
+						Material = Enum.Material.Concrete,
+						Parent = parent,
+					}).CanCollide = false
+				end
+				local glass = part({ Name = "QuartersWindow", Size = Vector3.new(0.3, 8.4, 7.4), CFrame = at(sx * (halfW + 1.3), wy, wz), Color = Color3.fromRGB(150, 200, 225), Material = Enum.Material.Glass, Transparency = 0.35, Parent = parent })
+				glass.CanCollide = false
+				tag(glass, "TexWindow")
+				part({ Name = "QuartersWinMullion", Size = Vector3.new(1.5, 8.4, 0.7), CFrame = at(face, wy, wz), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				part({ Name = "QuartersWinTransom", Size = Vector3.new(1.5, 0.7, 7.4), CFrame = at(face, wy + 1.4, wz), Color = Color3.fromRGB(238, 236, 228), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				part({ Name = "QuartersWinSill", Size = Vector3.new(2.6, 1, 11.2), CFrame = at(sx * (halfW + 1.7), wy - 5.8, wz), Color = Color3.fromRGB(224, 218, 204), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				if wy < 40 then
+					part({ Name = "QuartersWinGlow", Size = Vector3.new(0.3, 7.6, 6.6), CFrame = at(sx * (halfW + 1.06), wy, wz), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Neon, Transparency = 0.35, Parent = parent }).CanCollide = false
+				end
+			end
+		end
+	end
+
 	-- ---- the roof ----
 	-- Seven concentric slabs stacked one on the next is a ziggurat, not a
 	-- roof, and it sat on top of a fifty-three stud brick box with nothing on

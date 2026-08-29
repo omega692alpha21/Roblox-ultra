@@ -112,13 +112,49 @@ def main():
                 return False
         return True
 
-    bad, panels = [], 0
+    def outdoor(point, n):
+        """Is the space in front of this face open to the sky?
+
+        Without this every rule here fires on the INSIDE of an exterior wall:
+        the probe three studs in from the face of a room meets nothing, so a
+        sports hall's own north wall reads as an unlit, blank elevation. What
+        separates outside from inside is what is overhead.
+        """
+        probe = [point[i] + n[i] * CLEAR * 2 for i in range(3)]
+        for other in solid.get((int(probe[0] // CELL), int(probe[2] // CELL)), ()):
+            b = aabb(other)
+            if b[1][0] <= probe[1] or b[1][0] > probe[1] + 70.0:
+                continue
+            if b[0][0] <= probe[0] <= b[0][1] and b[2][0] <= probe[2] <= b[2][1]:
+                return False
+        return True
+
+    # Everything that reads as an opening or as dressing on an elevation, so
+    # the blank test below can ask whether a wall has any.
+    OPENING = ("Window", "Glass", "Door", "Lancet", "Casement", "Oculus",
+               "Buttress", "Pilaster", "Lantern", "Board", "Sign", "Bay",
+               "Porch", "Balcony", "Hood", "Arch")
+    dressing = defaultdict(list)
+    for q in parts:
+        if not any(w in q["n"] for w in OPENING):
+            continue
+        b = aabb(q)
+        for cx in range(int(b[0][0] // CELL), int(b[0][1] // CELL) + 1):
+            for cz in range(int(b[2][0] // CELL), int(b[2][1] // CELL) + 1):
+                dressing[(cx, cz)].append((q, b))
+
+    bad, blank, panels = [], [], 0
     for p in parts:
         n = p["n"]
         if any(w in n for w in NOT) or not any(w in n for w in WALLS):
             continue
         b = aabb(p)
-        if b[1][0] > 2.0 or b[1][1] < 6.0:      # not founded on the ground
+        # A wall you can hang a lantern on is one founded on the ground. An
+        # upper storey is still an ELEVATION though -- the staff lodge's blank
+        # west wall starts thirty studs up -- so this only gates the lit rule
+        # below, not the blank one.
+        founded = b[1][0] <= 2.0
+        if b[1][1] < 6.0:
             continue
         w, h, d = (b[i][1] - b[i][0] for i in range(3))
         if h < 6.0:
@@ -145,7 +181,7 @@ def main():
                 while y < top:
                     q = [0.0, 0.0, 0.0]
                     q[axis], q[other], q[1] = face, a, y
-                    if exposed(p, q, normal):
+                    if exposed(p, q, normal) and outdoor(q, normal):
                         seen += 1
                         pts += 1
                         if landing(q[0], q[1], q[2], normal) < DARK:
@@ -155,7 +191,35 @@ def main():
             if seen < 6:            # an internal or buried face; not an elevation
                 continue
             panels += 1
-            if dark / pts > DARK_SHARE:
+            # BLANK. An exposed elevation with not one window, door, buttress,
+            # lantern or board on it. The staff lodge is three storeys with
+            # twenty-four windows, every one of them on its north or its south
+            # face -- 3392 square studs of west elevation without an opening
+            # in it -- and no check in this repo could say so, because
+            # window_check can only measure the windows that exist.
+            found = 0
+            for dx in (-2, -1, 0, 1, 2):
+                for dz in (-2, -1, 0, 1, 2):
+                    key = (int(p["p"][0] // CELL) + dx, int(p["p"][2] // CELL) + dz)
+                    for q, qb in dressing.get(key, ()):
+                        # `face` already stands 0.4 off the wall, and a window
+                        # set flush in a 2.2-thick wall has its centre 1.5
+                        # behind that -- so a -1.5 lower bound excluded every
+                        # flush window in the map by exactly nothing.
+                        off = ((qb[axis][0] + qb[axis][1]) / 2 - face) * sign
+                        if not (-3.5 < off < 7.0):
+                            continue
+                        mid = (qb[other][0] + qb[other][1]) / 2
+                        if not (b[other][0] < mid < b[other][1]):
+                            continue
+                        my = (qb[1][0] + qb[1][1]) / 2
+                        if not (b[1][0] - 1.0 < my < b[1][1] + 1.0):
+                            continue
+                        found += 1
+            if found == 0 and span * (top - b[1][0]) >= 1200.0:
+                blank.append((round(span * (top - b[1][0])), n,
+                              [round(v) for v in p["p"]], "-+"[sign > 0] + "xyz"[axis]))
+            if founded and dark / pts > DARK_SHARE:
                 bad.append((dark / pts, n, [round(v) for v in p["p"]],
                             round(span * (top - b[1][0])), "-+"[sign > 0] + "xyz"[axis]))
 
@@ -164,9 +228,14 @@ def main():
         bad.sort(reverse=True)
         for share, name, pos, area, face in bad[:24]:
             print(f"  {share:.0%} dark  {name:20} at {pos} face {face}  {area} sq studs")
-        print(f"FAIL - {len(bad)} elevations have no light on them")
+    if blank:
+        blank.sort(reverse=True)
+        for area, name, pos, face in blank[:16]:
+            print(f"  blank      {name:20} at {pos} face {face}  {area} sq studs, no opening")
+    if bad or blank:
+        print(f"FAIL - {len(bad)} elevations unlit, {len(blank)} with nothing on them")
         return 1
-    print("PASS - every exposed elevation carries light")
+    print("PASS - every exposed elevation carries light and openings")
     return 0
 
 
