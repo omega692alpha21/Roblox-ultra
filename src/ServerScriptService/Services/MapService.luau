@@ -6008,10 +6008,16 @@ local function buildSpiral(
 		local y = topY - i * RISE
 		local px = centre.X + math.cos(angle) * radius
 		local pz = centre.Z + math.sin(angle) * radius
+		-- 1.5 thick, not 1.2, hung so the top stays at y. The rise is 1.4, so
+		-- at 1.2 every tread left two tenths of daylight under the one above
+		-- it: from anywhere below, a stone newel stair you could see straight
+		-- through. At 1.5 consecutive treads lap by a tenth and the stair is
+		-- solid, and no two of them share a plane -- their tops are a full
+		-- rise apart and their sides are at different angles.
 		part({
 			Name = "SanctumTread",
-			Size = Vector3.new(radius * 1.5, 1.2, tread),
-			CFrame = CFrame.new(px, y - 0.6, pz) * CFrame.Angles(0, -angle, 0),
+			Size = Vector3.new(radius * 1.5, 1.5, tread),
+			CFrame = CFrame.new(px, y - 0.75, pz) * CFrame.Angles(0, -angle, 0),
 			Color = Color3.fromRGB(150, 142, 128),
 			Material = Enum.Material.Slate,
 			Parent = parent,
