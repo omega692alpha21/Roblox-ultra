@@ -11312,8 +11312,11 @@ end
 
 -- A radiator under a window: brackets, fins, a top rail and a valve. Twelve
 -- parts, and the one object that says a room is heated rather than modelled.
-local function radiator(parent: Instance, x: number, z: number, face: number)
-	local at = CFrame.new(x, 0, z) * CFrame.Angles(0, math.rad(face), 0)
+-- `y` is the floor it stands on. Without it every radiator was built at y 0,
+-- so the upper-storey corridors stacked theirs on top of the ground floor's:
+-- 121 coplanar pairs of RadiatorRail, and three blocked routes.
+local function radiator(parent: Instance, x: number, z: number, face: number, y: number?)
+	local at = CFrame.new(x, y or 0, z) * CFrame.Angles(0, math.rad(face), 0)
 	for _, sx in { -3.4, 3.4 } do
 		part({ Name = "RadiatorBracket", Size = Vector3.new(0.6, 0.9, 1.6), CFrame = at * CFrame.new(sx, 0.45, 0), Color = Color3.fromRGB(58, 60, 64), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 	end
@@ -11578,6 +11581,81 @@ end
 -- One fitting every twenty-two studs, at the head of each storey, skipping
 -- anywhere a light already reaches so the rooms that were done by hand keep
 -- their own fittings.
+-- Put something in the corridors.
+--
+-- Ranking every room in the drawing by contents per thousand square studs
+-- puts sixteen corridors at exactly zero: both of the cafeteria's, four of
+-- the Academy's cross-corridors, and all ten of the dorm range's, at eighteen
+-- hundred square studs each. They have a floor, two walls, a ceiling and a
+-- lantern, and nothing else at all -- and a corridor is where a player spends
+-- the time between the rooms.
+--
+-- Everything here stands against a wall, two studs off it, so the middle of
+-- the run stays clear: CampusPlan asks for 24 studs of clear corridor and
+-- door_check walks it.
+local function dressCorridors(parent: Instance)
+	-- NOT the Academy. Its corridors are hand-built and already furnished --
+	-- locker islands, benches, water coolers -- and its plan cells cover
+	-- spaces the drawing calls corridor but the build uses for something
+	-- else: a bench went into the principal's office, one into the mission
+	-- courtyard, and one into the main hallway's north walking lane.
+	for _, name in { "Student Dorms", "Cafeteria", "Detention Hall", "Gymnasium", "Secret Rooftop" } do
+		local b = CampusPlan.building(name)
+		if not b then
+			continue
+		end
+		for level, storey in b.storeys do
+			if not b.storeyCorridors or not b.storeyCorridors[level] then
+				continue
+			end
+			for _, cell in CampusPlan.cells(b, level) do
+				if cell.kind ~= "corridor" then
+					continue
+				end
+				local x0, z0, x1, z1 = cell.rect[1], cell.rect[2], cell.rect[3], cell.rect[4]
+				local alongX = (x1 - x0) >= (z1 - z0)
+				local run = if alongX then x1 - x0 else z1 - z0
+				local across = if alongX then z1 - z0 else x1 - x0
+				if run < 24 or across < 12 then
+					continue
+				end
+				local y = storey.y
+				local lo = if alongX then x0 else z0
+				local nearWall = (if alongX then z0 else x0) + 2.4
+				local farWall = (if alongX then z1 else x1) - 2.4
+				local stations = math.max(2, math.floor(run / 34))
+				for i = 0, stations do
+					local t = (i + 0.5) / (stations + 1)
+					local along = lo + run * t
+					local side = if i % 2 == 0 then nearWall else farWall
+					local facing = if i % 2 == 0 then 0 else 180
+					local px = if alongX then along else side
+					local pz = if alongX then side else along
+					local yaw = (if alongX then 0 else 90) + facing
+					prop("Bench", CFrame.new(px, y, pz) * CFrame.Angles(0, math.rad(yaw), 0))
+					radiator(parent, px, pz, if alongX then facing else facing + 90, y)
+					if i == 0 then
+						prop("Extinguisher", CFrame.new(
+							if alongX then lo + 5 else side,
+							y,
+							if alongX then side else lo + 5
+						))
+					end
+					if i == 1 then
+						local bw = math.min(14, run / 4)
+						local bx = if alongX then along else side + (if facing == 0 then -1.4 else 1.4)
+						local bz = if alongX then side + (if facing == 0 then -1.4 else 1.4) else along
+						noticeBoard(parent, cell.name .. "Notices", CFrame.new(bx, y + 9.5, bz) * CFrame.Angles(0, math.rad(yaw), 0), bw, 5.5)
+					end
+					if i == stations then
+						prop("Bin", CFrame.new(px, y, pz))
+					end
+				end
+			end
+		end
+	end
+end
+
 local function buildRoomLights(parent: Instance)
 	-- Seed the skip list with the fittings that are ALREADY hanging. Tracking
 	-- only its own panels put a RoomLightSurround flat against thirteen
@@ -13705,6 +13783,7 @@ end
 	-- fittings already hanging in the map, and run first it saw none of them:
 	-- thirteen of its surrounds landed flat against existing CeilingPanels.
 	buildRoomLights(folder)
+	dressCorridors(folder)
 	local secretDoors = buildSanctum(folder)
 	furnishProps()
 
