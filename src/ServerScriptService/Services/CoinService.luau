@@ -19,9 +19,9 @@ local SPOTS = {
 	Vector3.new(10, 0, -9), Vector3.new(70, 0, 9), Vector3.new(125, 0, -8),
 	Vector3.new(0, 0, 35), Vector3.new(-30, 0, 100), Vector3.new(35, 0, 105),
 	Vector3.new(0, 0, 96), Vector3.new(-116, 0, 20), Vector3.new(116, 0, -20),
-	Vector3.new(-204, 0, -29), Vector3.new(-204, 0, 35), Vector3.new(204, 0, -29),
-	Vector3.new(0, 0, -100), Vector3.new(-74, 0, -94), Vector3.new(74, 0, -94),
-	Vector3.new(0, 0, -120), Vector3.new(-130, 0, 118),
+	Vector3.new(372, 0, -300), Vector3.new(-204, 0, 35), Vector3.new(204, 0, -29),
+	Vector3.new(425, 0, 437), Vector3.new(-74, 0, -94), Vector3.new(74, 0, -94),
+	Vector3.new(425, 0, 400), Vector3.new(-130, 0, 118),
 	Vector3.new(-120, 0, 178), Vector3.new(120, 0, 178),
 }
 

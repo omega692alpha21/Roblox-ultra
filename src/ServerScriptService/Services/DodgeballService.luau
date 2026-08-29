@@ -14,7 +14,9 @@ local Signals = require(script.Parent.Parent.Signals)
 
 local DodgeballService = {}
 
-local GYM = Vector3.new(0, 0, -100)
+-- The gym is its own building now, at CampusPlan's Gymnasium rect
+-- (330, 340)-(520, 470). This is the Sports hall cell's centre.
+local GYM = Vector3.new(425, 0, 437)
 local HIT_CASH = 120
 local THROW_SPEED = 95
 

@@ -28,7 +28,12 @@ local SanctumMap = {}
 -- north field. The quarter turn is what puts the boulevard on the west side,
 -- where the tunnel from the headmaster's office comes in.
 local SCALE = 0.6
-local ORIGIN = Vector3.new(-48, -120, -232)
+-- Moved with the library, which is the only thing this has to follow.
+-- Every part in this module is built in estate-local space and passed
+-- through ToWorld -- ORIGIN + ROT * (v * SCALE) -- so this one line
+-- carries the boulevard, the pyramid, the atrium, the grand hall, all four
+-- chambers, the crown jewel, and the derived Entrance and Landing.
+local ORIGIN = Vector3.new(-368, -120, -300)
 -- Turned so the estate's own +Z (the boulevard, running away from the pyramid)
 -- points along world -X.
 local YAW = -math.pi / 2

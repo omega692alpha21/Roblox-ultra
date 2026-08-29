@@ -18,8 +18,16 @@ local DataService = require(script.Parent.DataService)
 local JailService = {}
 
 -- the detention hall, east wing (matches MapService's floor plan)
-local CELL_CENTER = Vector3.new(204, 0, 35)
-local CELL_HALF_X, CELL_HALF_Z = 20, 29
+-- The detention hall is its own building now, at CampusPlan's rect
+-- (-485, -40)-(-315, 80); this is the Detention hall cell's centre. Note
+-- this was a SECOND copy of MapService's detentionCenter -- two sources of
+-- truth for where a sentence puts you -- and both had to move together.
+local CELL_CENTER = Vector3.new(-438, 0, -14)
+-- The leash, sized to the NEW room. These were 20 x 29 -- exactly the old
+-- Academy zone, 40 x 58 -- and the centre moved without them, so a sentence
+-- would have penned the player into a 40 x 58 box floating inside a 77 x 36
+-- hall: through two walls on one axis and short of them on the other.
+local CELL_HALF_X, CELL_HALF_Z = 36, 16
 
 local sentences: { [Player]: number } = {} -- player -> os.clock() release time
 local bars: { BasePart } = {}
@@ -144,7 +152,9 @@ end
 
 -- The bars: a physical cage that only exists while someone is serving.
 local function buildBars(folder: Instance)
-	local doorway = CFrame.new(204, 0, 64) -- the detention hall's door onto the corridor
+	-- The detention hall's own door, in its own building: CampusPlan puts it
+	-- at the north edge of the Detention hall cell, z = 4, on the corridor.
+	local doorway = CFrame.new(-438, 0, 4)
 	for i = 0, 6 do
 		local bar = Instance.new("Part")
 		bar.Name = "DetentionBar"

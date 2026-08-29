@@ -22,22 +22,54 @@ MIN_AREA = 12.0  # a tiny coplanar detail is not what anyone will notice
 CELL = 48.0
 
 
-def footprint(p):
-    """The part's actual four corners in plan, not its bounding box.
+def footprint(p, plane=(0, 2)):
+    """The part's real outline in a plane, not its bounding box.
 
     The running track is a ring of ROTATED chord segments, and an axis-aligned
     box round a rotated rectangle is much bigger than the rectangle. Measured
     that way every segment appeared to overlap its neighbours and the check
     reported 136 flickering pairs on a track that has none. A tool that cries
-    wolf gets ignored, so the plan test uses the real quadrilateral.
+    wolf gets ignored, so the test uses the real quadrilateral.
+
+    The same is true off the horizontal. A stair stringer is a plank thin in x
+    and TILTED about x, so its y-z bounding box is far larger than the plank;
+    measured that way the staff lodge's two flights appeared to share 54 square
+    studs each. `plane` names the two world axes to project onto, and the
+    outline is the part's own extent in them -- the convex hull of its eight
+    corners, which for a box is at most a hexagon, so a general hull is used
+    rather than assuming four points.
     """
     r, s_, q = p["r"], p["s"], p["p"]
-    hx, hz = s_[0] / 2, s_[2] / 2
-    out = []
-    for sx, sz in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-        lx, lz = sx * hx, sz * hz
-        out.append((q[0] + r[0] * lx + r[2] * lz, q[2] + r[6] * lx + r[8] * lz))
-    return out
+    h = [s_[i] / 2 for i in range(3)]
+    a, b = plane
+    pts = []
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            for sz in (-1, 1):
+                local = (sx * h[0], sy * h[1], sz * h[2])
+                world = [q[i] + sum(r[i * 3 + j] * local[j] for j in range(3)) for i in range(3)]
+                pts.append((world[a], world[b]))
+    return _hull(pts)
+
+
+def _hull(points):
+    """Andrew's monotone chain, returning the convex hull counter-clockwise."""
+    pts = sorted(set(points))
+    if len(pts) <= 2:
+        return pts
+
+    def half(seq):
+        out = []
+        for pt in seq:
+            while len(out) >= 2:
+                (x0, y0), (x1, y1) = out[-2], out[-1]
+                if (x1 - x0) * (pt[1] - y0) - (y1 - y0) * (pt[0] - x0) > 0:
+                    break
+                out.pop()
+            out.append(pt)
+        return out[:-1]
+
+    return half(pts) + half(reversed(pts))
 
 
 def _signed_area(poly):
@@ -54,6 +86,7 @@ def _clockwise(poly):
 
 
 def overlap_area(a, b):
+    # (both arguments are convex outlines; Sutherland-Hodgman needs no more)
     """Sutherland-Hodgman clip of one convex quad by the other, then shoelace.
 
     Winding matters and is not guaranteed: the inside test below assumes a
@@ -135,20 +168,27 @@ def main():
                     continue
                 seen.add(key)
                 ax = axa
-                if not any(abs(ba[ax][u] - bb[ax][v]) < SAME for u in (0, 1) for v in (0, 1)):
+                # SAME SIDE of the shared plane, not merely touching it.
+                #
+                # Two slabs butted face to face -- a roof plane meeting the
+                # next roof plane, a floor slab meeting the one beside it --
+                # have one face pointing up into the other's underside. Both
+                # are back-face culled and neither is ever drawn, so nothing
+                # flickers; this was counting every butt joint on the campus.
+                # A depth fight needs the two solids on the SAME side: two
+                # tops in one plane, or two undersides.
+                if not (abs(ba[ax][0] - bb[ax][0]) < SAME or abs(ba[ax][1] - bb[ax][1]) < SAME):
                     continue
                 face = [i for i in range(3) if i != ax]
                 laps = [min(ba[f][1], bb[f][1]) - max(ba[f][0], bb[f][0]) for f in face]
                 if laps[0] <= 0.2 or laps[1] <= 0.2:
                     continue
-                if ax == 1:
-                    # horizontal: use the real oriented footprints, because an
-                    # axis-aligned box round a rotated rectangle is much bigger
-                    # than the rectangle and the running track showed 136 pairs
-                    # it does not have
-                    area = overlap_area(footprint(pa), footprint(pb))
-                else:
-                    area = laps[0] * laps[1]
+                # The real oriented outlines, on whichever plane the panel
+                # lies in. An axis-aligned box round a rotated part is much
+                # bigger than the part: measured that way the running track
+                # showed 136 pairs it does not have, and the staff lodge's two
+                # stair flights two more.
+                area = overlap_area(footprint(pa, tuple(face)), footprint(pb, tuple(face)))
                 if area < MIN_AREA:
                     continue
                 bad.append((pa["n"], pb["n"], round(area), [round(v) for v in pa["p"]]))

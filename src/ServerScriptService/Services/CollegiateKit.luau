@@ -225,29 +225,35 @@ end
 -- FAR side of the springing, which gives radius S/2 + c and puts the apex
 -- exactly on both arcs. Set c to zero and you get a semicircle -- a Roman arch,
 -- the wrong century.
-function CollegiateKit.pointedArch(ctx: Ctx, o: { x: number, y: number, z: number, span: number, rise: number, depth: number, ring: number?, segments: number?, colour: Color3?, tagName: string? })
+function CollegiateKit.pointedArch(ctx: Ctx, o: { x: number, y: number, z: number, span: number, rise: number, depth: number, ring: number?, segments: number?, colour: Color3?, tagName: string?, yaw: number? })
 	local ring = o.ring or 2.2
 	local n = o.segments or 9
 	local colour = o.colour or CollegiateKit.ASHLAR
 	local tagName = o.tagName or "TexAshlar"
+	-- An arch on a wall that faces east or west has to be turned to face it.
+	-- Without this the only way to place one on a side elevation was to swap
+	-- the x and z arguments, which does not rotate the arch -- it moves it to
+	-- a completely different place on the map. Every side entrance PlanBuilder
+	-- built had its arch somewhere else entirely.
+	local yaw = CFrame.Angles(0, o.yaw or 0, 0)
+	local anchor = CFrame.new(o.x, 0, o.z) * yaw
 	local halfSpan = o.span / 2
 	local c = (o.rise * o.rise - halfSpan * halfSpan) / o.span
 	local radius = halfSpan + c
 	local sweep = math.atan2(o.rise, c)
 
 	for _, side in { -1, 1 } do
-		local cx = o.x - side * c
 		for i = 0, n - 1 do
 			local a0 = sweep * (i / n)
 			local a1 = sweep * ((i + 1) / n)
 			local mid = (a0 + a1) / 2
 			local segLen = radius * (a1 - a0) * 1.08
-			local px = cx + side * radius * math.cos(mid)
+			local px = side * radius * math.cos(mid) - side * c
 			local py = o.y + radius * math.sin(mid)
 			local block = ctx.part({
 				Name = "ArchVoussoir",
 				Size = Vector3.new(ring, segLen, o.depth),
-				CFrame = CFrame.new(px, py, o.z) * CFrame.Angles(0, 0, side * mid),
+				CFrame = anchor * CFrame.new(px, py, 0) * CFrame.Angles(0, 0, side * mid),
 				Color = colour,
 				Material = Enum.Material.Concrete,
 				Parent = ctx.parent,
@@ -259,9 +265,9 @@ function CollegiateKit.pointedArch(ctx: Ctx, o: { x: number, y: number, z: numbe
 	-- the springer each side and the apex block, which are the pieces that make
 	-- an arch look built rather than drawn
 	for _, side in { -1, 1 } do
-		ctx.tag(ctx.part({ Name = "ArchSpringer", Size = Vector3.new(ring + 1.4, 1.6, o.depth + 0.6), CFrame = CFrame.new(o.x + side * halfSpan, o.y - 0.4, o.z), Color = colour, Material = Enum.Material.Concrete, Parent = ctx.parent }), tagName).CanCollide = false
+		ctx.tag(ctx.part({ Name = "ArchSpringer", Size = Vector3.new(ring + 1.4, 1.6, o.depth + 0.6), CFrame = anchor * CFrame.new(side * halfSpan, o.y - 0.4, 0), Color = colour, Material = Enum.Material.Concrete, Parent = ctx.parent }), tagName).CanCollide = false
 	end
-	ctx.tag(ctx.part({ Name = "ArchApex", Size = Vector3.new(2.6, 3.0, o.depth + 0.6), CFrame = CFrame.new(o.x, o.y + o.rise + 0.6, o.z), Color = colour, Material = Enum.Material.Concrete, Parent = ctx.parent }), tagName).CanCollide = false
+	ctx.tag(ctx.part({ Name = "ArchApex", Size = Vector3.new(2.6, 3.0, o.depth + 0.6), CFrame = anchor * CFrame.new(0, o.y + o.rise + 0.6, 0), Color = colour, Material = Enum.Material.Concrete, Parent = ctx.parent }), tagName).CanCollide = false
 end
 
 -- ---------------------------------------------------------------------------

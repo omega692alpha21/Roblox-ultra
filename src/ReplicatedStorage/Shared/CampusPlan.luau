@@ -71,6 +71,12 @@ Plan.SITE = {
 	{ name = "Cafeteria", rect = { 220, -348, 420, -252 }, kind = "building" },
 	{ name = "Detention Hall", rect = { -485, -40, -315, 80 }, kind = "building" },
 	{ name = "Parking Lot", rect = { 335, -35, 525, 115 }, kind = "grounds" },
+	-- The two painted ball courts. They were built at (-300, -250) and
+	-- (300, -250), which the drawing gives to the Library and the Cafeteria --
+	-- so a basketball key was painted across the library floor and a
+	-- volleyball net stood in the servery. They belong on open ground east of
+	-- the Academy, between the car park and the cafeteria.
+	{ name = "Ball Courts", rect = { 250, -220, 530, -100 }, kind = "grounds" },
 	{ name = "Sports Field", rect = { 300, 150, 580, 320 }, kind = "grounds" },
 	{ name = "Gymnasium", rect = { 330, 340, 520, 470 }, kind = "building", link = { "Hidden Alley" } },
 	{ name = "Secret Rooftop", rect = { 155, 345, 265, 455 }, kind = "building", link = { "Hidden Alley" } },
@@ -500,6 +506,20 @@ function Plan.walls(b, storey: number)
 		end
 	end
 	return out
+end
+
+-- The site rect a name is drawn on, so a builder can take its extent from the
+-- drawing instead of holding its own copy of the numbers. The Great Court was
+-- drawn 300 x 150 at (0, 210) and built 280 x 84 at (0, 166): the fountain
+-- landed on the entrance steps and the court's paths crossed the approach at
+-- the wrong place, because nothing made the builder read what was drawn.
+function Plan.site(name: string)
+	for _, s in Plan.SITE do
+		if s.name == name then
+			return s
+		end
+	end
+	return nil
 end
 
 function Plan.building(name: string)

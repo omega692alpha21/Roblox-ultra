@@ -20,14 +20,17 @@ local rng = Random.new()
 
 -- campus-wide scatter points for the treasure hunt
 local HUNT_SPOTS = {
-	Vector3.new(-150, 0, 70), Vector3.new(150, 0, 70), Vector3.new(20, 0, 152),
-	Vector3.new(-204, 0, -29), Vector3.new(0, 0, -100), Vector3.new(-204, 0, 35),
+	Vector3.new(-150, 0, 70), Vector3.new(150, 0, 70), Vector3.new(-114, 0, 182),
+	Vector3.new(372, 0, -300), Vector3.new(425, 0, 437), Vector3.new(-438, 0, -14),
 	Vector3.new(204, 0, -29), Vector3.new(-74, 0, -94), Vector3.new(-136, 0, 196),
 	Vector3.new(136, 0, 196), Vector3.new(0, 0, 6), Vector3.new(-116, 0, 20),
 }
 
 -- cafeteria cluster for the food fight frenzy
-local CAFETERIA = Vector3.new(-204, 0, -29)
+-- The cafeteria moved out of the Academy's west wing into its own building
+-- at CampusPlan's Cafeteria rect (220, -348)-(420, -252); this is the
+-- Dining hall cell's centre.
+local CAFETERIA = Vector3.new(372, 0, -300)
 
 local function announce(message: string)
 	Remotes.Get("Notify"):FireAllClients(message, "announce")

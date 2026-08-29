@@ -22,11 +22,12 @@ ROOMS = [
     ("lobby", 0, 100, 28, 20, 1),
     ("atrium", 0, 22, 28, 24, 1),
     ("upper corridor", 0, 65, 210, 14, 17),
-    ("gym", 0, -100, 46, 28, 1),
-    ("library", 0, -232, 44, 32, 1),
-    ("cafeteria", -204, -29, 18, 26, 1),
+    ("assembly hall", 0, -100, 46, 28, 1),
+    ("gymnasium", 425, 437, 82, 22, 1),
+    ("library", -320, -300, 44, 32, 1),
+    ("cafeteria", 372, -300, 36, 18, 1),
     ("principal office", -204, 35, 18, 26, 1),
-    ("detention", 204, 35, 18, 26, 1),
+    ("detention", -438, -14, 34, 16, 1),
     ("trophy room", 204, -29, 18, 26, 1),
     ("room 101", -74, -95, 12, 26, 1),
     ("music room", 74, -95, 12, 26, 1),
@@ -38,7 +39,7 @@ ROOMS = [
     ("staff studies", -300, -170, 38, 28, 20),
     ("headmaster office", -300, -170, 38, 28, 36),
     ("headmaster turret", -249, -186, 8, 8, 20),
-    ("library passage", -73, -222, 26, 5, 1),
+    ("library passage", -393, -290, 26, 5, 1),
 ]
 
 STEP = 8.0

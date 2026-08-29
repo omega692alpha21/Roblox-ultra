@@ -155,8 +155,17 @@ local function windowsAlong(
 		if blocked then
 			continue
 		end
-		local y = baseY + SILL + WINDOW_H / 2
-		if y + WINDOW_H / 2 > baseY + height - 1.5 then
+		-- Size the window to the STOREY, not to a constant.
+		--
+		-- With a fixed 11-stud light on a 5-stud sill, a sixteen-stud storey
+		-- fails the headroom guard for every opening, and the guard is a silent
+		-- `continue` -- so the Secret Rooftop block came out with four blank
+		-- elevations and the parts simply were not there. Nothing in the suite
+		-- could tell that from a building that had no windows drawn.
+		local wh = math.clamp(height * 0.44, 4.5, 13.0)
+		local sill = math.max(3.0, height * 0.22)
+		local y = baseY + sill + wh / 2
+		if y + wh / 2 > baseY + height - 1.2 then
 			continue
 		end
 		-- An exterior wall is eight studs thick and centred on the building
@@ -172,17 +181,17 @@ local function windowsAlong(
 				else CFrame.new(across + outward * (face + push), y, at)
 			return size, cf
 		end
-		local sSize, sCf = at3(WINDOW_W + 3.0, WINDOW_H + 3.0, 1.4, -0.5)
+		local sSize, sCf = at3(WINDOW_W + 3.0, wh + 3.0, 1.4, -0.5)
 		ctx.tag(ctx.part({ Name = "PlanWindowSurround", Size = sSize, CFrame = sCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
-		local gSize, gCf = at3(WINDOW_W, WINDOW_H, 0.6, 0.4)
+		local gSize, gCf = at3(WINDOW_W, wh, 0.6, 0.4)
 		local pane = ctx.part({ Name = "PlanWindowGlass", Size = gSize, CFrame = gCf, Color = GLASS_LIT, Material = Enum.Material.Neon, Transparency = 0.34, Parent = ctx.parent })
 		pane.CanCollide = false
 		pane.CastShadow = false
-		local mSize, mCf = at3(0.5, WINDOW_H, 0.8, 0.7)
+		local mSize, mCf = at3(0.5, wh, 0.8, 0.7)
 		ctx.part({ Name = "PlanWindowMullion", Size = mSize, CFrame = mCf, Color = FRAME, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
 		local silSize, silCf = at3(WINDOW_W + 4.0, 0.7, 2.2, 0.1)
 		local sill = ctx.part({ Name = "PlanWindowSill", Size = silSize, CFrame = silCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent })
-		sill.CFrame = silCf - Vector3.new(0, WINDOW_H / 2 + 0.4, 0)
+		sill.CFrame = silCf - Vector3.new(0, wh / 2 + 0.4, 0)
 		sill.CanCollide = false
 		ctx.tag(sill, "TexAshlar")
 		if i % 2 == 1 then
@@ -426,10 +435,13 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 		end
 		-- an arch over it, and a name board over that
 		local span = e.width + 4
+		-- Turned to face the wall it is in, not transposed. Swapping x and z
+		-- does not rotate an arch; it puts it somewhere else on the map.
 		Kit.pointedArch(K, {
-			x = if vertical then ez else ex,
+			x = ex,
 			y = doorH + 0.4,
-			z = if vertical then ex else ez,
+			z = ez,
+			yaw = if vertical then math.rad(90) else 0,
 			span = span,
 			rise = span * 0.75,
 			depth = 3.0,

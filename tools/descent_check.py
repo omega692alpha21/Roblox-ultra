@@ -16,7 +16,7 @@ tread, which is the coordinate the game genuinely leaves you standing on.
     python3 tools/sanctum_export.py && python3 tools/render_map.py . tools
     python3 tools/descent_check.py
 """
-import json, math, os, sys
+import json, re, math, os, sys
 from collections import deque
 
 import numpy as np
@@ -37,11 +37,44 @@ FLOOR_Y = -119.5
 # shaft from where the stair actually ends.
 SPIRAL_RISE = 1.4
 SPIRAL_PER_TURN = 24
-DESCENTS = [
-    ("library spiral", -100.0, -222.0, 6.5, 0.0, -17.4),
-    ("headmaster spiral", -249.0, -186.0, 7.0, math.pi, 33.6),
-]
 
+# READ from the source, not copied into it.
+#
+# These were hard-coded here as the same numbers MapService builds the spirals
+# from -- and when the library moved to its drawn ground, taking the whole
+# pyramid estate with it, this file did not move. It reported the library
+# spiral's last tread landing on nothing, at a coordinate the map no longer
+# has anything at, which is a tool failing rather than a map failing. The
+# constants are parsed out of MapService and SanctumMap instead, so a building
+# that moves takes its checks with it.
+def _luau_vec3(source, name):
+    m = re.search(r"local\s+" + name + r"\s*=\s*Vector3\.new\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)", source)
+    if not m:
+        raise SystemExit(f"descent_check: cannot find {name} in the source")
+    return tuple(float(g) for g in m.groups())
+
+
+def _luau_number(source, name):
+    m = re.search(r"local\s+" + name + r"\s*=\s*(-?[\d.]+)", source)
+    if not m:
+        raise SystemExit(f"descent_check: cannot find {name} in the source")
+    return float(m.group(1))
+
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_REPO = os.path.dirname(_HERE)
+_MAP_SRC = open(os.path.join(_REPO, "src/ServerScriptService/Services/MapService.luau")).read()
+_SANCTUM_SRC = open(os.path.join(_REPO, "src/ServerScriptService/Services/SanctumMap.luau")).read()
+
+LIB_SHAFT = _luau_vec3(_MAP_SRC, "LIB_SHAFT")
+HEAD_SHAFT = _luau_vec3(_MAP_SRC, "HEAD_SHAFT") if "local HEAD_SHAFT" in _MAP_SRC else (-249.0, 0.0, -186.0)
+ORIGIN = _luau_vec3(_SANCTUM_SRC, "ORIGIN")
+SCALE = _luau_number(_SANCTUM_SRC, "SCALE")
+
+DESCENTS = [
+    ("library spiral", LIB_SHAFT[0], LIB_SHAFT[2], 6.5, 0.0, -17.4),
+    ("headmaster spiral", HEAD_SHAFT[0], HEAD_SHAFT[2], 7.0, math.pi, 33.6),
+]
 
 def last_tread(cx, cz, radius, facing, top):
     steps = max(4, int((top - FLOOR_Y) / SPIRAL_RISE))
@@ -52,10 +85,18 @@ def last_tread(cx, cz, radius, facing, top):
 # floor is ninety-five studs across: touching one cell of its outermost edge is
 # not standing in the hall, and a check that accepts that would pass on a
 # pyramid you can only see the doorstep of.
+# Estate-LOCAL points, put through SanctumMap's own transform. ToWorld is
+# ORIGIN + ROT * (v * SCALE) with ROT a yaw of -pi/2, which maps local (x,y,z)
+# to world (-z, y, x) -- so these follow the estate wherever it is anchored
+# instead of being three more numbers to forget to update.
+def _to_world(lx, lz):
+    return (ORIGIN[0] - lz * SCALE, ORIGIN[2] + lx * SCALE)
+
+
 MUST_REACH = [
-    ("the atrium", (-63.9, -232.0)),
-    ("the grand hall", (0.0, -232.0)),
-    ("the boulevard", (-123.0, -232.0)),
+    ("the atrium", _to_world(0.0, 26.0)),
+    ("the grand hall", _to_world(0.0, -80.0)),
+    ("the boulevard", _to_world(0.0, 125.0)),
 ]
 
 

@@ -17,7 +17,7 @@ local JailService = require(script.Parent.JailService)
 
 local CurfewService = {}
 
-local detentionSpot = Vector3.new(204, 0, 35)
+local detentionSpot = Vector3.new(-438, 0, -14)
 local night = false
 local streaks: { [Player]: number } = {}
 local rng = Random.new()
@@ -26,9 +26,22 @@ local rng = Random.new()
 local function isIndoors(pos: Vector3): boolean
 	-- the school footprint from the floor plan (the courtyards are open to
 	-- the sky, so standing in one still counts as being outdoors at night)
-	if (math.abs(pos.X) < 236 and pos.Z > -160 and pos.Z < 136)
-		-- the library counts too: it is a building, prefects do not raid it
-		or (math.abs(pos.X) < 46 and pos.Z > -266 and pos.Z < -198) then
+	-- Every roofed building on the campus, not just the Academy. The ring
+	-- buildings moved out to their drawn ground -- the library to (-320, -300),
+	-- the cafeteria to (320, -300), the detention hall to (-400, 20) and the
+	-- gymnasium to (425, 405) -- and standing inside any of them is indoors.
+	-- Left as it was, a player sheltering in the new cafeteria at midnight was
+	-- still counted as out after curfew and hunted by prefects.
+	local function inside(cx: number, cz: number, hx: number, hz: number): boolean
+		return math.abs(pos.X - cx) < hx and math.abs(pos.Z - cz) < hz
+	end
+	if inside(0, -12, 236, 148)
+		or inside(-320, -300, 100, 48)   -- library
+		or inside(320, -300, 100, 48)    -- cafeteria
+		or inside(-400, 20, 85, 60)      -- detention hall
+		or inside(425, 405, 95, 65)      -- gymnasium
+		or inside(210, 400, 55, 55)      -- the rooftop block
+		or inside(0, -310, 150, 60) then -- student dorms
 		local inWestCourt = math.abs(pos.X + 116) < 56 and math.abs(pos.Z) < 52
 		local inEastCourt = math.abs(pos.X - 116) < 56 and math.abs(pos.Z) < 52
 		if not (inWestCourt or inEastCourt) then

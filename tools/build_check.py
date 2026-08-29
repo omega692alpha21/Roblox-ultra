@@ -70,6 +70,12 @@ def main():
         for p in parts:
             if not overlaps(aabb(p), r["rect"]):
                 continue
+            # A reserve is ground to BUILD ON. Something below grade does not
+            # stop anyone building above it, and the pyramid's cavern
+            # legitimately runs under the south edge of the plot -- its roof is
+            # sixteen studs down, which is foundation depth, not surface.
+            if p["p"][1] < -10:
+                continue
             if any(w in p["n"] for w in SCENERY):
                 wild += 1
             else:
@@ -127,6 +133,22 @@ def main():
         tall[p["n"]] += 1
     for name, n in tall.most_common(8):
         bad.append(("sightline", f"{n} x {name} rises over {SIGHT_MAX_HEIGHT:.0f} studs on the axis"))
+
+    # ---- E2. and it has windows in it --------------------------------------
+    # A blank elevation is not something any other check can see: the parts are
+    # simply absent, and absence looks exactly like a building that was drawn
+    # without windows. The Secret Rooftop block shipped with four blank walls
+    # because a fixed window height did not fit a sixteen-stud storey and the
+    # guard that caught it was a silent skip.
+    for entry in plan["site"]:
+        if entry["kind"] != "building":
+            continue
+        r = entry["rect"]
+        lit = sum(1 for p in parts
+                  if ("Window" in p["n"] or "Lancet" in p["n"] or "Dormer" in p["n"])
+                  and r[0] - 6 < p["p"][0] < r[2] + 6 and r[1] - 6 < p["p"][2] < r[3] + 6)
+        if lit < 8:
+            bad.append(("blank", f"{entry['name']} has {lit} window parts; its elevations are bare"))
 
     # ---- E. every drawn building is actually there -------------------------
     for entry in plan["site"]:

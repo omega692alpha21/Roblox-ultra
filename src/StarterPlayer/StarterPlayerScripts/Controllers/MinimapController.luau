@@ -29,7 +29,10 @@ type Shape = { x: number, z: number, w: number, d: number, color: Color3, z2: nu
 -- the campus, from MapService's floor plan
 local SHAPES: { Shape } = {
 	{ x = 0, z = -12, w = 452, d = 252, color = Color3.fromRGB(72, 78, 92) }, -- building mass
-	{ x = 0, z = -135, w = 104, d = 26, color = Color3.fromRGB(72, 78, 92) }, -- gym block
+	{ x = 425, z = 405, w = 190, d = 130, color = Color3.fromRGB(72, 78, 92) }, -- gymnasium
+	{ x = 320, z = -300, w = 200, d = 96, color = Color3.fromRGB(72, 78, 92) }, -- cafeteria
+	{ x = -400, z = 20, w = 170, d = 120, color = Color3.fromRGB(72, 78, 92) }, -- detention hall
+	{ x = -320, z = -300, w = 200, d = 96, color = Color3.fromRGB(72, 78, 92) }, -- library
 	{ x = -116, z = 0, w = 112, d = 104, color = Color3.fromRGB(86, 132, 74) }, -- west courtyard
 	{ x = 116, z = 0, w = 112, d = 104, color = Color3.fromRGB(86, 132, 74) }, -- east courtyard
 	{ x = 0, z = 70, w = 448, d = 22, color = Color3.fromRGB(148, 154, 168) }, -- main corridor
@@ -47,11 +50,11 @@ local SHAPES: { Shape } = {
 
 type Marker = { x: number, z: number, icon: string, color: Color3 }
 local MARKERS: { Marker } = {
-	{ x = 0, z = -105, icon = "🏀", color = Color3.fromRGB(255, 196, 80) },
-	{ x = -204, z = -29, icon = "🍔", color = Color3.fromRGB(255, 214, 120) },
+	{ x = 425, z = 437, icon = "🏀", color = Color3.fromRGB(255, 196, 80) },
+	{ x = 372, z = -300, icon = "🍔", color = Color3.fromRGB(255, 214, 120) },
 	{ x = -204, z = 35, icon = "🏛️", color = Color3.fromRGB(190, 214, 255) },
 	{ x = 204, z = -29, icon = "🏆", color = Color3.fromRGB(255, 232, 140) },
-	{ x = 204, z = 35, icon = "🔒", color = Color3.fromRGB(255, 120, 110) },
+	{ x = -438, z = -14, icon = "🔒", color = Color3.fromRGB(255, 120, 110) },
 	{ x = -74, z = -94, icon = "➗", color = Color3.fromRGB(120, 176, 255) },
 	{ x = 74, z = -94, icon = "🎵", color = Color3.fromRGB(212, 160, 240) },
 	{ x = -116, z = -28, icon = "🧬", color = Color3.fromRGB(150, 220, 130) },

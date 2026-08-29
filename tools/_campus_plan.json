@@ -5516,6 +5516,16 @@
   },
   {
    "kind": "grounds",
+   "name": "Ball Courts",
+   "rect": [
+    250,
+    -220,
+    530,
+    -100
+   ]
+  },
+  {
+   "kind": "grounds",
    "name": "Sports Field",
    "rect": [
     300,

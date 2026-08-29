@@ -17,7 +17,7 @@ questions of the exported part dump:
     python3 tools/world_audit.py <dump>
 """
 import math
-import json, math, os, re, sys
+import json, re, math, os, re, sys
 
 DUMP = sys.argv[1] if len(sys.argv) > 1 else "_map_export.json"
 REPO = sys.argv[2] if len(sys.argv) > 2 else "."
@@ -147,11 +147,11 @@ CARVED = [
     (-52, -148, 52, -122),       # gym protrusion
     (-226, -275, -126, -189),    # boys dorm
     (126, -275, 226, -189),      # girls dorm
-    (-48, -268, 48, -196),       # library
+    (-368, -336, -272, -264),    # library, on its drawn ground
     (-348, -208, -252, -132),    # staff lodge
     (-263, -200, -235, -172),    # the turret
-    (-102, -232, -44, -212),     # the library's passage
-    (-113, -235, -87, -209),     # the library's shaft
+    (-422, -300, -364, -280),    # the library's passage
+    (-433, -303, -407, -277),    # the library's shaft
     (-380, -44, -300, 4),        # the swimming pool's basin
 ]
 
@@ -272,19 +272,20 @@ def collect():
         ("infirmary", 122, 17, -94),
         ("sanctum cupboard", -216, 0, 30),
         ("sanctum stair head", -216, 0, 22),
-        ("cafeteria", -204, 0, -29),
+        ("cafeteria", 372, 0, -300),
         ("principal office", -204, 0, 46),
-        ("gym floor", 0, 0, -100),
+        ("assembly hall floor", 0, 0, -100),
         ("greenhouse", -116, 1, -28),
         ("east lab", 116, 0, -33.5),
         ("room 101", -74, 0, -95),
         ("music room", 74, 0, -95),
-        ("library floor", 0, 0, -210),
+        ("library floor", -320, 0, -278),
+        ("gymnasium floor", 425, 0, 437),
         ("onboarding hub", 0, 3, 70),
         ("mission npc lunch lady", -204, 0, 50),
         ("mission npc courtyard", 150, 0, 10),
-        ("mission npc cafeteria", -204, 0, -6),
-        ("detention cell", 204, 0, 35),
+        ("mission npc cafeteria", 280, 0, -280),
+        ("detention cell", -438, 0, -14),
         ("dorm west", -176, 2, -220),
         ("dorm west upstairs", -190, 18, -240),
         ("dorm east upstairs", 162, 18, -240),
@@ -299,6 +300,26 @@ def collect():
         spots.append((f"homeroom south {i + 1}", [x, 0, 103]))
         spots.append((f"homeroom north {i + 1}", [x, 0, -94]))
     return spots
+
+
+def _luau_vec3(source, name):
+    m = re.search(r"local\s+" + name + r"\s*=\s*Vector3\.new\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)", source)
+    if not m:
+        raise SystemExit(f"world_audit: cannot find {name} in MapService")
+    return tuple(float(g) for g in m.groups())
+
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_MAP_SRC = open(os.path.join(os.path.dirname(_HERE), "src/ServerScriptService/Services/MapService.luau")).read()
+_SANCTUM_ENTRANCE = _luau_vec3(_MAP_SRC, "SANCTUM_ENTRANCE")
+_TURRET = _luau_vec3(_MAP_SRC, "TURRET")
+# The tunnel leaves the turret shaft through whichever doorway faces the
+# sanctum, and moving the library REVERSED that: the entrance used to be east
+# of the turret and is now well to the west, so the mouth flipped to the other
+# side of the shaft. Derive which side rather than typing a point that is only
+# right until something moves.
+_MOUTH_SIDE = -1.0 if _SANCTUM_ENTRANCE[0] < _TURRET[0] else 1.0
+_HEAD_MOUTH = (_TURRET[0] + _MOUTH_SIDE * 13.0, _SANCTUM_ENTRANCE[1], _TURRET[2])
 
 
 # Routes a player actually walks, sampled end to end. The "can't go upstairs"
@@ -317,13 +338,17 @@ WALKS = [
     # the two ways down to the estate under the library
     # The tunnels themselves. The boulevard beyond them belongs to SanctumMap
     # and is proved by tools/sanctum_check.py, which reads a different dump.
-    ("headmaster tunnel", (-237, -118, -186), (-158.4, -118, -232)),
+    # END READ FROM SOURCE. This was the old SANCTUM_ENTRANCE typed in by hand,
+    # and when the library moved -- taking the pyramid estate and the tunnel's
+    # far end with it -- the audit went on walking a line the map no longer has
+    # a tunnel under, and reported three bad spots in a tunnel that is fine.
+    ("headmaster tunnel", _HEAD_MOUTH, _SANCTUM_ENTRANCE),
     # From the reading room, through the secret door, into the passage. The
     # shelf opens on four digits and used to open onto twenty-six studs of
     # solid west wall, so the walk starts INSIDE the library and crosses the
     # wall line.
-    ("library secret door", (-38, 0, -222), (-56, 0, -222)),
-    ("library passage", (-88, -16, -222), (-100, -16, -222)),
+    ("library secret door", (-358, 0, -290), (-376, 0, -290)),
+    ("library passage", (-408, -16, -290), (-420, -16, -290)),
     ("lobby to atrium", (0, 0, 118), (0, 0, 20)),
     # The entrance hall, across as well as through. It is the first room
     # anybody sees and it had grown two life-size statues, three sofas and a
@@ -333,9 +358,12 @@ WALKS = [
     ("lobby east aisle", (36, 0, 121), (36, 0, 100)),
     ("lobby to stair W", (-46, 0, 121), (-46, 0, 113)),
     ("lobby to stair E", (46, 0, 121), (46, 0, 113)),
-    ("atrium to gym", (0, 0, 20), (0, 0, -98)),
-    ("gym to library path", (0, 0, -152), (0, 0, -186)),
-    ("library colonnade", (9, 0, -186), (9, 0, -204)),
+    ("atrium to assembly hall", (0, 0, 20), (0, 0, -98)),
+    # The library is at (-320, -300) now, so the walk that used to run south
+    # from the gym to its door does not exist. What replaces it is the walk
+    # from the Academy's rear doors out onto the back lawn.
+    ("academy rear to lawn", (0, 0, -152), (0, 0, -186)),
+    ("library colonnade", (-311, 0, -254), (-311, 0, -272)),
     # The stairs, sampled as ramps. This is the check that would have caught
     # the gap between the upper deck and the roof slabs the first time.
     ("lobby stair W", (-46, 0.5, 114), (-46, 16, 88)),
@@ -350,7 +378,7 @@ WALKS = [
 # estate, so they get walked tread by tread.
 SPIRALS = [
     ("headmaster spiral", -249, -186, 33.6, -119.5, 7.0, math.pi),
-    ("library spiral", -100, -222, -17.4, -119.5, 6.5, 0.0),
+    ("library spiral", -420, -290, -17.4, -119.5, 6.5, 0.0),
 ]
 # Every straight flight in the school, as (name, foot x/y/z, head x/y/z, half
 # width). A flight is walked tread by tread like the spirals: the centreline
@@ -362,7 +390,7 @@ STAIRS = [
     ("wing stair E", (178, 0.5, -9), (178, 16, 17), 5),
     ("lodge stair to studies", (-270, 3.5, -146), (-270, 19, -176.4), 4),
     ("lodge stair to office", (-270, 19.5, -140), (-270, 35, -170.4), 4),
-    ("library steps down", (-49, 0, -222), (-88, -16, -222), 5),
+    ("library steps down", (-369, 0, -290), (-408, -16, -290), 5),
     ("boys dorm stair", (-150, 2, -216), (-150, 18, -246.4), 4),
     ("girls dorm stair", (202, 2, -216), (202, 18, -246.4), 4),
 ]

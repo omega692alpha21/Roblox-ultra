@@ -128,8 +128,11 @@ local GIVERS: { Giver } = {
 		name = "Lunch Lady Sue",
 		baseId = "lunch_lady_supreme",
 		suitColor = Color3.fromRGB(230, 230, 235),
-		position = Vector3.new(-204, 0, -6),
-		faceToward = Vector3.new(-204, 0, -50),
+		-- In the new cafeteria's servery, at CampusPlan's Cafeteria rect
+		-- (220, -348)-(420, -252). She was standing in the Academy's west wing,
+		-- which is a classroom now.
+		position = Vector3.new(280, 0, -280),
+		faceToward = Vector3.new(330, 0, -290),
 		allDone = "Extra tots for you today, sugar. You've earned 'em.",
 		missions = {
 			{

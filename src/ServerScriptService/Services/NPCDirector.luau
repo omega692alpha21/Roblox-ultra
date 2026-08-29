@@ -12,9 +12,9 @@ local NPCDirector = {}
 local POIS = {
 	Vector3.new(-150, 0, 70), -- main corridor west
 	Vector3.new(150, 0, 70), -- main corridor east
-	Vector3.new(28, 0, 162), -- bus stop / spawn
-	Vector3.new(-204, 0, -29), -- cafeteria
-	Vector3.new(0, 0, -100), -- gym
+	Vector3.new(-114, 0, 182), -- bus stop / spawn, under the shelter roof
+	Vector3.new(372, 0, -300), -- cafeteria, in its own building now
+	Vector3.new(425, 0, 437), -- gym, in its own building now
 	Vector3.new(-116, 0, 0), -- west courtyard (cliques)
 	Vector3.new(116, 0, 0), -- east courtyard (courts)
 	Vector3.new(-74, 0, -94), -- classroom 101

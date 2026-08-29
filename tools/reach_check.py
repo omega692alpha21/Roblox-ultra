@@ -25,11 +25,25 @@ REPO = os.path.join(HERE, "..")
 DUMP = os.path.join(HERE, "_map_export.json")
 
 CELL = 1.0
-HALF = 460.0
-N = int(HALF * 2 / CELL)
 
-# Terrain: MapService lays a 900 x 900 grass slab just under y = 0.
-TERRAIN_HALF, TERRAIN_TOP = 450.0, -0.1
+# The grid is the PLOT, read from the drawing. It used to be a fixed 920 x 920
+# square centred on the origin, drawn when the campus was that size. The plot
+# is now 1640 x 1420 and reaches x = 840 and z = 780, so the gymnasium, the
+# sports field, the car park and both reserves sat off the edge of the grid --
+# every one of them read as "walled in" no matter what was built there, which
+# is a checker that cannot fail usefully.
+def _plot():
+    src = open(os.path.join(REPO, "src/ReplicatedStorage/Shared/CampusPlan.luau")).read()
+    m = re.search(r"Plan\.PLOT = \{ *([-\d.]+), *([-\d.]+), *([-\d.]+), *([-\d.]+) *\}", src)
+    return [float(v) for v in m.groups()]
+
+
+X0, Z0, X1, Z1 = _plot()
+NX = int((X1 - X0) / CELL)
+NZ = int((Z1 - Z0) / CELL)
+
+# Terrain: MapService fills the whole plot with a grass slab just under y = 0.
+TERRAIN_TOP = -0.1
 
 STEP_UP = 3.0     # how far above the level a surface can be and still be floor
 STEP_DOWN = 3.0
@@ -37,19 +51,27 @@ BODY_LOW = 0.6    # the band a body occupies above the floor
 BODY_HIGH = 5.0
 
 
-def grid_index(world):
-    return int((world + HALF) / CELL)
+def gx(world):
+    return int((world - X0) / CELL)
 
 
-def world_at(index):
-    return index * CELL - HALF + CELL / 2
+def gz(world):
+    return int((world - Z0) / CELL)
 
 
-def cells_covering(lo, hi):
+def world_x(index):
+    return index * CELL + X0 + CELL / 2
+
+
+def world_z(index):
+    return index * CELL + Z0 + CELL / 2
+
+
+def cells_covering(lo, hi, origin, n):
     """[first, last) cell indices whose centre lies between lo and hi."""
-    first = int(math.ceil((lo + HALF - CELL / 2) / CELL))
-    last = int(math.floor((hi + HALF - CELL / 2) / CELL)) + 1
-    return max(first, 0), min(last, N)
+    first = int(math.ceil((lo - origin - CELL / 2) / CELL))
+    last = int(math.floor((hi - origin - CELL / 2) / CELL)) + 1
+    return max(first, 0), min(last, n)
 
 
 def aabb(part):
@@ -61,7 +83,10 @@ def aabb(part):
 # Doors that are shut on purpose. A homeroom gate opens when you claim the
 # plot, so a reachability proof has to walk through it or every homeroom in
 # the school reads as walled in.
-OPENABLE = ("Gate",)
+# and the front doors, which are modelled swung open at 72 degrees. Every part
+# here is tested as an axis-aligned box, so a leaf standing at an angle reads
+# as a slab right across the opening it is standing clear of.
+OPENABLE = ("Gate", "MainDoor", "MainDoorGlass")
 
 
 def build_level(parts, level):
@@ -75,11 +100,10 @@ def build_level(parts, level):
     every cell of itself as blocked by itself.
     """
     boxes = []
-    floor = np.full((N, N), -1e9, dtype=np.float32)
+    floor = np.full((NX, NZ), -1e9, dtype=np.float32)
 
-    if level < 1:  # the ground storey sits on the terrain slab
-        lo, hi = grid_index(-TERRAIN_HALF), grid_index(TERRAIN_HALF)
-        floor[lo:hi, lo:hi] = TERRAIN_TOP
+    if level < 1:  # the ground storey sits on the terrain slab, which is the plot
+        floor[:, :] = TERRAIN_TOP
 
     for part in parts:
         if not part.get("cc") or part["n"] in OPENABLE:
@@ -89,8 +113,8 @@ def build_level(parts, level):
         # Touch-coverage inflates each box by up to a cell on all four sides,
         # which closed the five-stud aisle between the lab benches and left a
         # professor standing in an unreachable slot.
-        x0, x1 = cells_covering(box[0][0], box[0][1])
-        z0, z1 = cells_covering(box[2][0], box[2][1])
+        x0, x1 = cells_covering(box[0][0], box[0][1], X0, NX)
+        z0, z1 = cells_covering(box[2][0], box[2][1], Z0, NZ)
         if x1 <= x0 or z1 <= z0:
             continue
         top, bottom = box[1][1], box[1][0]
@@ -99,7 +123,7 @@ def build_level(parts, level):
             patch = floor[x0:x1, z0:z1]
             np.maximum(patch, top, out=patch)
 
-    blocked = np.zeros((N, N), dtype=bool)
+    blocked = np.zeros((NX, NZ), dtype=bool)
     for x0, x1, z0, z1, bottom, top in boxes:
         patch = floor[x0:x1, z0:z1]
         # in the way of a body standing on THIS cell's floor
@@ -113,7 +137,7 @@ def flood(walkable, floor, starts):
     seen = np.zeros_like(walkable)
     queue = deque()
     for sx, sz in starts:
-        if 0 <= sx < N and 0 <= sz < N and walkable[sx, sz] and not seen[sx, sz]:
+        if 0 <= sx < NX and 0 <= sz < NZ and walkable[sx, sz] and not seen[sx, sz]:
             seen[sx, sz] = True
             queue.append((sx, sz))
     while queue:
@@ -121,7 +145,7 @@ def flood(walkable, floor, starts):
         here = floor[x, z]
         for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             nx, nz = x + dx, z + dz
-            if 0 <= nx < N and 0 <= nz < N and walkable[nx, nz] and not seen[nx, nz]:
+            if 0 <= nx < NX and 0 <= nz < NZ and walkable[nx, nz] and not seen[nx, nz]:
                 # a Humanoid steps 2 studs; anything more is a wall or a drop
                 if abs(floor[nx, nz] - here) <= 2.2:
                     seen[nx, nz] = True
@@ -145,8 +169,8 @@ def rooms_from_source():
 FIXED = [
     # room centres the generated tables do not name
     ("lobby", [0, 0, 100]), ("atrium", [0, 0, 22]), ("gym floor", [0, 0, -100]),
-    ("library", [0, 0, -210]), ("cafeteria", [-204, 0, -29]), ("principal office", [-196, 0, 46]),
-    ("detention cell", [204, 0, 35]), ("trophy room", [204, 0, -29]),
+    ("library", [-320, 0, -278]), ("cafeteria", [372, 0, -300]), ("principal office", [-196, 0, 46]),
+    ("detention cell", [-438, 0, -14]), ("trophy room", [204, 0, -29]),
     ("greenhouse", [-116, 1, -28]), ("east lab", [116, 0, -28]),
     ("room 101", [-74, 0, -95]), ("music room", [74, 0, -95]),
     ("west dorm", [-176, 0, -212]), ("east dorm", [176, 0, -212]),
@@ -232,17 +256,31 @@ def main():
         walkable, floor = build_level(parts, level)
         levels[level] = (walkable, floor)
 
-    # start where a player starts: the courtyard outside the front doors
+    # Start where a player actually starts -- the SpawnLocation, found in the
+    # dump by name. This was a hard-coded strip up the entrance axis at x = 0,
+    # z = 130..190, written when the spawn pad was there. The Great Court then
+    # put a fountain on that line, so most of the seeds landed on the fountain
+    # rim and the flood began three studs in the air inside a stone ring.
     ground_walkable, ground_floor = levels[0.0]
-    starts = [(grid_index(0), grid_index(z)) for z in range(130, 190, 2)]
+    pad = next((q for q in parts if q["n"] == "BusStop"), None)
+    if pad is None:
+        print("no SpawnLocation named BusStop in the dump")
+        return 1
+    pbox = aabb(pad)
+    sx0, sx1 = cells_covering(pbox[0][0], pbox[0][1], X0, NX)
+    sz0, sz1 = cells_covering(pbox[2][0], pbox[2][1], Z0, NZ)
+    starts = [(x, z) for x in range(sx0, sx1) for z in range(sz0, sz1)]
     ground_seen = flood(ground_walkable, ground_floor, starts)
+    if not ground_seen.any():
+        print(f"the spawn pad at {[round(v, 1) for v in pad['p']]} has no standable floor")
+        return 1
 
     bad = []
 
     # Every flight has to be walkable up to: check its foot from the ground.
     for name, sx, sz in STAIR_FEET:
-        gx, gz = grid_index(sx), grid_index(sz)
-        if not ground_seen[gx, gz]:
+        cx, cz = gx(sx), gz(sz)
+        if not ground_seen[cx, cz]:
             bad.append((f"{name} stair foot", [sx, 0, sz], "cannot be walked to"))
 
     # Upstairs is a separate raster, so the flood cannot climb the stairs by
@@ -251,11 +289,11 @@ def main():
     # four would hide a landing that leads nowhere.
     upper_walkable, upper_floor = levels[16.0]
     upper_starts = []
-    gx, gz = grid_index(SEED_HEAD[0]), grid_index(SEED_HEAD[1])
+    cx, cz = gx(SEED_HEAD[0]), gz(SEED_HEAD[1])
     for dx in range(-3, 4):
         for dz in range(-3, 4):
-            x, z = gx + dx, gz + dz
-            if 0 <= x < N and 0 <= z < N and upper_walkable[x, z]:
+            x, z = cx + dx, cz + dz
+            if 0 <= x < NX and 0 <= z < NZ and upper_walkable[x, z]:
                 upper_starts.append((x, z))
     if not upper_starts:
         bad.append(("upper landing", list(SEED_HEAD), "the stair arrives nowhere standable"))
@@ -266,19 +304,19 @@ def main():
     # its own grid and its own seed at the head of that flight.
     office_walkable, office_floor = levels[35.0]
     office_starts = []
-    ox, oz = grid_index(OFFICE_HEAD[0]), grid_index(OFFICE_HEAD[1])
+    ox, oz = gx(OFFICE_HEAD[0]), gz(OFFICE_HEAD[1])
     for dx in range(-6, 7):
         for dz in range(-6, 7):
             x, z = ox + dx, oz + dz
-            if 0 <= x < N and 0 <= z < N and office_walkable[x, z]:
+            if 0 <= x < NX and 0 <= z < NZ and office_walkable[x, z]:
                 office_starts.append((x, z))
     if not office_starts:
         bad.append(("headmaster's stair", list(OFFICE_HEAD), "arrives nowhere standable"))
     office_seen = flood(office_walkable, office_floor, office_starts)
     for name, px, pz in OFFICE_SPOTS:
-        gx, gz = grid_index(px), grid_index(pz)
+        cx, cz = gx(px), gz(pz)
         if not any(
-            0 <= gx + dx < N and 0 <= gz + dz < N and office_seen[gx + dx, gz + dz]
+            0 <= cx + dx < NX and 0 <= cz + dz < NZ and office_seen[cx + dx, cz + dz]
             for dx in range(-6, 7)
             for dz in range(-6, 7)
         ):
@@ -286,9 +324,9 @@ def main():
 
     # and the other three heads have to be reachable across the upper floor
     for name, hx, hz in UPPER_HEADS:
-        gx, gz = grid_index(hx), grid_index(hz)
+        cx, cz = gx(hx), gz(hz)
         if not any(
-            upper_seen[gx + dx, gz + dz]
+            upper_seen[cx + dx, cz + dz]
             for dx in range(-6, 7)
             for dz in range(-6, 7)
         ):
@@ -296,7 +334,7 @@ def main():
     for name, point in targets:
         upstairs = point[1] > 8
         seen, walkable = (upper_seen, upper_walkable) if upstairs else (ground_seen, ground_walkable)
-        gx, gz = grid_index(point[0]), grid_index(point[2])
+        cx, cz = gx(point[0]), gz(point[2])
         # Accept anywhere in a room-sized patch. A room centre very often
         # lands on the thing the room is for -- a grand piano, a lab bench, a
         # garden bed -- and calling that "unreachable" buries the real cases.
@@ -305,8 +343,8 @@ def main():
         found = standable = False
         for dx in range(-20, 21, 2):
             for dz in range(-20, 21, 2):
-                x, z = gx + dx, gz + dz
-                if 0 <= x < N and 0 <= z < N and walkable[x, z]:
+                x, z = cx + dx, cz + dz
+                if 0 <= x < NX and 0 <= z < NZ and walkable[x, z]:
                     standable = True
                     if seen[x, z]:
                         found = True
@@ -321,14 +359,14 @@ def main():
     for name, point in spots:
         upstairs = point[1] > 8
         seen, walkable = (upper_seen, upper_walkable) if upstairs else (ground_seen, ground_walkable)
-        gx, gz = grid_index(point[0]), grid_index(point[2])
+        cx, cz = gx(point[0]), gz(point[2])
         if not any(
-            0 <= gx + dx < N and 0 <= gz + dz < N and seen[gx + dx, gz + dz]
+            0 <= cx + dx < NX and 0 <= cz + dz < NZ and seen[cx + dx, cz + dz]
             for dx in range(-6, 7)
             for dz in range(-6, 7)
         ):
             standable = any(
-                0 <= gx + dx < N and 0 <= gz + dz < N and walkable[gx + dx, gz + dz]
+                0 <= cx + dx < NX and 0 <= cz + dz < NZ and walkable[cx + dx, cz + dz]
                 for dx in range(-6, 7)
                 for dz in range(-6, 7)
             )

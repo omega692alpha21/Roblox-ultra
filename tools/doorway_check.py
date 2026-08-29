@@ -31,7 +31,7 @@ LANES = [
     ("principal door",   -184, 5,   35,  10, 8, 10),
     ("trophy door",       184, 5,  -23,  10, 8, 10),
     ("detention door",    184, 5,   35,  10, 8, 10),
-    ("gym mouth",           0, 5,  -64,  20, 8, 10),
+    ("assembly hall mouth", 0, 5,  -64,  20, 8, 10),
     ("greenhouse door",  -116, 5,   -8,  24, 8, 10),
     ("east lab door",     116, 5,   -8,  24, 8, 10),
     ("library door",        0, 5, -198,  12, 8, 14),

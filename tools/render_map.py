@@ -280,6 +280,7 @@ map_src = map_src.replace('local ReplicatedStorage = game:GetService("Replicated
 map_src = map_src.replace("local Palette = require(ReplicatedStorage.Shared.Palette)", "")
 map_src = map_src.replace("local Kit = require(script.Parent.CollegiateKit)", "local Kit = __Kit")
 map_src = map_src.replace("local PlanBuilder = require(script.Parent.PlanBuilder)", "local PlanBuilder = __PlanBuilder")
+map_src = map_src.replace("local CampusPlan = require(ReplicatedStorage.Shared.CampusPlan)", "local CampusPlan = __CampusPlan")
 map_src = map_src.replace("local GameConfig = require(ReplicatedStorage.Config.GameConfig)", "")
 map_src = map_src.replace("local PropSizes = require(ReplicatedStorage.Config.PropSizes)", "local PropSizes = __PropSizes")
 map_src = map_src.replace("local Cliques = require(ReplicatedStorage.Config.Cliques)", "local Cliques = __Cliques")
@@ -640,8 +641,8 @@ shots = [
     ("plotroom",   (-190, 7, 78),    (-190, 5, 110)),
     ("gym",        (0, 9, -70),      (0, 8, -130)),
     ("room101",    (-74, 6, -70),    (-74, 6, -120)),
-    ("library",    (0, 16, -152),    (0, 14, -232)),
-    ("libinside",  (0, 7, -196),     (0, 9, -262)),
+    ("library",    (-320, 16, -220),  (-320, 14, -300)),
+    ("libinside",  (-320, 7, -264),   (-320, 9, -330)),
     ("tennis",     (340, 20, 90),    (340, 6, -20)),
     ("pool",       (-340, 14, 60),   (-340, 2, -20)),
     ("dorms",      (-176, 8, -160),  (-176, 8, -212)),
@@ -651,10 +652,10 @@ shots = [
     ("head",       (-266, 41, -170),  (-320, 39, -170)),
     ("headdesk",   (-330, 42, -170),  (-280, 40, -170)),
     ("turret",     (-249, 40, -170),  (-249, 34, -190)),
-    ("libshaft",   (-60, 6, -222),    (-104, 2, -222)),
+    ("libshaft",   (-380, 6, -290),   (-424, 2, -290)),
     ("dorm",       (-176, 8, -238),   (-176, 4, -190)),
-    ("cafeteria",  (-204, 8, -50),    (-204, 4, 4)),
-    ("libinterior",(0, 10, -200),     (0, 6, -250)),
+    ("cafeteria",  (372, 8, -230),    (372, 4, -300)),
+    ("libinterior",(-320, 10, -268),  (-320, 6, -318)),
     ("court",      (-116, 14, 62),    (-116, 4, 20)),
     ("courtwide",  (-176, 26, 70),    (-110, 6, 20)),
     ("officewide", (-190, 8, 55),    (-212, 5, 20)),
@@ -666,7 +667,7 @@ shots = [
     ("backcampus", (0, 220, -120),   (0, 0, -400)),
     ("dormfront",  (-176, 26, -140), (-176, 20, -230)),
     ("lodge",      (-300, 40, -60),  (-300, 30, -170)),
-    ("library",    (-150, 30, -150), (-40, 10, -220)),
+    ("library",    (-470, 30, -218), (-360, 10, -288)),
     # A PLAYER'S eye, five studs up on the court looking at the school. Every
     # other camera here is a director's shot from forty studs in the air; this
     # is the one that matches what somebody standing in the game actually sees,
