@@ -3751,6 +3751,29 @@ local function buildLibrary(parent: Instance, center: Vector3)
 			piece.Parent = parent
 			tag(piece, "TexCoursedStone")
 		end
+		-- and the same dressing the drawn buildings' gables carry, or these
+		-- are two more blank triangles: a lit window with its surround,
+		-- mullion and sill, a kneeler at each foot and a coping at the apex.
+		local ASH = Color3.fromRGB(201, 191, 169)
+		local gx = center.X + side * (halfW + 1)
+		local gw, gh = 10.0, math.min(14.0, rise * 0.42)
+		local gy = eaves + rise * 0.26
+		tag(part({ Name = "LibraryGableSurround", Size = Vector3.new(1.6, gh + 3.4, gw + 3.4), CFrame = CFrame.new(gx + side * 1.6, gy, center.Z), Color = ASH, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		local gPane = part({ Name = "LibraryGableWindow", Size = Vector3.new(0.7, gh, gw), CFrame = CFrame.new(gx + side * 2.6, gy, center.Z), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Parent = parent })
+		gPane.CanCollide = false
+		gPane.CastShadow = false
+		part({ Name = "LibraryGableMullion", Size = Vector3.new(1.0, gh, 0.6), CFrame = CFrame.new(gx + side * 2.9, gy, center.Z), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		tag(part({ Name = "LibraryGableSill", Size = Vector3.new(2.4, 0.9, gw + 5.0), CFrame = CFrame.new(gx + side * 1.4, gy - gh / 2 - 2.1, center.Z), Color = ASH, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		local gGlow = Instance.new("PointLight")
+		gGlow.Color = Color3.fromRGB(255, 220, 160)
+		gGlow.Brightness = 0.8
+		gGlow.Range = 22
+		gGlow.Shadows = false
+		gGlow.Parent = gPane
+		for _, foot in { -1, 1 } do
+			tag(part({ Name = "LibraryGableKneeler", Size = Vector3.new(4.6, 2.8, 5.4), CFrame = CFrame.new(gx + side * 0.6, eaves + 0.4, center.Z + foot * ((D + 4) / 2 - 0.4)), Color = ASH, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		end
+		tag(part({ Name = "LibraryGableCoping", Size = Vector3.new(4.4, 2.2, 4.4), CFrame = CFrame.new(gx + side * 0.6, eaves + rise + 0.7, center.Z), Color = ASH, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
 	end
 	-- dormers down both slopes, lit like every other window on the campus
 	for _, dx in { -30, -10, 10, 30 } do
