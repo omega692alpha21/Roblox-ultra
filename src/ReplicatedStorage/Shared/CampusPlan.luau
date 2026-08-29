@@ -234,7 +234,11 @@ Plan.BUILDINGS = {
 					{ from = { -20, 0.0, -266 }, to = { -4, 8.0, -266 } },
 					{ from = { -4, 8.0, -282 }, to = { -20, 15.0, -282 } },
 				},
-				landings = { { y = 8.0, rect = { -21, -289, -3, -259 } } },
+				-- The landing is at the TURN, past the head of the lower
+				-- flight -- not over it. Drawn as (-21, -289) to (-3, -259) it
+				-- covered the whole of the lower flight's footprint, so the
+				-- flight climbed into the underside of its own landing.
+				landings = { { y = 8.0, rect = { -4, -290, 10, -258 } } },
 			},
 		},
 		entrances = {

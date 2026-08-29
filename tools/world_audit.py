@@ -145,8 +145,7 @@ TERRAIN_TOP = -0.1
 CARVED = [
     (-226, -126, 226, 126),      # main building
     (-52, -148, 52, -122),       # gym protrusion
-    (-226, -275, -126, -189),    # boys dorm
-    (126, -275, 226, -189),      # girls dorm
+    (-150, -370, 150, -250),     # the boarding house, on its drawn ground
     (-368, -336, -272, -264),    # library, on its drawn ground
     (-348, -208, -252, -132),    # staff lodge
     (-263, -200, -235, -172),    # the turret
@@ -286,10 +285,15 @@ def collect():
         ("mission npc courtyard", 150, 0, 10),
         ("mission npc cafeteria", 280, 0, -280),
         ("detention cell", -438, 0, -14),
-        ("dorm west", -176, 2, -220),
-        ("dorm west upstairs", -190, 18, -240),
-        ("dorm east upstairs", 162, 18, -240),
-        ("dorm east", 176, 2, -220),
+        # The boarding house is one range on the axis now, drawn at
+        # (-150, -370) to (150, -250) with fourteen rooms over two storeys.
+        # These four were the two blocks that used to stand at (+-176, -232).
+        ("dorm lobby", 0, 2, -276),
+        ("dorm 1", -114, 2, -344),
+        ("dorm 5", -58, 2, -276),
+        ("dorm upper landing", 0, 17, -276),
+        ("dorm 7 upstairs", -114, 17, -344),
+        ("dorm 13 upstairs", 58, 17, -276),
         ("tennis court", 340, 0, -20),
         ("pool deck", -340, 0, -50),
         ("clique board row", -158, 0, -44),
@@ -391,8 +395,11 @@ STAIRS = [
     ("lodge stair to studies", (-270, 3.5, -146), (-270, 19, -176.4), 4),
     ("lodge stair to office", (-270, 19.5, -140), (-270, 35, -170.4), 4),
     ("library steps down", (-369, 0, -290), (-408, -16, -290), 5),
-    ("boys dorm stair", (-150, 2, -216), (-150, 18, -246.4), 4),
-    ("girls dorm stair", (202, 2, -216), (202, 18, -246.4), 4),
+    # The boarding house's stair is a half-turn: two flights round a landing
+    # at y = 8, which is how CampusPlan draws it. Described as one straight run
+    # from the foot to the head it reads as two eight-stud steps.
+    ("dorm stair lower", (-20, 2, -266), (-4, 9, -266), 4),
+    ("dorm stair upper", (-4, 9, -282), (-20, 16, -282), 4),
 ]
 
 SPIRAL_RISE = 1.4

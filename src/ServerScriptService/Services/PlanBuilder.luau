@@ -256,18 +256,76 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 			continue
 		end
 
+		-- ---- the stairwell holes this storey's floor has to be cut for ----
+		-- A stair that arrives at this storey comes up THROUGH its floor. With
+		-- the floor laid whole, the flight climbed into the underside of the
+		-- slab it was climbing to: four studs of headroom on the last third of
+		-- every run in the building.
+		local wells = {}
+		for _, st in b.stairs or {} do
+			for _, flight in st.flights do
+				local top = math.max(flight.from[2], flight.to[2])
+				if math.abs(top - storey.y) < 1.0 then
+					local half = st.width / 2
+					local runAxis = math.abs(flight.to[1] - flight.from[1]) > math.abs(flight.to[3] - flight.from[3])
+					local x0 = math.min(flight.from[1], flight.to[1]) - (if runAxis then 1.0 else half)
+					local x1 = math.max(flight.from[1], flight.to[1]) + (if runAxis then 1.0 else half)
+					local z0 = math.min(flight.from[3], flight.to[3]) - (if runAxis then half else 1.0)
+					local z1 = math.max(flight.from[3], flight.to[3]) + (if runAxis then half else 1.0)
+					table.insert(wells, { x0, z0, x1, z1 })
+				end
+			end
+		end
+
 		-- ---- floor under every cell, ceiling over it ----
 		for _, cell in cells do
 			local r = cell.rect
 			local w, d = r[3] - r[1], r[4] - r[2]
 			local mx, mz = (r[1] + r[3]) / 2, (r[2] + r[4]) / 2
-			ctx.tag(ctx.part({
-				Name = "PlanFloor",
-				Size = Vector3.new(w, FLOOR_THICK, d),
-				CFrame = CFrame.new(mx, storey.y - FLOOR_THICK / 2, mz),
-				Color = FLOOR,
-				Parent = ctx.parent,
-			}), "TexFloorTile")
+			-- band the cell along z at every well edge, split each band along x
+			-- around the wells that reach into it, and lay a slab only where no
+			-- well covers it
+			local zEdges = { r[2], r[4] }
+			for _, h in wells do
+				if h[1] < r[3] and h[3] > r[1] then
+					table.insert(zEdges, math.clamp(h[2], r[2], r[4]))
+					table.insert(zEdges, math.clamp(h[4], r[2], r[4]))
+				end
+			end
+			table.sort(zEdges)
+			for zi = 1, #zEdges - 1 do
+				local z0, z1 = zEdges[zi], zEdges[zi + 1]
+				if z1 - z0 > 0.5 then
+					local zm = (z0 + z1) / 2
+					local xEdges = { r[1], r[3] }
+					for _, h in wells do
+						if zm > h[2] and zm < h[4] then
+							table.insert(xEdges, math.clamp(h[1], r[1], r[3]))
+							table.insert(xEdges, math.clamp(h[3], r[1], r[3]))
+						end
+					end
+					table.sort(xEdges)
+					for xi = 1, #xEdges - 1 do
+						local x0, x1 = xEdges[xi], xEdges[xi + 1]
+						local xm = (x0 + x1) / 2
+						local covered = false
+						for _, h in wells do
+							if xm > h[1] and xm < h[3] and zm > h[2] and zm < h[4] then
+								covered = true
+							end
+						end
+						if not covered and x1 - x0 > 0.5 then
+							ctx.tag(ctx.part({
+								Name = "PlanFloor",
+								Size = Vector3.new(x1 - x0, FLOOR_THICK, z1 - z0),
+								CFrame = CFrame.new((x0 + x1) / 2, storey.y - FLOOR_THICK / 2, (z0 + z1) / 2),
+								Color = FLOOR,
+								Parent = ctx.parent,
+							}), "TexFloorTile")
+						end
+					end
+				end
+			end
 			local ceil = ctx.part({
 				Name = "PlanCeiling",
 				Size = Vector3.new(w, CEIL_THICK, d),
@@ -498,7 +556,9 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 			local r = pad.rect
 			ctx.tag(ctx.part({
 				Name = "PlanLanding",
-				Size = Vector3.new(r[3] - r[1], 0.8, r[4] - r[2]),
+				-- top at pad.y + 0.05, not pad.y: the tread at the head of the
+				-- flight tops out at exactly pad.y and the two shared a plane
+				Size = Vector3.new(r[3] - r[1], 0.9, r[4] - r[2]),
 				CFrame = CFrame.new((r[1] + r[3]) / 2, pad.y - 0.4, (r[2] + r[4]) / 2),
 				Color = ASHLAR,
 				Material = Enum.Material.Concrete,

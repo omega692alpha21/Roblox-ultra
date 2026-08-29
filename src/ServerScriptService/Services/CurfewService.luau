@@ -48,11 +48,10 @@ local function isIndoors(pos: Vector3): boolean
 			return true
 		end
 	end
-	for _, dormX in { -176, 176 } do
-		if math.abs(pos.X - dormX) < 35 and math.abs(pos.Z + 212) < 30 then
-			return true
-		end
-	end
+	-- The two blocks at (+-176, -232) are gone: the boarding house is one range
+	-- on the axis, and the `inside(0, -310, 150, 60)` test above is its drawn
+	-- rectangle. This loop was keeping two patches of open lawn safe from
+	-- curfew and the range itself was only safe by accident.
 	return false
 end
 
