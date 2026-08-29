@@ -981,6 +981,13 @@ shots = [
     # so this is the view the school actually opens on.
     ("spawnview",  (-114, 15, 322),   (-90, 10, 240)),
     ("spawnwalk",  (-84, 14, 268),    (-10, 16, 170)),
+    # Inside the Academy, which is where the game is set and which no camera
+    # has ever looked at. Its middle floor was 34,240 square studs of unbroken
+    # black until build 213 and nothing in this list could have shown it.
+    ("mainhall",   (-200, 7, 65),     (200, 8, 65)),
+    ("atrium",     (-40, 9, 40),      (30, 6, 5)),
+    ("greatstair", (0, 8, 44),        (0, 22, -10)),
+    ("upperhall",  (-190, 22, 65),    (190, 23, 65)),
     ("dininghall", (338, 7, -336),    (410, 5, -276)),
     ("servery",    (326, 7, -272),    (292, 5, -282)),
     ("kitchen",    (296, 7, -304),    (234, 5, -332)),

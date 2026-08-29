@@ -8265,15 +8265,28 @@ local function buildRoomLights(parent: Instance)
 			local ceil = storey.y + storey.height - 1.4
 			for _, cell in CampusPlan.cells(b, level) do
 				local x0, z0, x1, z1 = cell.rect[1], cell.rect[2], cell.rect[3], cell.rect[4]
-				local nx = math.max(1, math.round((x1 - x0) / 22))
-				local nz = math.max(1, math.round((z1 - z0) / 22))
+				-- The atrium and the two stair halls are open wells: the storey
+				-- above them has no floor, so a fitting at this storey's
+				-- ceiling line hangs in mid-air over the drop. They are lit
+				-- from their own skylights and lanterns.
+				-- ONE fitting, on the axis, for a well: at 22-stud spacing the
+				-- atrium came out carpeted in light panels, dozens of them in
+				-- a grid across an open double-height room that is already
+				-- lit by its own skylights and its fountain.
+				local well = string.find(cell.name, "Atrium") ~= nil or string.find(cell.name, "Great stair") ~= nil
+				-- 55 for a well, not one fitting on the axis: the Great stair
+				-- cell is 112 by 64 and a single lantern at its centre left
+				-- two 1024-square-stud holes at its flanks.
+				local step = if well then 55.0 else 26.0
+				local nx = math.max(1, math.round((x1 - x0) / step))
+				local nz = math.max(1, math.round((z1 - z0) / step))
 				for i = 1, nx do
 					for j = 1, nz do
 						local px = x0 + (x1 - x0) * (i - 0.5) / nx
 						local pz = z0 + (z1 - z0) * (j - 0.5) / nz
 						local near = false
 						for _, q in placed do
-							if math.abs(q.X - px) < 16 and math.abs(q.Z - pz) < 16 and math.abs(q.Y - ceil) < 6 then
+							if math.abs(q.X - px) < 18 and math.abs(q.Z - pz) < 18 and math.abs(q.Y - ceil) < 6 then
 								near = true
 								break
 							end
@@ -8292,8 +8305,11 @@ local function buildRoomLights(parent: Instance)
 							pan.CastShadow = false
 							part({ Name = "RoomLightSurround", Size = Vector3.new(10.4, 0.5, 6.4), CFrame = CFrame.new(px, ceil + 0.4, pz), Color = Color3.fromRGB(226, 224, 216), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
 							local lamp = Instance.new("PointLight")
-							lamp.Brightness = 1.2
-							lamp.Range = 32
+							-- Range 38, not 32. At 32 a 26-stud grid left the far
+							-- ends of the top-floor offices dark: the panels sit
+							-- at cell fractions and the corners fall outside.
+							lamp.Brightness = 1.3
+							lamp.Range = 40
 							lamp.Color = Color3.fromRGB(255, 238, 210)
 							lamp.Shadows = false
 							lamp.Parent = pan
