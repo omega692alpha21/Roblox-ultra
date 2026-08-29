@@ -3284,7 +3284,10 @@ local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gap
 				part({ Name = "Muntin", Size = Vector3.new(0.45, 6.6, 3.2), CFrame = cf * CFrame.new(wx, y0 + 5.6, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				part({ Name = "Muntin", Size = Vector3.new(winW, 0.45, 3.2), CFrame = cf * CFrame.new(wx, y0 + 5.6, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				-- sill under each window
-				part({ Name = "FacadeSill", Size = Vector3.new(winW + 2.6, 0.6, 3.4), CFrame = cf * CFrame.new(wx, y0 + 0.95, 0) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				-- Out, not centred on the wall plane. A sill is the deepest member on an
+				-- elevation -- it is what sheds the water -- and at 0.6 studs proud it
+				-- was the shallowest thing on this facade.
+				part({ Name = "FacadeSill", Size = Vector3.new(winW + 2.6, 0.6, 3.4), CFrame = cf * CFrame.new(wx, y0 + 0.95, 1.4) , Color = TRIM, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				-- Ashlar jambs and a hood mould, not green timber shutters.
 				-- Shutters read colonial cottage; the reference school is
 				-- collegiate gothic, where a window is a hole cut in stone with
@@ -3297,10 +3300,10 @@ local function buildFacadeWall(parent: Instance, from: Vector3, to: Vector3, gap
 				for _, sh in { -1, 1 } do
 					tag(part({ Name = "WindowJamb", Size = Vector3.new(2.4, 9.4, 3.4), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 1.2), y0 + 5.6, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
 				end
-				tag(part({ Name = "WindowHood", Size = Vector3.new(winW + 6.2, 1.3, 3.8), CFrame = cf * CFrame.new(wx, y0 + 10.6, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
-				part({ Name = "Keystone", Size = Vector3.new(2.2, 2.4, 4.0), CFrame = cf * CFrame.new(wx, y0 + 10.4, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+				tag(part({ Name = "WindowHood", Size = Vector3.new(winW + 6.2, 1.3, 3.8), CFrame = cf * CFrame.new(wx, y0 + 10.6, 1.0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+				part({ Name = "Keystone", Size = Vector3.new(2.2, 2.4, 4.0), CFrame = cf * CFrame.new(wx, y0 + 10.4, 1.2), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				for _, sh in { -1, 1 } do
-					part({ Name = "HoodStop", Size = Vector3.new(1.4, 1.9, 3.9), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 2.8), y0 + 9.9, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+					part({ Name = "HoodStop", Size = Vector3.new(1.4, 1.9, 3.9), CFrame = cf * CFrame.new(wx + sh * (winW / 2 + 2.8), y0 + 9.9, 1.05), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 				end
 			end
 			-- slim string course between storeys only
@@ -3529,7 +3532,7 @@ local function buildGrandFacade(parent: Instance)
 			lancet.CanCollide = false
 			lancet.CastShadow = false
 			part({ Name = "EntryPierMullion", Size = Vector3.new(0.5, 7.0, 1.0), CFrame = CFrame.new(px, wy, Z + 12.7), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-			tag(part({ Name = "EntryPierSill", Size = Vector3.new(7.6, 0.8, 2.0), CFrame = CFrame.new(px, wy - 5.1, Z + 12.0), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+			tag(part({ Name = "EntryPierSill", Size = Vector3.new(7.6, 0.8, 2.4), CFrame = CFrame.new(px, wy - 5.1, Z + 13.2), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
 		end
 	end
 	part({ Name = "EntryBayHeader", Size = Vector3.new(56, 26, 14), CFrame = CFrame.new(0, 33, Z + 5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
@@ -3589,7 +3592,7 @@ local function buildGrandFacade(parent: Instance)
 	-- take (a Humanoid manages 2.2) and the reason the whole school read as
 	-- walled in from outside.
 	for _, side in { -1, 1 } do
-		part({ Name = "EntryBayPlinth", Size = Vector3.new(14.5, 2.4, 2.6), CFrame = CFrame.new(side * 21.75, 1.2, bayFace - 0.2), Color = Color3.fromRGB(198, 194, 184), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "EntryBayPlinth", Size = Vector3.new(14.5, 2.4, 2.6), CFrame = CFrame.new(side * 21.75, 1.2, bayFace + 0.8), Color = Color3.fromRGB(198, 194, 184), Material = Enum.Material.Concrete, Parent = parent })
 	end
 
 	-- string courses at the floor lines
