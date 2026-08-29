@@ -691,6 +691,14 @@ local function buildLibrary(parent: Instance, center: Vector3)
 		}), "TexAshlar").CanCollide = false
 	end
 
+	-- The ten colours a bound book is actually covered in: half-calf, buckram,
+	-- cloth in the greens, blues and ochres a school library is bound in.
+	local CLOTH = {
+		{ 122, 58, 46 }, { 92, 44, 38 }, { 60, 74, 52 }, { 44, 62, 88 },
+		{ 138, 106, 54 }, { 78, 58, 84 }, { 46, 70, 72 }, { 148, 132, 100 },
+		{ 96, 40, 52 }, { 58, 82, 60 },
+	}
+
 	-- stacks: rows of shelves down both halves, with an aisle between
 	for row = -1, 1 do
 		for side = 0, 1 do
@@ -703,6 +711,16 @@ local function buildLibrary(parent: Instance, center: Vector3)
 				Material = Enum.Material.WoodPlanks,
 				Parent = parent,
 			})
+			-- The end of a bookcase is a framed panel with a cornice on it, not
+			-- a five-by-twelve slab -- and the ends are what you see first,
+			-- because you walk INTO the aisle between them.
+			for _, endZ in { -28.2, 12.2 } do
+				part({ Name = "LibraryShelfEnd", Size = Vector3.new(5.6, 12.4, 0.6), CFrame = CFrame.new(center) * CFrame.new(x, 6.2, endZ), Color = Color3.fromRGB(112, 78, 52), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
+				for _, ux in { -2.2, 2.2 } do
+					part({ Name = "LibraryShelfStile", Size = Vector3.new(1.0, 12.4, 1.0), CFrame = CFrame.new(center) * CFrame.new(x + ux, 6.2, endZ), Color = Color3.fromRGB(128, 92, 60), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
+				end
+			end
+			part({ Name = "LibraryShelfCornice", Size = Vector3.new(6.4, 1.0, 41.4), CFrame = CFrame.new(center) * CFrame.new(x, 12.5, -8), Color = Color3.fromRGB(112, 78, 52), Material = Enum.Material.WoodPlanks, Parent = parent }).CanCollide = false
 			-- BOOKS, not a band. This was one part thirty-eight studs long in
 			-- one colour per shelf -- and a player stands a stud from it, so
 			-- what the library's whole west end read as was three stripes of
@@ -723,10 +741,15 @@ local function buildLibrary(parent: Instance, center: Vector3)
 						Name = "LibraryBook",
 						Size = Vector3.new(out, high, thick),
 						CFrame = CFrame.new(center) * CFrame.new(x, shelfLevel * 2.7 - 0.9 + high / 2, zAt + thick / 2),
+						-- Book cloth, not a rainbow. The first pass at this spread
+						-- the channels independently, which gives bright pinks
+						-- and teals -- a colour range no library has and this
+						-- campus has nowhere. These are the ten a bound book is
+						-- actually covered in, jittered per volume.
 						Color = Color3.fromRGB(
-							math.clamp(70 + (n % 11) * 17 + side * 20, 45, 235),
-							math.clamp(58 + ((n // 5) % 9) * 19 + shelfLevel * 6, 40, 220),
-							math.clamp(52 + ((n // 7) % 8) * 21, 38, 215)
+							math.clamp(CLOTH[(n % #CLOTH) + 1][1] + ((n // 11) % 5) * 7 - 14, 30, 210),
+							math.clamp(CLOTH[(n % #CLOTH) + 1][2] + ((n // 13) % 5) * 7 - 14, 26, 200),
+							math.clamp(CLOTH[(n % #CLOTH) + 1][3] + ((n // 17) % 5) * 7 - 14, 24, 195)
 						),
 						Material = Enum.Material.Fabric,
 						Parent = parent,
