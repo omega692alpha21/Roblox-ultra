@@ -151,7 +151,6 @@ CARVED = [
     (-263, -200, -235, -172),    # the turret
     (-422, -300, -364, -280),    # the library's passage
     (-433, -303, -407, -277),    # the library's shaft
-    (-380, -44, -300, 4),        # the swimming pool's basin
 ]
 
 
@@ -294,8 +293,6 @@ def collect():
         ("dorm upper landing", 0, 17, -276),
         ("dorm 7 upstairs", -114, 17, -344),
         ("dorm 13 upstairs", 58, 17, -276),
-        ("tennis court", 340, 0, -20),
-        ("pool deck", -340, 0, -50),
         ("clique board row", -158, 0, -44),
     ]:
         spots.append((name, [x, y, z]))

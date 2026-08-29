@@ -176,7 +176,6 @@ FIXED = [
     ("dorm lobby", [0, 0, -276]), ("dorm 1", [-114, 0, -344]),
     ("dorm 5", [-58, 0, -276]), ("dorm laundry", [114, 0, -276]),
     ("teachers quarters", [-300, 3, -170]),
-    ("pool deck", [-340, 0, -20]), ("tennis court", [340, 0, -20]),
     ("upper corridor", [0, 16, 65]),
 ]
 for i, x in enumerate((-190, -122, 122, 190)):

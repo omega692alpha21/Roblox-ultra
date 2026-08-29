@@ -53,8 +53,6 @@ local SHAPES: { Shape } = {
 	{ x = 440, z = 235, w = 280, d = 170, color = Color3.fromRGB(74, 118, 66) }, -- sports field
 	{ x = 0, z = -310, w = 300, d = 120, color = Color3.fromRGB(92, 76, 68) }, -- boarding house
 	{ x = 390, z = -160, w = 280, d = 120, color = Color3.fromRGB(70, 96, 74) }, -- ball courts
-	{ x = 340, z = -20, w = 190, d = 110, color = Color3.fromRGB(58, 104, 88) }, -- tennis
-	{ x = -340, z = -20, w = 120, d = 88, color = Color3.fromRGB(96, 168, 200) }, -- pool
 }
 
 type Marker = { x: number, z: number, icon: string, color: Color3 }
@@ -68,8 +66,6 @@ local MARKERS: { Marker } = {
 	{ x = 74, z = -94, icon = "🎵", color = Color3.fromRGB(212, 160, 240) },
 	{ x = -116, z = -28, icon = "🧬", color = Color3.fromRGB(150, 220, 130) },
 	{ x = -320, z = -300, icon = "📚", color = Color3.fromRGB(240, 226, 190) },
-	{ x = 340, z = -20, icon = "🎾", color = Color3.fromRGB(200, 240, 120) },
-	{ x = -340, z = -20, icon = "🏊", color = Color3.fromRGB(140, 216, 240) },
 	{ x = 116, z = -28, icon = "⚗️", color = Color3.fromRGB(150, 240, 190) },
 	{ x = -116, z = 0, icon = "👥", color = Color3.fromRGB(180, 255, 200) },
 	{ x = -300, z = -170, icon = "🎓", color = Color3.fromRGB(226, 186, 120) }, -- teachers' quarters

@@ -34,7 +34,11 @@ LANES = [
     ("assembly hall mouth", 0, 5,  -64,  20, 8, 10),
     ("greenhouse door",  -116, 5,   -8,  24, 8, 10),
     ("east lab door",     116, 5,   -8,  24, 8, 10),
-    ("library door",        0, 5, -198,  12, 8, 14),
+    # The library moved to (-320, -300) and its front door is the 16-stud gap
+    # in the north wall at z = -266. This still pointed at (0, -198), which was
+    # the old library's door and is now the middle of the Dorm Court -- so the
+    # check was asking whether a stone dial obstructed a doorway 300 studs away.
+    ("library door",     -320, 5, -266,  14, 8, 8),
 ]
 
 # things that are meant to be stood around, not walked through

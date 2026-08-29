@@ -34,8 +34,6 @@ export type Map = {
 	trim: { TrimRun },
 	props: { PropRequest },
 	library: Vector3,
-	tennis: Vector3,
-	pool: Vector3,
 	conveyorStart: Vector3,
 	conveyorEnd: Vector3,
 	trophyCashBoard: BasePart,
@@ -374,10 +372,10 @@ end
 
 -- ===== campus grounds: the three places that are not the school building =====
 --
--- The floor plan is full, so these sit outside it: the library on the north
--- quad behind the gym, the tennis stadium east, the pool west. Paths run back
--- to the building so they read as part of the campus and not as scenery
--- dropped on a lawn.
+-- The floor plan is full, so these sit outside it. Paths run back to the
+-- building so they read as part of the campus and not as scenery dropped on a
+-- lawn. (The tennis stadium east and the pool west were two of these; the
+-- Sports Field replaced both.)
 
 local function buildCampusPath(parent: Instance, from: Vector3, to: Vector3, width: number, over: boolean?)
 	local delta = to - from
@@ -620,238 +618,20 @@ local function buildLibrary(parent: Instance, center: Vector3)
 	end
 end
 
-local function buildTennisStadium(parent: Instance, center: Vector3)
-	-- two courts side by side, fenced, with stands down both long sides
-	for _, courtX in { -24, 24 } do
-		local surface = part({
-			Name = "TennisCourt",
-			-- 0.6 thick, half of it under ground level: the line markings are
-			-- 0.34 slabs starting at 0 and the surface started at 0 too, so
-			-- every line on both courts fought the court under it.
-			Size = Vector3.new(38, 0.6, 78),
-			CFrame = CFrame.new(center) * CFrame.new(courtX, 0.0, 0),
-			Color = Color3.fromRGB(58, 110, 92),
-			Material = Enum.Material.SmoothPlastic,
-			Parent = parent,
-		})
-		local _ = surface
-		-- lines
-		for _, line in {
-			{ size = Vector3.new(27, 0.34, 0.5), offset = Vector3.new(0, 0.17, 0) },
-			{ size = Vector3.new(27, 0.34, 0.5), offset = Vector3.new(0, 0.17, 21) },
-			{ size = Vector3.new(27, 0.34, 0.5), offset = Vector3.new(0, 0.17, -21) },
-			{ size = Vector3.new(0.5, 0.34, 78), offset = Vector3.new(-13.5, 0.17, 0) },
-			{ size = Vector3.new(0.5, 0.34, 78), offset = Vector3.new(13.5, 0.17, 0) },
-			{ size = Vector3.new(0.5, 0.34, 42), offset = Vector3.new(0, 0.17, 0) },
-		} do
-			part({
-				Name = "CourtLine",
-				Size = line.size,
-				CFrame = CFrame.new(center) * CFrame.new(Vector3.new(courtX, 0, 0) + line.offset),
-				Color = Color3.fromRGB(240, 240, 236),
-				Material = Enum.Material.SmoothPlastic,
-				Parent = parent,
-			})
-		end
-		part({
-			Name = "TennisNet",
-			Size = Vector3.new(30, 3.6, 0.3),
-			CFrame = CFrame.new(center) * CFrame.new(courtX, 1.8, 0),
-			Color = Color3.fromRGB(40, 44, 48),
-			Material = Enum.Material.Fabric,
-			Transparency = 0.25,
-			Parent = parent,
-		})
-		-- net posts with a foot, a cap, a cleat and a tension bar, and a tape
-		-- along the head of the net: two bare sticks is not a tennis net
-		for _, side in { -1, 1 } do
-			local px = center.X + courtX + side * 15
-			part({ Name = "NetPostFoot", Size = Vector3.new(2.0, 0.5, 2.0), CFrame = CFrame.new(px, center.Y + 0.25, center.Z), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent })
-			part({ Name = "NetPost", Size = Vector3.new(0.8, 4.4, 0.8), CFrame = CFrame.new(px, center.Y + 2.2, center.Z), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent })
-			part({ Name = "NetPostCap", Size = Vector3.new(1.3, 0.45, 1.3), CFrame = CFrame.new(px, center.Y + 4.6, center.Z), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-			part({ Name = "NetPostCleat", Size = Vector3.new(0.5, 0.8, 1.3), CFrame = CFrame.new(px + side * 0.65, center.Y + 1.4, center.Z), Color = Color3.fromRGB(60, 64, 70), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-			part({ Name = "NetPostStay", Size = Vector3.new(2.6, 0.28, 0.28), CFrame = CFrame.new(px - side * 1.3, center.Y + 3.8, center.Z) * CFrame.Angles(0, 0, math.rad(side * 30)), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-			part({ Name = "NetPostCollar", Size = Vector3.new(1.2, 0.5, 1.2), CFrame = CFrame.new(px, center.Y + 0.75, center.Z), Color = Color3.fromRGB(60, 64, 70), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-			part({ Name = "NetPostWinder", Size = Vector3.new(0.9, 0.9, 0.4), CFrame = CFrame.new(px + side * 0.6, center.Y + 2.6, center.Z), Color = Color3.fromRGB(150, 154, 160), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-		end
-		part({ Name = "NetTape", Size = Vector3.new(30, 0.5, 0.4), CFrame = CFrame.new(center) * CFrame.new(courtX, 3.75, 0), Color = Color3.fromRGB(244, 246, 250), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
-		part({ Name = "NetStrap", Size = Vector3.new(0.6, 3.6, 0.45), CFrame = CFrame.new(center) * CFrame.new(courtX, 1.8, 0), Color = Color3.fromRGB(240, 242, 246), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
-		part({ Name = "NetAnchor", Size = Vector3.new(0.8, 0.4, 0.8), CFrame = CFrame.new(center) * CFrame.new(courtX, 0.2, 0), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-		-- singles sticks, which is what tells a tennis court from a net on a lawn
-		for _, side in { -1, 1 } do
-			part({ Name = "SinglesStick", Size = Vector3.new(0.5, 3.9, 0.5), CFrame = CFrame.new(center) * CFrame.new(courtX + side * 13.5, 1.95, 0), Color = Color3.fromRGB(150, 154, 160), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-		end
-	end
-
-	-- bleachers: stepped rows on both flanks
-	for _, side in { -1, 1 } do
-		for tier = 1, 6 do
-			part({
-				Name = "TennisStand",
-				Size = Vector3.new(7, 2.4, 92),
-				CFrame = CFrame.new(center) * CFrame.new(side * (56 + tier * 6), tier * 2.4 - 1.2, 0),
-				Color = tier % 2 == 0 and Color3.fromRGB(196, 92, 76) or Color3.fromRGB(214, 206, 190),
-				Material = Enum.Material.Concrete,
-				Parent = parent,
-			})
-		end
-	end
-
-	-- floodlights at the four corners, built as masts: a pole with a glowing
-	-- box floating at the top of it is not a floodlight
-	local tennisCtx = { parent = parent, part = part :: any, tag = tag :: any }
-	for _, cx in { -80, 80 } do
-		for _, cz in { -52, 52 } do
-			Grounds.floodMast(
-				tennisCtx,
-				center.X + cx,
-				center.Z + cz,
-				44,
-				math.atan2(-cx, -cz)
-			)
-		end
-	end
-
-	local board = part({
-		Name = "TennisScoreboard",
-		Size = Vector3.new(30, 12, 1.4),
-		CFrame = CFrame.new(center) * CFrame.new(0, 20, -56),
-		Color = Palette.Blackboard,
-		Parent = parent,
-	})
-	signText(board, "CRUMBWORTH TENNIS\nHOME 6   AWAY 4", Palette.BusYellow, Enum.NormalId.Front)
-end
-
-local function buildPool(parent: Instance, center: Vector3)
-	local W, D, DEPTH = 76, 44, 13
-	local halfW, halfD = W / 2, D / 2
-
-	-- deck: four slabs around the basin, so the hole is a real hole
-	local deck = 22
-	for _, slab in {
-		{ size = Vector3.new(W + deck * 2, 1, deck), offset = Vector3.new(0, -0.4, halfD + deck / 2) },
-		{ size = Vector3.new(W + deck * 2, 1, deck), offset = Vector3.new(0, -0.4, -halfD - deck / 2) },
-		{ size = Vector3.new(deck, 1, D), offset = Vector3.new(halfW + deck / 2, -0.4, 0) },
-		{ size = Vector3.new(deck, 1, D), offset = Vector3.new(-halfW - deck / 2, -0.4, 0) },
-	} do
-		tag(part({
-			Name = "PoolDeck",
-			Size = slab.size,
-			CFrame = CFrame.new(center) * CFrame.new(slab.offset),
-			Color = Color3.fromRGB(226, 222, 212),
-			Material = Enum.Material.CeramicTiles,
-			Parent = parent,
-		}), "TexCourtPaving")
-	end
-
-	-- basin
-	part({
-		Name = "PoolBottom",
-		Size = Vector3.new(W, 1, D),
-		CFrame = CFrame.new(center) * CFrame.new(0, -DEPTH - 0.5, 0),
-		Color = Color3.fromRGB(126, 196, 224),
-		Material = Enum.Material.CeramicTiles,
-		Parent = parent,
-	})
-	for _, wall in {
-		{ size = Vector3.new(W + 2, DEPTH, 1), offset = Vector3.new(0, -DEPTH / 2, halfD) },
-		{ size = Vector3.new(W + 2, DEPTH, 1), offset = Vector3.new(0, -DEPTH / 2, -halfD) },
-		{ size = Vector3.new(1, DEPTH, D), offset = Vector3.new(halfW, -DEPTH / 2, 0) },
-		{ size = Vector3.new(1, DEPTH, D), offset = Vector3.new(-halfW, -DEPTH / 2, 0) },
-	} do
-		part({
-			Name = "PoolWall",
-			Size = wall.size,
-			CFrame = CFrame.new(center) * CFrame.new(wall.offset),
-			Color = Color3.fromRGB(206, 226, 236),
-			Material = Enum.Material.CeramicTiles,
-			Parent = parent,
-		})
-	end
-
-	-- lane ropes
-	for lane = -2, 2 do
-		part({
-			Name = "PoolLane",
-			Size = Vector3.new(0.5, 0.4, D - 2),
-			CFrame = CFrame.new(center) * CFrame.new(lane * 12, -1, 0),
-			Color = lane % 2 == 0 and Color3.fromRGB(232, 96, 84) or Color3.fromRGB(240, 240, 240),
-			Material = Enum.Material.SmoothPlastic,
-			Parent = parent,
-		})
-	end
-
-	-- Real terrain water, so this is a pool you swim in and not a blue floor.
-	-- Filled to just under the deck rather than a stud below it: a pool whose
-	-- surface sits a stud down reads as an empty tank from the deck, and the
-	-- step in was a drop.
-	local top, bottom = -0.6, -DEPTH + 1
-	local waterCenter = center + Vector3.new(0, (top + bottom) / 2, 0)
-	pcall(function()
-		workspace.Terrain:FillBlock(
-			CFrame.new(waterCenter),
-			Vector3.new(W - 1, top - bottom, D - 1),
-			Enum.Material.Water
-		)
-	end)
-
-	-- diving board over the deep end
-	part({
-		Name = "DivePlatform",
-		Size = Vector3.new(6, 8, 6),
-		CFrame = CFrame.new(center) * CFrame.new(-halfW - 6, 4, 0),
-		Color = Color3.fromRGB(214, 208, 196),
-		Material = Enum.Material.Concrete,
-		Parent = parent,
-	})
-	part({
-		Name = "DiveBoard",
-		Size = Vector3.new(14, 0.6, 4),
-		CFrame = CFrame.new(center) * CFrame.new(-halfW + 2, 8.3, 0),
-		Color = Color3.fromRGB(240, 240, 236),
-		Material = Enum.Material.SmoothPlastic,
-		Parent = parent,
-	})
-
-	-- loungers and parasols down the sunny side
-	for i = -2, 2 do
-		part({
-			Name = "PoolLounger",
-			Size = Vector3.new(4, 1.4, 9),
-			CFrame = CFrame.new(center) * CFrame.new(i * 16, 0.7, halfD + 10) * CFrame.Angles(math.rad(-12), 0, 0),
-			Color = Color3.fromRGB(244, 232, 210),
-			Material = Enum.Material.Fabric,
-			Parent = parent,
-		})
-		part({
-			Name = "PoolParasolPole",
-			Size = Vector3.new(0.5, 10, 0.5),
-			CFrame = CFrame.new(center) * CFrame.new(i * 16 + 4, 5, halfD + 16),
-			Color = Color3.fromRGB(180, 176, 168),
-			Material = Enum.Material.Metal,
-			Parent = parent,
-		})
-		part({
-			Name = "PoolParasol",
-			Shape = Enum.PartType.Cylinder,
-			Size = Vector3.new(0.6, 13, 13),
-			CFrame = CFrame.new(center) * CFrame.new(i * 16 + 4, 10, halfD + 16) * CFrame.Angles(0, 0, math.rad(90)),
-			Color = i % 2 == 0 and Color3.fromRGB(232, 108, 96) or Color3.fromRGB(246, 206, 96),
-			Material = Enum.Material.Fabric,
-			Parent = parent,
-		})
-	end
-
-	local sign = part({
-		Name = "PoolSign",
-		Size = Vector3.new(26, 5, 1),
-		CFrame = CFrame.new(center) * CFrame.new(0, 8, -halfD - 20),
-		Color = Palette.Blackboard,
-		Parent = parent,
-	})
-	signText(sign, "CRUMBWORTH POOL\nNO RUNNING", Color3.fromRGB(140, 216, 240), Enum.NormalId.Front)
-	signText(sign, "NO RUNNING", Color3.fromRGB(140, 216, 240), Enum.NormalId.Back)
-end
+-- The tennis stadium and the swimming pool are gone.
+--
+-- The plan retired both when the Sports Field was drawn -- a running track, a
+-- pitch and four floodlight masts at (300, 150) to (580, 320) do the job of a
+-- two-court stadium and an outdoor pool between them. They stayed built
+-- anyway, and by the time the drawing caught up they were standing inside two
+-- buildings: the pool at (-340, -20) is inside the Detention Hall, which
+-- CampusPlan draws at (-485, -40) to (-315, 80), and the tennis stands ran
+-- x 244..435 across the Parking Lot, drawn at (335, -35) to (525, 115). Two
+-- venues nothing could see because two buildings were standing in them.
+--
+-- The pool took a terrain water fill and an 80 x 48 air-carve with it; both
+-- are removed here, so the basin is grass again rather than an unlit hole in
+-- the west lawn with a building over it.
 
 local function buildZone(parent: Instance, name: string, center: Vector3, size: Vector2, color: Color3, label: string, material: Enum.Material?): BasePart
 	local floor = part({
@@ -1791,8 +1571,6 @@ local NO_TREES = {
 	-- (the boarding house's own ground comes from CampusPlan.SITE below)
 	{ -387, -352, -253, -248 }, -- the library, on its drawn ground
 	{ -230, -130, 230, 130 },    -- the school itself
-	{ 290, -70, 400, 70 },       -- the tennis stadium
-	{ -400, -70, -290, 70 },     -- the pool
 	{ -180, -470, 180, -320 },   -- the running track and playing field
 	-- (the ball courts have moved to their drawn ground east of the Academy)
 	{ -392, -258, -356, -166 },  -- the groundsman's yard
@@ -1984,11 +1762,6 @@ local function buildTerrain()
 		-- the library's passage west under the field, and its shaft
 		{ cf = CFrame.new(-393, -8, -290), size = Vector3.new(64, 34, 22) },
 		{ cf = CFrame.new(-420, -8, -290), size = Vector3.new(26, 34, 26) },
-		-- The swimming pool. The grass slab is four studs thick and the pool's
-		-- water is filled from y = -13 up to -1, so the basin was capped with a
-		-- lid of turf and the pool simply was not there: you walked out to the
-		-- deck and found lawn where the water should be.
-		{ cf = CFrame.new(-340, -2.3, -20), size = Vector3.new(80, 6, 48) },
 	} do
 		terrain:FillBlock(region.cf, region.size, Enum.Material.Air)
 	end
@@ -8062,23 +7835,15 @@ end
 
 	-- ---------------- campus grounds ----------------
 	local LIBRARY = Vector3.new(-320, 0, -300)
-	local TENNIS = Vector3.new(340, 0, -20)
-	local POOL = Vector3.new(-340, 0, -20)
 	buildLibrary(folder, LIBRARY)
-	buildTennisStadium(folder, TENNIS)
-	buildPool(folder, POOL)
 	-- walks back to the building, so these read as campus and not scenery
 	-- laid OVER the two dorm walks it crosses at z = -196
 	buildCampusPath(folder, Vector3.new(0, 0, -150), LIBRARY + Vector3.new(0, 0, 44), 16, true)
-	buildCampusPath(folder, Vector3.new(230, 0, -20), TENNIS + Vector3.new(-96, 0, 0), 14)
-	buildCampusPath(folder, Vector3.new(-230, 0, -20), POOL + Vector3.new(96, 0, 0), 14)
 
 	-- The treeline predates the pool and the tennis stadium, so it plants
 	-- trees inside both. Rather than teach every scatter about every venue,
 	-- clear the venues afterwards: one list to extend when a venue is added.
 	local KEEP_CLEAR = {
-		{ c = POOL, rx = 62, rz = 50, what = "the pool" },
-		{ c = TENNIS, rx = 110, rz = 70, what = "the tennis stadium" },
 		{ c = LIBRARY, rx = 52, rz = 42, what = "the library" },
 	}
 	local cleared = 0
@@ -8131,8 +7896,6 @@ end
 		trim = trimRuns,
 		props = propRequests,
 		library = LIBRARY,
-		tennis = TENNIS,
-		pool = POOL,
 		conveyorStart = Vector3.new(-190, 0, 65),
 		conveyorEnd = Vector3.new(190, 0, 65),
 		trophyCashBoard = trophyCashBoard,
