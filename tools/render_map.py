@@ -503,8 +503,13 @@ for _pl in props:
         # a light on top of it.
         _stand_ins.append(_stand_in("PropLampPost", (_w * 0.16, _h * 0.82, _d * 0.16),
                                     (_x, _y + _h * 0.41, _z), _r, (74, 74, 80)))
-        _stand_ins.append(_stand_in("PropLampHead", (_w * 0.5, _h * 0.18, _d * 0.5),
-                                    (_x, _y + _h * 0.91, _z), _r, _body))
+        _head = _stand_in("PropLampHead", (_w * 0.5, _h * 0.18, _d * 0.5),
+                          (_x, _y + _h * 0.91, _z), _r, _body)
+        # A lantern is the one part of a lamp that is lit, and in a night frame
+        # a solid stand-in head painted over the LampGlow behind it is the
+        # difference between a lit courtyard and a row of dark posts.
+        _head["m"] = "Neon"
+        _stand_ins.append(_head)
     elif _is_tree and _h > 6:
         _stand_ins.append(_stand_in("PropTrunk", (_w * 0.20, _h * 0.52, _d * 0.20),
                                     (_x, _y + _h * 0.26, _z), _r, _trunk))
@@ -524,6 +529,49 @@ lm = math.sqrt(sum(c * c for c in LIGHT))
 LIGHT = tuple(c / lm for c in LIGHT)
 
 NIGHT_SKY = ((14, 20, 40), (30, 40, 68))
+
+# ---- the lights, for the night pass ----
+#
+# A night frame that only draws emissive surfaces shows the windows and nothing
+# they light: the courts, the walks and the drive all came out as black ground
+# with gold rectangles floating over them, which is not what the references
+# look like and not what the game looks like either. The dump carries every
+# PointLight as [range, brightness] on its part, so the renderer can do the one
+# bounce that matters -- direct light on a surface -- and a night shot becomes
+# something worth judging.
+LIGHTS = []
+for _p in parts:
+    for _l in _p.get("lamps") or ():
+        LIGHTS.append((_p["p"][0], _p["p"][1], _p["p"][2], float(_l[0]), float(_l[1])))
+LCELL = 64.0
+LGRID = {}
+for _i, (_lx, _ly, _lz, _lr, _lb) in enumerate(LIGHTS):
+    _span = int(_lr // LCELL) + 1
+    _cx0, _cz0 = int(_lx // LCELL), int(_lz // LCELL)
+    for _dx in range(-_span, _span + 1):
+        for _dz in range(-_span, _span + 1):
+            LGRID.setdefault((_cx0 + _dx, _cz0 + _dz), []).append(_i)
+print(f"{len(LIGHTS)} lights indexed for the night pass")
+
+
+def lamplight(px, py, pz, nx, ny, nz):
+    """How much direct light lands on a surface at p facing n."""
+    total = 0.0
+    for i in LGRID.get((int(px // LCELL), int(pz // LCELL)), ()):
+        lx, ly, lz, rng, bright = LIGHTS[i]
+        dx, dy, dz = lx - px, ly - py, lz - pz
+        d2 = dx * dx + dy * dy + dz * dz
+        if d2 >= rng * rng:
+            continue
+        d = math.sqrt(d2) or 1e-6
+        ndl = (nx * dx + ny * dy + nz * dz) / d
+        if ndl <= 0.0:
+            continue
+        fall = 1.0 - d / rng
+        total += bright * ndl * fall * fall
+        if total > 4.0:
+            break
+    return total
 
 
 def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 235), (208, 226, 240)), interior=False, night=False):
@@ -750,8 +798,10 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                 if part["m"] == "Neon" or float(part.get("lit") or 0) > 0:
                     shade = 1.30
                 else:
-                    shade *= 0.30
+                    # moonlight, then whatever the lamps and the windows put
+                    # on this surface
                     c = (c[0] * 0.80, c[1] * 0.88, c[2] * 1.10)
+                    shade = shade * 0.16 + min(1.05, lamplight(fcx, fcy, fcz, nx, ny_, nz_) * 0.42)
             col = tuple(min(255, int(ch * shade)) for ch in c)
             faces.append((corners, col))
 
