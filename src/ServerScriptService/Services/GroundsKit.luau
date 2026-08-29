@@ -506,4 +506,77 @@ function GroundsKit.gatePier(ctx: Ctx, x: number, z: number, height: number)
 	ctx.part({ Name = "PierFinial", Size = Vector3.new(3.0, 3.0, 3.0), CFrame = CFrame.new(x, 1.7 + height + 3.4, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Shape = Enum.PartType.Ball, Parent = ctx.parent }).CanCollide = false
 end
 
+-- ----------------------------------------------------------- floodlight --
+-- A mast with a head on it, not a glowing box in the air. Base, mast, ladder,
+-- a bracket arm, a head frame, six lamp units in it and a service walkway.
+function GroundsKit.floodMast(ctx: Ctx, x: number, z: number, height: number, aimYaw: number)
+	local at = CFrame.new(x, 0, z) * CFrame.Angles(0, aimYaw, 0)
+	ctx.part({ Name = "MastBase", Size = Vector3.new(6.0, 2.0, 6.0), CFrame = at * CFrame.new(0, 1.0, 0), Color = Color3.fromRGB(150, 150, 156), Material = Enum.Material.Concrete, Parent = ctx.parent })
+	ctx.part({ Name = "MastPlinth", Size = Vector3.new(4.2, 1.2, 4.2), CFrame = at * CFrame.new(0, 2.6, 0), Color = Color3.fromRGB(168, 168, 174), Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "FloodMast", Size = Vector3.new(2.4, height, 2.4), CFrame = at * CFrame.new(0, 2.0 + height / 2, 0), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = ctx.parent })
+	-- a ladder up the back of it
+	for i = 0, math.floor(height / 4) do
+		ctx.part({ Name = "MastRung", Size = Vector3.new(2.4, 0.28, 0.28), CFrame = at * CFrame.new(0, 5.0 + i * 4.0, -1.5), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+	for _, side in { -1, 1 } do
+		ctx.part({ Name = "MastLadderRail", Size = Vector3.new(0.3, height - 4, 0.3), CFrame = at * CFrame.new(side * 1.0, 4.0 + (height - 4) / 2, -1.5), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+	local top = 2.0 + height
+	-- the bracket the head hangs off, and the walkway under it
+	ctx.part({ Name = "MastBracket", Size = Vector3.new(2.0, 1.0, 7.0), CFrame = at * CFrame.new(0, top - 1.4, 3.0), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "MastWalkway", Size = Vector3.new(11.0, 0.4, 3.4), CFrame = at * CFrame.new(0, top - 2.6, 2.4), Color = Color3.fromRGB(84, 88, 94), Material = Enum.Material.DiamondPlate, Parent = ctx.parent }).CanCollide = false
+	for _, side in { -1, 1 } do
+		ctx.part({ Name = "MastGuard", Size = Vector3.new(0.3, 2.4, 3.4), CFrame = at * CFrame.new(side * 5.4, top - 1.4, 2.4), Color = Color3.fromRGB(84, 88, 94), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+	-- the head: a frame with six lamp units in it, each with its own cowl
+	ctx.part({ Name = "FloodHead", Size = Vector3.new(13.0, 5.4, 1.4), CFrame = at * CFrame.new(0, top + 1.2, 4.4), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	for i = 0, 5 do
+		local lx = -5.0 + (i % 3) * 5.0
+		local ly = top + (if i < 3 then 2.4 else 0.0)
+		ctx.part({ Name = "FloodCowl", Size = Vector3.new(4.2, 2.2, 1.8), CFrame = at * CFrame.new(lx, ly, 5.2) * CFrame.Angles(math.rad(-18), 0, 0), Color = Color3.fromRGB(60, 64, 70), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		local lamp = ctx.part({
+			Name = "FloodLamp",
+			Size = Vector3.new(3.4, 1.6, 0.5),
+			CFrame = at * CFrame.new(lx, ly - 0.2, 5.9) * CFrame.Angles(math.rad(-18), 0, 0),
+			Color = Color3.fromRGB(255, 246, 214),
+			Material = Enum.Material.Neon,
+			Parent = ctx.parent,
+		})
+		lamp.CanCollide = false
+		lamp.CastShadow = false
+		if i == 1 or i == 4 then
+			local light = Instance.new("SpotLight")
+			light.Angle = 110
+			light.Brightness = 2.2
+			light.Range = 96
+			light.Face = Enum.NormalId.Front
+			light.Shadows = false
+			light.Color = Color3.fromRGB(255, 248, 226)
+			light.Parent = lamp
+		end
+	end
+end
+
+-- ----------------------------------------------------------------- goal --
+-- Posts, crossbar, the two back stanchions, the stays between them, and a net
+-- on three faces. A goal was two white sticks and a bar.
+function GroundsKit.goal(ctx: Ctx, x: number, z: number, width: number, height: number, yaw: number)
+	local at = CFrame.new(x, 0, z) * CFrame.Angles(0, yaw, 0)
+	local hw, back = width / 2, 8.0
+	for _, side in { -1, 1 } do
+		ctx.part({ Name = "GoalPost", Size = Vector3.new(1.1, height, 1.1), CFrame = at * CFrame.new(side * hw, height / 2, 0), Color = Color3.fromRGB(238, 238, 240), Material = Enum.Material.Metal, Parent = ctx.parent })
+		ctx.part({ Name = "GoalStanchion", Size = Vector3.new(0.8, height * 0.52, 0.8), CFrame = at * CFrame.new(side * hw, height * 0.26, -back), Color = Color3.fromRGB(226, 226, 230), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.part({ Name = "GoalStay", Size = Vector3.new(0.7, 0.7, back + 1), CFrame = at * CFrame.new(side * hw, height * 0.52, -back / 2), Color = Color3.fromRGB(226, 226, 230), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.part({ Name = "GoalNetSide", Size = Vector3.new(0.2, height * 0.7, back), CFrame = at * CFrame.new(side * (hw - 0.1), height * 0.35, -back / 2), Color = Color3.fromRGB(238, 240, 244), Material = Enum.Material.Fabric, Transparency = 0.45, Parent = ctx.parent }).CanCollide = false
+	end
+	ctx.part({ Name = "GoalBar", Size = Vector3.new(width + 1.1, 1.1, 1.1), CFrame = at * CFrame.new(0, height, 0), Color = Color3.fromRGB(238, 238, 240), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "GoalNetBack", Size = Vector3.new(width, height * 0.55, 0.2), CFrame = at * CFrame.new(0, height * 0.275, -back), Color = Color3.fromRGB(238, 240, 244), Material = Enum.Material.Fabric, Transparency = 0.45, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "GoalNetRoof", Size = Vector3.new(width, 0.2, back), CFrame = at * CFrame.new(0, height * 0.78, -back / 2) * CFrame.Angles(math.rad(18), 0, 0), Color = Color3.fromRGB(238, 240, 244), Material = Enum.Material.Fabric, Transparency = 0.45, Parent = ctx.parent }).CanCollide = false
+	-- the ground bar the net is laced to, and the pegs holding it down
+	ctx.part({ Name = "GoalGroundBar", Size = Vector3.new(width, 0.5, 0.5), CFrame = at * CFrame.new(0, 0.3, -back), Color = Color3.fromRGB(226, 226, 230), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	for i = -1, 1 do
+		ctx.part({ Name = "GoalPeg", Size = Vector3.new(0.4, 0.9, 0.4), CFrame = at * CFrame.new(i * (width / 3), 0.45, -back - 0.6), Color = Color3.fromRGB(160, 164, 170), Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+end
+
 return GroundsKit

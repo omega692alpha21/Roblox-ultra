@@ -215,10 +215,31 @@ local function buildPlot(index: number, cf: CFrame, parent: Instance): Plot
 		Parent = model,
 	})
 
-	-- laser gate across the entrance
+	-- laser gate across the entrance, in a frame that emits it. The field on
+	-- its own was one translucent slab hanging in a doorway with nothing
+	-- holding it up.
+	for _, side in { -1, 1 } do
+		local jx = side * (width / 2 - 1.2)
+		part({ Name = "GateJamb", Size = Vector3.new(2.4, 13, 2.4), CFrame = cf * CFrame.new(jx, 6.5, depth / 2), Color = Color3.fromRGB(72, 76, 84), Material = Enum.Material.Metal, Parent = model })
+		part({ Name = "GateJambFoot", Size = Vector3.new(3.6, 0.8, 3.6), CFrame = cf * CFrame.new(jx, 0.4, depth / 2), Color = Color3.fromRGB(52, 56, 62), Material = Enum.Material.Metal, Parent = model })
+		for i = 0, 3 do
+			local emitter = part({
+				Name = "GateEmitter",
+				Size = Vector3.new(0.5, 1.4, 1.4),
+				CFrame = cf * CFrame.new(jx - side * 1.3, 2.0 + i * 2.8, depth / 2),
+				Color = Palette.CashGreen,
+				Material = Enum.Material.Neon,
+				Parent = model,
+			})
+			emitter.CanCollide = false
+			emitter.CastShadow = false
+		end
+	end
+	part({ Name = "GateHead", Size = Vector3.new(width, 2.2, 2.4), CFrame = cf * CFrame.new(0, 13.6, depth / 2), Color = Color3.fromRGB(72, 76, 84), Material = Enum.Material.Metal, Parent = model })
+	part({ Name = "GateHeadStripe", Size = Vector3.new(width - 1, 0.7, 2.6), CFrame = cf * CFrame.new(0, 12.7, depth / 2), Color = Palette.BusYellow, Material = Enum.Material.SmoothPlastic, Parent = model }).CanCollide = false
 	local gate = part({
 		Name = "Gate",
-		Size = Vector3.new(width, 12, 1),
+		Size = Vector3.new(width - 3, 12, 1),
 		CFrame = cf * CFrame.new(0, 6, depth / 2),
 		Color = Palette.CashGreen,
 		Material = Enum.Material.ForceField,
@@ -641,15 +662,24 @@ local function buildTennisStadium(parent: Instance, center: Vector3)
 			Transparency = 0.25,
 			Parent = parent,
 		})
-		for _, postZ in { -15.5, 15.5 } do
-			part({
-				Name = "NetPost",
-				Size = Vector3.new(0.8, 4.4, 0.8),
-				CFrame = CFrame.new(center) * CFrame.new(courtX + (postZ > 0 and 15 or -15), 2.2, 0),
-				Color = Color3.fromRGB(120, 124, 130),
-				Material = Enum.Material.Metal,
-				Parent = parent,
-			})
+		-- net posts with a foot, a cap, a cleat and a tension bar, and a tape
+		-- along the head of the net: two bare sticks is not a tennis net
+		for _, side in { -1, 1 } do
+			local px = center.X + courtX + side * 15
+			part({ Name = "NetPostFoot", Size = Vector3.new(2.0, 0.5, 2.0), CFrame = CFrame.new(px, center.Y + 0.25, center.Z), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent })
+			part({ Name = "NetPost", Size = Vector3.new(0.8, 4.4, 0.8), CFrame = CFrame.new(px, center.Y + 2.2, center.Z), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent })
+			part({ Name = "NetPostCap", Size = Vector3.new(1.3, 0.45, 1.3), CFrame = CFrame.new(px, center.Y + 4.6, center.Z), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "NetPostCleat", Size = Vector3.new(0.5, 0.8, 1.3), CFrame = CFrame.new(px + side * 0.65, center.Y + 1.4, center.Z), Color = Color3.fromRGB(60, 64, 70), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "NetPostStay", Size = Vector3.new(2.6, 0.28, 0.28), CFrame = CFrame.new(px - side * 1.3, center.Y + 3.8, center.Z) * CFrame.Angles(0, 0, math.rad(side * 30)), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "NetPostCollar", Size = Vector3.new(1.2, 0.5, 1.2), CFrame = CFrame.new(px, center.Y + 0.75, center.Z), Color = Color3.fromRGB(60, 64, 70), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "NetPostWinder", Size = Vector3.new(0.9, 0.9, 0.4), CFrame = CFrame.new(px + side * 0.6, center.Y + 2.6, center.Z), Color = Color3.fromRGB(150, 154, 160), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		end
+		part({ Name = "NetTape", Size = Vector3.new(30, 0.5, 0.4), CFrame = CFrame.new(center) * CFrame.new(courtX, 3.75, 0), Color = Color3.fromRGB(244, 246, 250), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+		part({ Name = "NetStrap", Size = Vector3.new(0.6, 3.6, 0.45), CFrame = CFrame.new(center) * CFrame.new(courtX, 1.8, 0), Color = Color3.fromRGB(240, 242, 246), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
+		part({ Name = "NetAnchor", Size = Vector3.new(0.8, 0.4, 0.8), CFrame = CFrame.new(center) * CFrame.new(courtX, 0.2, 0), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		-- singles sticks, which is what tells a tennis court from a net on a lawn
+		for _, side in { -1, 1 } do
+			part({ Name = "SinglesStick", Size = Vector3.new(0.5, 3.9, 0.5), CFrame = CFrame.new(center) * CFrame.new(courtX + side * 13.5, 1.95, 0), Color = Color3.fromRGB(150, 154, 160), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 		end
 	end
 
@@ -667,32 +697,18 @@ local function buildTennisStadium(parent: Instance, center: Vector3)
 		end
 	end
 
-	-- floodlights at the four corners
+	-- floodlights at the four corners, built as masts: a pole with a glowing
+	-- box floating at the top of it is not a floodlight
+	local tennisCtx = { parent = parent, part = part :: any, tag = tag :: any }
 	for _, cx in { -80, 80 } do
 		for _, cz in { -52, 52 } do
-			part({
-				Name = "FloodPole",
-				Size = Vector3.new(2, 46, 2),
-				CFrame = CFrame.new(center) * CFrame.new(cx, 23, cz),
-				Color = Color3.fromRGB(108, 112, 118),
-				Material = Enum.Material.Metal,
-				Parent = parent,
-			})
-			local head = part({
-				Name = "FloodLamp",
-				Size = Vector3.new(9, 4, 2.5),
-				CFrame = CFrame.new(center) * CFrame.new(cx, 45, cz),
-				Color = Color3.fromRGB(255, 246, 214),
-				Material = Enum.Material.Neon,
-				Parent = parent,
-			})
-			local light = Instance.new("SpotLight")
-			light.Angle = 100
-			light.Brightness = 2.4
-			light.Range = 90
-			light.Face = Enum.NormalId.Bottom
-			light.Color = Color3.fromRGB(255, 248, 226)
-			light.Parent = head
+			Grounds.floodMast(
+				tennisCtx,
+				center.X + cx,
+				center.Z + cz,
+				44,
+				math.atan2(-cx, -cz)
+			)
 		end
 	end
 
@@ -3778,6 +3794,24 @@ local function buildGrandFacade(parent: Instance)
 		part({ Name = "ClockRing", Size = Vector3.new(12.6, 12.6, 0.3), CFrame = CFrame.new(0, 80, spec.z - dir * 0.2), Color = Color3.fromRGB(120, 90, 40), Material = Enum.Material.Metal, Parent = parent })
 		part({ Name = "ClockHour", Size = Vector3.new(0.8, 3.2, 0.25), CFrame = CFrame.new(0, 81.4, spec.z + dir * 0.35), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
 		part({ Name = "ClockMinute", Size = Vector3.new(0.6, 4.2, 0.25), CFrame = CFrame.new(1.3, 80.8, spec.z + dir * 0.36) * CFrame.Angles(0, 0, math.rad(-58)), Color = Color3.fromRGB(28, 30, 34), Parent = parent })
+		-- twelve numerals, a boss over the hands' spindle and a moulded bezel:
+		-- a clock face is not a white disc with two sticks on it, and this one
+		-- is eighty studs up on the campus's one landmark
+		for h = 0, 11 do
+			local a = h * math.pi / 6
+			local long = h % 3 == 0
+			part({
+				Name = "ClockNumeral",
+				Size = Vector3.new(if long then 0.55 else 0.35, if long then 1.5 else 0.9, 0.2),
+				CFrame = CFrame.new(math.sin(a) * 4.5, 80 + math.cos(a) * 4.5, spec.z + dir * 0.32)
+					* CFrame.Angles(0, 0, -a),
+				Color = Color3.fromRGB(38, 40, 46),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			}).CanCollide = false
+		end
+		part({ Name = "ClockBezel", Size = Vector3.new(13.4, 13.4, 0.5), CFrame = CFrame.new(0, 80, spec.z - dir * 0.55), Color = Color3.fromRGB(96, 72, 34), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "ClockBoss", Size = Vector3.new(1.1, 1.1, 0.5), CFrame = CFrame.new(0, 80, spec.z + dir * 0.45), Color = Color3.fromRGB(120, 90, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 		local _ = face
 	end
 
@@ -3852,10 +3886,18 @@ local function buildGrandFacade(parent: Instance)
 	for _, lx in { -50, -38, 38, 50 } do
 		lampPost(parent, lx, Z + 30, { short = true, range = 40 })
 	end
+	-- Stone planters: a base, a tapered body, a moulded rim, soil and a clipped
+	-- bay standing in it. Three boxes stacked was a tub with a bush on top.
 	for _, px in { -44, 44 } do
-		part({ Name = "Planter", Size = Vector3.new(10, 3.4, 10), CFrame = CFrame.new(px, 1.7, Z + 46), Color = Color3.fromRGB(176, 170, 160), Material = Enum.Material.Concrete, Parent = parent })
-		part({ Name = "PlanterSoil", Size = Vector3.new(8.6, 0.6, 8.6), CFrame = CFrame.new(px, 3.5, Z + 46), Color = Color3.fromRGB(78, 58, 42), Material = Enum.Material.Ground, Parent = parent })
-		part({ Name = "PlanterShrub", Size = Vector3.new(7, 5.4, 7), CFrame = CFrame.new(px, 6.4, Z + 46), Color = Color3.fromRGB(62, 116, 58), Material = Enum.Material.Grass, Parent = parent })
+		local pz = Z + 46
+		part({ Name = "PlanterBase", Size = Vector3.new(11, 0.8, 11), CFrame = CFrame.new(px, 0.6, pz), Color = Color3.fromRGB(160, 154, 144), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "Planter", Size = Vector3.new(9.4, 3.0, 9.4), CFrame = CFrame.new(px, 2.5, pz), Color = Color3.fromRGB(176, 170, 160), Material = Enum.Material.Concrete, Parent = parent })
+		part({ Name = "PlanterRim", Size = Vector3.new(10.6, 0.8, 10.6), CFrame = CFrame.new(px, 4.2, pz), Color = Color3.fromRGB(198, 192, 180), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		for _, side in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+			part({ Name = "PlanterPanel", Size = Vector3.new(if side[1] ~= 0 then 0.5 else 6.4, 1.8, if side[1] ~= 0 then 6.4 else 0.5), CFrame = CFrame.new(px + side[1] * 4.8, 2.5, pz + side[2] * 4.8), Color = Color3.fromRGB(196, 190, 178), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		end
+		part({ Name = "PlanterSoil", Size = Vector3.new(8.6, 0.6, 8.6), CFrame = CFrame.new(px, 3.9, pz), Color = Color3.fromRGB(78, 58, 42), Material = Enum.Material.Ground, Parent = parent }).CanCollide = false
+		Grounds.yewCone({ parent = parent, part = part :: any, tag = tag :: any }, px, pz, 8.0)
 	end
 	-- flower boxes under the ground-floor windows (the Reddit-street touch)
 	for i = 0, 25 do
@@ -6197,6 +6239,45 @@ end
 -- is what gives a school corridor depth instead of reading as a hallway in a
 -- hotel. Ours is thirty-two studs across, which is room for a seven-stud
 -- island down the middle and a twelve-stud lane on each side.
+-- One run of lockers: body, capping, door seams, handles, vents, a plinth and
+-- a bench along the foot. `at` stands at the run's middle at floor level with
+-- its local -Z pointing at whoever is looking.
+local function lockerRun(parent: Instance, at: CFrame, halfW: number, halfD: number, height: number, bench: boolean)
+	part({
+		Name = "LockerBankRun",
+		Size = Vector3.new(halfW * 2, height, halfD * 2),
+		CFrame = at * CFrame.new(0, height / 2, 0),
+		Color = Palette.LockerBlue,
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	})
+	part({
+		Name = "LockerBankCap",
+		Size = Vector3.new(halfW * 2 + 0.8, 0.8, halfD * 2 + 0.8),
+		CFrame = at * CFrame.new(0, height + 0.3, 0),
+		Color = Color3.fromRGB(226, 224, 216),
+		Material = Enum.Material.SmoothPlastic,
+		Parent = parent,
+	}).CanCollide = false
+	local faceZ = -(halfD + 0.05)
+	local doors = math.max(2, math.floor(halfW / 2))
+	for i = 0, doors - 1 do
+		local dx = -halfW + (i + 0.5) * (halfW * 2 / doors)
+		part({ Name = "LockerSeam", Size = Vector3.new(0.3, height - 1, 0.3), CFrame = at * CFrame.new(dx - halfW / doors, height / 2, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
+		for _, row in { height * 0.29, height * 0.71 } do
+			part({ Name = "LockerHandle", Size = Vector3.new(0.4, 1, 0.3), CFrame = at * CFrame.new(dx + 1.2, row, faceZ), Color = Palette.BusYellow, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "LockerVent", Size = Vector3.new(2.4, 0.4, 0.25), CFrame = at * CFrame.new(dx, row + 1.5, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
+		end
+	end
+	if bench then
+		part({ Name = "LockerPlinth", Size = Vector3.new(halfW * 2 + 5, 0.5, 3.0), CFrame = at * CFrame.new(0, 0.38, -halfD - 1.6), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		part({ Name = "CorridorBench", Size = Vector3.new(halfW * 2 + 2, 0.5, 2.0), CFrame = at * CFrame.new(0, 2.2, -halfD - 1.5), Color = Color3.fromRGB(178, 84, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
+		for _, lx in { -halfW + 1, halfW - 1 } do
+			part({ Name = "CorridorBenchLeg", Size = Vector3.new(0.6, 2, 1.8), CFrame = at * CFrame.new(lx, 1, -halfD - 1.5), Color = Color3.fromRGB(120, 122, 126), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		end
+	end
+end
+
 local function buildLockerIslands(parent: Instance)
 	-- Against the NORTH WALL, in a run, the way a school corridor is. They
 	-- used to stand out in the middle of the floor as freestanding islands,
@@ -6210,38 +6291,7 @@ local function buildLockerIslands(parent: Instance)
 	local Z = 77.6                      -- hard against the north wall at 81
 	local HALF_D, HALF_W, H = 2.6, 8, 9
 	for _, cx in { -150, -100, -50, 50, 100, 150 } do
-		part({
-			Name = "LockerBankRun",
-			Size = Vector3.new(HALF_W * 2, H, HALF_D * 2),
-			CFrame = CFrame.new(cx, H / 2, Z),
-			Color = Palette.LockerBlue,
-			Material = Enum.Material.Metal,
-			Parent = parent,
-		})
-		part({
-			Name = "LockerBankCap",
-			Size = Vector3.new(HALF_W * 2 + 0.8, 0.8, HALF_D * 2 + 0.8),
-			CFrame = CFrame.new(cx, H + 0.3, Z),
-			Color = Color3.fromRGB(226, 224, 216),
-			Material = Enum.Material.SmoothPlastic,
-			Parent = parent,
-		}).CanCollide = false
-		-- doors, handles and vents on the one face anybody can see
-		local faceZ = Z - (HALF_D + 0.05)
-		for i = 0, 3 do
-			local dx = cx - HALF_W + 2 + i * 4
-			part({ Name = "LockerSeam", Size = Vector3.new(0.3, H - 1, 0.3), CFrame = CFrame.new(dx - 2, H / 2, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
-			for _, row in { 2.6, 6.4 } do
-				part({ Name = "LockerHandle", Size = Vector3.new(0.4, 1, 0.3), CFrame = CFrame.new(dx + 1.2, row, faceZ), Color = Palette.BusYellow, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-				part({ Name = "LockerVent", Size = Vector3.new(2.4, 0.4, 0.25), CFrame = CFrame.new(dx, row + 1.5, faceZ), Color = Palette.LockerBlueDark, Parent = parent }).CanCollide = false
-			end
-		end
-		-- a bench along the foot of them, still inside the wall zone
-		part({ Name = "LockerPlinth", Size = Vector3.new(HALF_W * 2 + 5, 0.5, 3.0), CFrame = CFrame.new(cx, 0.38, Z - HALF_D - 1.6), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
-		part({ Name = "CorridorBench", Size = Vector3.new(HALF_W * 2 + 2, 0.5, 2.0), CFrame = CFrame.new(cx, 2.2, Z - HALF_D - 1.5), Color = Color3.fromRGB(178, 84, 62), Material = Enum.Material.WoodPlanks, Parent = parent })
-		for _, lx in { -HALF_W + 1, HALF_W - 1 } do
-			part({ Name = "CorridorBenchLeg", Size = Vector3.new(0.6, 2, 1.8), CFrame = CFrame.new(cx + lx, 1, Z - HALF_D - 1.5), Color = Color3.fromRGB(120, 122, 126), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-		end
+		lockerRun(parent, CFrame.new(cx, 0, Z), HALF_W, HALF_D, H, true)
 	end
 end
 
@@ -6377,10 +6427,16 @@ local function buildCourt(parent: Instance, centre: Vector3, kind: string, surfa
 			rim.CanCollide = false
 		end
 	else
-		-- a net across the middle
+		-- a net across the middle, on posts that are built like posts
 		for _, side in { -1, 1 } do
-			part({ Name = "NetPost", Size = Vector3.new(0.8, 11, 0.8), CFrame = CFrame.new(centre.X, centre.Y + 5.5, centre.Z + side * (hd + 1)), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent })
+			local pz = centre.Z + side * (hd + 1)
+			part({ Name = "NetPostFoot", Size = Vector3.new(2.4, 0.6, 2.4), CFrame = CFrame.new(centre.X, centre.Y + 0.3, pz), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent })
+			part({ Name = "NetPost", Size = Vector3.new(0.8, 11, 0.8), CFrame = CFrame.new(centre.X, centre.Y + 5.5, pz), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent })
+			part({ Name = "NetPostCap", Size = Vector3.new(1.3, 0.5, 1.3), CFrame = CFrame.new(centre.X, centre.Y + 11.2, pz), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "NetPostCleat", Size = Vector3.new(1.4, 0.9, 0.5), CFrame = CFrame.new(centre.X, centre.Y + 3.2, pz - side * 0.7), Color = Color3.fromRGB(60, 64, 70), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "NetStay", Size = Vector3.new(0.3, 0.3, 3.0), CFrame = CFrame.new(centre.X, centre.Y + 9.6, pz + side * 1.2) * CFrame.Angles(math.rad(side * 34), 0, 0), Color = Color3.fromRGB(96, 100, 106), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 		end
+		part({ Name = "NetTape", Size = Vector3.new(0.28, 0.5, (hd + 1) * 2), CFrame = CFrame.new(centre.X, centre.Y + 10.3, centre.Z), Color = Color3.fromRGB(244, 246, 250), Material = Enum.Material.Fabric, Parent = parent }).CanCollide = false
 		local net = part({
 			Name = "CourtNet",
 			Size = Vector3.new(0.2, 3.4, (hd + 1) * 2),
@@ -6514,13 +6570,19 @@ local function buildBackCampus(parent: Instance)
 		end
 	end
 	tag(part({ Name = "FieldTurf", Size = Vector3.new(RX * 2 - 70, 0.4, RZ * 2 - 70), CFrame = CFrame.new(FIELD + Vector3.new(0, 0.2, 0)), Color = Color3.fromRGB(96, 162, 68), Material = Enum.Material.Grass, Parent = parent }), "TexGrass").CanCollide = false
-	-- goalposts at each end of the infield
+	-- goals at each end of the infield, and the four floodlight masts the
+	-- drawing calls for. The goals were two white sticks and a bar with no
+	-- net between them, and the field had no lighting at all -- CampusPlan
+	-- gives it "track + pitch + four floodlight masts" and only two of the
+	-- three were ever built.
+	local fieldCtx = { parent = parent, part = part :: any, tag = tag :: any }
 	for _, side in { -1, 1 } do
-		local gx = FIELD.X + side * 92
-		for _, sz in { -13, 13 } do
-			part({ Name = "GoalPost", Size = Vector3.new(1.1, 17, 1.1), CFrame = CFrame.new(gx, 8.5, FIELD.Z + sz), Color = Palette.White, Material = Enum.Material.Metal, Parent = parent })
-		end
-		part({ Name = "GoalBar", Size = Vector3.new(1.1, 1.1, 27), CFrame = CFrame.new(gx, 17, FIELD.Z), Color = Palette.White, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		Grounds.goal(fieldCtx, FIELD.X + side * 92, FIELD.Z, 26, 17, if side > 0 then 0 else math.pi)
+	end
+	for _, corner in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+		local mx = FIELD.X + corner[1] * (RX - 26)
+		local mz = FIELD.Z + corner[2] * (RZ - 24)
+		Grounds.floodMast(fieldCtx, mx, mz, 54, math.atan2(-corner[1], -corner[2]))
 	end
 
 	-- ---- a stand along the SOUTH side, so the field has a front ----
@@ -7249,14 +7311,12 @@ end
 		{ cf = CFrame.new(-58.6, 4.2, -30), rot = 90 },
 		{ cf = CFrame.new(58.6, 4.2, -30), rot = 90 },
 	} do
-		tag(part({
-			Name = "LockerBank",
-			Size = Vector3.new(24, 8.4, 1.6),
-			CFrame = spec.cf * CFrame.Angles(0, math.rad(spec.rot), 0),
-			Color = Color3.fromRGB(46, 84, 168),
-			Material = Enum.Material.SmoothPlastic,
-			Parent = folder,
-		}), "TexLocker")
+		-- These were four 24 x 8.4 x 1.6 boards painted locker blue and stuck
+		-- flat to the atrium walls. A bank of lockers has doors, handles,
+		-- vents and a capping, and the corridor's own run has had all of
+		-- those since it was built -- it was just written inline there and
+		-- nothing else could reach it.
+		lockerRun(folder, spec.cf * CFrame.Angles(0, math.rad(spec.rot), 0) * CFrame.new(0, -4.2, 0), 12, 0.8, 8.4, false)
 	end
 	-- columns along the open corridor edges (colonnade + lobby + atrium)
 	-- On the corridor's south EDGE at z = 52, not four studs into it at 59.
@@ -7467,8 +7527,20 @@ end
 	local courtBase = part({ Name = "BasketballCourt", Size = Vector3.new(34, 0.3, 22), CFrame = CFrame.new(96, 0.57, -14), Color = Color3.fromRGB(52, 118, 190), Material = Enum.Material.SmoothPlastic, Parent = folder })
 	local _cb = courtBase
 	part({ Name = "CourtKey", Size = Vector3.new(10, 0.22, 22), CFrame = CFrame.new(96, 0.83, -14), Color = Color3.fromRGB(226, 130, 62), Material = Enum.Material.SmoothPlastic, Parent = folder }).CanCollide = false
-	for _, hoopX in { 80, 112 } do
-		part({ Name = "HoopPost", Size = Vector3.new(0.8, 11, 0.8), CFrame = CFrame.new(hoopX, 5.5, -14), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
+	-- Hoops, not posts. These were two bare uprights at each end of a painted
+	-- court: no backboard, no rim, nothing to aim at.
+	for _, hoop in { { x = 80, dir = 1 }, { x = 112, dir = -1 } } do
+		local hx, dir = hoop.x, hoop.dir
+		part({ Name = "HoopFoot", Size = Vector3.new(3.4, 0.7, 3.4), CFrame = CFrame.new(hx, 0.95, -14), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = folder })
+		part({ Name = "HoopPost", Size = Vector3.new(1.0, 12, 1.0), CFrame = CFrame.new(hx, 6.6, -14), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder })
+		part({ Name = "HoopArm", Size = Vector3.new(3.2, 0.6, 0.6), CFrame = CFrame.new(hx + dir * 1.6, 12.0, -14), Color = Color3.fromRGB(120, 124, 130), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+		local board = part({ Name = "HoopBoard", Size = Vector3.new(0.4, 4.0, 6.6), CFrame = CFrame.new(hx + dir * 3.4, 11.4, -14), Color = Color3.fromRGB(246, 248, 250), Material = Enum.Material.SmoothPlastic, Parent = folder })
+		board.CanCollide = false
+		part({ Name = "HoopBoardBox", Size = Vector3.new(0.2, 2.0, 3.0), CFrame = CFrame.new(hx + dir * 3.65, 10.9, -14), Color = Color3.fromRGB(226, 84, 52), Material = Enum.Material.SmoothPlastic, Parent = folder }).CanCollide = false
+		local rim = part({ Name = "HoopRim", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.35, 3.0, 3.0), CFrame = CFrame.new(hx + dir * 5.2, 10.0, -14) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(238, 108, 46), Material = Enum.Material.Metal, Parent = folder })
+		rim.CanCollide = false
+		local net = part({ Name = "HoopNet", Size = Vector3.new(2.6, 2.4, 2.6), CFrame = CFrame.new(hx + dir * 5.2, 8.8, -14), Color = Color3.fromRGB(240, 242, 246), Material = Enum.Material.Fabric, Transparency = 0.45, Parent = folder })
+		net.CanCollide = false
 	end
 	local volleyBase = part({ Name = "VolleyballCourt", Size = Vector3.new(30, 0.3, 18), CFrame = CFrame.new(136, 0.57, 24), Color = Color3.fromRGB(226, 148, 168), Material = Enum.Material.SmoothPlastic, Parent = folder })
 	local _vb = volleyBase
@@ -7528,14 +7600,22 @@ end
 	-- studs off the wall with nothing behind it.
 	local notice = part({ Name = "LobbyNotice", Size = Vector3.new(0.5, 9, 16), CFrame = CFrame.new(-59.05, 7, 104), Color = Palette.Blackboard, Parent = folder })
 	signText(notice, "NOTICES\nBELL 8:40\nDETENTION 4PM", Palette.Chalk, Enum.NormalId.Right)
+	-- NOT a tree: these are indoors, under thirty studs of roof, in the
+	-- entrance hall. A planted bay in a glazed tub is the thing a school lobby
+	-- actually has either side of its doors -- with a base, a moulding and a
+	-- rim on the tub, rather than a box with a green box on it.
 	for _, side in { -1, 1 } do
-		part({ Name = "LobbyPlanter", Size = Vector3.new(6, 3.4, 6), CFrame = CFrame.new(side * 30, 1.7, 116), Color = Color3.fromRGB(150, 118, 96), Material = Enum.Material.Concrete, Parent = folder })
-		part({ Name = "LobbyPlanterSoil", Size = Vector3.new(5, 0.4, 5), CFrame = CFrame.new(side * 30, 3.5, 116), Color = Color3.fromRGB(78, 62, 48), Material = Enum.Material.Ground, Parent = folder })
-		-- NOT a tree: this one is indoors, under thirty studs of roof, in the
-		-- entrance hall. A planted bay tree in a tub is the thing a school
-		-- lobby actually has either side of its doors.
-		part({ Name = "LobbyTub", Size = Vector3.new(4.4, 3.2, 4.4), CFrame = CFrame.new(side * 30, 5.6, 116), Color = Color3.fromRGB(178, 122, 88), Material = Enum.Material.Slate, Parent = folder })
-		part({ Name = "LobbyBayFoliage", Size = Vector3.new(7, 6, 7), CFrame = CFrame.new(side * 30, 10.4, 116), Color = Color3.fromRGB(96, 148, 84), Material = Enum.Material.Grass, Parent = folder }).CanCollide = false
+		local px = side * 30
+		part({ Name = "LobbyPlanterBase", Size = Vector3.new(7.0, 0.6, 7.0), CFrame = CFrame.new(px, 0.5, 116), Color = Color3.fromRGB(132, 104, 84), Material = Enum.Material.Concrete, Parent = folder })
+		part({ Name = "LobbyPlanter", Size = Vector3.new(6, 3.2, 6), CFrame = CFrame.new(px, 2.4, 116), Color = Color3.fromRGB(150, 118, 96), Material = Enum.Material.Concrete, Parent = folder })
+		part({ Name = "LobbyPlanterBand", Size = Vector3.new(6.4, 0.5, 6.4), CFrame = CFrame.new(px, 3.1, 116), Color = Color3.fromRGB(178, 142, 116), Material = Enum.Material.Concrete, Parent = folder }).CanCollide = false
+		part({ Name = "LobbyPlanterRim", Size = Vector3.new(6.8, 0.7, 6.8), CFrame = CFrame.new(px, 4.35, 116), Color = Color3.fromRGB(186, 150, 122), Material = Enum.Material.Concrete, Parent = folder }).CanCollide = false
+		part({ Name = "LobbyPlanterSoil", Size = Vector3.new(5.4, 0.5, 5.4), CFrame = CFrame.new(px, 4.05, 116), Color = Color3.fromRGB(78, 62, 48), Material = Enum.Material.Ground, Parent = folder }).CanCollide = false
+		part({ Name = "LobbyBayStem", Size = Vector3.new(0.9, 3.0, 0.9), CFrame = CFrame.new(px, 5.8, 116), Color = Color3.fromRGB(112, 84, 58), Material = Enum.Material.Wood, Parent = folder }).CanCollide = false
+		for i = 0, 2 do
+			local w = 6.6 - i * 1.6
+			part({ Name = "LobbyBayFoliage", Size = Vector3.new(w, 2.2, w), CFrame = CFrame.new(px, 8.0 + i * 2.0, 116) * CFrame.Angles(0, math.rad(24 * i), 0), Color = Color3.fromRGB(96 - i * 8, 148 - i * 10, 84 - i * 6), Material = Enum.Material.Grass, Parent = folder }).CanCollide = false
+		end
 	end
 	-- On the wall beside the corridor opening, not across it. This was a 16
 	-- stud board hung in the middle of a 23 stud doorway, so walking in from
@@ -7563,6 +7643,114 @@ end
 	-- bus stop down onto the west flank walk
 	buildPath(folder, Vector3.new(0, 0, ROAD_Z - 10), Vector3.new(0, 0, 285), 26)
 	buildPath(folder, Vector3.new(-96, 0, ROAD_Z - 10), Vector3.new(-96, 0, 285), 14)
+
+	-- ---------------- the main gate ----------------
+	-- CampusPlan has drawn it at (-30, 540) to (30, 560) since the drawing was
+	-- made and nothing has ever stood there: the ceremonial approach ran 250
+	-- studs past the road to an empty field. It is the first thing anybody
+	-- arriving sees and it closes the vista from the school's front doors.
+	do
+		local gateCtx = { parent = folder, part = part :: any, tag = tag :: any }
+		local gate = CampusPlan.site("Main Gate")
+		local gz = (gate.rect[2] + gate.rect[4]) / 2
+		local half = (gate.rect[3] - gate.rect[1]) / 2
+		-- the drive up to it, and the sweep inside the piers
+		-- up to the gate, and no further: the North Reserve starts at z = 560
+		-- and the drawing keeps it clear of anything built
+		buildPath(folder, Vector3.new(0, 0, ROAD_Z + 10), Vector3.new(0, 0, gz + 4), 26)
+		tag(part({
+			Name = "GateApron",
+			Size = Vector3.new(half * 4 + 24, 0.4, 26),
+			CFrame = CFrame.new(0, 0.2, gz - 4),
+			Color = Color3.fromRGB(120, 120, 128),
+			Material = Enum.Material.Slate,
+			Parent = folder,
+		}), "TexCourtPaving").CanCollide = false
+
+		-- the two great piers, and a lesser pier each side of them
+		Grounds.gatePier(gateCtx, -half, gz, 20.0)
+		Grounds.gatePier(gateCtx, half, gz, 20.0)
+		Grounds.gatePier(gateCtx, -half - 26, gz, 13.0)
+		Grounds.gatePier(gateCtx, half + 26, gz, 13.0)
+		-- a lantern on each of the great piers
+		-- A LANTERN: a plinth on the pier, a moulded base, four glazing bars
+		-- with the glass between them, a crowned cap and a finial. What stood
+		-- here was a glowing box with a lid on it.
+		local IRONWORK = Color3.fromRGB(28, 28, 32)
+		for _, px in { -half, half } do
+			part({ Name = "GateLanternPlinth", Size = Vector3.new(3.0, 1.0, 3.0), CFrame = CFrame.new(px, 25.0, gz), Color = IRONWORK, Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			part({ Name = "GateLanternBase", Size = Vector3.new(2.6, 0.7, 2.6), CFrame = CFrame.new(px, 25.9, gz), Color = IRONWORK, Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			for _, corner in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+				part({
+					Name = "GateLanternBar",
+					Size = Vector3.new(0.3, 3.4, 0.3),
+					CFrame = CFrame.new(px + corner[1] * 1.1, 27.9, gz + corner[2] * 1.1),
+					Color = IRONWORK,
+					Material = Enum.Material.Metal,
+					Parent = folder,
+				}).CanCollide = false
+			end
+			local glass = part({
+				Name = "GateLantern",
+				Size = Vector3.new(2.0, 3.2, 2.0),
+				CFrame = CFrame.new(px, 27.9, gz),
+				Color = Color3.fromRGB(255, 220, 160),
+				Material = Enum.Material.Neon,
+				Transparency = 0.25,
+				Parent = folder,
+			})
+			glass.CanCollide = false
+			part({ Name = "GateLanternCrown", Size = Vector3.new(2.8, 1.0, 2.8), CFrame = CFrame.new(px, 30.1, gz), Color = IRONWORK, Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			part({ Name = "GateLanternVane", Size = Vector3.new(1.6, 0.8, 1.6), CFrame = CFrame.new(px, 30.9, gz) * CFrame.Angles(0, math.rad(45), 0), Color = IRONWORK, Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			part({ Name = "GateLanternFinial", Size = Vector3.new(0.5, 2.0, 0.5), CFrame = CFrame.new(px, 32.0, gz), Color = IRONWORK, Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			local lamp = Instance.new("PointLight")
+			lamp.Color = Color3.fromRGB(255, 220, 160)
+			lamp.Brightness = 2.0
+			lamp.Range = 46
+			lamp.Shadows = false
+			lamp.Parent = glass
+		end
+
+		-- the leaves, standing open against the piers, and the flanking screens
+		for _, side in { -1, 1 } do
+			local hingeX = side * half
+			local leafW = half * 0.92
+			local leafCx = hingeX + side * (leafW / 2 - 1.0)
+			part({ Name = "MainGateStile", Size = Vector3.new(0.9, 15, 0.9), CFrame = CFrame.new(hingeX + side * 3.4, 8.0, gz + 5.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder })
+			part({ Name = "MainGateRail", Size = Vector3.new(leafW, 0.7, 0.7), CFrame = CFrame.new(leafCx, 2.4, gz + 5.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			part({ Name = "MainGateRail", Size = Vector3.new(leafW, 0.7, 0.7), CFrame = CFrame.new(leafCx, 13.6, gz + 5.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			local bars = math.max(3, math.floor(leafW / 2.4))
+			for i = 0, bars do
+				local bx = leafCx - leafW / 2 + i * (leafW / bars)
+				part({ Name = "MainGateBar", Size = Vector3.new(0.32, 12, 0.32), CFrame = CFrame.new(bx, 8.0, gz + 5.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+				part({ Name = "MainGateSpear", Size = Vector3.new(0.6, 1.1, 0.6), CFrame = CFrame.new(bx, 14.6, gz + 5.6) * CFrame.Angles(0, math.rad(45), 0), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			end
+			-- the screen between the lesser pier and the great one
+			Grounds.railing(gateCtx, side * (half + 3), gz, side * (half + 23), gz, 9.0)
+			-- and the boundary railing running out from the lesser pier
+			Grounds.railing(gateCtx, side * (half + 29), gz, side * 210, gz, 9.0)
+			Grounds.gatePier(gateCtx, side * 210, gz, 13.0)
+		end
+
+		-- the school's name across the gate, hung between the great piers
+		local arch = part({ Name = "GateArch", Size = Vector3.new(half * 2 - 4, 1.0, 1.0), CFrame = CFrame.new(0, 21.5, gz + 5.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder })
+		arch.CanCollide = false
+		-- ironwork under the arch: a run of scrolls with a finial over each
+		-- pier. Without them the arch was a single bar in the air.
+		for i = -3, 3 do
+			local sx = i * ((half * 2 - 8) / 7)
+			part({ Name = "GateArchScroll", Size = Vector3.new(0.4, 3.2, 0.4), CFrame = CFrame.new(sx, 19.8, gz + 5.6) * CFrame.Angles(0, 0, math.rad(if i % 2 == 0 then 22 else -22)), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+			part({ Name = "GateArchBoss", Size = Vector3.new(1.0, 1.0, 0.6), CFrame = CFrame.new(sx, 18.2, gz + 5.6) * CFrame.Angles(0, 0, math.rad(45)), Color = Color3.fromRGB(217, 180, 92), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+		end
+		part({ Name = "GateArchRail", Size = Vector3.new(half * 2 - 4, 0.5, 0.5), CFrame = CFrame.new(0, 17.6, gz + 5.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+		local board = part({ Name = "GateNameBoard", Size = Vector3.new(30, 5.4, 0.6), CFrame = CFrame.new(0, 24.4, gz + 5.6), Color = Color3.fromRGB(22, 35, 63), Material = Enum.Material.SmoothPlastic, Parent = folder })
+		board.CanCollide = false
+		signText(board, "CRUMBWORTH HIGH", Color3.fromRGB(217, 180, 92), Enum.NormalId.Back)
+		signText(board, "CRUMBWORTH HIGH", Color3.fromRGB(217, 180, 92), Enum.NormalId.Front)
+		for _, hx in { -8, 8 } do
+			part({ Name = "GateBoardHanger", Size = Vector3.new(0.4, 2.0, 0.4), CFrame = CFrame.new(hx, 22.5, gz + 5.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = folder }).CanCollide = false
+		end
+	end
 	local dormBeds: { BasePart } = {}
 	-- the residential quad: behind the school, either side of the library, with
 	-- walks onto the same north path. A dorm parked between the car park and

@@ -38,6 +38,7 @@ FABRIC = (
     "Glass", "Window", "Door", "Frame", "Trim", "Band", "Plinth", "Verge",
     "Turf", "Grass", "Soil", "Hedge", "Water", "Leaf", "Sign", "Board", "Plaque",
     "Crest", "Banner", "Line", "Marking", "Rail", "Fence", "Tarmac", "Bay",
+    "Apron", "Verandah", "Terrace", "Joint", "Border",
 )
 PLASTIC = ("Plastic", "SmoothPlastic")
 
@@ -82,7 +83,27 @@ def main():
         if key:
             by_stem[key].append(p)
 
-    LINK = 14.0  # two parts nearer than this belong to the same object
+    LINK = 6.0  # two parts with less than this much air between them are one object
+
+    def half_extents(p):
+        r, s_ = p["r"], p["s"]
+        return [0.5 * sum(abs(r[i * 3 + j]) * s_[j] for j in range(3)) for i in range(3)]
+
+    def gap(a, b):
+        """The air between two parts' boxes, not the distance between centres.
+
+        Centre-to-centre put the jambs of a 62-stud homeroom gate thirty studs
+        from its head -- so a gate that IS a frame with a field in it came back
+        as three loose parts. What decides whether two parts are one object is
+        whether they touch.
+        """
+        ha, hb = half_extents(a), half_extents(b)
+        total = 0.0
+        for i in range(3):
+            d = abs(a["p"][i] - b["p"][i]) - ha[i] - hb[i]
+            if d > 0:
+                total += d * d
+        return total ** 0.5
 
     def cluster(members):
         remaining = list(members)
@@ -92,8 +113,7 @@ def main():
             group, queue = [seed], [seed]
             while queue:
                 a = queue.pop()
-                near = [b for b in remaining
-                        if sum((a["p"][i] - b["p"][i]) ** 2 for i in range(3)) < LINK * LINK]
+                near = [b for b in remaining if gap(a, b) < LINK]
                 for b in near:
                     remaining.remove(b)
                     group.append(b)
@@ -115,19 +135,52 @@ def main():
                     return True
         return False
 
+    # A cluster standing INSIDE a larger assembly is a component of it, not an
+    # object of its own.
+    #
+    # This groups parts by what their name says they are, so the six lamp units
+    # in a floodlight head come back as "one FloodLamp made of six identical
+    # boxes" -- which is exactly what a floodlight head is, and the mast under
+    # them is twenty-five parts the check never sees because none of them is
+    # called a lamp. Same for the four posts of the bus shelter and the lantern
+    # hanging in it. So: look at everything standing around the cluster, ignore
+    # building fabric (a locker against a wall is still a locker on its own),
+    # and if what is left is an assembly in its own right, the cluster is part
+    # of it.
+    ASSEMBLY_NEAR = 8.0
+
+    def component_of_assembly(group):
+        # everything standing here that is not this cluster's own parts. The
+        # first version of this looked only at parts with no object name of
+        # their own, so a bus shelter's four posts could not see its benches,
+        # its fascia or its lantern -- all of which are named as objects -- and
+        # the shelter read as four bare posts standing in a field.
+        own = {m["n"] for m in group}
+        seen_names = set()
+        count = 0
+        for q in parts:
+            if q["n"] in own or any(w in q["n"] for w in FABRIC):
+                continue
+            for m in group:
+                if gap(m, q) < ASSEMBLY_NEAR:
+                    seen_names.add(q["n"])
+                    count += 1
+                    break
+        return count >= MIN_PARTS and len(seen_names) >= 3
+
     thin, uniform, plasticky = [], [], []
     objects = 0
     for key, members in by_stem.items():
         for group in cluster(members):
             objects += 1
-            if len(group) < MIN_PARTS and mesh_backed(group):
+            if len(group) < MIN_PARTS and (mesh_backed(group) or component_of_assembly(group)):
                 continue
             if len(group) < MIN_PARTS:
                 thin.append((key, len(group), [round(v) for v in group[0]["p"]]))
                 continue
             sizes = {tuple(round(v, 2) for v in m["s"]) for m in group}
             colours = {tuple(m["c"]) for m in group}
-            if len(sizes) == 1 and len(colours) == 1:
+            if len(sizes) == 1 and len(colours) == 1 and not component_of_assembly(group):
                 uniform.append((key, len(group)))
             # Bare plastic is only evidence of a placeholder when the thing has
             # no shape to it either. A lacquered piano is 44 differently sized
