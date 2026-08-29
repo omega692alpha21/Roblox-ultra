@@ -150,12 +150,49 @@ def main():
         if lit < 8:
             bad.append(("blank", f"{entry['name']} has {lit} window parts; its elevations are bare"))
 
-    # ---- E. every drawn building is actually there -------------------------
+    # ---- D2. no scenery stands on drawn ground -----------------------------
+    # A reserve is allowed its trees -- they get cleared when it is built on --
+    # but a rectangle the drawing has already spent is not lawn. The Bike Track
+    # came out with three boulders and eight trees on it because the scatter's
+    # exclusion list is hand-kept and nothing checked it against the drawing.
     for entry in plan["site"]:
-        if entry["kind"] != "building":
-            continue
-        n = sum(1 for p in parts if overlaps(aabb(p), entry["rect"]))
-        if n < 20:
+        r = entry["rect"]
+        n = sum(1 for p in parts
+                if any(w in p["n"] for w in SCENERY)
+                and r[0] < p["p"][0] < r[2] and r[1] < p["p"][2] < r[3])
+        n += sum(1 for q in props
+                 if any(w in q["k"] for w in SCENERY_PROPS)
+                 and r[0] < q["p"][0] < r[2] and r[1] < q["p"][2] < r[3])
+        if n:
+            # A NOTE, not a failure. Planting inside a drawn footprint is
+            # sometimes exactly right -- the Academy's two quadrangles are
+            # courtyards in the middle of its rect, and the Great Court's lime
+            # avenue and parterre flowers are the court. What is never right is
+            # SCATTER landing there, and that is now prevented at the source:
+            # both the scatter's block list and the treeline's exclusion list
+            # are fed from CampusPlan.SITE rather than kept by hand. This line
+            # is how you see it when a number moves.
+            notes.append(f"{n} trees or rocks stand on {entry['name']}")
+
+    # ---- E. every drawn site is actually there -----------------------------
+    # Buildings AND grounds. This only ever looked at buildings, so a drawn
+    # feature that is not a building -- the Bike Track, the Main Gate -- could
+    # sit in the drawing with nothing on the ground and nothing would say so.
+    # A ground feature is allowed to be thinner than a building: paving, lines
+    # and planting, not walls.
+    for entry in plan["site"]:
+        want = 20 if entry["kind"] == "building" else 6
+        # scenery does not count: the Bike Track is drawn 240 x 200 and what
+        # stands on it is eight trees and three boulders that the scatter put
+        # there because nothing told it the ground was spoken for. A drawn
+        # feature is BUILT or it is not.
+        n = sum(1 for p in parts
+                if not any(w in p["n"] for w in SCENERY) and overlaps(aabb(p), entry["rect"]))
+        n += sum(1 for q in props
+                 if not any(w in q["k"] for w in SCENERY_PROPS)
+                 and entry["rect"][0] < q["p"][0] < entry["rect"][2]
+                 and entry["rect"][1] < q["p"][2] < entry["rect"][3])
+        if n < want:
             bad.append(("missing", f"{entry['name']} is drawn at {entry['rect']} and only "
                                    f"{n} parts stand there"))
 

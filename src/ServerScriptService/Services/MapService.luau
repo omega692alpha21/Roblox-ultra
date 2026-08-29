@@ -1785,6 +1785,7 @@ local PLOT_MID_X = (PLOT_MIN_X + PLOT_MAX_X) / 2
 local PLOT_MID = (PLOT_MIN_Z + PLOT_MAX_Z) / 2
 
 local NO_TREES = {
+	{ -556, 224, -304, 436 },    -- the bike track, on its drawn ground
 	{ -350, -210, -250, -130 },  -- the staff lodge and its turret
 	{ -265, -202, -232, -170 },
 	{ -228, -278, -124, -186 },  -- boys dorm
@@ -1815,6 +1816,16 @@ local NO_TREES = {
 	-- CampusPlan.APPROACH, and tools/build_check.py holds the built map to it.
 	{ -150, 124, 150, 575 },
 }
+
+-- and every rectangle the drawing has spent, whatever it is and whenever it
+-- was drawn. The hand-kept list above is where the trees came from: its
+-- library entry is (-387, -352) to (-253, -248) and the drawing gives the
+-- Library (-420, -348) to (-220, -252), so ten trees grew inside the west end
+-- of it. A hand-kept exclusion list drifts from the drawing by construction;
+-- reading the drawing does not.
+for _, site in CampusPlan.SITE do
+	table.insert(NO_TREES, { site.rect[1], site.rect[2], site.rect[3], site.rect[4] })
+end
 
 -- A point on a rounded rectangle, so the belt of trees and the ridge of rock
 -- follow the boundary the campus actually has instead of a circle drawn round
@@ -1881,7 +1892,10 @@ local function buildRocks(parent: Instance)
 		local pos = onBoundary(i / 62 + rng:NextNumber(-0.002, 0.002),
 			WALL_W + out, WALL_N + out, WALL_S - out)
 		local grade = rng:NextNumber(1.2, 2.4)
-		if clear(pos, 26) and insidePlot(pos, 24) and claimGround(pos, 20 * grade) then
+		-- 48, not 26: buildRockOutcrop throws its boulders up to 21 studs
+		-- off the seed, so a seed cleared at 26 could still drop stone five
+		-- studs inside a rectangle the drawing had spoken for
+		if clear(pos, 48) and insidePlot(pos, 24) and claimGround(pos, 20 * grade) then
 			buildRockOutcrop(parent, pos, grade, 900 + i)
 		end
 	end
@@ -2144,6 +2158,8 @@ type Zone = {
 	count: number,
 	seed: number,
 	margin: number?,
+	-- a zone the author means to sit inside a drawn footprint
+	inside: boolean?,
 }
 
 -- A tree that is a TREE.
@@ -2263,7 +2279,11 @@ local function scatter(zone: Zone)
 			rng:NextNumber(zone.min.X + inset, zone.max.X - inset),
 			rng:NextNumber(zone.min.Y + inset, zone.max.Y - inset)
 		)
-		local clear = not scatterBlocked(at.X, at.Y, radius)
+		-- `inside` marks a zone the author has deliberately put within a drawn
+		-- footprint -- the two quadrangles are open courtyards in the middle
+		-- of the Academy's rect, and blocking the whole rect stripped their
+		-- planting the moment the drawing started blocking scatter.
+		local clear = zone.inside == true or not scatterBlocked(at.X, at.Y, radius)
 		for _, other in placed do
 			if not clear then
 				break
@@ -3959,6 +3979,141 @@ local function upLight(parent: Instance, x: number, z: number, colour: Color3?)
 	light.Range = 22
 	light.Color = colour or Color3.fromRGB(255, 214, 156)
 	light.Parent = lens
+end
+
+-- ================= THE BIKE TRACK =================
+-- CampusPlan draws it at (-550, 230) to (-310, 430) and nothing has ever
+-- stood there: 48,000 square studs of the campus that the drawing spends on a
+-- feature and the build spends on grass and eight trees the scatter planted
+-- because nothing told it the ground was spoken for.
+--
+-- A pump track is a closed ribbon of tarmac that winds: the wobble in the
+-- radius below is the point of it, not decoration. Round the outside of each
+-- bend the ribbon is banked, there is a gate and a start pad on the straight,
+-- and the whole loop is edged so it reads from the air.
+local function buildBikeTrack(parent: Instance)
+	local site = CampusPlan.site("Bike Track")
+	local cx = (site.rect[1] + site.rect[3]) / 2
+	local cz = (site.rect[2] + site.rect[4]) / 2
+	local A = (site.rect[3] - site.rect[1]) / 2 - 16
+	local B = (site.rect[4] - site.rect[2]) / 2 - 16
+	local TARMAC = Color3.fromRGB(58, 60, 66)
+	local KERB = Color3.fromRGB(206, 200, 186)
+	local SEGMENTS = 48
+	local HALF_W = 7.0
+
+	local function at(i: number): (number, number)
+		local t = (i % SEGMENTS) / SEGMENTS * math.pi * 2
+		local wobbleX = 1 + 0.16 * math.cos(3 * t)
+		local wobbleZ = 1 + 0.16 * math.sin(2 * t)
+		return cx + math.cos(t) * A * wobbleX, cz + math.sin(t) * B * wobbleZ
+	end
+
+	for i = 0, SEGMENTS - 1 do
+		local x0, z0 = at(i)
+		local x1, z1 = at(i + 1)
+		local dx, dz = x1 - x0, z1 - z0
+		local length = math.sqrt(dx * dx + dz * dz)
+		local yaw = math.atan2(dx, dz)
+		local mid = CFrame.new((x0 + x1) / 2, 0, (z0 + z1) / 2) * CFrame.Angles(0, yaw, 0)
+		-- the ribbon, overlength by a stud so the joints close on the bends
+		-- Alternating courses. Each run overlaps its neighbour by a stud and a
+		-- bit so the joints close round the bends, and at one height that is
+		-- forty-eight overlapping slabs all topping out in the same plane.
+		tag(part({
+			Name = "TrackRibbon",
+			Size = Vector3.new(HALF_W * 2, 0.5, length + 1.4),
+			CFrame = mid * CFrame.new(0, if i % 2 == 0 then 0.25 else 0.31, 0),
+			Color = TARMAC,
+			Material = Enum.Material.Asphalt,
+			Parent = parent,
+		}), "TexTarmac").CanCollide = false
+		-- the banking: a wedge on the OUTSIDE of the curve, so a bend is a
+		-- berm. Which side that is depends on which way the ribbon is turning,
+		-- and the ribbon turns both ways -- it winds.
+		if i % 2 == 0 then
+			-- The berm goes on the side AWAY from the middle of the loop.
+			-- Deciding that from which way the ribbon is turning gets it wrong
+			-- wherever the wobble reverses the curve, and the first version
+			-- banked the whole track on its inside edge. The run's own +X in
+			-- world is (cos yaw, -sin yaw); dotted with the vector out from
+			-- the centre it says which side is outside, always.
+			local mx, mz = (x0 + x1) / 2, (z0 + z1) / 2
+			local outward = if (mx - cx) * math.cos(yaw) - (mz - cz) * math.sin(yaw) >= 0 then 1 else -1
+			local berm = Instance.new("WedgePart")
+			berm.Name = "TrackBerm"
+			berm.Anchored = true
+			berm.CanCollide = false
+			berm.Size = Vector3.new(length + 1.4, 3.6, 6.5)
+			berm.CFrame = mid
+				* CFrame.new(outward * (HALF_W + 3.0), 1.8, 0)
+				* CFrame.Angles(0, math.rad(if outward > 0 then -90 else 90), 0)
+			berm.Color = Color3.fromRGB(66, 68, 74)
+			berm.Material = Enum.Material.Asphalt
+			berm.Parent = parent
+			tag(berm, "TexTarmac")
+			-- packed earth behind the bank, so it stands on something
+			part({
+				Name = "TrackBermFill",
+				Size = Vector3.new(4.0, 1.2, length + 1.4),
+				CFrame = mid * CFrame.new(outward * (HALF_W + 7.6), 0.5, 0),
+				Color = Color3.fromRGB(74, 62, 48),
+				Material = Enum.Material.Ground,
+				Parent = parent,
+			}).CanCollide = false
+		end
+		-- edging markers, alternating, every third segment
+		if i % 3 == 0 then
+			for _, side in { -1, 1 } do
+				part({
+					Name = "TrackEdge",
+					Size = Vector3.new(1.2, 0.9, 2.6),
+					CFrame = mid * CFrame.new(side * (HALF_W + 0.8), 0.45, 0),
+					Color = if (i // 3) % 2 == 0 then KERB else Color3.fromRGB(188, 68, 58),
+					Material = Enum.Material.Concrete,
+					Parent = parent,
+				}).CanCollide = false
+			end
+		end
+	end
+
+	-- the start: a gate over the ribbon, a grid pad under it and a board
+	local sx, sz = at(0)
+	local nx, nz = at(1)
+	local startYaw = math.atan2(nx - sx, nz - sz)
+	local startAt = CFrame.new(sx, 0, sz) * CFrame.Angles(0, startYaw, 0)
+	part({ Name = "TrackStartPad", Size = Vector3.new(HALF_W * 2, 0.2, 8), CFrame = startAt * CFrame.new(0, 0.6, 0), Color = Color3.fromRGB(226, 224, 216), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+	for i = 0, 6 do
+		part({ Name = "TrackStartSquare", Size = Vector3.new(HALF_W * 2 / 7, 0.2, 4), CFrame = startAt * CFrame.new(-HALF_W + (i + 0.5) * (HALF_W * 2 / 7), 0.72, 0), Color = if i % 2 == 0 then Color3.fromRGB(38, 40, 46) else Color3.fromRGB(232, 230, 224), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+	end
+	for _, side in { -1, 1 } do
+		part({ Name = "TrackGatePost", Size = Vector3.new(1.4, 14, 1.4), CFrame = startAt * CFrame.new(side * (HALF_W + 2), 7, 0), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = parent })
+		part({ Name = "TrackGateFoot", Size = Vector3.new(3.0, 0.7, 3.0), CFrame = startAt * CFrame.new(side * (HALF_W + 2), 0.35, 0), Color = Color3.fromRGB(72, 76, 82), Material = Enum.Material.Metal, Parent = parent })
+		part({ Name = "TrackGateBrace", Size = Vector3.new(0.6, 0.6, 5.0), CFrame = startAt * CFrame.new(side * (HALF_W + 2), 12.4, 2.2) * CFrame.Angles(math.rad(28), 0, 0), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "TrackGateBeam", Size = Vector3.new(HALF_W * 2 + 6, 1.4, 1.4), CFrame = startAt * CFrame.new(0, 14, 0), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	local banner = part({ Name = "TrackBanner", Size = Vector3.new(HALF_W * 2 + 4, 4.4, 0.4), CFrame = startAt * CFrame.new(0, 11.4, 0), Color = Color3.fromRGB(22, 35, 63), Material = Enum.Material.SmoothPlastic, Parent = parent })
+	banner.CanCollide = false
+	signText(banner, "CRUMBWORTH TRACK", Color3.fromRGB(217, 180, 92), Enum.NormalId.Front)
+	signText(banner, "START / FINISH", Color3.fromRGB(217, 180, 92), Enum.NormalId.Back)
+
+	-- somewhere to leave a bike, and something to watch from
+	for _, off in { -14, 14 } do
+		local rackAt = startAt * CFrame.new(off, 0, -14)
+		part({ Name = "TrackRackBase", Size = Vector3.new(12, 0.5, 5), CFrame = rackAt * CFrame.new(0, 0.35, 0), Color = Color3.fromRGB(150, 150, 156), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+		for i = 0, 3 do
+			part({ Name = "TrackHoop", Size = Vector3.new(0.4, 4.0, 0.4), CFrame = rackAt * CFrame.new(-4.5 + i * 3, 2.5, 0), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			part({ Name = "TrackHoopTop", Size = Vector3.new(0.4, 0.4, 3.4), CFrame = rackAt * CFrame.new(-4.5 + i * 3, 4.4, 0), Color = Color3.fromRGB(96, 100, 108), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		end
+	end
+
+	-- four lamps round the loop, so it is usable at the hour the game is set
+	for i = 0, 3 do
+		local lx, lz = at(i * SEGMENTS / 4 + 3)
+		local away = math.sqrt((lx - cx) ^ 2 + (lz - cz) ^ 2)
+		local k = (away + 16) / math.max(away, 1)
+		lampPost(parent, cx + (lx - cx) * k, cz + (lz - cz) * k, { range = 52, brightness = 2.0 })
+	end
 end
 
 local function buildGreatCourt(parent: Instance)
@@ -6619,23 +6774,33 @@ local function buildBackCampus(parent: Instance)
 	-- into the library's own pediment at z = -193: the building is ninety-two
 	-- studs wide and sits squarely on the centre line, so the way to the back
 	-- of the plot goes round it.
+	-- It STOPS at the boarding houses' front, at z = -250, instead of running
+	-- on to -344. CampusPlan draws the Student Dorms at (-150, -370) to
+	-- (150, -250) and the avenue ran the length of that rectangle down the
+	-- middle of it, with six trees and six lamps standing where the range
+	-- will be. An avenue to a building ends at the building.
 	local AV = 100
+	local AV_END = -250
 	part({ Name = "BackAvenueLink", Size = Vector3.new(AV - 10, 0.3, 18), CFrame = CFrame.new((AV - 10) / 2, 0.2, -158), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
-	part({ Name = "BackAvenue", Size = Vector3.new(20, 0.3, 190), CFrame = CFrame.new(AV, 0.2, -253), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
-	part({ Name = "BackAvenueFoot", Size = Vector3.new(AV - 10, 0.3, 18), CFrame = CFrame.new((AV - 10) / 2, 0.2, -344), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+	part({ Name = "BackAvenue", Size = Vector3.new(20, 0.3, -158 - AV_END + 20), CFrame = CFrame.new(AV, 0.2, (AV_END - 168) / 2), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+	part({ Name = "BackAvenueFoot", Size = Vector3.new(AV - 10, 0.3, 18), CFrame = CFrame.new((AV - 10) / 2, 0.2, AV_END + 8), Color = Color3.fromRGB(206, 198, 182), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
 	for _, side in { -1, 1 } do
-		for i = 0, 6 do
+		for i = 0, 2 do
 			prop(if i % 2 == 0 then "KTreeTall" else "KTree",
 				CFrame.new(AV + side * 22, 0, -176 - i * 24) * CFrame.Angles(0, i * 1.1, 0))
 			lampPost(parent, AV + side * 14, -188 - i * 24, { short = true, range = 44, brightness = 1.9 })
 		end
 	end
 
-	-- ---- the orchard, west of the track, in rows ----
-	for row = 0, 5 do
-		for col = 0, 4 do
-			prop("KTreeOak", CFrame.new(-232 - col * 26, 0, -318 - row * 26)
-				* CFrame.Angles(0, (row * 5 + col) * 0.7, 0))
+	-- ---- the orchard, SOUTH of the library, in rows ----
+	-- It began at z = -318 and ran five rows of oaks straight through the
+	-- Library, which the drawing puts at (-420, -348) to (-220, -252): ten
+	-- trees inside the reading room. It sits in the band between the library's
+	-- back wall and the South Reserve now.
+	for row = 0, 2 do
+		for col = 0, 6 do
+			prop("KTreeOak", CFrame.new(-232 - col * 24, 0, -360 - row * 24)
+				* CFrame.Angles(0, (row * 7 + col) * 0.7, 0))
 		end
 	end
 	-- THE KITCHEN GARDEN, moved to where the sports field used to be.
@@ -6725,12 +6890,13 @@ local function buildPlanting(parent: Instance)
 		{ min = Vector2.new(-240, -190), max = Vector2.new(-115, -160), pool = COVER, count = 16, seed = 4010 },
 		{ min = Vector2.new(115, -190), max = Vector2.new(240, -160), pool = COVER, count = 16, seed = 4011 },
 		-- the two quadrangles, at the foot of their corner trees
-		{ min = Vector2.new(-165, -44), max = Vector2.new(-68, 40), pool = COVER, count = 14, seed = 4012 },
-		{ min = Vector2.new(68, -44), max = Vector2.new(165, 40), pool = COVER, count = 14, seed = 4013 },
+		{ min = Vector2.new(-165, -44), max = Vector2.new(-68, 40), pool = COVER, count = 14, seed = 4012, inside = true },
+		{ min = Vector2.new(68, -44), max = Vector2.new(165, 40), pool = COVER, count = 14, seed = 4013, inside = true },
 	} do
 		scatter({
 			min = zone.min, max = zone.max, y = 0,
 			pool = zone.pool, count = zone.count, seed = zone.seed, margin = 3,
+			inside = zone.inside,
 		})
 	end
 	-- loose rock along the boundary, where the ridge meets the lawn
@@ -6740,9 +6906,11 @@ local function buildPlanting(parent: Instance)
 			WALL_W - rng:NextNumber(6, 22), WALL_N - rng:NextNumber(6, 22), WALL_S + rng:NextNumber(6, 22))
 		-- one of these landed on the ceremonial axis, between the gate and the
 		-- front doors, which is the one strip of ground on the campus that has
-		-- to stay clear
+		-- to stay clear; and three of them landed on the bike track, because
+		-- this loop was the one scatter that never asked whether the drawing
+		-- had spoken for the ground it was standing on
 		local onAxis = math.abs(pos.X) < 46 and pos.Z > 124
-		if not onAxis and claimGround(pos, 11) then
+		if not onAxis and not scatterBlocked(pos.X, pos.Z, 11) and claimGround(pos, 11) then
 			prop(if i % 3 == 0 then "KRockTall" else "KRockLarge",
 				CFrame.new(pos) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0))
 		end
@@ -7084,6 +7252,26 @@ end
 	trimRuns = {}
 	propRequests = {}
 	scatterBlocks = {}
+
+	-- Ground the drawing has spoken for is not lawn.
+	--
+	-- The scatter avoids other props and it avoids the rectangles in NO_TREES,
+	-- and NO_TREES is a hand-kept list -- so every feature added to the drawing
+	-- since is fair game to it. The Bike Track came out with three boulders and
+	-- eight trees on it. Every drawn site blocks the scatter now, whatever it
+	-- is and whenever it was drawn.
+	--
+	-- AFTER the reset above, not before it: Build clears scatterBlocks a few
+	-- lines into itself, so a registration made at the top of the function is
+	-- thrown away before a single builder runs.
+	for _, site in CampusPlan.SITE do
+		blockScatter(
+			(site.rect[1] + site.rect[3]) / 2,
+			(site.rect[2] + site.rect[4]) / 2,
+			(site.rect[3] - site.rect[1]) / 2 + 8,
+			(site.rect[4] - site.rect[2]) / 2 + 8
+		)
+	end
 
 	local folder = Instance.new("Folder")
 	folder.Name = "CrumbworthHigh"
@@ -7627,6 +7815,7 @@ end
 	buildGrandFacade(folder)
 	buildFrontGrounds(folder)
 	buildGreatCourt(folder)
+	buildBikeTrack(folder)
 	detailCorridor(folder)
 
 	-- ---------------- outside: entrance, dorms, grounds ----------------

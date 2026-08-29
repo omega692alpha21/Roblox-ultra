@@ -735,6 +735,7 @@ shots = [
     ("busstop",    (-114, 6, 330),   (-108, 4, 280)),
     ("gate",       (0, 12, 620),     (0, 14, 520)),
     ("gatedrive",  (0, 8, 500),      (0, 20, 200)),
+    ("biketrack",  (-430, 130, 520),  (-430, 4, 330)),
 ]
 for name, cam, target in shots:
     render(cam, target, os.path.join(OUT, f"shot_{name}.png"))
