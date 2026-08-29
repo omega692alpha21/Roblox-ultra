@@ -28,7 +28,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DUMP = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "_map_export.json")
 
 DRESSING = ("Plinth", "StringCourse", "Cornice", "Quoin", "Gutter", "Downpipe",
-            "Hopper", "Buttress", "Pilaster", "Band", "Coping", "Kneeler")
+            "Hopper", "Buttress", "Pilaster", "Band", "Coping", "Kneeler",
+            # the dressing round an opening is relief too: a surround flush
+            # with its wall is a rectangle painted on stone
+            "Surround", "Sill", "Hood", "Jamb", "Keystone", "Lintel",
+            "Reveal", "Apron", "Cill")
 WALLS = ("Wall", "Facade", "Brick", "Shell", "Range", "Tower", "Gable")
 NOT_WALL = ("Inner", "Partition", "Cavern", "Tunnel", "Boundary", "Retain",
             "Head", "Upper", "Lower")

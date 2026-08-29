@@ -174,24 +174,44 @@ local function windowsAlong(
 		-- one of them INSIDE the masonry: twenty-one windows on the gymnasium,
 		-- none of them visible from anywhere.
 		local face = thickness / 2
-		local function at3(w: number, h: number, d: number, push: number)
+		local function at3(w: number, h: number, d: number, push: number, alongOff: number?, dy: number?)
+			local a = at + (alongOff or 0)
 			local size = if alongX then Vector3.new(w, h, d) else Vector3.new(d, h, w)
 			local cf = if alongX
-				then CFrame.new(at, y, across + outward * (face + push))
-				else CFrame.new(across + outward * (face + push), y, at)
+				then CFrame.new(a, y + (dy or 0), across + outward * (face + push))
+				else CFrame.new(across + outward * (face + push), y + (dy or 0), a)
 			return size, cf
 		end
-		local sSize, sCf = at3(WINDOW_W + 3.0, wh + 3.0, 1.4, -0.5)
-		ctx.tag(ctx.part({ Name = "PlanWindowSurround", Size = sSize, CFrame = sCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
-		local gSize, gCf = at3(WINDOW_W, wh, 0.6, 0.4)
+		-- A FRAME, four bars round the opening -- not a slab.
+		--
+		-- The surround was one WINDOW_W+3 by wh+3 sheet of ashlar at push
+		-- -0.5, which stands two tenths of a stud proud of the wall, and the
+		-- pane and its mullion were pushed FURTHER out than it. So the raised
+		-- band that is supposed to frame a window sat BEHIND the glass it
+		-- frames, and 132 windows across five buildings read as rectangles
+		-- painted on flat stone. relief_check measures exactly this.
+		local SUR = 1.6
+		for _, bar in
+			{
+				{ w = WINDOW_W + SUR * 2, h = SUR, along = 0.0, dy = wh / 2 + SUR / 2 },
+				{ w = WINDOW_W + SUR * 2, h = SUR, along = 0.0, dy = -wh / 2 - SUR / 2 },
+				{ w = SUR, h = wh, along = -(WINDOW_W + SUR) / 2, dy = 0.0 },
+				{ w = SUR, h = wh, along = (WINDOW_W + SUR) / 2, dy = 0.0 },
+			}
+		do
+			local bSize, bCf = at3(bar.w, bar.h, 2.2, 0.5, bar.along, bar.dy)
+			ctx.tag(ctx.part({ Name = "PlanWindowSurround", Size = bSize, CFrame = bCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
+		end
+		-- the pane sits in the reveal the frame makes, not out in front of it
+		local gSize, gCf = at3(WINDOW_W, wh, 0.6, 0.2)
 		local pane = ctx.part({ Name = "PlanWindowGlass", Size = gSize, CFrame = gCf, Color = GLASS_LIT, Material = Enum.Material.Neon, Transparency = 0.34, Parent = ctx.parent })
 		pane.CanCollide = false
 		pane.CastShadow = false
-		local mSize, mCf = at3(0.5, wh, 0.8, 0.7)
+		local mSize, mCf = at3(0.5, wh, 0.8, 0.55)
 		ctx.part({ Name = "PlanWindowMullion", Size = mSize, CFrame = mCf, Color = FRAME, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
-		local silSize, silCf = at3(WINDOW_W + 4.0, 0.7, 2.2, 0.1)
+		local silSize, silCf = at3(WINDOW_W + 4.0, 0.7, 2.8, 0.6)
 		local sill = ctx.part({ Name = "PlanWindowSill", Size = silSize, CFrame = silCf, Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent })
-		sill.CFrame = silCf - Vector3.new(0, wh / 2 + 0.4, 0)
+		sill.CFrame = silCf - Vector3.new(0, wh / 2 + 1.6, 0)
 		sill.CanCollide = false
 		ctx.tag(sill, "TexAshlar")
 		if i % 2 == 1 then

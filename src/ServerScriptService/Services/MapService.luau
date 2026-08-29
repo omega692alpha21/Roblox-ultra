@@ -3521,8 +3521,11 @@ local function buildGrandFacade(parent: Instance)
 		-- a lit lancet in each pier's outer face, so it is stone with a window
 		-- in it rather than a slab
 		for _, wy in { 21.2, 33.4 } do
-			tag(part({ Name = "EntryPierSurround", Size = Vector3.new(6.6, 9.4, 1.2), CFrame = CFrame.new(px, wy, Z + 12.1), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
-			local lancet = part({ Name = "EntryPierGlass", Size = Vector3.new(4.2, 7.0, 0.7), CFrame = CFrame.new(px, wy, Z + 12.5), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.32, Parent = parent })
+			-- A tenth of a stud INSIDE the pier it dresses, with the lancet behind
+			-- it standing further out than the surround does. Pushed out to read
+			-- as the raised band it is meant to be.
+			tag(part({ Name = "EntryPierSurround", Size = Vector3.new(6.6, 9.4, 2.0), CFrame = CFrame.new(px, wy, Z + 12.5), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+			local lancet = part({ Name = "EntryPierGlass", Size = Vector3.new(4.2, 7.0, 0.7), CFrame = CFrame.new(px, wy, Z + 13.2), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.32, Parent = parent })
 			lancet.CanCollide = false
 			lancet.CastShadow = false
 			part({ Name = "EntryPierMullion", Size = Vector3.new(0.5, 7.0, 1.0), CFrame = CFrame.new(px, wy, Z + 12.7), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
