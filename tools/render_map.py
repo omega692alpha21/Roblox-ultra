@@ -528,7 +528,7 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
         # sanctum's cavern roof -- 286 x 148 studs of near-black slate eighteen
         # studs down -- painted itself straight over the west lawn in every
         # aerial, and read as a hole in the campus.
-        if py + sy < -6 and cam[1] > 0:
+        if cam[1] > 0 and (py + sy / 2 < -2 or py < -6):
             continue
         def world(local):
             return (px + R[0][0]*local[0] + R[0][1]*local[1] + R[0][2]*local[2],

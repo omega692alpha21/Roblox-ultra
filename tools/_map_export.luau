@@ -8525,6 +8525,21 @@ local function buildTeachersQuarters(parent: Instance, center: Vector3)
 				Vector3.new(side * halfW, RIDGE + (step + 0.5) * ((RIDGE_TOP - RIDGE) / 7), 0))
 		end
 	end
+	-- A string course at each floor. The lodge is three storeys of unbroken
+	-- stone from the plinth to the eaves -- the only building on the campus
+	-- with more than one floor and nothing marking where they are, which
+	-- tools/kit_check.py is what found.
+	for _, band in { GROUND, UPPER } do
+		tag(part({
+			Name = "QuartersStringCourse",
+			Size = Vector3.new(W + 1.8, 1.4, D + 1.8),
+			CFrame = at(0, band + 0.7, 0),
+			Color = STONE,
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		}), "TexAshlar").CanCollide = false
+	end
+
 	-- dormers, on the side the campus is
 	for _, dx in { -28, -9, 9, 28 } do
 		part({ Name = "QuartersDormer", Size = Vector3.new(10, 9, 11), CFrame = at(dx, RIDGE + 3, halfD - 8), Color = Color3.fromRGB(232, 226, 214), Material = Enum.Material.WoodPlanks, Parent = parent })
