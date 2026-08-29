@@ -467,8 +467,12 @@ PROP_COLOUR = (
 def _prop_look(kind):
     for words, body, trunk in PROP_COLOUR:
         if any(w in kind for w in words):
-            return body, trunk, words[0] in ("Tree",)
+            return body, trunk, words[0] == "Tree"
     return (150, 146, 138), (120, 118, 112), False
+
+
+def _is_lamp(kind):
+    return any(w in kind for w in ("Lamp", "Light", "Lantern"))
 
 
 def _stand_in(name, size, pos, rot, colour):
@@ -489,9 +493,18 @@ for _pl in props:
     _x, _y, _z = _pl["p"]
     _r = _pl["r"]
     _body, _trunk, _is_tree = _prop_look(_pl["k"])
+    _lamp = _is_lamp(_pl["k"])
     if _pl.get("hang"):
         _stand_ins.append(_stand_in("Prop" + _pl["k"], (_w, _h, _d),
                                     (_x, _y - _h / 2, _z), _r, _body))
+    elif _lamp and _h > 6:
+        # A lamp standard's bounding box is as wide as its bracket, so drawn
+        # solid it is a pale slab the size of a garden shed. It is a post with
+        # a light on top of it.
+        _stand_ins.append(_stand_in("PropLampPost", (_w * 0.16, _h * 0.82, _d * 0.16),
+                                    (_x, _y + _h * 0.41, _z), _r, (74, 74, 80)))
+        _stand_ins.append(_stand_in("PropLampHead", (_w * 0.5, _h * 0.18, _d * 0.5),
+                                    (_x, _y + _h * 0.91, _z), _r, _body))
     elif _is_tree and _h > 6:
         _stand_ins.append(_stand_in("PropTrunk", (_w * 0.20, _h * 0.52, _d * 0.20),
                                     (_x, _y + _h * 0.26, _z), _r, _trunk))
@@ -595,7 +608,12 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
         # green field. A wall a hundred studs long is worth drawing from any
         # distance; a baluster is not.
         dist = math.sqrt((px - cam[0]) ** 2 + (py - cam[1]) ** 2 + (pz - cam[2]) ** 2)
-        if dist > 900 and max(sx, sy, sz) < 20:
+        # Cull on how big it lands on the SCREEN, not on a flat 20 studs: a
+        # 20-stud tree at 900 was kept and the same tree at 1400 was dropped,
+        # so an aerial that could hold the whole campus showed the near half
+        # planted and the far half as bare lawn -- and the planting pass got
+        # judged on it.
+        if dist > 900 and max(sx, sy, sz) / dist < 0.012:
             continue
         # Nothing underground. There is no terrain in the dump, so the pyramid
         # sanctum's cavern roof -- 286 x 148 studs of near-black slate eighteen
