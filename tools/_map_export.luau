@@ -59,7 +59,25 @@ local function c3(r, g, b) return setmetatable({R=r or 0, G=g or 0, B=b or 0}, C
 Color3 = {
   new = c3,
   fromRGB = function(r, g, b) return c3((r or 0)/255, (g or 0)/255, (b or 0)/255) end,
-  fromHSV = function(h, s, v) return c3(v, v, v) end,
+  -- A REAL one. This returned c3(v, v, v) -- grey -- so every part in the map
+  -- whose colour comes from a hue rotation dumped, rendered and audited as
+  -- grey. asset_audit found it as "SecretShelfBook is 64 copies of one box in
+  -- one colour", which was the tool's fault, not the map's: the shelf that
+  -- opens the pyramid is sixty-four books in twelve hues.
+  fromHSV = function(h, s, v)
+    h = (h % 1) * 6
+    local i = math.floor(h)
+    local f = h - i
+    local p = v * (1 - s)
+    local q = v * (1 - s * f)
+    local t = v * (1 - s * (1 - f))
+    if i == 0 then return c3(v, t, p) end
+    if i == 1 then return c3(q, v, p) end
+    if i == 2 then return c3(p, v, t) end
+    if i == 3 then return c3(p, q, v) end
+    if i == 4 then return c3(t, p, v) end
+    return c3(v, p, q)
+  end,
 }
 
 UDim = { new = function(s, o) return {Scale=s, Offset=o} end }
@@ -10135,7 +10153,7 @@ local function buildBackCampus(parent: Instance)
 				{ Vector3.new(0.8, 1.6, 7.4), Vector3.new(9.6, 0, 0) },
 			} do
 				part({
-					Name = "GardenBoard",
+					Name = "GardenBedTimber",
 					Size = board[1],
 					CFrame = CFrame.new(bx + board[2].X, 0.8, bz + board[2].Z),
 					Color = Color3.fromRGB(124, 92, 60),
@@ -10144,7 +10162,7 @@ local function buildBackCampus(parent: Instance)
 				})
 			end
 			part({
-				Name = "GardenBed",
+				Name = "GardenBedSoil",
 				Size = Vector3.new(18.4, 1.2, 7.4),
 				CFrame = CFrame.new(bx, 0.6, bz),
 				Color = Color3.fromRGB(92, 68, 48),
@@ -10159,7 +10177,7 @@ local function buildBackCampus(parent: Instance)
 					local w = 1.6 + (n % 5) * 0.24
 					local h = 1.5 + ((n // 5) % 6) * 0.26
 					part({
-						Name = "GardenCrop",
+						Name = "GardenBedCrop",
 						Size = Vector3.new(w, h, w * 0.86),
 						CFrame = CFrame.new(bx - 7.4 + i * 3.7, 1.2 + h / 2, bz + drill * 2.4),
 						Color = Color3.fromRGB(

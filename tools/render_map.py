@@ -79,7 +79,25 @@ local function c3(r, g, b) return setmetatable({R=r or 0, G=g or 0, B=b or 0}, C
 Color3 = {
   new = c3,
   fromRGB = function(r, g, b) return c3((r or 0)/255, (g or 0)/255, (b or 0)/255) end,
-  fromHSV = function(h, s, v) return c3(v, v, v) end,
+  -- A REAL one. This returned c3(v, v, v) -- grey -- so every part in the map
+  -- whose colour comes from a hue rotation dumped, rendered and audited as
+  -- grey. asset_audit found it as "SecretShelfBook is 64 copies of one box in
+  -- one colour", which was the tool's fault, not the map's: the shelf that
+  -- opens the pyramid is sixty-four books in twelve hues.
+  fromHSV = function(h, s, v)
+    h = (h % 1) * 6
+    local i = math.floor(h)
+    local f = h - i
+    local p = v * (1 - s)
+    local q = v * (1 - s * f)
+    local t = v * (1 - s * (1 - f))
+    if i == 0 then return c3(v, t, p) end
+    if i == 1 then return c3(q, v, p) end
+    if i == 2 then return c3(p, v, t) end
+    if i == 3 then return c3(p, q, v) end
+    if i == 4 then return c3(t, p, v) end
+    return c3(v, p, q)
+  end,
 }
 
 UDim = { new = function(s, o) return {Scale=s, Offset=o} end }

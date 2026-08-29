@@ -7009,7 +7009,7 @@ local function buildBackCampus(parent: Instance)
 				{ Vector3.new(0.8, 1.6, 7.4), Vector3.new(9.6, 0, 0) },
 			} do
 				part({
-					Name = "GardenBoard",
+					Name = "GardenBedTimber",
 					Size = board[1],
 					CFrame = CFrame.new(bx + board[2].X, 0.8, bz + board[2].Z),
 					Color = Color3.fromRGB(124, 92, 60),
@@ -7018,7 +7018,7 @@ local function buildBackCampus(parent: Instance)
 				})
 			end
 			part({
-				Name = "GardenBed",
+				Name = "GardenBedSoil",
 				Size = Vector3.new(18.4, 1.2, 7.4),
 				CFrame = CFrame.new(bx, 0.6, bz),
 				Color = Color3.fromRGB(92, 68, 48),
@@ -7033,7 +7033,7 @@ local function buildBackCampus(parent: Instance)
 					local w = 1.6 + (n % 5) * 0.24
 					local h = 1.5 + ((n // 5) % 6) * 0.26
 					part({
-						Name = "GardenCrop",
+						Name = "GardenBedCrop",
 						Size = Vector3.new(w, h, w * 0.86),
 						CFrame = CFrame.new(bx - 7.4 + i * 3.7, 1.2 + h / 2, bz + drill * 2.4),
 						Color = Color3.fromRGB(

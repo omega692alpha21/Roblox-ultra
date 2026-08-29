@@ -25,10 +25,30 @@ REPO = os.path.dirname(HERE)
 
 # Names that promise an object rather than a piece of building fabric. A wall
 # may be one slab; a bench may not.
+#
+# This is a WHITELIST, and a whitelist can only catch the placeholders somebody
+# thought to name. Running the same bar over every non-fabric cluster in the
+# map instead was tried and does not pay: it reports twenty-seven things, of
+# which the real ones are the two below and the rest are goal stanchions,
+# curtain, rope, chequer tiles, car wheels and abacus beads -- and silencing
+# those means putting "Bar" and "Net" in FABRIC, which is what tells the audit
+# a goal IS an assembly. So the list stays, and it grows by what actually got
+# missed:
+#
+#   Book  the library's shelves were ONE part thirty-eight studs long per
+#         shelf level, in one colour. Nothing checked, because nothing on this
+#         list is called a book.
+#   Bed   the kitchen garden's sixteen beds were a brown box with a green box
+#         laid on top of it.
+#
+# Curtain, Rope, Stand and Booth were tried here too and taken out again: a
+# stage curtain and a climbing rope ARE one part each, and six identical music
+# stands are six music stands.
 OBJECT = (
     "Bench", "Lamp", "Lantern", "Fountain", "Statue", "Bin", "Desk", "Chair",
     "Table", "Locker", "Globe", "Clock", "Gate", "Post", "Bollard", "Planter",
     "Trophy", "Vending", "Piano", "Easel", "Telescope", "Microscope", "Cauldron",
+    "Book", "Bed",
 )
 # Fabric: walls, floors, roofs, trim. One part is a legitimate answer for these.
 FABRIC = (
@@ -71,9 +91,11 @@ def main():
     # "WalkLamp", "StatueTorso" -> "Statue"), then cluster those parts by
     # position, because two lamps thirty studs apart are two lamps.
     def stem(name):
+        if any(w in name for w in FABRIC):
+            return None
         for word in OBJECT:
             i = name.find(word)
-            if i >= 0 and not any(w in name for w in FABRIC):
+            if i >= 0:
                 return name[: i + len(word)]
         return None
 
