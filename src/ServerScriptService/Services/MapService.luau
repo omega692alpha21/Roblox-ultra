@@ -3695,6 +3695,36 @@ local function buildGrandFacade(parent: Instance)
 	-- header behind it.
 	signText(board, "DETENTION ACADEMY", Color3.fromRGB(217, 180, 92), Enum.NormalId.Back)
 	tag(part({ Name = "NameBoardFrame", Size = Vector3.new(35.8, 7.6, 0.5), CFrame = CFrame.new(0, 42.0, FACE + 0.1), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	-- Two gooseneck lamps over it. The reference art's name board is lit from
+	-- in front; ours was a navy rectangle in the dark with gold lettering on
+	-- it and no fitting anywhere near it.
+	for _, side in { -1, 1 } do
+		local sx = side * 12.0
+		part({ Name = "SignLampBracket", Size = Vector3.new(0.9, 1.6, 0.9), CFrame = CFrame.new(sx, 46.6, FACE + 0.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "SignLampArm", Size = Vector3.new(0.55, 0.55, 4.4), CFrame = CFrame.new(sx, 47.2, FACE + 2.6), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "SignLampElbow", Size = Vector3.new(0.55, 1.5, 0.55), CFrame = CFrame.new(sx, 46.6, FACE + 4.7), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "SignLampShade", Size = Vector3.new(3.4, 1.1, 3.4), CFrame = CFrame.new(sx, 45.7, FACE + 4.7), Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		local bulb = part({ Name = "SignLampGlow", Size = Vector3.new(2.2, 0.4, 2.2), CFrame = CFrame.new(sx, 45.1, FACE + 4.7), Color = Color3.fromRGB(255, 226, 176), Material = Enum.Material.Neon, Parent = parent })
+		bulb.CanCollide = false
+		bulb.CastShadow = false
+		local lamp = Instance.new("PointLight")
+		lamp.Brightness = 1.6
+		lamp.Range = 30
+		lamp.Color = Color3.fromRGB(255, 224, 178)
+		lamp.Shadows = false
+		lamp.Parent = bulb
+	end
+	-- and a crest on the gable above it: shield, border, chevron and quarters
+	-- Proud of the gable, not inside it: BayGableWall is 1.6 thick centred on
+	-- FACE + 0.4, so anything at FACE + 0.9 is buried in the wall it is meant
+	-- to hang on.
+	part({ Name = "CrestBorder", Size = Vector3.new(10.4, 12.4, 0.5), CFrame = CFrame.new(0, 55.0, FACE + 1.5), Color = Color3.fromRGB(217, 180, 92), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "CrestShield", Size = Vector3.new(9.0, 11.0, 0.8), CFrame = CFrame.new(0, 55.0, FACE + 1.9), Color = Color3.fromRGB(22, 35, 63), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+	part({ Name = "CrestChevron", Size = Vector3.new(9.2, 1.6, 0.4), CFrame = CFrame.new(0, 56.6, FACE + 2.6), Color = Color3.fromRGB(217, 180, 92), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for _, q in { Vector3.new(-2.2, 59.2, 0), Vector3.new(2.2, 59.2, 0), Vector3.new(-2.2, 52.6, 0), Vector3.new(2.2, 52.6, 0) } do
+		part({ Name = "CrestQuarter", Size = Vector3.new(3.2, 3.2, 0.4), CFrame = CFrame.new(q.X, q.Y, FACE + 2.6), Color = if q.X * (q.Y - 56) > 0 then Color3.fromRGB(140, 38, 46) else Color3.fromRGB(201, 191, 169), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "CrestFinial", Size = Vector3.new(1.4, 1.4, 1.4), CFrame = CFrame.new(0, 61.8, FACE + 1.8) * CFrame.Angles(0, math.rad(45), 0), Color = Color3.fromRGB(217, 180, 92), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 
 	-- wall lanterns either side of the doors -- a scanned one, not a glowing box
 	for _, side in { -1, 1 } do
@@ -3828,12 +3858,13 @@ local function buildGrandFacade(parent: Instance)
 		local _ = face
 	end
 
-	-- school name over the entrance
-	-- Proud of the entry bay's header, not flush with it. Flush, the sign's
-	-- reading face was inside fourteen studs of concrete: the school's own
-	-- name over its own front door, unreadable from the drive.
-	local sign = part({ Name = "FacadeSign", Size = Vector3.new(40, 5, 1.2), CFrame = CFrame.new(0, 39.6, Z + 15.4), Color = Color3.fromRGB(24, 32, 58), Parent = parent })
-	signText(sign, "DETENTION", Color3.fromRGB(255, 196, 60), Enum.NormalId.Front)
+	-- The school name over the entrance is the entry bay's own AcademyNameBoard
+	-- and nothing else. There used to be a SECOND board here reading
+	-- "DETENTION", 40 by 5, hung three studs in front of that one and two and
+	-- a half studs lower -- so from the drive the lower half of "DETENTION
+	-- ACADEMY" was covered by the word "DETENTION", and this board was itself
+	-- entirely behind the entry bay's piers. sign_check's sight-line rule is
+	-- what found it; the old probe missed it by three tenths of a stud.
 
 	-- ---- corner towers with crenellations ----
 	for _, corner in CORNER_TOWERS do
@@ -8953,7 +8984,10 @@ end
 	-- is the doorway, so the room could not be walked into.
 	local classBoard = part({ Name = "ClassBoard", Size = Vector3.new(18, 8, 0.6), CFrame = CFrame.new(-74, 6, -121), Color = Palette.Blackboard, Parent = folder })
 	classBoard.CanCollide = false
-	signText(classBoard, "CLASSROOM 101", Palette.White, Enum.NormalId.Front)
+	-- Back, not Front: the board is against the south wall and Front is -Z,
+	-- so the writing read into the facade a stud and a half behind it while
+	-- the desks in front of it saw a blank slate.
+	signText(classBoard, "CLASSROOM 101", Palette.White, Enum.NormalId.Back)
 
 	-- trophy hall boards
 	local trophyCashBoard = part({
