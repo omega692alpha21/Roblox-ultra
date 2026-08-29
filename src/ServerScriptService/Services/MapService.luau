@@ -1422,9 +1422,17 @@ local function buildCheckerFloor(parent: Instance, center: Vector3, size: Vector
 					Size = Vector3.new(tile - 0.4, 0.2, tile - 0.4),
 					CFrame = CFrame.new(
 						center.X - size.X / 2 + tile / 2 + i * tile,
-						-- 0.24, not 0.11: a checker tile is drawn ON the hallway
-						-- floor, and at 0.11 its top landed on the floor's top
-						0.24,
+						-- -0.09. The atrium's floor is SchoolBaseFloor1 and its
+						-- top is at -0.20, so a tile centred on 0.24 hovers a
+						-- third of a stud clear of it -- seventy-two of them,
+						-- floating over the middle of the school. The note this
+						-- replaces raised them FROM 0.11 to clear a z-fight,
+						-- which lifted them off the floor instead of layering
+						-- them onto it. At -0.09 the tile is bedded into the
+						-- floor and stands a hundredth proud, sharing no plane
+						-- with anything. (solid_check could not see this: its
+						-- floating test only looks at collidable parts.)
+						-0.09,
 						center.Z - size.Y / 2 + tile / 2 + j * tile
 					),
 					-- a warm stone against the pale floor: the old pillarbox red
