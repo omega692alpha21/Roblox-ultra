@@ -74,6 +74,24 @@ C3MT.__index = function(c, k)
       return setmetatable({R=a.R+(b.R-a.R)*t, G=a.G+(b.G-a.G)*t, B=a.B+(b.B-a.B)*t}, C3MT)
     end
   end
+  -- Color3:ToHSV. MeshService warms every imported mesh through it, and the
+  -- shim answered nil -- so the day MeshService is added to the module list
+  -- below, the export dies on a nil call. Answering it now costs nothing.
+  if k == "ToHSV" then
+    return function(a)
+      local mx = math.max(a.R, a.G, a.B)
+      local mn = math.min(a.R, a.G, a.B)
+      local d = mx - mn
+      local h = 0
+      if d > 0 then
+        if mx == a.R then h = ((a.G - a.B) / d) % 6
+        elseif mx == a.G then h = (a.B - a.R) / d + 2
+        else h = (a.R - a.G) / d + 4 end
+        h /= 6
+      end
+      return h, (if mx > 0 then d / mx else 0), mx
+    end
+  end
   return nil
 end
 local function c3(r, g, b) return setmetatable({R=r or 0, G=g or 0, B=b or 0}, C3MT) end

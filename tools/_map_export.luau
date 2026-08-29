@@ -54,6 +54,24 @@ C3MT.__index = function(c, k)
       return setmetatable({R=a.R+(b.R-a.R)*t, G=a.G+(b.G-a.G)*t, B=a.B+(b.B-a.B)*t}, C3MT)
     end
   end
+  -- Color3:ToHSV. MeshService warms every imported mesh through it, and the
+  -- shim answered nil -- so the day MeshService is added to the module list
+  -- below, the export dies on a nil call. Answering it now costs nothing.
+  if k == "ToHSV" then
+    return function(a)
+      local mx = math.max(a.R, a.G, a.B)
+      local mn = math.min(a.R, a.G, a.B)
+      local d = mx - mn
+      local h = 0
+      if d > 0 then
+        if mx == a.R then h = ((a.G - a.B) / d) % 6
+        elseif mx == a.G then h = (a.B - a.R) / d + 2
+        else h = (a.R - a.G) / d + 4 end
+        h /= 6
+      end
+      return h, (if mx > 0 then d / mx else 0), mx
+    end
+  end
   return nil
 end
 local function c3(r, g, b) return setmetatable({R=r or 0, G=g or 0, B=b or 0}, C3MT) end
@@ -3230,6 +3248,15 @@ end
 -- builders can register their own footprints: a scatter that does not know
 -- where the walks are plants trees on them, and no check but prop_check can
 -- see it -- as a tree clipping a slab, three hundred lines from the cause.
+-- The ten cloths a bound book is actually covered in. The library's stacks and
+-- the shelf that opens the pyramid draw from the same palette, so a book in
+-- one reads as the same object as a book in the other.
+local BOOK_CLOTH = {
+	{ 122, 58, 46 }, { 92, 44, 38 }, { 60, 74, 52 }, { 44, 62, 88 },
+	{ 138, 106, 54 }, { 78, 58, 84 }, { 46, 70, 72 }, { 148, 132, 100 },
+	{ 96, 40, 52 }, { 58, 82, 60 },
+}
+
 local scatterBlocks: { { number } } = {}
 
 local function blockScatter(x: number, z: number, halfX: number, halfZ: number)
@@ -3849,11 +3876,7 @@ local function buildLibrary(parent: Instance, center: Vector3)
 
 	-- The ten colours a bound book is actually covered in: half-calf, buckram,
 	-- cloth in the greens, blues and ochres a school library is bound in.
-	local CLOTH = {
-		{ 122, 58, 46 }, { 92, 44, 38 }, { 60, 74, 52 }, { 44, 62, 88 },
-		{ 138, 106, 54 }, { 78, 58, 84 }, { 46, 70, 72 }, { 148, 132, 100 },
-		{ 96, 40, 52 }, { 58, 82, 60 },
-	}
+	local CLOTH = BOOK_CLOTH
 
 	-- stacks: rows of shelves down both halves, with an aisle between
 	for row = -1, 1 do
@@ -9375,15 +9398,36 @@ local function buildSecretBookshelf(parent: Instance, at: CFrame, name: string):
 			Material = Enum.Material.Wood,
 			Parent = shelf,
 		}).CanCollide = false
-		for book = 0, 7 do
+		-- Spines, not eight identical boxes in a hue rotation. A player stands
+		-- a stud from this shelf for as long as it takes to work four digits
+		-- out of it, so it is the most looked-at object in the game -- and it
+		-- read as a row of clones. Same arithmetic as the library's stacks,
+		-- off the shelf's own level index, so a book is the same book every
+		-- build and the two shelves are made of the same kind of book.
+		local xAt, i = -6.4, 0
+		while xAt < 6.1 do
+			i += 1
+			local n = level * 211 + i * 37
+			local thick = 0.62 + (n % 9) * 0.16
+			local high = 1.9 + ((n // 9) % 5) * 0.22
+			local out = 1.4 + ((n // 3) % 4) * 0.16
+			local lean = if (n // 7) % 11 == 0 then math.rad(7) else 0
+			local cloth = BOOK_CLOTH[(n % #BOOK_CLOTH) + 1]
 			part({
 				Name = "SecretShelfBook",
-				Size = Vector3.new(1.1, 2.4, 1.6),
-				CFrame = at * CFrame.new(-5.6 + book * 1.55, -3.6 + level * 3.4, -0.7),
-				Color = Color3.fromHSV(((level * 8 + book) % 12) / 12, 0.45, 0.62),
+				Size = Vector3.new(thick, high, out),
+				CFrame = at
+					* CFrame.new(xAt + thick / 2, -4.75 + level * 3.4 + high / 2, -1.2 + out / 2)
+					* CFrame.Angles(0, 0, lean),
+				Color = Color3.fromRGB(
+					math.clamp(cloth[1] + ((n // 11) % 5) * 7 - 14, 30, 210),
+					math.clamp(cloth[2] + ((n // 13) % 5) * 7 - 14, 26, 200),
+					math.clamp(cloth[3] + ((n // 17) % 5) * 7 - 14, 24, 195)
+				),
 				Material = Enum.Material.Fabric,
 				Parent = shelf,
 			}).CanCollide = false
+			xAt += thick + 0.1 + (n % 3) * 0.05
 		end
 	end
 	return shelf
