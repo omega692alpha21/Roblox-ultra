@@ -3647,15 +3647,74 @@ local function buildLibrary(parent: Instance, center: Vector3)
 	signText(plaque, "CRUMBWORTH LIBRARY", Palette.BusYellow, Enum.NormalId.Back)
 	signText(plaque, "SILENCE, PLEASE", Palette.BusYellow, Enum.NormalId.Back)
 
-	local roof = part({
-		Name = "LibraryRoof",
-		Size = Vector3.new(W + 4, 1.5, D + 4),
-		CFrame = CFrame.new(center) * CFrame.new(0, H + 0.5, 0),
-		Color = Color3.fromRGB(96, 90, 84),
-		Material = Enum.Material.Slate,
-		Parent = parent,
+	-- THE ROOF, and the dressing that goes with it.
+	--
+	-- The library was the one building on the campus with no collegiate work on
+	-- it at all: no plinth course, no string course, no cornice, no quoins, no
+	-- dormers, no chimney -- and a flat grey slab a stud and a half thick for a
+	-- roof, on a campus where every other range is steep blue slate. It is a
+	-- hero building: the pyramid sanctum hangs off its west wall and three of
+	-- the render cameras look straight at it.
+	local kit = { parent = parent, part = part :: any, tag = tag :: any }
+	local eaves = H + 0.5
+	local rise = math.clamp(D * 0.36, 12, 44)
+	Kit.gableRoof(kit, {
+		x = center.X,
+		z = center.Z,
+		width = W + 4,
+		depth = D + 4,
+		eaves = eaves,
+		rise = rise,
+		runsX = true,
 	})
-	local _ = roof
+	-- gable ends, or the roof is two planes over open air
+	for _, side in { -1, 1 } do
+		for _, half in { -1, 1 } do
+			local piece = Instance.new("WedgePart")
+			piece.Name = "LibraryGableEnd"
+			piece.Anchored = true
+			piece.CanCollide = false
+			piece.Size = Vector3.new(2.0, rise, (D + 4) / 2)
+			piece.CFrame = CFrame.new(center.X + side * (halfW + 1), eaves + rise / 2, center.Z + half * (D + 4) / 4)
+				* CFrame.Angles(0, if half > 0 then 0 else math.pi, 0)
+			piece.Color = Color3.fromRGB(206, 198, 182)
+			piece.Material = Enum.Material.Sandstone
+			piece.Parent = parent
+			tag(piece, "TexCoursedStone")
+		end
+	end
+	-- dormers down both slopes, lit like every other window on the campus
+	for _, dx in { -30, -10, 10, 30 } do
+		for _, slope in { -1, 1 } do
+			Kit.dormer(kit, {
+				x = center.X + dx,
+				y = eaves + rise * 0.34,
+				z = center.Z + slope * ((D + 4) / 2) * 0.62,
+				facing = if slope > 0 then 0 else 180,
+				width = 7,
+				height = 6,
+			})
+		end
+	end
+	-- a stack at each end of the ridge and one in the middle
+	for _, cx in { -36, 0, 36 } do
+		Kit.chimney(kit, { x = center.X + cx, z = center.Z, base = eaves, height = rise + 9, width = 5.4 })
+	end
+	-- plinth, string course, cornice and quoins: the same vocabulary the drawn
+	-- buildings are assembled from
+	tag(part({ Name = "LibraryPlinth", Size = Vector3.new(W + 3.0, 3.0, D + 3.0), CFrame = CFrame.new(center) * CFrame.new(0, 1.5, 0), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	tag(part({ Name = "LibraryStringCourse", Size = Vector3.new(W + 1.6, 1.5, D + 1.6), CFrame = CFrame.new(center) * CFrame.new(0, 21.5, 0), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	tag(part({ Name = "LibraryCornice", Size = Vector3.new(W + 3.4, 2.2, D + 3.4), CFrame = CFrame.new(center) * CFrame.new(0, eaves - 1.1, 0), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	for _, corner in { Vector3.new(-1, 0, -1), Vector3.new(1, 0, -1), Vector3.new(-1, 0, 1), Vector3.new(1, 0, 1) } do
+		tag(part({
+			Name = "LibraryQuoin",
+			Size = Vector3.new(5.0, eaves - 4.0, 5.0),
+			CFrame = CFrame.new(center) * CFrame.new(corner.X * (halfW - 1.0), (eaves - 4.0) / 2 + 3.2, corner.Z * (halfD - 1.0)),
+			Color = Color3.fromRGB(201, 191, 169),
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		}), "TexAshlar").CanCollide = false
+	end
 
 	-- stacks: rows of shelves down both halves, with an aisle between
 	for row = -1, 1 do
