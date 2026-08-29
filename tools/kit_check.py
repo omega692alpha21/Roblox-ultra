@@ -50,6 +50,12 @@ FEATURES = {
     "quoins":  ("Quoin", "Pilaster", "Buttress"),
     "dormer":  ("Dormer",),
     "chimney": ("Chimney",),
+    # A gutter along the eaves and a downpipe off it. Ranking the roofs by the
+    # kinds of part on them said the same thing about all eight buildings --
+    # ridges, verges, eaves boards, dormers and stacks, and not one gutter --
+    # so the eaves boards were sitting over nothing.
+    "gutter": ("Gutter",),
+    "downpipe": ("Downpipe",),
     "door":    ("DoorLeaf", "EntryBay", "EntranceBay", "Portico", "Porch",
                 "MainDoor", "Column"),
 }
@@ -68,7 +74,8 @@ def tilted(p):
 # per corner; everything else needs at least one to prove the builder knew
 # about it.
 NEED = {"plinth": 1, "string": 1, "cornice": 1, "quoins": 4,
-        "roof": 2, "dormer": 2, "chimney": 1, "door": 1}
+        "roof": 2, "dormer": 2, "chimney": 1, "door": 1,
+        "gutter": 2, "downpipe": 2}
 WHY = {
     "plinth": "no base course: the wall grows straight out of the lawn",
     "string": "no string course between storeys",
@@ -77,6 +84,8 @@ WHY = {
     "roof": "the roof is not pitched -- a flat slab where the campus is steep slate",
     "dormer": "no dormers: the roof is one blank plane",
     "chimney": "not one chimney stack on the whole roof",
+    "gutter": "no gutter along the eaves",
+    "downpipe": "no downpipe off the gutter",
     "door": "no entrance that reads as one",
 }
 PAD = 10.0   # a cornice oversails, a chimney leans out; measure a little wide

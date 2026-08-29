@@ -7899,6 +7899,117 @@ local function hangLight(parent: Instance, kind: string, x: number, y: number, z
 	lamp.Parent = shade
 end
 
+-- Rainwater goods on a hand-built elevation. PlanBuilder hangs its own off
+-- the drawing; the Academy, the library and the staff lodge are built by hand
+-- and need telling where.
+--
+-- A gutter goes on an EAVE, not on a gable end -- a verge sheds sideways --
+-- so these take the runs one at a time rather than wrapping a rectangle.
+local GOODS_COLOUR = Color3.fromRGB(58, 62, 68)
+
+local function gutterRun(parent: Instance, ax: number, az: number, bx: number, bz: number, y: number)
+	local dx, dz = bx - ax, bz - az
+	local run = math.sqrt(dx * dx + dz * dz)
+	if run < 4 then
+		return
+	end
+	local alongX = math.abs(dx) > math.abs(dz)
+	part({
+		Name = "Gutter",
+		Size = if alongX then Vector3.new(run, 1.2, 1.7) else Vector3.new(1.7, 1.2, run),
+		CFrame = CFrame.new((ax + bx) / 2, y, (az + bz) / 2),
+		Color = GOODS_COLOUR,
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}).CanCollide = false
+	local n = math.max(2, math.round(run / 15))
+	for i = 0, n do
+		part({
+			Name = "GutterBracket",
+			Size = Vector3.new(0.5, 0.7, 0.5),
+			CFrame = CFrame.new(ax + dx * i / n, y - 0.95, az + dz * i / n),
+			Color = GOODS_COLOUR,
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
+	end
+end
+
+-- `out` is the direction the shoe kicks, away from the wall.
+local function downpipe(parent: Instance, x: number, z: number, topY: number, outX: number, outZ: number)
+	part({ Name = "Hopper", Size = Vector3.new(2.2, 2.4, 2.2), CFrame = CFrame.new(x, topY - 1.7, z), Color = GOODS_COLOUR, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	local run = topY - 4.4
+	if run < 6 then
+		return
+	end
+	part({
+		Name = "Downpipe",
+		Size = Vector3.new(run, 1.2, 1.2),
+		CFrame = CFrame.new(x, 1.2 + run / 2, z) * CFrame.Angles(0, 0, math.pi / 2),
+		Shape = Enum.PartType.Cylinder,
+		Color = GOODS_COLOUR,
+		Material = Enum.Material.Metal,
+		Parent = parent,
+	}).CanCollide = false
+	local clips = math.max(2, math.floor(run / 13))
+	for i = 1, clips do
+		part({ Name = "PipeClip", Size = Vector3.new(1.9, 0.7, 1.9), CFrame = CFrame.new(x, 1.2 + run * i / (clips + 1), z), Color = GOODS_COLOUR, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+	part({ Name = "PipeShoe", Size = Vector3.new(1.6, 2.2, 1.6), CFrame = CFrame.new(x, 1.4, z) * CFrame.Angles(math.rad(outZ * 16), 0, math.rad(-outX * 16)), Color = GOODS_COLOUR, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	part({ Name = "PipeGully", Size = Vector3.new(3.0, 0.5, 3.0), CFrame = CFrame.new(x + outX * 1.1, 0.35, z + outZ * 1.1), Color = Color3.fromRGB(96, 96, 100), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
+end
+
+-- The three hand-built roofs. Positions are picked off the measured bays, so
+-- a pipe lands on a pier and never across a window: the Academy's bays step
+-- 16.4 studs, which leaves about six studs of stone between them.
+local function buildRainwaterGoods(parent: Instance)
+	-- ---- the Academy ----
+	-- Gutters run between the corner towers, which are 32 studs square at
+	-- (+-224, +-124) and would otherwise swallow the ends of every run, and
+	-- stop clear of the entry bay.
+	local AC_EAVE = 35.9
+	for _, z in { -125.6, 125.6 } do
+		gutterRun(parent, -206, z, -42, z, AC_EAVE)
+		gutterRun(parent, 42, z, 206, z, AC_EAVE)
+	end
+	for _, x in { -225.6, 225.6 } do
+		gutterRun(parent, x, -106, x, 106, AC_EAVE)
+	end
+	for _, x in { -191.2, -109.2, 109.2, 191.2 } do
+		downpipe(parent, x, 126.6, AC_EAVE, 0, 1)
+		downpipe(parent, x, -126.6, AC_EAVE, 0, -1)
+	end
+	downpipe(parent, -44.35, 126.6, AC_EAVE, 0, 1)
+	downpipe(parent, 44.35, 126.6, AC_EAVE, 0, 1)
+	downpipe(parent, -61.6, -126.6, AC_EAVE, 0, -1)
+	downpipe(parent, 61.6, -126.6, AC_EAVE, 0, -1)
+	for _, z in { -93.0, 0.0, 93.0 } do
+		downpipe(parent, -226.6, z, AC_EAVE, -1, 0)
+		downpipe(parent, 226.6, z, AC_EAVE, 1, 0)
+	end
+
+	-- ---- the library ----
+	-- Cornice at 25.4, footprint 95.4 by 71.4 about (-320, -300); the ridge
+	-- runs along x, so the eaves are the z sides.
+	for _, z in { -335.7, -264.3 } do
+		gutterRun(parent, -366, z, -274, z, 24.0)
+	end
+	for _, x in { -362, -278 } do
+		downpipe(parent, x, -336.7, 24.0, 0, -1)
+		downpipe(parent, x, -263.3, 24.0, 0, 1)
+	end
+
+	-- ---- the staff lodge ----
+	-- Its eaves boards are already at y 55 on z -206.4 and -133.6.
+	for _, z in { -207.6, -132.4 } do
+		gutterRun(parent, -346, z, -254, z, 53.4)
+	end
+	for _, x in { -330, -270 } do
+		downpipe(parent, x, -208.6, 53.4, 0, -1)
+		downpipe(parent, x, -131.4, 53.4, 0, 1)
+	end
+end
+
 local function furnishRingBuildings(parent: Instance)
 	----------------------------------------------------------------- cafeteria
 	-- Two dining halls either side of the partition at z -300, a kitchen and a
@@ -9583,6 +9694,7 @@ end
 	end
 	ringLanterns(folder)
 	ringNameBoards(folder)
+	buildRainwaterGoods(folder)
 	buildHiddenAlley(folder)
 	buildFlagpole(folder)
 	buildCoreFence(folder)
