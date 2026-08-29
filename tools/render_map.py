@@ -281,6 +281,7 @@ map_src = map_src.replace("local Palette = require(ReplicatedStorage.Shared.Pale
 map_src = map_src.replace("local Kit = require(script.Parent.CollegiateKit)", "local Kit = __Kit")
 map_src = map_src.replace("local PlanBuilder = require(script.Parent.PlanBuilder)", "local PlanBuilder = __PlanBuilder")
 map_src = map_src.replace("local CampusPlan = require(ReplicatedStorage.Shared.CampusPlan)", "local CampusPlan = __CampusPlan")
+map_src = map_src.replace("local Grounds = require(script.Parent.GroundsKit)", "local Grounds = __Grounds")
 map_src = map_src.replace("local GameConfig = require(ReplicatedStorage.Config.GameConfig)", "")
 map_src = map_src.replace("local PropSizes = require(ReplicatedStorage.Config.PropSizes)", "local PropSizes = __PropSizes")
 map_src = map_src.replace("local Cliques = require(ReplicatedStorage.Config.Cliques)", "local Cliques = __Cliques")
@@ -391,6 +392,7 @@ program = (
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Config/PropSizes.luau"), "__PropSizes")
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Shared/CampusPlan.luau"), "__CampusPlan")
     + load_module(os.path.join(REPO, "src/ServerScriptService/Services/CollegiateKit.luau"), "__Kit")
+    + load_module(os.path.join(REPO, "src/ServerScriptService/Services/GroundsKit.luau"), "__Grounds")
     + load_module(os.path.join(REPO, "src/ServerScriptService/Services/PlanBuilder.luau"), "__PlanBuilder")
     + "local __MapService\n"
     + map_src
@@ -539,6 +541,46 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
                 ([b, apex, c], (0.7, 0.7, 0)),
                 ([d, c, apex], (0, 0.7, 0.7)),
             ]
+        elif part.get("sh") == "Cylinder":
+            # Roblox spins a Cylinder about its LOCAL X, so Size is
+            # (length, diameter, diameter). Drawn as a box it reads as a slab:
+            # the fountain's basin and every dish in it, the tennis nets, the
+            # car wheels and the gym's centre circle all rendered square, and
+            # the offline shots were being judged on that.
+            seg = 16
+            ring_a, ring_b = [], []
+            for i in range(seg):
+                t = 2 * math.pi * i / seg
+                cy, cz_ = math.cos(t) * sy, math.sin(t) * sz
+                ring_a.append((-sx, cy, cz_))
+                ring_b.append((sx, cy, cz_))
+            polys.append((list(reversed(ring_a)), (-1, 0, 0)))
+            polys.append((ring_b, (1, 0, 0)))
+            for i in range(seg):
+                j = (i + 1) % seg
+                t = 2 * math.pi * (i + 0.5) / seg
+                polys.append(([ring_a[i], ring_b[i], ring_b[j], ring_a[j]],
+                              (0, math.cos(t), math.sin(t))))
+        elif part.get("sh") == "Ball":
+            # a UV sphere; Roblox scales it to the part's own half-sizes
+            rings, seg = 6, 12
+            def pt(ri, si):
+                phi = math.pi * ri / rings
+                th = 2 * math.pi * si / seg
+                return (sx * math.cos(phi),
+                        sy * math.sin(phi) * math.cos(th),
+                        sz * math.sin(phi) * math.sin(th))
+            for ri in range(rings):
+                for si in range(seg):
+                    sj = (si + 1) % seg
+                    quad = [pt(ri, si), pt(ri, sj), pt(ri + 1, sj), pt(ri + 1, si)]
+                    quad = [v for k, v in enumerate(quad)
+                            if k == 0 or v != quad[k - 1]]
+                    if len(quad) < 3:
+                        continue
+                    mid = [sum(v[k] for v in quad) / len(quad) for k in range(3)]
+                    mag = math.sqrt(sum(c * c for c in mid)) or 1.0
+                    polys.append((quad, tuple(c / mag for c in mid)))
         else:
             for axis in range(3):
                 for sign in (-1, 1):
@@ -680,7 +722,17 @@ shots = [
     ("newgym",     (250, 40, 300),   (425, 20, 405)),
     ("rooftopblk", (120, 30, 300),   (210, 14, 400)),
     ("alleyeye",   (300, 5, 350),    (290, 12, 400)),
-    ("roofedge",   (-142, 44, 200),  (-142, 46, 100)),
+    ("roofedge",   (-142, 44, 260),  (-142, 46, 130)),
+    # The Great Court, which is where the game starts and where every player
+    # walks in from. These four look AT it rather than past it: the old
+    # eyecourt shot aims at the clock tower 25 studs up, so everything on the
+    # ground in front of the camera falls below the frame and the court itself
+    # was never once in a picture.
+    ("courtfount", (0, 11, 292),      (0, 11, 210)),
+    ("courtnorth", (0, 7, 300),      (0, 6, 180)),
+    ("courtside",  (-128, 7, 250),   (-20, 6, 180)),
+    ("courtair",   (-150, 90, 360),  (0, 4, 200)),
+    ("busstop",    (-114, 6, 330),   (-108, 4, 280)),
 ]
 for name, cam, target in shots:
     render(cam, target, os.path.join(OUT, f"shot_{name}.png"))

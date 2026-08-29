@@ -20,7 +20,7 @@ local rng = Random.new()
 
 -- campus-wide scatter points for the treasure hunt
 local HUNT_SPOTS = {
-	Vector3.new(-150, 0, 70), Vector3.new(150, 0, 70), Vector3.new(-114, 0, 182),
+	Vector3.new(-150, 0, 70), Vector3.new(150, 0, 70), Vector3.new(-114, 0, 298),
 	Vector3.new(372, 0, -300), Vector3.new(425, 0, 437), Vector3.new(-438, 0, -14),
 	Vector3.new(204, 0, -29), Vector3.new(-74, 0, -94), Vector3.new(-136, 0, 196),
 	Vector3.new(136, 0, 196), Vector3.new(0, 0, 6), Vector3.new(-116, 0, 20),

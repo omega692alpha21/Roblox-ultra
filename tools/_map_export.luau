@@ -1752,6 +1752,518 @@ end
 return CollegiateKit
 
 end)()
+local __Grounds = (function()
+
+-- The vocabulary the grounds are assembled from.
+--
+-- Everything outdoors used to be written inline at its call site, so a fountain
+-- was three cylinders on a stem, a parterre was a brown rectangle with a green
+-- cross painted on it, and a bench was two boxes. That is the "basic shapes
+-- that look like objects" problem: the shapes are right and the object is not
+-- there. Each builder here puts down the parts a real one is made of --
+-- coping, kerb, plinth, moulding, standard, jet -- and every one of them
+-- clears tools/asset_audit.py's bar on its own.
+--
+-- Geometry comes from the caller as a rect or a centre and a radius, and the
+-- caller gets its numbers from CampusPlan. Nothing here invents a coordinate.
+
+local GroundsKit = {}
+
+export type Ctx = {
+	parent: Instance,
+	part: (props: { [string]: any }) -> BasePart,
+	tag: (p: BasePart, tagName: string) -> BasePart,
+	prop: ((kind: string, cf: CFrame, options: any?) -> ())?,
+}
+
+GroundsKit.STONE = Color3.fromRGB(183, 174, 158)
+GroundsKit.STONE_PALE = Color3.fromRGB(206, 200, 186)
+GroundsKit.STONE_DEEP = Color3.fromRGB(150, 142, 128)
+GroundsKit.WATER = Color3.fromRGB(120, 176, 200)
+GroundsKit.HEDGE = Color3.fromRGB(47, 90, 52)
+GroundsKit.HEDGE_DEEP = Color3.fromRGB(34, 68, 38)
+GroundsKit.YEW = Color3.fromRGB(38, 74, 46)
+GroundsKit.GRAVEL = Color3.fromRGB(176, 166, 148)
+GroundsKit.IRON = Color3.fromRGB(28, 28, 32)
+GroundsKit.TIMBER = Color3.fromRGB(107, 74, 46)
+GroundsKit.LANTERN = Color3.fromRGB(255, 220, 160)
+
+local TAU = math.pi * 2
+
+-- ---------------------------------------------------------------- octagon --
+-- A ring of eight straight runs is what a stone basin actually is: cut blocks
+-- laid to a polygon. It also renders as a polygon rather than as the square a
+-- Cylinder part collapses to when anything looks at it side on.
+local function octagonRing(
+	ctx: Ctx,
+	name: string,
+	cx: number,
+	cz: number,
+	radius: number,
+	thickness: number,
+	height: number,
+	y: number,
+	colour: Color3,
+	material: Enum.Material
+): { BasePart }
+	local out = {}
+	-- The flat-to-flat length of one side of a regular octagon at this radius,
+	-- plus the mitre: two runs meeting at 45 degrees each need to reach
+	-- (thickness / 2) * tan(22.5) past the flat to close the corner. Adding
+	-- the whole thickness instead -- which is what this did -- overshoots by
+	-- more than half the wall on a wide ring, and on the fountain's 11-stud
+	-- apron that threw the octagon's south vertex 6 studs into the school's
+	-- entrance terrace.
+	local mitre = math.tan(math.pi / 8)
+	local side = mitre * (2 * radius + thickness)
+	for i = 0, 7 do
+		local a = i * TAU / 8 + TAU / 16
+		local piece = ctx.part({
+			Name = name,
+			Size = Vector3.new(side, height, thickness),
+			CFrame = CFrame.new(cx + math.cos(a) * radius, y, cz + math.sin(a) * radius)
+				* CFrame.Angles(0, -a, 0),
+			Color = colour,
+			Material = material,
+			Parent = ctx.parent,
+		})
+		table.insert(out, piece)
+	end
+	return out
+end
+
+GroundsKit.octagonRing = octagonRing
+
+-- A solid octagonal course. A regular octagon is exactly the union of a square
+-- and the same square turned 45 degrees, so two parts do it -- and the second
+-- is raised four hundredths of a stud so the two never share a face.
+local function octagonSlab(
+	ctx: Ctx,
+	name: string,
+	cx: number,
+	cz: number,
+	halfWidth: number,
+	height: number,
+	y: number,
+	colour: Color3,
+	material: Enum.Material
+)
+	for i, turn in { 0, math.pi / 4 } do
+		ctx.part({
+			Name = name,
+			Size = Vector3.new(halfWidth * 2, height, halfWidth * 2),
+			CFrame = CFrame.new(cx, y + (i - 1) * 0.04, cz) * CFrame.Angles(0, turn, 0),
+			Color = colour,
+			Material = material,
+			Parent = ctx.parent,
+		}).CanCollide = false
+	end
+end
+
+GroundsKit.octagonSlab = octagonSlab
+
+-- --------------------------------------------------------------- fountain --
+-- rim, coping, water, a stepped pedestal, three dishes with their falls, a
+-- ring of jets and a finial. `r` is the outside of the basin.
+export type FountainSpec = {
+	x: number,
+	z: number,
+	r: number,
+	upLight: ((parent: Instance, x: number, z: number, colour: Color3?) -> ())?,
+}
+
+function GroundsKit.fountain(ctx: Ctx, o: FountainSpec)
+	local cx, cz, r = o.x, o.z, o.r
+
+	-- The courses, bottom to top, each one clear of the last: apron -0.3..0.9,
+	-- step 0.9..1.4, basin wall 1.4..3.4, coping 3.4..4.3 -- coping height, so
+	-- the water is visible over it from standing eye level and the edge is
+	-- something to sit on. No two of them meet
+	-- on the same side of a plane, which is what makes a stack of stone read as
+	-- stone instead of speckling.
+	octagonRing(ctx, "FountainApron", cx, cz, r + 5.5, 11.0, 1.2, 0.3, GroundsKit.STONE_PALE, Enum.Material.Concrete)
+	for _, piece in octagonRing(ctx, "FountainStep", cx, cz, r + 2.0, 4.0, 0.5, 1.15, GroundsKit.STONE_PALE, Enum.Material.Concrete) do
+		piece.CanCollide = false
+	end
+
+	-- the basin wall, and the coping course over it
+	octagonRing(ctx, "FountainRim", cx, cz, r, 3.0, 2.0, 2.4, GroundsKit.STONE, Enum.Material.Marble)
+	for _, piece in octagonRing(ctx, "FountainCoping", cx, cz, r, 4.2, 0.9, 3.85, GroundsKit.STONE_PALE, Enum.Material.Marble) do
+		piece.CanCollide = false
+	end
+	-- a moulded band low on the wall, so the basin has a base
+	for _, piece in octagonRing(ctx, "FountainBase", cx, cz, r, 4.0, 1.1, 2.15, GroundsKit.STONE_DEEP, Enum.Material.Marble) do
+		piece.CanCollide = false
+	end
+
+	-- the water, and the floor of the basin under it. Both are cylinders: an
+	-- octagon of stone with a square of water in it is what the first one was.
+	local floor = ctx.part({
+		Name = "FountainFloor",
+		Size = Vector3.new(0.9, (r - 1.5) * 2, (r - 1.5) * 2),
+		CFrame = CFrame.new(cx, 1.85, cz) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(52, 74, 84),
+		Material = Enum.Material.Slate,
+		Shape = Enum.PartType.Cylinder,
+		Parent = ctx.parent,
+	})
+	floor.CanCollide = false
+	local water = ctx.part({
+		Name = "FountainWater",
+		Size = Vector3.new(0.5, (r - 1.6) * 2, (r - 1.6) * 2),
+		CFrame = CFrame.new(cx, 3.0, cz) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = GroundsKit.WATER,
+		Material = Enum.Material.Glass,
+		Transparency = 0.35,
+		Shape = Enum.PartType.Cylinder,
+		Parent = ctx.parent,
+	})
+	water.CanCollide = false
+	water.Reflectance = 0.4
+
+	-- the pedestal: three octagonal courses, smallest on top
+	for i, course in { { w = 7.0, h = 1.8 }, { w = 5.2, h = 1.6 }, { w = 3.6, h = 1.4 } } do
+		octagonSlab(ctx, "FountainPedestal", cx, cz, course.w, course.h,
+			1.9 + (i - 1) * 1.7 + course.h / 2, GroundsKit.STONE_PALE, Enum.Material.Marble)
+	end
+
+	-- three dishes on a shaft, each with the sheet of water falling off it
+	local dishes = { { r = r * 0.46, y = 10.6 }, { r = r * 0.30, y = 16.0 }, { r = r * 0.18, y = 20.4 } }
+	local shaftFrom = 6.6
+	for i, dish in dishes do
+		ctx.part({
+			Name = "FountainShaft",
+			Size = Vector3.new(2.6, dish.y - shaftFrom + 1.2, 2.6),
+			CFrame = CFrame.new(cx, (shaftFrom + dish.y) / 2, cz),
+			Color = GroundsKit.STONE_PALE,
+			Material = Enum.Material.Marble,
+			Parent = ctx.parent,
+		}).CanCollide = false
+		-- the bowl under the lip: two courses, the lower one well in, so the
+		-- dish tapers to its shaft instead of reading as a tray on a stick
+		octagonSlab(ctx, "FountainDishBowl", cx, cz, dish.r * 0.86, 1.1, dish.y - 1.05, GroundsKit.STONE, Enum.Material.Marble)
+		octagonSlab(ctx, "FountainDishBowl", cx, cz, dish.r * 0.52, 1.0, dish.y - 2.0, GroundsKit.STONE, Enum.Material.Marble)
+		for _, piece in octagonRing(ctx, "FountainDishLip", cx, cz, dish.r, 2.0, 1.2, dish.y, GroundsKit.STONE_PALE, Enum.Material.Marble) do
+			piece.CanCollide = false
+		end
+		-- the water standing in the dish
+		octagonSlab(ctx, "FountainDishWater", cx, cz, dish.r * 0.94, 0.4, dish.y + 0.5, GroundsKit.WATER, Enum.Material.Glass)
+		-- the fall: a curtain of water hanging off the lip all the way round,
+		-- not a translucent block the width of the dish
+		local drop = if i == 1 then 6.2 else 5.0
+		for _, piece in octagonRing(ctx, "FountainFall", cx, cz, dish.r + 0.3, 0.5, drop, dish.y - 0.4 - drop / 2, Color3.fromRGB(214, 238, 248), Enum.Material.Glass) do
+			piece.CanCollide = false
+			piece.Transparency = 0.55
+			piece.Reflectance = 0.2
+			piece.CastShadow = false
+		end
+		shaftFrom = dish.y
+	end
+
+	-- the finial, and a jet standing over it
+	ctx.part({
+		Name = "FountainFinial",
+		Size = Vector3.new(2.2, 2.2, 2.2),
+		CFrame = CFrame.new(cx, 21.8, cz),
+		Color = GroundsKit.STONE_PALE,
+		Material = Enum.Material.Marble,
+		Shape = Enum.PartType.Ball,
+		Parent = ctx.parent,
+	}).CanCollide = false
+	-- the plume: a narrow column of water off the finial with a head on it,
+	-- rather than a seven-stud white pillar standing in the middle of the court
+	local plume = ctx.part({
+		Name = "FountainPlume",
+		Size = Vector3.new(0.5, 4.0, 0.5),
+		CFrame = CFrame.new(cx, 24.8, cz),
+		Color = Color3.fromRGB(226, 246, 252),
+		Material = Enum.Material.Neon,
+		Transparency = 0.5,
+		Shape = Enum.PartType.Cylinder,
+		Parent = ctx.parent,
+	})
+	plume.CFrame = CFrame.new(cx, 24.8, cz) * CFrame.Angles(0, 0, math.rad(90))
+	plume.CanCollide = false
+	plume.CastShadow = false
+	local head = ctx.part({
+		Name = "FountainPlumeHead",
+		Size = Vector3.new(2.6, 2.6, 2.6),
+		CFrame = CFrame.new(cx, 27.2, cz),
+		Color = Color3.fromRGB(232, 248, 252),
+		Material = Enum.Material.Neon,
+		Transparency = 0.62,
+		Shape = Enum.PartType.Ball,
+		Parent = ctx.parent,
+	})
+	head.CanCollide = false
+	head.CastShadow = false
+
+	-- eight jets round the basin, each arcing in towards the middle
+	for i = 0, 7 do
+		local a = i * TAU / 8
+		local jx, jz = cx + math.cos(a) * (r - 5.0), cz + math.sin(a) * (r - 5.0)
+		-- leaning IN towards the middle: yaw the jet to face the centre first,
+		-- then tip it about its own X so the lean is inward whatever side of
+		-- the basin it stands on
+		local jet = ctx.part({
+			Name = "FountainJet",
+			Size = Vector3.new(0.45, 5.4, 0.45),
+			CFrame = CFrame.new(jx, 6.4, jz)
+				* CFrame.Angles(0, -a + math.pi / 2, 0)
+				* CFrame.Angles(math.rad(-24), 0, 0),
+			Color = Color3.fromRGB(226, 246, 252),
+			Material = Enum.Material.Neon,
+			Transparency = 0.5,
+			Shape = Enum.PartType.Cylinder,
+			Parent = ctx.parent,
+		})
+		jet.CFrame = jet.CFrame * CFrame.Angles(0, 0, math.rad(90))
+		jet.CanCollide = false
+		jet.CastShadow = false
+		ctx.part({
+			Name = "FountainSpout",
+			Size = Vector3.new(1.4, 1.0, 1.4),
+			CFrame = CFrame.new(jx, 3.1, jz),
+			Color = GroundsKit.STONE_DEEP,
+			Material = Enum.Material.Metal,
+			Parent = ctx.parent,
+		}).CanCollide = false
+	end
+
+	if o.upLight then
+		for i = 0, 11 do
+			local a = i * TAU / 12
+			o.upLight(ctx.parent, cx + math.cos(a) * (r + 4.0), cz + math.sin(a) * (r + 4.0), Color3.fromRGB(190, 226, 255))
+		end
+	end
+end
+
+-- ----------------------------------------------------------------- hedges --
+-- A run of clipped box: a bed of its own soil, the hedge over it, and a
+-- lighter top face so it reads as clipped rather than as a green slab.
+function GroundsKit.hedgeRun(ctx: Ctx, x0: number, z0: number, x1: number, z1: number, thickness: number, height: number)
+	local w = math.max(math.abs(x1 - x0), thickness)
+	local d = math.max(math.abs(z1 - z0), thickness)
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	ctx.part({
+		Name = "Hedge",
+		Size = Vector3.new(w, height, d),
+		CFrame = CFrame.new(cx, 0.4 + height / 2, cz),
+		Color = GroundsKit.HEDGE_DEEP,
+		Material = Enum.Material.Grass,
+		Parent = ctx.parent,
+	})
+	ctx.part({
+		Name = "HedgeClip",
+		Size = Vector3.new(w - 0.4, 0.5, d - 0.4),
+		CFrame = CFrame.new(cx, 0.4 + height - 0.1, cz),
+		Color = GroundsKit.HEDGE,
+		Material = Enum.Material.Grass,
+		Parent = ctx.parent,
+	}).CanCollide = false
+end
+
+-- A clipped yew cone: four stacked, shrinking courses on a short stem. Not a
+-- cone, but read as one at any distance, and it is five named parts rather
+-- than one green box.
+function GroundsKit.yewCone(ctx: Ctx, x: number, z: number, height: number)
+	ctx.part({
+		Name = "YewStem",
+		Size = Vector3.new(1.2, 1.6, 1.2),
+		CFrame = CFrame.new(x, 1.2, z),
+		Color = GroundsKit.TIMBER,
+		Material = Enum.Material.Wood,
+		Parent = ctx.parent,
+	}).CanCollide = false
+	local courses = 4
+	for i = 0, courses - 1 do
+		local t = i / courses
+		local w = (height * 0.46) * (1 - t * 0.78)
+		local h = height / courses
+		ctx.part({
+			Name = "YewCone",
+			Size = Vector3.new(w, h, w),
+			CFrame = CFrame.new(x, 2.0 + i * h + h / 2, z) * CFrame.Angles(0, math.rad(22 * i), 0),
+			Color = GroundsKit.YEW:Lerp(GroundsKit.HEDGE, t * 0.4),
+			Material = Enum.Material.Grass,
+			Parent = ctx.parent,
+		}).CanCollide = false
+	end
+end
+
+-- A stone urn on a plinth: base, plinth, moulding, bowl, lip, and planting.
+function GroundsKit.urn(ctx: Ctx, x: number, z: number, scale: number?)
+	local s = scale or 1.0
+	ctx.part({ Name = "UrnBase", Size = Vector3.new(4.4 * s, 1.0 * s, 4.4 * s), CFrame = CFrame.new(x, 0.9 + 0.5 * s, z), Color = GroundsKit.STONE, Material = Enum.Material.Concrete, Parent = ctx.parent })
+	ctx.part({ Name = "UrnPlinth", Size = Vector3.new(3.0 * s, 4.0 * s, 3.0 * s), CFrame = CFrame.new(x, 1.4 + 2.5 * s, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Parent = ctx.parent })
+	ctx.part({ Name = "UrnMoulding", Size = Vector3.new(4.0 * s, 0.7 * s, 4.0 * s), CFrame = CFrame.new(x, 1.4 + 4.7 * s, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "UrnBowl", Size = Vector3.new(5.2 * s, 2.6 * s, 5.2 * s), CFrame = CFrame.new(x, 1.4 + 6.3 * s, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "UrnLip", Size = Vector3.new(6.0 * s, 0.6 * s, 6.0 * s), CFrame = CFrame.new(x, 1.4 + 7.7 * s, z), Color = GroundsKit.STONE, Material = Enum.Material.Marble, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "UrnPlanting", Size = Vector3.new(5.0 * s, 2.2 * s, 5.0 * s), CFrame = CFrame.new(x, 1.4 + 8.9 * s, z), Color = GroundsKit.HEDGE, Material = Enum.Material.Grass, Parent = ctx.parent }).CanCollide = false
+end
+
+-- ------------------------------------------------------------- a parterre --
+-- Gravel, a clipped box edge, a knot of box inside it, a yew at each corner,
+-- an urn in the middle and flowers in the compartments. The old one was a
+-- rectangle of bare soil with a green cross laid on it.
+export type ParterreSpec = {
+	x: number,
+	z: number,
+	hw: number,
+	hd: number,
+	flower: ((kind: string, cf: CFrame) -> ())?,
+	upLight: ((parent: Instance, x: number, z: number, colour: Color3?) -> ())?,
+}
+
+function GroundsKit.parterre(ctx: Ctx, o: ParterreSpec)
+	local x, z, hw, hd = o.x, o.z, o.hw, o.hd
+	-- gravel, laid over the paving and inside its own kerb
+	ctx.tag(ctx.part({
+		Name = "ParterreGravel",
+		Size = Vector3.new(hw * 2 - 2, 0.34, hd * 2 - 2),
+		-- 0.55 .. 0.89: over the court's paving joints (0.47 .. 0.57), which
+		-- run the full width of the court and pass under every bed
+		CFrame = CFrame.new(x, 0.72, z),
+		Color = GroundsKit.GRAVEL,
+		Material = Enum.Material.Pebble,
+		Parent = ctx.parent,
+	}), "TexCourtPaving").CanCollide = false
+	for _, run in {
+		{ x - hw, z - hd, x + hw, z - hd },
+		{ x - hw, z + hd, x + hw, z + hd },
+		{ x - hw, z - hd, x - hw, z + hd },
+		{ x + hw, z - hd, x + hw, z + hd },
+	} do
+		ctx.part({
+			Name = "ParterreKerb",
+			Size = Vector3.new(math.max(math.abs(run[3] - run[1]) + 1.4, 1.4), 0.9, math.max(math.abs(run[4] - run[2]) + 1.4, 1.4)),
+			CFrame = CFrame.new((run[1] + run[3]) / 2, 0.75, (run[2] + run[4]) / 2),
+			Color = GroundsKit.STONE_PALE,
+			Material = Enum.Material.Concrete,
+			Parent = ctx.parent,
+		})
+	end
+
+	-- the clipped box edge, set in from the kerb
+	local ex, ez = hw - 3.0, hd - 3.0
+	GroundsKit.hedgeRun(ctx, x - ex, z - ez, x + ex, z - ez, 1.8, 2.4)
+	GroundsKit.hedgeRun(ctx, x - ex, z + ez, x + ex, z + ez, 1.8, 2.4)
+	GroundsKit.hedgeRun(ctx, x - ex, z - ez, x - ex, z + ez, 1.8, 2.4)
+	GroundsKit.hedgeRun(ctx, x + ex, z - ez, x + ex, z + ez, 1.8, 2.4)
+
+	-- a knot inside it: a diamond of box on the bed's own axes
+	local kx, kz = ex - 5.0, ez - 5.0
+	for _, seg in {
+		{ x - kx, z, x, z - kz },
+		{ x, z - kz, x + kx, z },
+		{ x + kx, z, x, z + kz },
+		{ x, z + kz, x - kx, z },
+	} do
+		local dx, dz = seg[3] - seg[1], seg[4] - seg[2]
+		local length = math.sqrt(dx * dx + dz * dz)
+		ctx.part({
+			Name = "ParterreKnot",
+			Size = Vector3.new(1.4, 1.7, length),
+			CFrame = CFrame.new((seg[1] + seg[3]) / 2, 1.25, (seg[2] + seg[4]) / 2)
+				* CFrame.Angles(0, math.atan2(dx, dz), 0),
+			Color = GroundsKit.HEDGE,
+			Material = Enum.Material.Grass,
+			Parent = ctx.parent,
+		}).CanCollide = false
+	end
+
+	-- a clipped yew at each inside corner, and an urn on the middle
+	for _, corner in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+		GroundsKit.yewCone(ctx, x + corner[1] * (ex - 2.6), z + corner[2] * (ez - 2.6), 9.0)
+	end
+	GroundsKit.urn(ctx, x, z, 1.1)
+
+	-- flowers in the four compartments the knot makes
+	if o.flower then
+		for _, corner in { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } } do
+			for i = -1, 1 do
+				local fx = x + corner[1] * (kx * 0.62) + (if corner[1] == 0 then i * 4.4 else 0)
+				local fz = z + corner[2] * (kz * 0.62) + (if corner[2] == 0 then 0 else i * 4.4)
+				if corner[1] ~= 0 then
+					fz = z + i * 4.4
+				end
+				o.flower(if (i + corner[1]) % 2 == 0 then "KFlowerRed" else "KFlowerYellow", CFrame.new(fx, 0.8, fz))
+			end
+		end
+	end
+	if o.upLight then
+		o.upLight(ctx.parent, x, z - hd - 2.4, Color3.fromRGB(255, 224, 172))
+		o.upLight(ctx.parent, x, z + hd + 2.4, Color3.fromRGB(255, 224, 172))
+	end
+end
+
+-- --------------------------------------------------------------- a bench --
+-- Cast-iron ends, five timber slats, a back of three, and an arm each side.
+function GroundsKit.bench(ctx: Ctx, x: number, z: number, yaw: number)
+	local at = CFrame.new(x, 0, z) * CFrame.Angles(0, yaw, 0)
+	for _, side in { -1, 1 } do
+		ctx.part({ Name = "BenchEnd", Size = Vector3.new(0.6, 2.4, 4.4), CFrame = at * CFrame.new(side * 5.6, 1.6, 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent })
+		ctx.part({ Name = "BenchFoot", Size = Vector3.new(1.2, 0.5, 5.2), CFrame = at * CFrame.new(side * 5.6, 0.65, 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.part({ Name = "BenchArm", Size = Vector3.new(0.7, 0.7, 4.6), CFrame = at * CFrame.new(side * 5.6, 4.3, -0.2), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.part({ Name = "BenchStay", Size = Vector3.new(0.5, 2.6, 0.5), CFrame = at * CFrame.new(side * 5.6, 3.4, 1.9), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+	for i = -2, 2 do
+		ctx.part({
+			Name = "BenchSlat",
+			Size = Vector3.new(11.6, 0.4, 0.85),
+			CFrame = at * CFrame.new(0, 2.9, i * 1.0),
+			Color = GroundsKit.TIMBER,
+			Material = Enum.Material.WoodPlanks,
+			Parent = ctx.parent,
+		})
+	end
+	for i = 0, 2 do
+		ctx.part({
+			Name = "BenchBackSlat",
+			Size = Vector3.new(11.6, 0.85, 0.4),
+			CFrame = at * CFrame.new(0, 3.9 + i * 1.1, 2.1),
+			Color = GroundsKit.TIMBER,
+			Material = Enum.Material.WoodPlanks,
+			Parent = ctx.parent,
+		}).CanCollide = false
+	end
+end
+
+-- ------------------------------------------------------------- iron fence --
+-- Spear-topped railings between stone piers: the thing that encloses every
+-- courtyard in the reference art.
+function GroundsKit.railing(ctx: Ctx, x0: number, z0: number, x1: number, z1: number, height: number)
+	local dx, dz = x1 - x0, z1 - z0
+	local length = math.sqrt(dx * dx + dz * dz)
+	if length < 1 then
+		return
+	end
+	local yaw = math.atan2(dx, dz)
+	local mid = CFrame.new((x0 + x1) / 2, 0, (z0 + z1) / 2) * CFrame.Angles(0, yaw, 0)
+	ctx.part({ Name = "RailingKerb", Size = Vector3.new(1.6, 1.0, length), CFrame = mid * CFrame.new(0, 0.7, 0), Color = GroundsKit.STONE, Material = Enum.Material.Concrete, Parent = ctx.parent })
+	for _, band in { { y = height * 0.30, h = 0.4 }, { y = height * 0.88, h = 0.5 } } do
+		ctx.part({ Name = "RailingRail", Size = Vector3.new(0.42, band.h, length), CFrame = mid * CFrame.new(0, 1.2 + band.y, 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+	local bays = math.max(1, math.floor(length / 2.6))
+	for i = 0, bays do
+		local along = -length / 2 + i * (length / bays)
+		ctx.part({ Name = "RailingBar", Size = Vector3.new(0.3, height, 0.3), CFrame = mid * CFrame.new(0, 1.2 + height / 2, along), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+		ctx.part({ Name = "RailingSpear", Size = Vector3.new(0.55, 1.1, 0.55), CFrame = mid * CFrame.new(0, 1.2 + height + 0.4, along) * CFrame.Angles(0, math.rad(45), 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
+	end
+end
+
+-- A gate pier: plinth, shaft, cornice and a ball finial.
+function GroundsKit.gatePier(ctx: Ctx, x: number, z: number, height: number)
+	ctx.part({ Name = "PierPlinth", Size = Vector3.new(7.0, 1.6, 7.0), CFrame = CFrame.new(x, 0.9, z), Color = GroundsKit.STONE, Material = Enum.Material.Concrete, Parent = ctx.parent })
+	ctx.tag(ctx.part({ Name = "PierShaft", Size = Vector3.new(5.4, height, 5.4), CFrame = CFrame.new(x, 1.7 + height / 2, z), Color = GroundsKit.STONE, Material = Enum.Material.Slate, Parent = ctx.parent }), "TexCoursedStone")
+	ctx.part({ Name = "PierCornice", Size = Vector3.new(6.8, 1.1, 6.8), CFrame = CFrame.new(x, 1.7 + height + 0.55, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "PierCap", Size = Vector3.new(5.0, 0.9, 5.0), CFrame = CFrame.new(x, 1.7 + height + 1.55, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
+	ctx.part({ Name = "PierFinial", Size = Vector3.new(3.0, 3.0, 3.0), CFrame = CFrame.new(x, 1.7 + height + 3.4, z), Color = GroundsKit.STONE_PALE, Material = Enum.Material.Marble, Shape = Enum.PartType.Ball, Parent = ctx.parent }).CanCollide = false
+end
+
+return GroundsKit
+
+end)()
 local __PlanBuilder = (function()
 
 -- Build a building FROM THE DRAWING.
@@ -2278,6 +2790,7 @@ local CollectionService = game:GetService("CollectionService")
 local Kit = __Kit
 local PlanBuilder = __PlanBuilder
 local CampusPlan = __CampusPlan
+local Grounds = __Grounds
 
 local PropSizes = __PropSizes
 
@@ -4021,17 +4534,17 @@ local function insidePlot(pos: Vector3, margin: number): boolean
 	return pos.X > PLOT_MIN_X + margin and pos.X < PLOT_MAX_X - margin
 		and pos.Z > PLOT_MIN_Z + margin and pos.Z < PLOT_MAX_Z - margin
 end
--- The ground is the plot, exactly. It used to be a 1400 x 1500 slab
--- centred on (0, -100), drawn before the plot grew to its expansion
--- size, so the East Reserve (x 700..840) and the North Reserve
--- (z 650..780) had no ground under them at all -- you could walk off
--- the edge of the world inside the estate wall -- while 210 studs of
--- grass ran on past the south wall to z -850.
--- The front road, north of the Great Court. It used to run at z = 208,
--- which the court now covers to z = 285: twenty-two studs of asphalt
--- through the middle of the parterres, with the school bus parked on
--- the fountain's north walk.
+-- The front road, north of the Great Court. It used to run at z = 208, which
+-- the court now covers to z = 285: twenty-two studs of asphalt through the
+-- middle of the parterres, with the school bus parked on the fountain's north
+-- walk.
 local ROAD_Z = 320
+
+-- The ground is the plot, exactly. It used to be a 1400 x 1500 slab centred on
+-- (0, -100), drawn before the plot grew to its expansion size, so the East
+-- Reserve (x 700..840) and the North Reserve (z 650..780) had no ground under
+-- them at all -- you could walk off the edge of the world inside the estate
+-- wall -- while 210 studs of grass ran on past the south wall to z = -850.
 local PLOT_W, PLOT_D = PLOT_MAX_X - PLOT_MIN_X, PLOT_MAX_Z - PLOT_MIN_Z
 local PLOT_MID_X = (PLOT_MIN_X + PLOT_MAX_X) / 2
 local PLOT_MID = (PLOT_MIN_Z + PLOT_MAX_Z) / 2
@@ -5973,8 +6486,8 @@ local function buildGrandFacade(parent: Instance)
 	-- the bay, the arch, the cheek walls, the urns and the lanterns -- all of
 	-- which are already standing.
 	local TERRACE_TOP = 0.9
-	-- from the door line out to the court: z 123 .. 163
-	local terraceMid, terraceDepth = Z + 19, 40
+	-- from the door line out into the court: z 123 .. 151
+	local terraceMid, terraceDepth = Z + 13, 28
 	part({ Name = "EntranceTerrace", Size = Vector3.new(64, TERRACE_TOP + 0.6, terraceDepth), CFrame = CFrame.new(0, (TERRACE_TOP - 0.6) / 2, terraceMid), Color = Color3.fromRGB(206, 202, 192), Material = Enum.Material.Concrete, Parent = parent })
 	-- The kerb is a FRAME round the terrace, standing a little proud of it --
 	-- not a 66 x 42 slab laid at exactly the terrace's own top, which is 2,560
@@ -6167,7 +6680,9 @@ end
 --
 -- Everything here is laid out from the fountain, so the whole thing reads as
 -- one composition rather than as things that happen to be near each other.
-local COURT_R = 22
+-- The fountain's basin radius. 22 gave a 49-stud bowl on a court 300 wide,
+-- which from the gate read as a wedding cake on a paving slab.
+local COURT_R = 34
 
 local function courtLamp(parent: Instance, x: number, z: number)
 	lampPost(parent, x, z, { range = 52, brightness = 2.4 })
@@ -6248,71 +6763,112 @@ local function buildGreatCourt(parent: Instance)
 		}).CanCollide = false
 	end
 
-	-- ---- the fountain, on the crossing ----
-	part({ Name = "FountainRim", Size = Vector3.new(COURT_R * 2 + 5, 3, COURT_R * 2 + 5), CFrame = CFrame.new(cx, 1.5, cz), Color = Color3.fromRGB(188, 184, 174), Material = Enum.Material.Marble, Parent = parent }).Shape = Enum.PartType.Cylinder
-	local bowl = part({ Name = "FountainBasin", Size = Vector3.new(COURT_R * 2, 2.4, COURT_R * 2), CFrame = CFrame.new(cx, 1.6, cz), Color = Color3.fromRGB(36, 74, 92), Material = Enum.Material.Glass, Transparency = 0.25, Parent = parent })
-	bowl.Shape = Enum.PartType.Cylinder
-	bowl.CanCollide = false
-	bowl.Reflectance = 0.4
-	for tier, spec in {
-		{ r = 11, y = 4.4, h = 1.6 },
-		{ r = 7, y = 7.4, h = 1.4 },
-		{ r = 4, y = 10.2, h = 1.2 },
+	-- ---- the paving pattern ----
+	-- A field of one grey 300 x 150 studs across is the largest flat surface
+	-- on the campus and it read as one. A formal court is laid in courses: a
+	-- border band inside the railings, and an octagonal rondel of darker stone
+	-- round the fountain that the four walks run out of.
+	local kitCtx0 = { parent = parent, part = part :: any, tag = tag :: any }
+	local BORDER = Color3.fromRGB(146, 146, 152)
+	for _, run in {
+		{ w = width, d = 7, dx = 0, dz = -depth / 2 + 3.5 },
+		{ w = width, d = 7, dx = 0, dz = depth / 2 - 3.5 },
+		{ w = 7, d = depth - 14, dx = -width / 2 + 3.5, dz = 0 },
+		{ w = 7, d = depth - 14, dx = width / 2 - 3.5, dz = 0 },
 	} do
-		part({ Name = "FountainStem", Size = Vector3.new(2.6, spec.y - 1.6, 2.6), CFrame = CFrame.new(cx, (spec.y + 1.6) / 2, cz), Color = Color3.fromRGB(196, 192, 182), Material = Enum.Material.Marble, Parent = parent })
-		local dish = part({ Name = "FountainTier", Size = Vector3.new(spec.r * 2, spec.h, spec.r * 2), CFrame = CFrame.new(cx, spec.y, cz), Color = Color3.fromRGB(206, 202, 192), Material = Enum.Material.Marble, Parent = parent })
-		dish.Shape = Enum.PartType.Cylinder
-		dish.CanCollide = false
-		-- the sheet of water falling off each dish
-		local fall = part({ Name = "FountainFall", Size = Vector3.new(spec.r * 2 - 1, 2.6, spec.r * 2 - 1), CFrame = CFrame.new(cx, spec.y - 1.8, cz), Color = Color3.fromRGB(198, 232, 244), Material = Enum.Material.Glass, Transparency = 0.55, Parent = parent })
-		fall.Shape = Enum.PartType.Cylinder
-		fall.CanCollide = false
-		local _ = tier
+		tag(part({
+			Name = "CourtBorder",
+			Size = Vector3.new(run.w, 0.3, run.d),
+			CFrame = CFrame.new(cx + run.dx, 0.66, cz + run.dz),
+			Color = BORDER,
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		}), "TexCourtPaving").CanCollide = false
 	end
-	part({ Name = "FountainFinial", Size = Vector3.new(1.8, 3.4, 1.8), CFrame = CFrame.new(cx, 12.4, cz), Color = Color3.fromRGB(214, 210, 200), Material = Enum.Material.Marble, Parent = parent }).CanCollide = false
-	-- lights set into the rim, which is what the reference actually glows with
-	for i = 0, 15 do
-		local a = i * math.pi / 8
-		upLight(parent, cx + math.cos(a) * (COURT_R + 3.4), cz + math.sin(a) * (COURT_R + 3.4), Color3.fromRGB(190, 226, 255))
+	-- the rondel: an octagonal band of darker stone, one course over the
+	-- paving and under the fountain's own apron
+	for _, piece in Grounds.octagonRing(kitCtx0, "CourtRondel", cx, cz, RING - 5.0, 10.0, 0.3, 0.66, Color3.fromRGB(104, 104, 112), Enum.Material.Slate) do
+		piece.CanCollide = false
+		tag(piece, "TexCourtPaving")
 	end
 
+	-- ---- lime avenue down both flanks ----
+	-- The court's two long sides were 150 studs of empty paving. An avenue is
+	-- what stands there in every one of the references.
+	for _, sx in { -1, 1 } do
+		for i = -2, 2 do
+			local tz = cz + i * 28
+			if math.abs(tz - cz) > CROSS_HALF + 10 or i == 0 then
+				meshTree(parent, Vector3.new(cx + sx * (FLANK + 16), 0.5, tz), 1.15)
+			end
+		end
+	end
+
+	-- ---- the fountain, on the crossing ----
+	-- Built by GroundsKit: an octagonal basin with a coping and a moulded base,
+	-- water in it, a stepped pedestal, three dishes with their falls, eight
+	-- jets arcing in off the rim and a plume over the finial. What stood here
+	-- was three cylinders on a stem, 49 studs across in a court 300 wide, and
+	-- from the gate it read as a wedding cake on a paving slab.
+	local kitCtx = { parent = parent, part = part :: any, tag = tag :: any }
+	Grounds.fountain(kitCtx, { x = cx, z = cz, r = COURT_R, upLight = upLight :: any })
+
 	-- ---- the parterres ----
-	-- One clipped bed in each quadrant, set inside the walks and outside the
-	-- ring of open paving round the fountain. They used to be sixteen beds on
-	-- a grid that ignored both, so the hedges met across every route and the
-	-- only continuous surface through the court was the top of a hedge.
+	-- One in each quadrant, inside the walks and outside the ring of open
+	-- paving round the fountain: gravel, a stone kerb, a clipped box edge, a
+	-- knot of box, a yew cone at each corner, an urn on the middle and flowers
+	-- in the compartments. They were sixteen rectangles of bare soil on a grid
+	-- that ignored both the walks and the fountain, so the hedges met across
+	-- every route and the only continuous surface through the court was the
+	-- top of a hedge.
 	local bedHalfX = (FLANK - FLANK_HALF - RING) / 2
 	local bedHalfZ = (depth / 2 - CROSS_HALF - 10) / 2
 	for _, quad in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
-		local bx = cx + quad[1] * (RING + bedHalfX)
-		local bz = cz + quad[2] * (CROSS_HALF + 6 + bedHalfZ)
-		part({ Name = "ParterreBed", Size = Vector3.new(bedHalfX * 2, 0.9, bedHalfZ * 2), CFrame = CFrame.new(bx, 0.65, bz), Color = Color3.fromRGB(74, 58, 44), Material = Enum.Material.Ground, Parent = parent }).CanCollide = false
-		-- the clipped edge, four low runs round the bed
-		for _, edge in {
-			{ bedHalfX * 2, 1.6, 0, bedHalfZ - 0.8 },
-			{ bedHalfX * 2, 1.6, 0, -(bedHalfZ - 0.8) },
-			{ 1.6, bedHalfZ * 2, bedHalfX - 0.8, 0 },
-			{ 1.6, bedHalfZ * 2, -(bedHalfX - 0.8), 0 },
+		Grounds.parterre(kitCtx, {
+			x = cx + quad[1] * (RING + bedHalfX),
+			z = cz + quad[2] * (CROSS_HALF + 6 + bedHalfZ),
+			hw = bedHalfX,
+			hd = bedHalfZ,
+			flower = prop :: any,
+			upLight = upLight :: any,
+		})
+	end
+
+	-- ---- the court is enclosed, the way every reference court is ----
+	-- spear-topped railings on a stone kerb between piers, broken at the
+	-- entrance axis and at both flank walks
+	local function railRun(x0: number, z0: number, x1: number, z1: number)
+		Grounds.railing(kitCtx, x0, z0, x1, z1, 8.0)
+	end
+	for _, side in { -1, 1 } do
+		local ex = cx + side * width / 2
+		for _, span in {
+			{ cz - depth / 2, cz - CROSS_HALF - 4 },
+			{ cz + CROSS_HALF + 4, cz + depth / 2 },
 		} do
-			part({
-				Name = "ParterreHedge",
-				Size = Vector3.new(edge[1], 2.6, edge[2]),
-				CFrame = CFrame.new(bx + edge[3], 1.5, bz + edge[4]),
-				Color = HEDGE,
-				Material = Enum.Material.Grass,
-				Parent = parent,
-			})
+			railRun(ex, span[1], ex, span[2])
 		end
-		-- a cross of clipped box inside the bed, which is what makes a parterre
-		-- a parterre rather than a rectangle of soil
-		part({ Name = "ParterreKnot", Size = Vector3.new(bedHalfX * 2 - 8, 1.8, 1.4), CFrame = CFrame.new(bx, 1.55, bz), Color = HEDGE, Material = Enum.Material.Grass, Parent = parent }).CanCollide = false
-		part({ Name = "ParterreKnot", Size = Vector3.new(1.4, 1.8, bedHalfZ * 2 - 8), CFrame = CFrame.new(bx, 1.55, bz), Color = HEDGE, Material = Enum.Material.Grass, Parent = parent }).CanCollide = false
-		for _, off in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
-			prop(
-				if off[1] * off[2] > 0 then "KFlowerRed" else "KFlowerYellow",
-				CFrame.new(bx + off[1] * bedHalfX * 0.5, 1.1, bz + off[2] * bedHalfZ * 0.5)
-			)
-		end
+		Grounds.gatePier(kitCtx, ex, cz - CROSS_HALF - 4, 9.0)
+		Grounds.gatePier(kitCtx, ex, cz + CROSS_HALF + 4, 9.0)
+		Grounds.gatePier(kitCtx, ex, cz - depth / 2, 9.0)
+		Grounds.gatePier(kitCtx, ex, cz + depth / 2, 9.0)
+	end
+	-- the north side, either side of the drive
+	for _, span in {
+		{ cx - width / 2 + 4, cx - AXIS_HALF - 5 },
+		{ cx + AXIS_HALF + 5, cx + width / 2 - 4 },
+	} do
+		railRun(span[1], cz + depth / 2, span[2], cz + depth / 2)
+	end
+	Grounds.gatePier(kitCtx, cx - AXIS_HALF - 5, cz + depth / 2, 13.0)
+	Grounds.gatePier(kitCtx, cx + AXIS_HALF + 5, cz + depth / 2, 13.0)
+
+	-- ---- benches on the ring, facing the water ----
+	-- On the diagonals, so they stand clear of the entrance walk and the walk
+	-- across, in the open paving between the fountain's apron and the beds.
+	for _, seat in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+		local ox, oz = seat[1] * (COURT_R + 9), seat[2] * (COURT_R + 9)
+		Grounds.bench(kitCtx, cx + ox, cz + oz, math.atan2(ox, oz))
 	end
 
 	-- ---- lamps: at every junction of the walks, and down the flanks ----
@@ -6469,17 +7025,9 @@ local function buildFrontGrounds(parent: Instance)
 		end
 	end
 
-	-- benches along the entrance walk, backs to it, facing the parterres
-	for _, sgn in { -1, 1 } do
-		for _, bz in { 178, 246 } do
-			local bx = sgn * 18
-			part({ Name = "BenchSeat", Size = Vector3.new(3.4, 0.6, 12), CFrame = CFrame.new(bx, 2.4, bz), Color = Color3.fromRGB(146, 96, 56), Material = Enum.Material.WoodPlanks, Parent = parent })
-			part({ Name = "BenchBack", Size = Vector3.new(0.6, 3.4, 12), CFrame = CFrame.new(bx + sgn * 1.4, 4.2, bz), Color = Color3.fromRGB(146, 96, 56), Material = Enum.Material.WoodPlanks, Parent = parent })
-			for _, lz in { bz - 4.6, bz + 4.6 } do
-				part({ Name = "BenchLeg", Size = Vector3.new(3.2, 2.2, 0.7), CFrame = CFrame.new(bx, 1.1, lz), Color = Color3.fromRGB(60, 62, 68), Material = Enum.Material.Metal, Parent = parent })
-			end
-		end
-	end
+	-- The benches are the court's, built by GroundsKit on the fountain's ring
+	-- with cast-iron ends and slatted seats. These were two boxes and a leg
+	-- each, standing at x = +-18 on the entrance walk.
 
 	-- The founder's statue is not here any more. It stood at (-56, 168), which
 	-- is inside the Great Court as drawn, half on the west flank walk; the
