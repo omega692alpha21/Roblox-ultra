@@ -7188,21 +7188,34 @@ local function serveryCounter(parent: Instance, x: number, z0: number, z1: numbe
 		local wz = z0 + run * (i + 0.5) / 4
 		part({
 			Name = "ServeryWell",
-			Size = Vector3.new(2.4, 0.5, 4.4),
-			CFrame = CFrame.new(x, 4.0, wz),
+			Size = Vector3.new(2.4, 0.7, 4.4),
+			CFrame = CFrame.new(x, 4.25, wz),
 			Color = Color3.fromRGB(255, 206, 132),
 			Material = Enum.Material.Neon,
 			Transparency = 0.35,
 			Parent = parent,
 		}).CanCollide = false
-		part({
-			Name = "ServeryWellRim",
-			Size = Vector3.new(3.0, 0.3, 5.0),
-			CFrame = CFrame.new(x, 4.15, wz),
-			Color = Color3.fromRGB(146, 152, 158),
-			Material = Enum.Material.Metal,
-			Parent = parent,
-		}).CanCollide = false
+		-- a rim AROUND the well, four bars, not a lid over it. A 3.0 by 5.0
+		-- slab centred above a 2.4 by 4.4 well covers it: what the queue sees
+		-- of a lit bain-marie is then a grey plate.
+		for _, bar in
+			{
+				{ Vector3.new(3.0, 0.4, 0.4), Vector3.new(0, 0, 2.5) },
+				{ Vector3.new(3.0, 0.4, 0.4), Vector3.new(0, 0, -2.5) },
+				{ Vector3.new(0.4, 0.4, 5.4), Vector3.new(1.5, 0, 0) },
+				{ Vector3.new(0.4, 0.4, 5.4), Vector3.new(-1.5, 0, 0) },
+			}
+		do
+			local off = bar[2] :: Vector3
+			part({
+				Name = "ServeryWellRim",
+				Size = bar[1] :: Vector3,
+				CFrame = CFrame.new(x + off.X, 4.2, wz + off.Z),
+				Color = Color3.fromRGB(146, 152, 158),
+				Material = Enum.Material.Metal,
+				Parent = parent,
+			}).CanCollide = false
+		end
 	end
 	-- tray rail on brackets, on the queue side
 	for i = 0, 3 do
@@ -7453,9 +7466,13 @@ end
 -- wheel, the flue and its flanges. The plant room is the one room in the game
 -- whose whole point is machinery, and it had a light in it and nothing else.
 local function boiler(parent: Instance, x: number, z: number)
-	part({ Name = "BoilerShell", Size = Vector3.new(9.0, 6.4, 6.4), CFrame = CFrame.new(x, 3.6, z) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(78, 92, 104), Material = Enum.Material.Metal, Parent = parent })
+	-- A cylinder spins about its LOCAL X, so the shell lies along z only when
+	-- it is turned about Y. Turned about Z instead -- which is what this was --
+	-- it stands on end as a nine-stud drum with its dished ends floating off
+	-- its sides.
+	part({ Name = "BoilerShell", Size = Vector3.new(9.0, 6.4, 6.4), CFrame = CFrame.new(x, 3.6, z) * CFrame.Angles(0, math.pi / 2, 0), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(78, 92, 104), Material = Enum.Material.Metal, Parent = parent })
 	for _, sy in { -4.6, 4.6 } do
-		part({ Name = "BoilerEnd", Size = Vector3.new(0.8, 6.8, 6.8), CFrame = CFrame.new(x, 3.6, z + sy) * CFrame.Angles(math.pi / 2, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(58, 70, 82), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "BoilerEnd", Size = Vector3.new(0.8, 6.8, 6.8), CFrame = CFrame.new(x, 3.6, z + sy) * CFrame.Angles(0, math.pi / 2, 0), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(58, 70, 82), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 	end
 	part({ Name = "BoilerSaddle", Size = Vector3.new(5.4, 1.2, 8.0), CFrame = CFrame.new(x, 0.6, z), Color = Color3.fromRGB(46, 48, 52), Material = Enum.Material.Metal, Parent = parent })
 	local door = part({ Name = "BoilerDoor", Size = Vector3.new(0.5, 3.2, 3.2), CFrame = CFrame.new(x - 3.2, 3.6, z), Color = Color3.fromRGB(52, 40, 36), Material = Enum.Material.Metal, Parent = parent })
@@ -7469,19 +7486,22 @@ local function boiler(parent: Instance, x: number, z: number)
 	glow.Parent = fire
 	part({ Name = "BoilerGauge", Size = Vector3.new(0.4, 1.4, 1.4), CFrame = CFrame.new(x - 3.3, 6.0, z - 1.8) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(226, 224, 214), Material = Enum.Material.SmoothPlastic, Parent = parent }).CanCollide = false
 	part({ Name = "BoilerValve", Size = Vector3.new(0.4, 2.2, 2.2), CFrame = CFrame.new(x - 3.3, 6.0, z + 1.8) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(168, 62, 48), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-	part({ Name = "BoilerFlue", Size = Vector3.new(1.8, 9.0, 1.8), CFrame = CFrame.new(x + 2.6, 10.0, z), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(64, 66, 70), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
-	for _, fy in { 7.6, 12.6 } do
+	-- up to the ceiling, not to eleven studs short of it: a flue that stops in
+	-- mid-air is a pipe hanging in a room
+	part({ Name = "BoilerFlue", Size = Vector3.new(1.8, 10.6, 1.8), CFrame = CFrame.new(x + 2.6, 10.3, z) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(64, 66, 70), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for _, fy in { 7.6, 13.6 } do
 		part({ Name = "BoilerFlange", Size = Vector3.new(0.6, 2.6, 2.6), CFrame = CFrame.new(x + 2.6, fy, z) * CFrame.Angles(0, 0, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(46, 48, 52), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 	end
 end
 
 -- A run of service pipe with its brackets and a valve, hung under a ceiling.
-local function pipeRun(parent: Instance, x: number, y: number, z0: number, z1: number, colour: Color3)
+local function pipeRun(parent: Instance, x: number, y: number, z0: number, z1: number, colour: Color3, ceil: number)
 	local mid, run = (z0 + z1) / 2, z1 - z0
 	part({ Name = "ServicePipe", Size = Vector3.new(run, 1.1, 1.1), CFrame = CFrame.new(x, y, mid) * CFrame.Angles(0, math.pi / 2, 0), Shape = Enum.PartType.Cylinder, Color = colour, Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 	local n = math.max(2, math.floor(run / 16))
+	local drop = ceil - y
 	for i = 0, n do
-		part({ Name = "PipeBracket", Size = Vector3.new(0.5, 1.8, 1.8), CFrame = CFrame.new(x, y + 0.9, z0 + run * i / n), Color = Color3.fromRGB(58, 60, 64), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "PipeBracket", Size = Vector3.new(0.5, drop, 1.8), CFrame = CFrame.new(x, y + drop / 2, z0 + run * i / n), Color = Color3.fromRGB(58, 60, 64), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 	end
 	part({ Name = "PipeValve", Size = Vector3.new(0.5, 2.4, 2.4), CFrame = CFrame.new(x, y, mid) * CFrame.Angles(0, math.pi / 2, math.pi / 2), Shape = Enum.PartType.Cylinder, Color = Color3.fromRGB(168, 62, 48), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
 end
@@ -7719,7 +7739,11 @@ local function furnishRingBuildings(parent: Instance)
 	prop("Chalkboard", CFrame.new(-446, 0, -31.4), { scale = 2.2 })
 	prop("Clock", CFrame.new(-430, 12, -31.2))
 	prop("Bin", CFrame.new(-474, 0, -29))
-	noticeBoard(parent, "DetentionRules", CFrame.new(-455, 10, -31.4), 12, 7)
+	-- Clear of the chalkboard: at x -455 with a board 12 wide and a chalkboard
+	-- scaled to seven and a half, the two met edge to edge on the same wall.
+	noticeBoard(parent, "DetentionRules", CFrame.new(-464, 10, -31.4), 12, 7)
+	-- the east wall of the hall, which had nothing on it at all
+	wainscot(parent, -401.5, -28, -401.5, -4, -1, 7)
 	for _, lx in { -462, -438 } do
 		hangLight(parent, "CeilingLampDisc", lx, 14.4, -14, 40)
 	end
@@ -7736,6 +7760,7 @@ local function furnishRingBuildings(parent: Instance)
 		prop("Bench", CFrame.new(bx, 0, 0) * CFrame.Angles(0, math.pi, 0))
 	end
 	prop("Clock", CFrame.new(-360, 12, -30.2))
+	wainscot(parent, -370, -32, -327, -32, 1, 7)
 	prop("Bin", CFrame.new(-328, 0, -28))
 	for _, lx in { -384, -350 } do
 		hangLight(parent, "CeilingLampDisc", lx, 14.4, -14, 40)
@@ -7911,8 +7936,8 @@ local function furnishRingBuildings(parent: Instance)
 	-- The plant room, which is what a fire escape and a walkable roof hang off.
 	boiler(parent, 174, 362)
 	boiler(parent, 174, 376)
-	pipeRun(parent, 182, 13.0, 356, 384, Color3.fromRGB(78, 92, 104))
-	pipeRun(parent, 186, 13.0, 356, 384, Color3.fromRGB(120, 74, 54))
+	pipeRun(parent, 182, 13.0, 356, 384, Color3.fromRGB(78, 92, 104), 15.6)
+	pipeRun(parent, 186, 13.0, 356, 384, Color3.fromRGB(120, 74, 54), 15.6)
 	prop("UtilityBox", CFrame.new(206, 6, 356.4))
 	prop("UtilityBox", CFrame.new(206, 6, 362.4))
 	prop("IndustrialLamp", CFrame.new(166, 12, 356.4))
@@ -7941,7 +7966,7 @@ local function furnishRingBuildings(parent: Instance)
 	end
 
 	-- the corridors and the way up
-	pipeRun(parent, 200, 13.0, 388, 414, Color3.fromRGB(78, 92, 104))
+	pipeRun(parent, 200, 13.0, 388, 414, Color3.fromRGB(78, 92, 104), 15.6)
 	prop("IndustrialWallSconce", CFrame.new(164.4, 10, 400) * CFrame.Angles(0, math.rad(90), 0))
 	prop("IndustrialWallSconce", CFrame.new(255.6, 10, 400) * CFrame.Angles(0, math.rad(-90), 0))
 	prop("PlasticCrate", CFrame.new(170, 0, 412))
