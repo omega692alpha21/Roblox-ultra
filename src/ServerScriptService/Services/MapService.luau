@@ -3412,7 +3412,45 @@ local function buildGrandFacade(parent: Instance)
 	-- the bay is a frame, not a plug: piers each side, header above, so the
 	-- doors underneath actually open into the lobby
 	for _, side in { -1, 1 } do
-		part({ Name = "EntryBayPier", Size = Vector3.new(15, 46, 14), CFrame = CFrame.new(side * 20.5, 23, Z + 5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		local px = side * 20.5
+		part({ Name = "EntryBayPier", Size = Vector3.new(15, 46, 14), CFrame = CFrame.new(px, 23, Z + 5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+		-- ARTICULATED, not a blank slab. Each pier was fifteen by forty-six of
+		-- flat pale concrete standing either side of the arch, and they are
+		-- the two largest unbroken surfaces in the shot every player sees
+		-- first -- the walk up to the front doors. A pier is a plinth, a shaft
+		-- with a set-off where it steps in, a band at each storey and a
+		-- moulded cap.
+		--
+		-- Every course is WIDER than the shaft it dresses and none of them
+		-- shares a face with it: the shaft is 15 x 14 and these run 16.4 to
+		-- 17.2, so a course reads as a course from any angle.
+		for _, course in {
+			{ w = 17.2, d = 16.2, h = 3.2, y = 1.6 },    -- plinth
+			{ w = 16.4, d = 15.4, h = 1.4, y = 4.6 },    -- its weathering
+			{ w = 16.4, d = 15.4, h = 1.6, y = 15.4 },   -- first storey band
+			{ w = 16.4, d = 15.4, h = 1.6, y = 27.0 },   -- second storey band
+			{ w = 17.2, d = 16.2, h = 2.4, y = 44.2 },   -- cornice
+			{ w = 15.8, d = 14.8, h = 1.6, y = 46.2 },   -- and its cap
+		} do
+			tag(part({
+				Name = "EntryPierCourse",
+				Size = Vector3.new(course.w, course.h, course.d),
+				CFrame = CFrame.new(px, course.y, Z + 5),
+				Color = Color3.fromRGB(201, 191, 169),
+				Material = Enum.Material.Concrete,
+				Parent = parent,
+			}), "TexAshlar").CanCollide = false
+		end
+		-- a lit lancet in each pier's outer face, so it is stone with a window
+		-- in it rather than a slab
+		for _, wy in { 21.2, 33.4 } do
+			tag(part({ Name = "EntryPierSurround", Size = Vector3.new(6.6, 9.4, 1.2), CFrame = CFrame.new(px, wy, Z + 12.1), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+			local lancet = part({ Name = "EntryPierGlass", Size = Vector3.new(4.2, 7.0, 0.7), CFrame = CFrame.new(px, wy, Z + 12.5), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.32, Parent = parent })
+			lancet.CanCollide = false
+			lancet.CastShadow = false
+			part({ Name = "EntryPierMullion", Size = Vector3.new(0.5, 7.0, 1.0), CFrame = CFrame.new(px, wy, Z + 12.7), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+			tag(part({ Name = "EntryPierSill", Size = Vector3.new(7.6, 0.8, 2.0), CFrame = CFrame.new(px, wy - 5.1, Z + 12.0), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		end
 	end
 	part({ Name = "EntryBayHeader", Size = Vector3.new(56, 26, 14), CFrame = CFrame.new(0, 33, Z + 5), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 	-- arched transom over the doors
@@ -3929,6 +3967,23 @@ local function buildDormCourt(parent: Instance)
 	for _, side in { -1, 1 } do
 		for i = -1, 1 do
 			meshTree(parent, Vector3.new(cx + side * (width / 2 + 12), 0.5, cz + i * 30), 1.1)
+		end
+	end
+
+	-- LIMES ON THE LAWNS. The avenue above stands OUTSIDE the court, twelve
+	-- studs past its edge, so the court itself held ten props and every one of
+	-- them was a lamp: two hundred and eighty by ninety-four studs of grass
+	-- with nothing growing on it, in front of the one building the reference
+	-- art photographs twice. Four to a panel, set in from its corners, framing
+	-- the lawn rather than standing in the middle of it.
+	for _, side in { -1, 1 } do
+		for _, ox in { -1, 1 } do
+			for _, oz in { -1, 1 } do
+				meshTree(parent, Vector3.new(
+					cx + side * (AXIS_HALF + panelHalfX) + ox * (panelHalfX - 14),
+					0.9,
+					cz + oz * (panelHalfZ - 14)), 1.25)
+			end
 		end
 	end
 	-- and a pair of urns marking the head of the axis walk at each end
