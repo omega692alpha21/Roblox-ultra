@@ -320,8 +320,16 @@ local function buildPavilion(
 	size: Vector2,
 	label: string,
 	accent: Color3,
-	glass: Color3
+	glass: Color3,
+	-- The frame is painted joinery; the accent is the SUBJECT's colour, which
+	-- belongs on the name board and nowhere else. Running them together put a
+	-- spring-green greenhouse and a mint-green laboratory in the middle of a
+	-- campus built from stone, slate, ashlar, navy and gold -- and from the
+	-- air those two courtyards were the only things on it that read as
+	-- plastic. Defaults to accent, so the other callers are unchanged.
+	frame: Color3?
 )
+	local paint = frame or accent
 	local half = Vector2.new(size.X / 2, size.Y / 2)
 	part({
 		Name = name .. "Floor",
@@ -363,7 +371,7 @@ local function buildPavilion(
 				Name = name .. "GlazingBar",
 				Size = if runsX then Vector3.new(0.5, 13.4, 1.4) else Vector3.new(1.4, 13.4, 0.5),
 				CFrame = CFrame.new(center) * CFrame.new(wall.pos + (if runsX then Vector3.new(slide, 0, 0) else Vector3.new(0, 0, slide))),
-				Color = accent,
+				Color = paint,
 				Material = Enum.Material.Metal,
 				Parent = parent,
 			}).CanCollide = false
@@ -372,7 +380,7 @@ local function buildPavilion(
 			Name = name .. "GlazingTransom",
 			Size = if runsX then Vector3.new(wall.size.X - 1.2, 0.5, 1.4) else Vector3.new(1.4, 0.5, wall.size.Z - 1.2),
 			CFrame = CFrame.new(center) * CFrame.new(wall.pos),
-			Color = accent,
+			Color = paint,
 			Material = Enum.Material.Metal,
 			Parent = parent,
 		}).CanCollide = false
@@ -383,7 +391,7 @@ local function buildPavilion(
 			Name = name .. "Post",
 			Size = Vector3.new(1.6, 15, 1.6),
 			CFrame = CFrame.new(center) * CFrame.new(corner + Vector3.new(0, 7.5, 0)),
-			Color = accent,
+			Color = paint,
 			Material = Enum.Material.Metal,
 			Parent = parent,
 		})
@@ -393,7 +401,7 @@ local function buildPavilion(
 		Name = name .. "Lintel",
 		Size = Vector3.new(size.X, 2, 1.6),
 		CFrame = CFrame.new(center) * CFrame.new(0, 14, half.Y),
-		Color = accent,
+		Color = paint,
 		Material = Enum.Material.Metal,
 		Parent = parent,
 	})
@@ -8865,7 +8873,8 @@ end
 		Vector2.new(36, 34),
 		"THE GREENHOUSE\nBIOLOGY",
 		Color3.fromRGB(150, 220, 130),
-		Color3.fromRGB(206, 238, 210)
+		Color3.fromRGB(206, 238, 210),
+		Color3.fromRGB(228, 230, 220)
 	)
 	buildPavilion(
 		folder,
@@ -8874,7 +8883,8 @@ end
 		Vector2.new(36, 34),
 		"EAST LAB\nCHEMISTRY",
 		Color3.fromRGB(150, 240, 190),
-		Color3.fromRGB(202, 232, 240)
+		Color3.fromRGB(202, 232, 240),
+		Color3.fromRGB(78, 84, 92)
 	)
 	-- The gymnasium moved out to its own building at (425, 405). This hall
 	-- stays -- it is a hundred by eighty-two studs of sprung floor and every
