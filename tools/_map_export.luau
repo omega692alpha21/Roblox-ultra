@@ -11419,6 +11419,64 @@ local function buildRainwaterGoods(parent: Instance)
 	end
 end
 
+-- Ridge capping and iron cresting.
+--
+-- The Academy's roofs are pairs of pitched slabs that meet and stop: seven
+-- ridges across the building and exactly ONE RoofRidge part on any of them,
+-- over the entry bay. Everything else on that roofscape is there -- spires,
+-- pinnacles, sixteen stacks, ten dormers, forty crenels -- and the lines the
+-- whole silhouette hangs from were bare joints. Cresting is what makes a
+-- collegiate roof read against a night sky, which is what the reference
+-- picture of this elevation is.
+local function ridgeLine(parent: Instance, x: number, y: number, z: number, run: number, alongX: boolean)
+	local capSize = if alongX then Vector3.new(run, 1.6, 2.8) else Vector3.new(2.8, 1.6, run)
+	tag(part({
+		Name = "RidgeCap",
+		Size = capSize,
+		CFrame = CFrame.new(x, y + 0.5, z),
+		Color = Color3.fromRGB(74, 82, 94),
+		Material = Enum.Material.Slate,
+		Parent = parent,
+	}), "TexSlateRoof").CanCollide = false
+	local n = math.max(4, math.floor(run / 4.5))
+	for i = 0, n do
+		local t = -0.5 + i / n
+		local px = if alongX then x + run * t else x
+		local pz = if alongX then z else z + run * t
+		part({ Name = "RidgeCrest", Size = Vector3.new(0.35, 2.0, 0.35), CFrame = CFrame.new(px, y + 2.3, pz), Color = Color3.fromRGB(38, 40, 46), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		-- a quatrefoil head on every third upright, turned forty-five degrees
+		if i % 3 == 0 then
+			part({ Name = "RidgeCrestHead", Size = Vector3.new(1.1, 1.1, 1.1), CFrame = CFrame.new(px, y + 3.5, pz) * CFrame.Angles(0, math.rad(45), math.rad(45)), Color = Color3.fromRGB(38, 40, 46), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		end
+	end
+	local railSize = if alongX then Vector3.new(run, 0.3, 0.3) else Vector3.new(0.3, 0.3, run)
+	part({ Name = "RidgeCrestRail", Size = railSize, CFrame = CFrame.new(x, y + 3.1, z), Color = Color3.fromRGB(38, 40, 46), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	for _, endT in { -0.5, 0.5 } do
+		local px = if alongX then x + run * endT else x
+		local pz = if alongX then z else z + run * endT
+		part({ Name = "RidgeFinialShaft", Size = Vector3.new(0.9, 4.2, 0.9), CFrame = CFrame.new(px, y + 2.6, pz), Color = Color3.fromRGB(38, 40, 46), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "RidgeFinialHead", Size = Vector3.new(1.8, 1.8, 1.8), CFrame = CFrame.new(px, y + 5.2, pz) * CFrame.Angles(0, math.rad(45), math.rad(45)), Color = Color3.fromRGB(38, 40, 46), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+	end
+end
+
+local function buildRidgeCresting(parent: Instance)
+	-- Read off the PitchRoof pairs: each pair meets at the mid-line between
+	-- its two slabs, and the ridge is the top of their boxes.
+	for _, ridge in
+		{
+			{ x = -142.0, y = 52.0, z = 100.0, run = 164.0, alongX = true },
+			{ x = 142.0, y = 52.0, z = 100.0, run = 164.0, alongX = true },
+			{ x = -142.0, y = 53.0, z = -94.0, run = 164.0, alongX = true },
+			{ x = 142.0, y = 53.0, z = -94.0, run = 164.0, alongX = true },
+			{ x = 0.0, y = 56.0, z = -105.0, run = 104.0, alongX = true },
+			{ x = -198.0, y = 50.0, z = 0.0, run = 64.0, alongX = false },
+			{ x = 198.0, y = 50.0, z = 0.0, run = 64.0, alongX = false },
+		}
+	do
+		ridgeLine(parent, ridge.x, ridge.y, ridge.z, ridge.run, ridge.alongX)
+	end
+end
+
 local function furnishRingBuildings(parent: Instance)
 	----------------------------------------------------------------- cafeteria
 	-- Two dining halls either side of the partition at z -300, a kitchen and a
@@ -13104,6 +13162,7 @@ end
 	ringLanterns(folder)
 	ringNameBoards(folder)
 	buildRainwaterGoods(folder)
+	buildRidgeCresting(folder)
 	buildHiddenAlley(folder)
 	buildFlagpole(folder)
 	buildCoreFence(folder)
