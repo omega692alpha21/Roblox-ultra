@@ -2563,26 +2563,42 @@ local function furnishProps()
 	-- the gym.
 
 	-- ---------------- library ----------------
+	-- These twenty pieces were authored for the library when it stood at
+	-- (0, -232). The library moved to (-320, -300) with the sanctum hanging
+	-- off it, and the furniture did not: a whole reading room -- four study
+	-- desks, eight chairs, two sofas, two shelf banks -- was left standing on
+	-- open grass in the middle of what is now the Dorm Court, and the mirror
+	-- and the two pictures ended up buried in the boarding house's front wall.
+	-- LIB is the library's centre, so the room travels with the building from
+	-- here on rather than being re-typed each time it moves.
+	local LIB = Vector2.new(-320, -300)
+	local function libProp(kind: string, x: number, y: number, z: number, yaw: number?)
+		local cf = CFrame.new(LIB.X + x, y, LIB.Y + z)
+		if yaw then
+			cf *= CFrame.Angles(0, math.rad(yaw), 0)
+		end
+		prop(kind, cf)
+	end
 	-- four study tables on the reading carpet, two chairs each
 	for i, x in { -33, -11, 11, 33 } do
-		prop("Table", CFrame.new(x, 0, -209))
-		prop("Chair", CFrame.new(x, 0, -213) * CFrame.Angles(0, math.pi, 0))
-		prop("Chair2", CFrame.new(x, 0, -205))
+		libProp("Table", x, 0, 23)
+		libProp("Chair", x, 0, 19, 180)
+		libProp("Chair2", x, 0, 27)
 		if i % 2 == 1 then
-			prop("Vase4", CFrame.new(x, 2.7, -209))
+			libProp("Vase4", x, 2.7, 23)
 		end
 	end
-	prop("Sofa", CFrame.new(-38, 0, -217) * CFrame.Angles(0, math.rad(90), 0))
-	prop("ArmChair", CFrame.new(38, 0, -217) * CFrame.Angles(0, math.rad(-90), 0))
-	prop("SideTable", CFrame.new(-41, 0, -211) * CFrame.Angles(0, math.rad(90), 0))
-	prop("LoungeChair", CFrame.new(41, 0, -211) * CFrame.Angles(0, math.rad(-90), 0))
+	libProp("Sofa", -38, 0, 15, 90)
+	libProp("ArmChair", 38, 0, 15, -90)
+	libProp("SideTable", -41, 0, 21, 90)
+	libProp("LoungeChair", 41, 0, 21, -90)
 	-- against the front wall either side of the doors, not down the aisles
-	row("SteelShelves", 0, 180, { { -38, -202 }, { 38, -202 } })
-	prop("Mirror", CFrame.new(0, 6, -264.4))
-	prop("PictureFrame", CFrame.new(-24, 8, -264.4))
-	prop("PictureFrame", CFrame.new(24, 8, -264.4))
-	row("PlanterPot", 0, 0, { { -30, -201 }, { 30, -201 } })
-	prop("Bin", CFrame.new(-38, 0, -204))
+	row("SteelShelves", 0, 180, { { LIB.X - 38, LIB.Y + 30 }, { LIB.X + 38, LIB.Y + 30 } })
+	libProp("Mirror", 0, 6, -32.4)
+	libProp("PictureFrame", -24, 8, -32.4)
+	libProp("PictureFrame", 24, 8, -32.4)
+	row("PlanterPot", 0, 0, { { LIB.X - 30, LIB.Y + 31 }, { LIB.X + 30, LIB.Y + 31 } })
+	libProp("Bin", -38, 0, 28)
 
 	-- ---------------- cafeteria ----------------
 	-- The real cafeteria is the outer bay at x -224..-184, z -52..6. What used
@@ -7646,9 +7662,14 @@ end
 	-- z = -196 to two blocks at (+-176, -232); the boarding house is one range
 	-- on the axis at (0, -310) now, so the approach is the axis itself with a
 	-- pair of walks off it onto the front of the range.
-	buildCampusPath(folder, Vector3.new(0, 0, -150), Vector3.new(0, 0, -246), 18)
-	-- laid OVER the axis walk it crosses at the dorm front
-	buildCampusPath(folder, Vector3.new(-70, 0, -246), Vector3.new(70, 0, -246), 14, true)
+	-- north end at z = -132, eight studs off the Academy's back wall, so the
+	-- walk starts at the building rather than in the middle of a field
+	buildCampusPath(folder, Vector3.new(0, 0, -132), Vector3.new(0, 0, -246), 18)
+	-- laid OVER the axis walk it crosses at the dorm front. It used to run at
+	-- z = -246, which put seven of its fourteen studs inside the boarding
+	-- house's front wall (z -254..-246); at -238 it stops one stud short of
+	-- the stonework instead of running under it.
+	buildCampusPath(folder, Vector3.new(-70, 0, -238), Vector3.new(70, 0, -238), 14, true)
 	-- The two diagonal paths that used to cut from (+-60, 150) out to
 	-- (+-130, 192) are gone: they crossed the court's parterres and its flank
 	-- walks at an angle, which is what a formal court never does. The court's
@@ -7836,9 +7857,18 @@ end
 	-- ---------------- campus grounds ----------------
 	local LIBRARY = Vector3.new(-320, 0, -300)
 	buildLibrary(folder, LIBRARY)
-	-- walks back to the building, so these read as campus and not scenery
-	-- laid OVER the two dorm walks it crosses at z = -196
-	buildCampusPath(folder, Vector3.new(0, 0, -150), LIBRARY + Vector3.new(0, 0, 44), 16, true)
+	-- The walk out to the library. It used to be one 16-wide diagonal from
+	-- (0, -150) straight to the library door, which cut corner to corner
+	-- across the west half of the Dorm Court -- the one thing a formal court
+	-- never has through it. It goes round instead: west along the court's
+	-- north edge, south down its flank at x = -180, then east-west into the
+	-- door. Every leg is square to the campus grid and none of them enters
+	-- the court's rect (x -140..140, z -246..-152).
+	buildCampusPath(folder, Vector3.new(0, 0, -140), Vector3.new(-180, 0, -140), 16, true)
+	buildCampusPath(folder, Vector3.new(-180, 0, -140), Vector3.new(-180, 0, -256), 16)
+	-- the two legs either side of the flank run are laid a course higher, so
+	-- neither elbow is sixty-four square studs of two slabs sharing a plane
+	buildCampusPath(folder, Vector3.new(-180, 0, -256), LIBRARY + Vector3.new(0, 0, 44), 16, true)
 
 	-- The treeline predates the pool and the tennis stadium, so it plants
 	-- trees inside both. Rather than teach every scatter about every venue,
