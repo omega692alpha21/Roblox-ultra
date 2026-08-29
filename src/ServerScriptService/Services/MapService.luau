@@ -7928,7 +7928,14 @@ end
 	end
 
 	-- ---------------- signature interiors ----------------
-	buildFountain(folder, Vector3.new(0, 0, 6)) -- atrium centerpiece
+	-- The atrium centrepiece, which is the middle of the school's main interior
+	-- and the thing every player walks round on the way to anywhere. It was
+	-- buildFountain: a marble cylinder, a blue disc and a white spray column --
+	-- three primitives, on a campus whose outdoor fountain is an octagonal
+	-- basin with a coping, a stepped pedestal, dishes, falls, jets and a plume.
+	-- Same builder now, one dish instead of three so it stands eleven studs
+	-- rather than twenty-seven and fits under the gallery.
+	Grounds.fountain(kitFor(folder), { x = 0, z = 6, r = 13, dishes = 1, upLight = upLight :: any })
 	buildGymMarkings(folder, Vector3.new(0, 0, -105))
 	buildHoops(folder, Vector3.new(0, 0, -105))
 	-- gym stage at the north end

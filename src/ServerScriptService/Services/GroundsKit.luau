@@ -114,6 +114,11 @@ export type FountainSpec = {
 	x: number,
 	z: number,
 	r: number,
+	-- How many dishes to stack. Three is a court fountain, twenty-seven studs
+	-- to the top of its plume. One is what fits under a roof: the dish heights
+	-- are absolute, so shrinking r alone gives a thin spike rather than a
+	-- smaller fountain.
+	dishes: number?,
 	upLight: ((parent: Instance, x: number, z: number, colour: Color3?) -> ())?,
 }
 
@@ -174,6 +179,10 @@ function GroundsKit.fountain(ctx: Ctx, o: FountainSpec)
 
 	-- three dishes on a shaft, each with the sheet of water falling off it
 	local dishes = { { r = r * 0.46, y = 10.6 }, { r = r * 0.30, y = 16.0 }, { r = r * 0.18, y = 20.4 } }
+	for _ = 1, 3 - math.clamp(o.dishes or 3, 1, 3) do
+		table.remove(dishes)
+	end
+	local top = dishes[#dishes].y
 	local shaftFrom = 6.6
 	for i, dish in dishes do
 		ctx.part({
@@ -209,7 +218,7 @@ function GroundsKit.fountain(ctx: Ctx, o: FountainSpec)
 	ctx.part({
 		Name = "FountainFinial",
 		Size = Vector3.new(2.2, 2.2, 2.2),
-		CFrame = CFrame.new(cx, 21.8, cz),
+		CFrame = CFrame.new(cx, top + 1.4, cz),
 		Color = GroundsKit.STONE_PALE,
 		Material = Enum.Material.Marble,
 		Shape = Enum.PartType.Ball,
@@ -220,20 +229,20 @@ function GroundsKit.fountain(ctx: Ctx, o: FountainSpec)
 	local plume = ctx.part({
 		Name = "FountainPlume",
 		Size = Vector3.new(0.5, 4.0, 0.5),
-		CFrame = CFrame.new(cx, 24.8, cz),
+		CFrame = CFrame.new(cx, top + 4.4, cz),
 		Color = Color3.fromRGB(226, 246, 252),
 		Material = Enum.Material.Neon,
 		Transparency = 0.5,
 		Shape = Enum.PartType.Cylinder,
 		Parent = ctx.parent,
 	})
-	plume.CFrame = CFrame.new(cx, 24.8, cz) * CFrame.Angles(0, 0, math.rad(90))
+	plume.CFrame = CFrame.new(cx, top + 4.4, cz) * CFrame.Angles(0, 0, math.rad(90))
 	plume.CanCollide = false
 	plume.CastShadow = false
 	local head = ctx.part({
 		Name = "FountainPlumeHead",
 		Size = Vector3.new(2.6, 2.6, 2.6),
-		CFrame = CFrame.new(cx, 27.2, cz),
+		CFrame = CFrame.new(cx, top + 6.8, cz),
 		Color = Color3.fromRGB(232, 248, 252),
 		Material = Enum.Material.Neon,
 		Transparency = 0.62,
