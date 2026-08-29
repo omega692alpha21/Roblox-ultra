@@ -430,6 +430,79 @@ with open(os.path.join(OUT, "_map_anchors.json"), "w") as fh:
     json.dump(anchors, fh)
 print(f"exported {len(anchors)} named anchor points")
 
+# ===== props as stand-ins =====
+# Every tree, bench, table, chair, lamp and boulder on the campus is a CC0
+# MESH, and meshes are not in the part dump -- so for thirteen hundred
+# placements the renderer drew nothing at all. Every aerial showed a campus of
+# bare lawn with buildings on it, and every judgement about whether the place
+# looks like the reference art was made with the planting, the furniture and
+# the street lamps invisible.
+#
+# It cannot draw the meshes, but it can draw what they occupy: a box the size
+# the mesh actually is, from the generated PropSizes table, in the colour of
+# what it is. A tree gets a trunk and a canopy, because one green box reads as
+# a hedge.
+def _prop_sizes():
+    import re
+    path = os.path.join(REPO, "src", "ReplicatedStorage", "Config", "PropSizes.luau")
+    out = {}
+    for m in re.finditer(r"^\t(\w+) = Vector3\.new\(([\d.]+), ([\d.]+), ([\d.]+)\)",
+                         open(path).read(), re.M):
+        out[m.group(1)] = (float(m.group(2)), float(m.group(3)), float(m.group(4)))
+    return out
+
+
+PROP_COLOUR = (
+    (("Tree", "Bush", "Shrub", "Foliage", "Hedge", "Fern", "Plant", "Flower"),
+     (58, 96, 54), (86, 64, 44)),
+    (("Rock", "Stone", "Boulder", "Stump"), (122, 120, 114), (108, 104, 98)),
+    (("Log", "Timber", "Crate", "Barrel", "Pallet"), (118, 86, 56), (98, 72, 46)),
+    (("Lamp", "Light", "Lantern", "Torch", "Candle"), (244, 222, 172), (74, 74, 80)),
+    (("Car", "Bus", "Van", "Truck", "Bike"), (128, 74, 70), (60, 60, 66)),
+    (("Bench", "Table", "Chair", "Desk", "Shelf", "Sofa", "Bed", "Stool",
+      "Cabinet", "Wardrobe", "Locker", "Piano"), (124, 88, 58), (98, 72, 46)),
+)
+
+
+def _prop_look(kind):
+    for words, body, trunk in PROP_COLOUR:
+        if any(w in kind for w in words):
+            return body, trunk, words[0] in ("Tree",)
+    return (150, 146, 138), (120, 118, 112), False
+
+
+def _stand_in(name, size, pos, rot, colour):
+    return {"n": name, "s": list(size), "p": list(pos), "r": list(rot),
+            "c": list(colour), "m": "SmoothPlastic", "t": 0.0, "sh": "Block",
+            "cls": "Part", "cc": False, "par": "", "gui": [], "lit": 0,
+            "lamps": []}
+
+
+_SIZES = _prop_sizes()
+_stand_ins = []
+for _pl in props:
+    _sz = _SIZES.get(_pl["k"])
+    if not _sz:
+        continue
+    _sc = _pl.get("sc") or 1.0
+    _w, _h, _d = _sz[0] * _sc, _sz[1] * _sc, _sz[2] * _sc
+    _x, _y, _z = _pl["p"]
+    _r = _pl["r"]
+    _body, _trunk, _is_tree = _prop_look(_pl["k"])
+    if _pl.get("hang"):
+        _stand_ins.append(_stand_in("Prop" + _pl["k"], (_w, _h, _d),
+                                    (_x, _y - _h / 2, _z), _r, _body))
+    elif _is_tree and _h > 6:
+        _stand_ins.append(_stand_in("PropTrunk", (_w * 0.20, _h * 0.52, _d * 0.20),
+                                    (_x, _y + _h * 0.26, _z), _r, _trunk))
+        _stand_ins.append(_stand_in("PropCanopy", (_w, _h * 0.58, _d),
+                                    (_x, _y + _h * 0.71, _z), _r, _body))
+    else:
+        _stand_ins.append(_stand_in("Prop" + _pl["k"], (_w, _h, _d),
+                                    (_x, _y + _h / 2, _z), _r, _body))
+parts = parts + _stand_ins
+print(f"drew {len(_stand_ins)} prop stand-ins")
+
 # ===== renderer =====
 from PIL import Image, ImageDraw
 

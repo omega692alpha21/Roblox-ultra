@@ -68,6 +68,28 @@ local function tag(p: BasePart, tagName: string): BasePart
 	return p
 end
 
+-- GROUND THE SCATTERS MAY NOT USE.
+--
+-- Declared up here rather than eight hundred lines down, so that the two path
+-- builders can register their own footprints: a scatter that does not know
+-- where the walks are plants trees on them, and no check but prop_check can
+-- see it -- as a tree clipping a slab, three hundred lines from the cause.
+local scatterBlocks: { { number } } = {}
+
+local function blockScatter(x: number, z: number, halfX: number, halfZ: number)
+	table.insert(scatterBlocks, { x - halfX, z - halfZ, x + halfX, z + halfZ })
+end
+
+local function scatterBlocked(x: number, z: number, radius: number): boolean
+	for _, rect in scatterBlocks do
+		if x + radius > rect[1] and x - radius < rect[3]
+			and z + radius > rect[2] and z - radius < rect[4] then
+			return true
+		end
+	end
+	return false
+end
+
 local function signText(parent: BasePart, text: string, textColor: Color3, face: Enum.NormalId?): SurfaceGui
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = face or Enum.NormalId.Front
@@ -425,6 +447,7 @@ local function buildCampusPath(parent: Instance, from: Vector3, to: Vector3, wid
 		Parent = parent,
 	})
 	tag(path, "TexCourtPaving")
+	blockScatter(mid.X, mid.Z, math.abs(delta.X) / 2 + width / 2, math.abs(delta.Z) / 2 + width / 2)
 end
 
 -- Where the secret bookshelf sits in the library's west wall. The wall is
@@ -875,22 +898,6 @@ local CANOPY_LIT = Color3.fromRGB(96, 168, 74)
 -- other PROPS -- it seeds its occupancy from everything placed so far -- but
 -- it has never known about built PARTS, and the campus is mostly built parts.
 -- A rock outcrop is forty studs of stone that scatter saw as empty lawn.
-local scatterBlocks: { { number } } = {}
-
-local function blockScatter(x: number, z: number, halfX: number, halfZ: number)
-	table.insert(scatterBlocks, { x - halfX, z - halfZ, x + halfX, z + halfZ })
-end
-
-local function scatterBlocked(x: number, z: number, radius: number): boolean
-	for _, rect in scatterBlocks do
-		if x + radius > rect[1] and x - radius < rect[3]
-			and z + radius > rect[2] and z - radius < rect[4] then
-			return true
-		end
-	end
-	return false
-end
-
 local ROCK_PALE = Color3.fromRGB(178, 188, 202)
 local ROCK_DEEP = Color3.fromRGB(120, 134, 154)
 
@@ -1063,6 +1070,7 @@ local function buildPath(parent: Instance, from: Vector3, to: Vector3, width: nu
 		Material = Enum.Material.Concrete,
 		Parent = parent,
 	})
+	blockScatter(mid.X, mid.Z, math.abs(flat.X) / 2 + width / 2 + 2, math.abs(flat.Z) / 2 + width / 2 + 2)
 	if not dressed then
 		return
 	end
@@ -1775,6 +1783,47 @@ local function buildTreeline(parent: Instance, treeFn: (Instance, Vector3, numbe
 			treeFn(parent, pos, scale)
 		end
 	end
+end
+
+-- TREES INSIDE THE FENCE.
+--
+-- The belt outside it closes the horizon. The grounds themselves were bare
+-- lawn from the fence to the buildings -- eleven hundred and fifty by nine
+-- hundred and eighty studs of it -- because every scatter written so far
+-- either walks the boundary or fills a named bed, and nothing planted the
+-- ordinary open ground a collegiate campus is mostly made of. From the air the
+-- estate read as buildings dropped on a field.
+--
+-- It plants nothing on anything the drawing has spoken for, nothing on a walk
+-- or a road (both path builders register their own footprints now) and nothing
+-- on the ceremonial approach, which is in NO_TREES.
+local function buildParkland(parent: Instance, treeFn: (Instance, Vector3, number) -> ())
+	local rng = Random.new(3311)
+	local planted = 0
+	-- 1800 seeds, claimed at nine studs a scale unit. 520 at fourteen put
+	-- fifty-four trees on eleven hundred by nine hundred and eighty studs of
+	-- ground: claimGround is shared with every other scatter on the campus,
+	-- and at that radius the first hundred seeds spend the whole lawn. Trees
+	-- in a group stand closer together than that.
+	for i = 1, 1800 do
+		local pos = Vector3.new(
+			rng:NextNumber(CORE_X0 + 26, CORE_X1 - 26), 0,
+			rng:NextNumber(CORE_Z0 + 26, CORE_Z1 - 26))
+		local scale = rng:NextNumber(1.0, 1.9)
+		local blocked = false
+		for _, rect in NO_TREES do
+			if pos.X > rect[1] - 10 and pos.X < rect[3] + 10
+				and pos.Z > rect[2] - 10 and pos.Z < rect[4] + 10 then
+				blocked = true
+				break
+			end
+		end
+		if not blocked and not scatterBlocked(pos.X, pos.Z, 12) and claimGround(pos, 9 * scale) then
+			treeFn(parent, pos, scale)
+			planted += 1
+		end
+	end
+	print(("[MapService] parkland: %d trees on the open ground inside the fence"):format(planted))
 end
 
 -- The stone ridge the treeline stands in front of. Two rings: a far one out
@@ -7277,6 +7326,17 @@ local function litWindows(root: Instance)
 			end
 		end
 
+		-- And OPEN THE GLASS. The leaf goes inside the pane, so whatever the
+		-- pane's own transparency is, that is how much of the glass's colour
+		-- sits between the light and the camera. At 0.2 -- which is what the
+		-- entrance bay's windows, the transoms and most of the map were built
+		-- at -- four fifths of what you see is cold blue-grey glass and one
+		-- fifth is the warm leaf behind it, on a campus whose whole night look
+		-- is warm gold. Anything with a lit leaf in it opens to 0.62.
+		if not dark and leafFor then
+			glass.Transparency = math.max(glass.Transparency, 0.62)
+		end
+
 		if not dark and leafFor and seed % 5 == 0 then
 			-- one light per BAY, not per pane: a light behind every window on a
 			-- campus this size is several hundred of them, and the eye reads a
@@ -8082,7 +8142,10 @@ end
 	buildHiddenAlley(folder)
 	buildFlagpole(folder)
 	buildCoreFence(folder)
+	-- the road, so nothing plants a tree in it
+	blockScatter(0, ROAD_Z, 264, 16)
 	buildTreeline(folder, meshTree)
+	buildParkland(folder, meshTree)
 	buildRocks(folder)
 	-- Feature trees flanking the facade and the wings. The pair at +-58 moved
 	-- out to +-66: a mesh oak is eighteen studs across where the old box tree
