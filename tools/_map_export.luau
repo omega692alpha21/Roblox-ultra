@@ -2391,6 +2391,23 @@ function GroundsKit.railing(ctx: Ctx, x0: number, z0: number, x1: number, z1: nu
 	local yaw = math.atan2(dx, dz)
 	local mid = CFrame.new((x0 + x1) / 2, 0, (z0 + z1) / 2) * CFrame.Angles(0, yaw, 0)
 	ctx.part({ Name = "RailingKerb", Size = Vector3.new(1.6, 1.0, length), CFrame = mid * CFrame.new(0, 0.7, 0), Color = GroundsKit.STONE, Material = Enum.Material.Concrete, Parent = ctx.parent })
+	-- The same invisible guard the estate boundary carries, and for the same
+	-- reason. The bars are three tenths of a stud thick and none of them
+	-- collides; the kerb they stand on is one stud high, which a player steps
+	-- over without slowing down. So the Great Court's enclosure -- the iron
+	-- railing that encloses the court in every one of the reference images --
+	-- was a picture of a fence that anybody could walk straight through, and
+	-- the one opening in it, on the axis where the approach is meant to be,
+	-- meant nothing at all.
+	ctx.part({
+		Name = "RailingGuard",
+		Size = Vector3.new(0.9, height + 1.2, length),
+		CFrame = mid * CFrame.new(0, 1.2 + height / 2, 0),
+		Color = GroundsKit.IRON,
+		Material = Enum.Material.Metal,
+		Transparency = 1,
+		Parent = ctx.parent,
+	}).CastShadow = false
 	for _, band in { { y = height * 0.30, h = 0.4 }, { y = height * 0.88, h = 0.5 } } do
 		ctx.part({ Name = "RailingRail", Size = Vector3.new(0.42, band.h, length), CFrame = mid * CFrame.new(0, 1.2 + band.y, 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
 	end
@@ -7930,15 +7947,33 @@ local function buildGreatCourt(parent: Instance)
 		Grounds.gatePier(kitCtx, ex, cz - depth / 2, 9.0)
 		Grounds.gatePier(kitCtx, ex, cz + depth / 2, 9.0)
 	end
-	-- the north side, either side of the drive
+	-- The north side, either side of the drive -- and either side of the two
+	-- SIDE GATES.
+	--
+	-- The bus stop is the spawn, it stands at x -114, and the walkway laid
+	-- from it runs fourteen studs wide straight south to x -96 ... and stopped
+	-- dead at this railing, because the only opening in three hundred studs of
+	-- it was on the axis a hundred studs away. While the railing did not
+	-- collide nobody could tell; the moment it did, the first thing a player
+	-- does in this game was walk into a fence. A court like this has a lesser
+	-- gate on each side walk, and the walkway is already pointing at where it
+	-- goes.
+	local SIDE_GATE = 96
 	for _, span in {
-		{ cx - width / 2 + 4, cx - AXIS_HALF - 5 },
-		{ cx + AXIS_HALF + 5, cx + width / 2 - 4 },
+		{ cx - width / 2 + 4, cx - SIDE_GATE - 7 },
+		{ cx - SIDE_GATE + 7, cx - AXIS_HALF - 5 },
+		{ cx + AXIS_HALF + 5, cx + SIDE_GATE - 7 },
+		{ cx + SIDE_GATE + 7, cx + width / 2 - 4 },
 	} do
 		railRun(span[1], cz + depth / 2, span[2], cz + depth / 2)
 	end
 	Grounds.gatePier(kitCtx, cx - AXIS_HALF - 5, cz + depth / 2, 13.0)
 	Grounds.gatePier(kitCtx, cx + AXIS_HALF + 5, cz + depth / 2, 13.0)
+	for _, side in { -1, 1 } do
+		for _, off in { -7, 7 } do
+			Grounds.gatePier(kitCtx, cx + side * SIDE_GATE + off, cz + depth / 2, 10.0)
+		end
+	end
 
 	-- ---- benches on the ring, facing the water ----
 	-- On the diagonals, so they stand clear of the entrance walk and the walk
@@ -7949,13 +7984,21 @@ local function buildGreatCourt(parent: Instance)
 	end
 
 	-- ---- lamps: at every junction of the walks, and down the flanks ----
+	-- BESIDE the walks, never on them. The lamps on the entrance axis were
+	-- always set four studs outside its edge; the eight on the two flank walks
+	-- were written as plain -FLANK and FLANK, which is the walk's CENTRELINE,
+	-- so a cast-iron lamp post stood in the middle of a fourteen-stud path --
+	-- and one of them stood squarely in the new side gate, in the middle of
+	-- the first thing a player sees. Same offset as the axis: clear of the
+	-- edge, on the outer side.
+	local FLANK_OFF = FLANK + FLANK_HALF + 4
 	for _, at in {
 		{ -AXIS_HALF - 4, -CROSS_HALF - 4 }, { AXIS_HALF + 4, -CROSS_HALF - 4 },
 		{ -AXIS_HALF - 4, CROSS_HALF + 4 }, { AXIS_HALF + 4, CROSS_HALF + 4 },
-		{ -FLANK, -CROSS_HALF - 8 }, { FLANK, -CROSS_HALF - 8 },
-		{ -FLANK, CROSS_HALF + 8 }, { FLANK, CROSS_HALF + 8 },
-		{ -FLANK, -depth / 2 + 14 }, { FLANK, -depth / 2 + 14 },
-		{ -FLANK, depth / 2 - 14 }, { FLANK, depth / 2 - 14 },
+		{ -FLANK_OFF, -CROSS_HALF - 8 }, { FLANK_OFF, -CROSS_HALF - 8 },
+		{ -FLANK_OFF, CROSS_HALF + 8 }, { FLANK_OFF, CROSS_HALF + 8 },
+		{ -FLANK_OFF, -depth / 2 + 14 }, { FLANK_OFF, -depth / 2 + 14 },
+		{ -FLANK_OFF, depth / 2 - 14 }, { FLANK_OFF, depth / 2 - 14 },
 		{ -AXIS_HALF - 4, -depth / 2 + 14 }, { AXIS_HALF + 4, -depth / 2 + 14 },
 		{ -AXIS_HALF - 4, depth / 2 - 14 }, { AXIS_HALF + 4, depth / 2 - 14 },
 	} do

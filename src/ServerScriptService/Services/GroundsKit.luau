@@ -495,6 +495,23 @@ function GroundsKit.railing(ctx: Ctx, x0: number, z0: number, x1: number, z1: nu
 	local yaw = math.atan2(dx, dz)
 	local mid = CFrame.new((x0 + x1) / 2, 0, (z0 + z1) / 2) * CFrame.Angles(0, yaw, 0)
 	ctx.part({ Name = "RailingKerb", Size = Vector3.new(1.6, 1.0, length), CFrame = mid * CFrame.new(0, 0.7, 0), Color = GroundsKit.STONE, Material = Enum.Material.Concrete, Parent = ctx.parent })
+	-- The same invisible guard the estate boundary carries, and for the same
+	-- reason. The bars are three tenths of a stud thick and none of them
+	-- collides; the kerb they stand on is one stud high, which a player steps
+	-- over without slowing down. So the Great Court's enclosure -- the iron
+	-- railing that encloses the court in every one of the reference images --
+	-- was a picture of a fence that anybody could walk straight through, and
+	-- the one opening in it, on the axis where the approach is meant to be,
+	-- meant nothing at all.
+	ctx.part({
+		Name = "RailingGuard",
+		Size = Vector3.new(0.9, height + 1.2, length),
+		CFrame = mid * CFrame.new(0, 1.2 + height / 2, 0),
+		Color = GroundsKit.IRON,
+		Material = Enum.Material.Metal,
+		Transparency = 1,
+		Parent = ctx.parent,
+	}).CastShadow = false
 	for _, band in { { y = height * 0.30, h = 0.4 }, { y = height * 0.88, h = 0.5 } } do
 		ctx.part({ Name = "RailingRail", Size = Vector3.new(0.42, band.h, length), CFrame = mid * CFrame.new(0, 1.2 + band.y, 0), Color = GroundsKit.IRON, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
 	end

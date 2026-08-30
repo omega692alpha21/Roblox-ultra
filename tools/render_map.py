@@ -991,8 +991,13 @@ shots = [
     # at something; not one of them was the first frame of the game. Players
     # spawn under the bus shelter at (-114, 0, 320) and turn to face the gate,
     # so this is the view the school actually opens on.
-    ("spawnview",  (-114, 15, 322),   (-90, 10, 240)),
-    ("spawnwalk",  (-84, 14, 268),    (-10, 16, 170)),
+    # The first frame of the game. It stood at y 15 -- the height of the bus
+    # shelter's roof -- twenty-three studs BEHIND the spawn pad, so half the
+    # picture was the underside of the shelter and I judged the arrival on it
+    # twice. A player spawns on the pad at (-114, 299) with their eyes six
+    # studs up, looking down the drive at the Academy.
+    ("spawnview",  (-96, 6, 308),     (-96, 13, 200)),
+    ("spawnwalk",  (-84, 6, 262),     (-10, 14, 170)),
     # Inside the Academy, which is where the game is set and which no camera
     # has ever looked at. Its middle floor was 34,240 square studs of unbroken
     # black until build 213 and nothing in this list could have shown it.
