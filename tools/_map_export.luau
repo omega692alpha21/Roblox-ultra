@@ -7331,7 +7331,61 @@ local function buildGrandFacade(parent: Instance)
 	-- tops out at 46, so the eaves sit just above it and the ridge runs across
 	-- the bay's depth.
 	Kit.gableRoof(kit, { x = 0, z = 129, width = 62, depth = 18, eaves = 47.0, rise = 19 })
-	tag(part({ Name = "BayGableWall", Size = Vector3.new(60, 17, 1.6), CFrame = CFrame.new(0, 55.5, FACE + 0.4), Color = Color3.fromRGB(138, 128, 114), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone").CanCollide = false
+
+	-- A REAL GABLE, not a rectangle with a crest on it.
+	--
+	-- BayGableWall was a 60 by 17 flat slab standing 13.6 studs proud of the
+	-- roof it fronted, and its top edge was HORIZONTAL -- in the dead centre
+	-- of the frame the "Detention Academy front at night" reference is of, in
+	-- the one place that reference has a point. Only a two-stud sliver of the
+	-- ridge showed above it. Nothing triangular existed anywhere in the facade
+	-- plane; a scan of every part with |x| < 40, z 100..150, y > 44 returned
+	-- the two roof wedges and nothing else.
+	--
+	-- The ridge behind stays where it is. Turning it front-to-back would put a
+	-- 62-wide gable straight through the clock tower, which stands at x -13..13
+	-- from z 105 to 131 and rises to 142 -- the bay already overlaps it over
+	-- z 120..131. So the court face becomes a raised coped gable in its own
+	-- right: forty-four studs across and twenty-four tall, which is a 47-degree
+	-- verge against the 32 a full-width triangle to the ridge would have given,
+	-- with the outer nine studs each side finished as parapet between the
+	-- buttresses. That is how a gabled bay reads in the reference.
+	local GW, GRISE, GEAVES = 44.0, 24.0, 47.0
+	local GZ = FACE + 0.4
+	for _, half in { -1, 1 } do
+		local piece = Instance.new("WedgePart")
+		piece.Name = "BayGableEnd"
+		piece.Anchored = true
+		piece.CanCollide = false
+		-- a wedge's tall face is its local -Z; yaw +-90 turns that toward the
+		-- apex at x = 0, so each half rises to the middle instead of away
+		piece.Size = Vector3.new(1.8, GRISE, GW / 2)
+		piece.CFrame = CFrame.new(half * GW / 4, GEAVES + GRISE / 2, GZ)
+			* CFrame.Angles(0, math.rad(if half > 0 then 90 else -90), 0)
+		piece.Color = Color3.fromRGB(138, 128, 114)
+		piece.Material = Enum.Material.Slate
+		piece.Parent = parent
+		tag(piece, "TexCoursedStone")
+		-- the coping up the verge, laid along the slope
+		local slope = math.atan2(GRISE, GW / 2)
+		local runLen = math.sqrt(GRISE * GRISE + (GW / 2) * (GW / 2))
+		tag(part({
+			Name = "BayGableCoping",
+			Size = Vector3.new(runLen + 1.0, 1.6, 3.0),
+			CFrame = CFrame.new(half * GW / 4, GEAVES + GRISE / 2, GZ + 0.9)
+				* CFrame.Angles(0, 0, -half * slope),
+			Color = Color3.fromRGB(201, 191, 169),
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		}), "TexAshlar").CanCollide = false
+		-- a kneeler where the verge meets the eaves
+		tag(part({ Name = "BayGableKneeler", Size = Vector3.new(4.4, 2.6, 4.0), CFrame = CFrame.new(half * (GW / 2 - 1.0), GEAVES + 0.6, GZ + 0.6), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		-- and the parapet that carries the gable out to the buttresses
+		tag(part({ Name = "BayParapet", Size = Vector3.new(9.0, 5.0, 1.8), CFrame = CFrame.new(half * (GW / 2 + 4.5), GEAVES + 2.5, GZ), Color = Color3.fromRGB(138, 128, 114), Material = Enum.Material.Slate, Parent = parent }), "TexCoursedStone").CanCollide = false
+		tag(part({ Name = "BayParapetCoping", Size = Vector3.new(9.8, 1.4, 3.0), CFrame = CFrame.new(half * (GW / 2 + 4.5), GEAVES + 5.7, GZ + 0.5), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
+	tag(part({ Name = "BayGableApex", Size = Vector3.new(4.8, 2.6, 3.4), CFrame = CFrame.new(0, GEAVES + GRISE + 0.9, GZ + 0.7), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	part({ Name = "BayGableFinial", Size = Vector3.new(1.6, 4.4, 1.6), CFrame = CFrame.new(0, GEAVES + GRISE + 4.2, GZ + 0.7), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }).CanCollide = false
 
 	-- the name board on the face, between the arch head and the eaves
 	local board = part({ Name = "AcademyNameBoard", Size = Vector3.new(34, 6.0, 0.9), CFrame = CFrame.new(0, 42.0, FACE + 0.5), Color = Color3.fromRGB(22, 35, 63), Material = Enum.Material.SmoothPlastic, Parent = parent })
@@ -7441,6 +7495,14 @@ local function buildGrandFacade(parent: Instance)
 		{ dx = -12.2, dz = 0, ax = 0 },
 	} do
 		for _, mid in { 39.5, 56 } do
+			-- The tower's court-facing lancets are INSIDE the entrance bay's
+			-- roof: the +z wedge is solid to y 62.9 at z 130.5, and the pane
+			-- at (0, 56, 130.9) spans y 49.5..62.5, so eighty-eight per cent
+			-- of it by volume is in slate and the rest is behind the gable.
+			-- A lit window nobody can see is a light bill, not a window.
+			if face.dz > 0 and mid < 60 then
+				continue
+			end
 			local w = if face.ax == 1 then Vector3.new(5.6, 13, 0.9) else Vector3.new(0.9, 13, 5.6)
 			local reveal = if face.ax == 1 then Vector3.new(8.0, 15.4, 0.7) else Vector3.new(0.7, 15.4, 8.0)
 			tag(part({ Name = "TowerLancetSurround", Size = reveal, CFrame = CFrame.new(face.dx * 1.02, mid, towerZ + face.dz * 1.02), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
