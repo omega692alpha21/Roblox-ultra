@@ -241,16 +241,20 @@ function EffectsService.Init()
 
 	-- flag sway
 	task.defer(function()
+		-- BOTH of them. There is a flag on each side of the entrance now, and
+		-- FindFirstChild returns one: the school's left-hand flag swayed and
+		-- its right-hand flag hung dead still.
 		local campus = workspace:FindFirstChild("CrumbworthHigh")
-		local flag = campus and campus:FindFirstChild("Flag") :: BasePart?
-		if flag then
-			local base = flag.CFrame
-			local tween = TweenService:Create(
-				flag,
-				TweenInfo.new(2.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-				{ CFrame = base * CFrame.Angles(0, math.rad(9), math.rad(3)) }
-			)
-			tween:Play()
+		for _, flag in (campus and campus:GetChildren() or {}) do
+			if flag:IsA("BasePart") and flag.Name == "Flag" then
+				local base = flag.CFrame
+				local tween = TweenService:Create(
+					flag,
+					TweenInfo.new(2.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+					{ CFrame = base * CFrame.Angles(0, math.rad(9), math.rad(3)) }
+				)
+				tween:Play()
+			end
 		end
 	end)
 

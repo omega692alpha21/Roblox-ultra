@@ -1317,36 +1317,75 @@ local function buildEntranceArch(parent: Instance)
 	signText(beam, "GO LEGENDS!", Palette.BusYellow, Enum.NormalId.Back)
 end
 
--- On the lawn beside the walk, not on the axis. A 26 stud pole dead centre in
+-- On the lawn beside the walk, not on the axis: a 26-stud pole dead centre in
 -- front of the doors is the first thing a player sees and it stood between
 -- them and the entrance.
+--
+-- A PAIR, and in the school's colours. This was one pole at x -38 with no
+-- counterpart at +38, flying a lime-green banner with a gold dollar sign on
+-- both faces -- on a strictly symmetric collegiate front, in the exact frame
+-- of the night reference, the only saturated green on the whole building. And
+-- ten studs behind it stood a SECOND pair of poles at the same two x values,
+-- one flying red and one flying blue, built by different code: the same
+-- two-builders-one-patch fault as the dormers and the shrubs. That pair is
+-- gone; this one is the school's, navy field and gold letters like every
+-- other piece of signage on the campus.
 local function buildFlagpole(parent: Instance)
-	local FX = -38
-	part({
-		Name = "FlagpoleBase",
-		Size = Vector3.new(5, 1.6, 5),
-		CFrame = CFrame.new(FX, 0.4, 150),
-		Color = Color3.fromRGB(206, 202, 192),
-		Material = Enum.Material.Concrete,
-		Parent = parent,
-	})
-	part({
-		Name = "Flagpole",
-		Size = Vector3.new(0.8, 26, 0.8),
-		CFrame = CFrame.new(FX, 13, 150),
-		Color = Color3.fromRGB(190, 190, 195),
-		Material = Enum.Material.Metal,
-		Parent = parent,
-	})
-	local flag = part({
-		Name = "Flag",
-		Size = Vector3.new(9, 5, 0.3),
-		CFrame = CFrame.new(FX + 5.3, 22.5, 150),
-		Color = Palette.CashGreen,
-		Parent = parent,
-	})
-	signText(flag, "$", Palette.BusYellow, Enum.NormalId.Front)
-	signText(flag, "$", Palette.BusYellow, Enum.NormalId.Back)
+	for _, side in { -1, 1 } do
+		local fx = side * 38
+		part({
+			Name = "FlagpoleBase",
+			Size = Vector3.new(5, 1.6, 5),
+			CFrame = CFrame.new(fx, 0.4, 150),
+			Color = Color3.fromRGB(206, 202, 192),
+			Material = Enum.Material.Concrete,
+			Parent = parent,
+		})
+		part({
+			Name = "FlagpoleCollar",
+			Size = Vector3.new(2.2, 1.0, 2.2),
+			CFrame = CFrame.new(fx, 1.7, 150),
+			Color = Color3.fromRGB(28, 28, 32),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
+		part({
+			Name = "Flagpole",
+			Size = Vector3.new(0.8, 26, 0.8),
+			CFrame = CFrame.new(fx, 13, 150),
+			Color = Color3.fromRGB(190, 190, 195),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		})
+		part({
+			Name = "FlagpoleFinial",
+			Size = Vector3.new(1.4, 1.4, 1.4),
+			CFrame = CFrame.new(fx, 26.6, 150),
+			Color = Color3.fromRGB(217, 180, 92),
+			Material = Enum.Material.Metal,
+			Parent = parent,
+		}).CanCollide = false
+		-- flying OUTWARD from the axis on both sides, so the pair reads as a pair
+		local flag = part({
+			Name = "Flag",
+			Size = Vector3.new(9, 5, 0.3),
+			CFrame = CFrame.new(fx + side * 5.3, 22.5, 150),
+			Color = Color3.fromRGB(22, 35, 63),
+			Material = Enum.Material.Fabric,
+			Parent = parent,
+		})
+		flag.CanCollide = false
+		part({
+			Name = "FlagBand",
+			Size = Vector3.new(9.2, 0.7, 0.45),
+			CFrame = CFrame.new(fx + side * 5.3, 20.2, 150),
+			Color = Color3.fromRGB(217, 180, 92),
+			Material = Enum.Material.Fabric,
+			Parent = parent,
+		}).CanCollide = false
+		signText(flag, "CH", Color3.fromRGB(217, 180, 92), Enum.NormalId.Front)
+		signText(flag, "CH", Color3.fromRGB(217, 180, 92), Enum.NormalId.Back)
+	end
 end
 
 local function buildHoops(parent: Instance, center: Vector3)
@@ -4038,11 +4077,11 @@ local function buildGrandFacade(parent: Instance)
 			part({ Name = "FrontHedge", Size = Vector3.new(13, 4.4, 6), CFrame = CFrame.new(x, 2.2, Z + 8), Color = Color3.fromRGB(58, 108, 56), Material = Enum.Material.Grass, Parent = parent })
 		end
 	end
-	-- flanking flag poles
-	for _, fx in { -38, 38 } do
-		part({ Name = "FlagPoleSmall", Size = Vector3.new(0.7, 22, 0.7), CFrame = CFrame.new(fx, 11, Z + 16), Color = Color3.fromRGB(198, 198, 202), Material = Enum.Material.Metal, Parent = parent })
-		part({ Name = "FlagSmall", Size = Vector3.new(6, 3.6, 0.2), CFrame = CFrame.new(fx + 3.2, 19, Z + 16), Color = fx < 0 and Color3.fromRGB(196, 56, 56) or Color3.fromRGB(56, 96, 196), Material = Enum.Material.Fabric, Parent = parent })
-	end
+	-- The flanking flag poles that used to stand here are gone. They were a
+	-- second pair at the same two x values as buildFlagpole's, ten studs in
+	-- front of it, one flying red and one flying blue -- two builders dressing
+	-- one patch of the ceremonial forecourt without either knowing about the
+	-- other, which is the fault this codebase keeps paying for.
 end
 
 -- The campus front, built from the reference: a paved parking apron with
@@ -8398,16 +8437,30 @@ end
 
 local function buildRidgeCresting(parent: Instance)
 	-- Read off the PitchRoof pairs: each pair meets at the mid-line between
-	-- its two slabs, and the ridge is the top of their boxes.
+	-- its two slabs, and the ridge is the TOP of their boxes -- baseY 38 plus
+	-- the rise, not the wedge centre.
+	--
+	-- These were 52, 53, 56 and 50, which were the ridge heights before the
+	-- Academy's roofs were pitched properly. Raising the rises left all three
+	-- hundred and fourteen pieces of capping, cresting and finial four to
+	-- fifteen studs INSIDE the slate: seven ridges rendering as a bare arris
+	-- against the sky, on the building the night reference is of, with the
+	-- geometry paid for and never once visible. solid_check cannot see it --
+	-- every one of those parts is CanCollide false -- and neither could I,
+	-- because a thing that is missing looks exactly like a thing that was
+	-- never built.
+	--
+	-- The outer columns' run was wrong as well, and had been before the pitch
+	-- changed: their ridge is 128 studs of z, not 64.
 	for _, ridge in
 		{
-			{ x = -142.0, y = 52.0, z = 100.0, run = 164.0, alongX = true },
-			{ x = 142.0, y = 52.0, z = 100.0, run = 164.0, alongX = true },
-			{ x = -142.0, y = 53.0, z = -94.0, run = 164.0, alongX = true },
-			{ x = 142.0, y = 53.0, z = -94.0, run = 164.0, alongX = true },
-			{ x = 0.0, y = 56.0, z = -105.0, run = 104.0, alongX = true },
-			{ x = -198.0, y = 50.0, z = 0.0, run = 64.0, alongX = false },
-			{ x = 198.0, y = 50.0, z = 0.0, run = 64.0, alongX = false },
+			{ x = -142.0, y = 62.0, z = 100.0, run = 164.0, alongX = true },
+			{ x = 142.0, y = 62.0, z = 100.0, run = 164.0, alongX = true },
+			{ x = -142.0, y = 68.0, z = -94.0, run = 164.0, alongX = true },
+			{ x = 142.0, y = 68.0, z = -94.0, run = 164.0, alongX = true },
+			{ x = 0.0, y = 72.0, z = -105.0, run = 104.0, alongX = true },
+			{ x = -198.0, y = 64.0, z = 0.0, run = 128.0, alongX = false },
+			{ x = 198.0, y = 64.0, z = 0.0, run = 128.0, alongX = false },
 		}
 	do
 		ridgeLine(parent, ridge.x, ridge.y, ridge.z, ridge.run, ridge.alongX)
@@ -8507,6 +8560,156 @@ local function dressCorridors(parent: Instance)
 					if i == stations - 1 then
 						prop("Clock", CFrame.new(px, y + 12.0, pz) * CFrame.Angles(0, math.rad(yaw), 0))
 					end
+				end
+			end
+		end
+	end
+end
+
+-- ================= CEILINGS =================
+-- tools/blank_check.py samples every large flat face in the map, marches a
+-- stud out along its own normal and asks whether ANYTHING is standing there.
+-- Thirty-two faces came back over 94 per cent bare, 167,000 square studs of
+-- them, and thirty of the thirty-two were ceilings: the atrium's roof flat is
+-- 15,104 studs of one colour, the main hallway's soffit 12,832, each wing's
+-- another six to nine thousand, and every ring building's PlanCeiling the
+-- same. It is why the atrium, the main hallway and the refectory all render
+-- with half the frame a blank grey field over whatever detail is below.
+--
+-- A collegiate ceiling is ribbed. Beams across the span at a fixed bay, a beam
+-- run round the perimeter where the ceiling meets the wall, and both bedded UP
+-- into the slab so no two faces share a plane. Nothing is added under a light
+-- fitting, a skylight or a roof lantern that is already there.
+local function buildCeilingCoffers(parent: Instance)
+	local RIB = Color3.fromRGB(206, 200, 188)
+	local BAY = 22.0        -- studs between ribs
+	local DROP = 1.5        -- how deep a rib hangs below the ceiling
+	local BED = 0.3         -- ... and how far it is bedded up into it
+
+	-- everything already hanging from a ceiling, so a rib never lands on it
+	local fittings: { { x: number, z: number, hx: number, hz: number, y: number } } = {}
+	for _, d in parent:GetDescendants() do
+		if d:IsA("BasePart") then
+			local n = d.Name
+			-- Signs and door heads as well as light fittings. A beam laid over
+			-- a sign is a beam standing in front of the only thing on that
+			-- wall anybody reads: the first run of this put ribs across four
+			-- gate signs and two classroom name boards, and tools/sign_check.py
+			-- said so.
+			if string.find(n, "Light") or string.find(n, "Lantern") or string.find(n, "Skylight")
+				or string.find(n, "Fixture") or string.find(n, "Chandelier") or string.find(n, "Pendant")
+				or string.find(n, "Sign") or string.find(n, "Board") or string.find(n, "Plaque")
+				or string.find(n, "Notice") or string.find(n, "Head") or string.find(n, "Crest") then
+				table.insert(fittings, { x = d.Position.X, z = d.Position.Z, hx = d.Size.X / 2 + 1.0, hz = d.Size.Z / 2 + 1.0, y = d.Position.Y })
+			end
+		end
+	end
+
+	local slabs: { BasePart } = {}
+	for _, d in parent:GetChildren() do
+		if d:IsA("BasePart") then
+			local n = d.Name
+			if string.find(n, "UpperSoffit") or string.find(n, "RoofSlab")
+				or string.find(n, "PlanCeiling") or string.find(n, "WingCeiling") then
+				if d.Size.X * d.Size.Z >= 1500 then
+					table.insert(slabs, d)
+				end
+			end
+		end
+	end
+
+	for _, slab in slabs do
+		local at = slab.Position
+		local sx, sz = slab.Size.X, slab.Size.Z
+		local bottom = at.Y - slab.Size.Y / 2
+		local ribY = bottom + BED - DROP / 2
+		local function clear(cx: number, cz: number, hx: number, hz: number): boolean
+			for _, f in fittings do
+				-- BELOW the ceiling, or set into it. The atrium's six roof
+				-- lanterns stand ON TOP of its slab -- kerb at 34.2 over a
+				-- soffit at 32.4 -- and vetoing a rib under each of them left
+				-- the largest ceiling in the school, 15,104 square studs of it,
+				-- with nothing across it at all. A fitting a player cannot see
+				-- from the room below cannot be in the way of a rib.
+				if f.y < bottom + 1.0 and math.abs(f.y - bottom) < 8.0
+					and math.abs(f.x - cx) < f.hx + hx
+					and math.abs(f.z - cz) < f.hz + hz then
+					return false
+				end
+			end
+			return true
+		end
+		-- ribs across the SHORT span, repeating down the long one
+		local alongX = sx >= sz
+		local run = if alongX then sx else sz
+		local span = if alongX then sz else sx
+		local bays = math.max(2, math.floor(run / BAY))
+		for i = 1, bays - 1 do
+			local off = -run / 2 + i * (run / bays)
+			local size = if alongX then Vector3.new(2.0, DROP, span - 1.0) else Vector3.new(span - 1.0, DROP, 2.0)
+			-- SHIFT, don't skip. The main hallway carries a light panel every
+			-- twenty-four studs and the ribs fall at twenty-two, so vetoing a
+			-- rib that meets one dropped most of them and left a hundred and
+			-- thirty-two studs of the ceiling with nothing across it -- the
+			-- exact defect this is here to fix, half fixed. A rib moved four
+			-- studs is still a rib on the bay.
+			local placed = false
+			-- The main hallway carries a ceiling panel every 24 studs and the
+			-- ribs fall at 22, so with five nudges of four studs the two
+			-- patterns beat against each other and seventeen of twenty ribs
+			-- were vetoed: three ribs across a four-hundred-and-forty-eight
+			-- stud hall. The nudges have to be able to reach the middle of a
+			-- bay, which means half the fitting pitch.
+			for _, nudge in { 0, 3, -3, 6, -6, 9, -9, 12, -12 } do
+				local o = off + nudge
+				if math.abs(o) < run / 2 - 3 then
+					local cx = if alongX then at.X + o else at.X
+					local cz = if alongX then at.Z else at.Z + o
+					if clear(cx, cz, size.X / 2, size.Z / 2) then
+						placed = true
+						off = o
+						break
+					end
+				end
+			end
+			local cx = if alongX then at.X + off else at.X
+			local cz = if alongX then at.Z else at.Z + off
+			if placed then
+				tag(part({
+					Name = "CeilingBeam",
+					Size = size,
+					CFrame = CFrame.new(cx, ribY, cz),
+					Color = RIB,
+					Material = Enum.Material.Concrete,
+					Parent = parent,
+				}), "TexAshlar").CanCollide = false
+			end
+		end
+		-- and the beam run where the ceiling meets the wall, which is what
+		-- stops a ribbed ceiling reading as slats stuck on a slab. Laid in
+		-- SEGMENTS: a wall carries the signs, the door heads and the name
+		-- boards, and a single unbroken run at the wall line goes straight
+		-- over them. Each piece stands only where nothing is in its way.
+		local PIECE = 12.0
+		for _, edge in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+			local alongEdgeX = edge[1] == 0
+			local length = if alongEdgeX then sx - 1.0 else sz - 1.0
+			local pieces = math.max(1, math.round(length / PIECE))
+			for i = 1, pieces do
+				local off = -length / 2 + (i - 0.5) * (length / pieces)
+				local w = length / pieces - 0.6
+                local cx = if alongEdgeX then at.X + off else at.X + edge[1] * (sx / 2 - 1.2)
+                local cz = if alongEdgeX then at.Z + edge[2] * (sz / 2 - 1.2) else at.Z + off
+				local size = if alongEdgeX then Vector3.new(w, DROP * 0.8, 2.4) else Vector3.new(2.4, DROP * 0.8, w)
+				if clear(cx, cz, size.X / 2 + 1.0, size.Z / 2 + 1.0) then
+					tag(part({
+						Name = "CeilingBeam",
+						Size = size,
+						CFrame = CFrame.new(cx, bottom + BED - DROP * 0.4, cz),
+						Color = RIB,
+						Material = Enum.Material.Concrete,
+						Parent = parent,
+					}), "TexAshlar").CanCollide = false
 				end
 			end
 		end
@@ -10652,6 +10855,7 @@ end
 	-- thirteen of its surrounds landed flat against existing CeilingPanels.
 	buildRoomLights(folder)
 	dressCorridors(folder)
+	buildCeilingCoffers(folder)
 	local secretDoors = buildSanctum(folder)
 	furnishProps()
 
