@@ -3393,47 +3393,73 @@ local function buildGrandFacade(parent: Instance)
 	-- its whole length. The board belongs to the block whose roof is visible
 	-- there, which is the one that does not stop at the joint.
 	local kit = kitFor(parent)
-	local function pitchedRoof(cx: number, cz: number, w: number, d: number, h: number, baseY: number, eaves: { boolean }?)
+	-- `runsZ` turns the ridge through ninety degrees. It is not decoration:
+	-- the two outer columns are fifty-four studs wide and a hundred and
+	-- twenty-seven deep, and their roofs ran the SHORT way -- a ridge fifty-two
+	-- studs long spanning a hundred and twenty-eight, which put the gable ends
+	-- on the long elevations and gave the tallest block on the school a
+	-- ten-degree roof. A pitch is measured across the span, so the span has to
+	-- be the short dimension.
+	local function pitchedRoof(cx: number, cz: number, w: number, d: number, h: number, baseY: number, eaves: { boolean }?, runsZ: boolean?)
+		local span = if runsZ then w else d      -- eaves to eaves, across
+		local run = if runsZ then d else w       -- along the ridge
 		for _, side in { -1, 1 } do
 			local wedge = Instance.new("WedgePart")
 			wedge.Name = "PitchRoof"
 			wedge.Anchored = true
-			wedge.Size = Vector3.new(w, h, d / 2)
-			wedge.CFrame = CFrame.new(cx, baseY + h / 2, cz + side * d / 4)
-				* CFrame.Angles(0, side > 0 and 0 or math.rad(180), 0)
+			wedge.Size = Vector3.new(run, h, span / 2)
+			if runsZ then
+				-- the wedge's tall face is at its local -Z; yaw 90 sends that
+				-- to -X, which is the ridge for the +x slope
+				wedge.CFrame = CFrame.new(cx + side * span / 4, baseY + h / 2, cz)
+					* CFrame.Angles(0, math.rad(if side > 0 then 90 else 270), 0)
+			else
+				wedge.CFrame = CFrame.new(cx, baseY + h / 2, cz + side * span / 4)
+					* CFrame.Angles(0, side > 0 and 0 or math.rad(180), 0)
+			end
 			wedge.Color = SLATE
 			wedge.Material = Enum.Material.Slate
 			wedge.Parent = parent
 			tag(wedge, "TexSlateRoof")
 		end
-		Kit.slateCourses(kit, { x = cx, z = cz, width = w, depth = d, eaves = baseY, rise = h })
+		Kit.slateCourses(kit, { x = cx, z = cz, width = w, depth = d, eaves = baseY, rise = h, runsX = not runsZ })
 		-- eaves overhang + carved brackets underneath
-		local north = if eaves then eaves[1] else true
-		local south = if eaves then eaves[2] else true
-		if north then
-			trimBand(cx, baseY - 0.3, cz + d / 2, w + 4, 2.4, 1.2)
-		end
-		if south then
-			trimBand(cx, baseY - 0.3, cz - d / 2, w + 4, 2.4, 1.2)
-		end
-		local brackets = math.floor(w / 14)
+		local far = if eaves then eaves[1] else true    -- +z, or +x when runsZ
+		local near = if eaves then eaves[2] else true   -- -z, or -x
 		local edges = {}
-		if north then
-			table.insert(edges, cz + d / 2)
+		if far then
+			table.insert(edges, 1)
 		end
-		if south then
-			table.insert(edges, cz - d / 2)
+		if near then
+			table.insert(edges, -1)
 		end
+		for _, edge in edges do
+			if runsZ then
+				trimBand(cx + edge * span / 2, baseY - 0.3, cz, 2.4, run + 4, 1.2)
+			else
+				trimBand(cx, baseY - 0.3, cz + edge * span / 2, run + 4, 2.4, 1.2)
+			end
+		end
+		local brackets = math.floor(run / 14)
 		for bI = 0, brackets do
-			local bx = cx - w / 2 + bI * (w / math.max(brackets, 1))
-			for _, bz in edges do
-				part({ Name = "EaveBracket", Size = Vector3.new(1.4, 2.6, 3.2), CFrame = CFrame.new(bx, baseY - 2.0, bz), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
+			local along = -run / 2 + bI * (run / math.max(brackets, 1))
+			for _, edge in edges do
+				local bx = if runsZ then cx + edge * span / 2 else cx + along
+				local bz = if runsZ then cz + along else cz + edge * span / 2
+				local size = if runsZ then Vector3.new(3.2, 2.6, 1.4) else Vector3.new(1.4, 2.6, 3.2)
+				part({ Name = "EaveBracket", Size = size, CFrame = CFrame.new(bx, baseY - 2.0, bz), Color = TRIM, Material = Enum.Material.Concrete, Parent = parent })
 			end
 		end
 	end
 
-	pitchedRoof(-142, 100, 164, 48, 14, 38.0)
-	pitchedRoof(142, 100, 164, 48, 14, 38.0)
+	-- 24, not 14. Every other roof on this campus is pitched at forty-five
+	-- degrees -- the dorms, the library, the cafeteria, the hall, all of them
+	-- built by the same kit off the same drawing -- and the Academy, which is
+	-- the building one of the four reference images is OF, was pitched at
+	-- thirty and its wings at ten. From the air the hero building read as the
+	-- flattest thing on the estate.
+	pitchedRoof(-142, 100, 164, 48, 24, 38.0)
+	pitchedRoof(142, 100, 164, 48, 24, 38.0)
 	-- Dormers on the front slope. Every roof in the reference art is broken by
 	-- them, and a bare slate plane 164 studs long is the single largest blank
 	-- surface on the building. They sit on the front pitch, which runs from the
@@ -3451,11 +3477,13 @@ local function buildGrandFacade(parent: Instance)
 		for i = -2, 2 do
 			Kit.dormer(kitFor(parent), {
 				x = wing + i * 32,
-				y = 42.3,
+				-- the surface at z 116 on a 24-stud rise over a 24-stud
+				-- half-span: 38 + 24 * (1 - 16/24) = 46
+				y = 46.0,
 				z = 116,
 				facing = 0,
 				width = 7,
-				height = 6,
+				height = 7,
 			})
 		end
 	end
@@ -3465,14 +3493,27 @@ local function buildGrandFacade(parent: Instance)
 	-- was two dormers inside each other with the older one's roof wedge poking
 	-- out sideways like a blade. Two builders, one patch of roof, neither aware
 	-- of the other -- the same fault as the shrubs and the planters.
-	pitchedRoof(-142, -94, 164, 60, 15, 38.0)
-	pitchedRoof(142, -94, 164, 60, 15, 38.0)
+	pitchedRoof(-142, -94, 164, 60, 30, 38.0)
+	pitchedRoof(142, -94, 164, 60, 30, 38.0)
+	-- Dormers on the NORTH slope too. That elevation is what a player sees the
+	-- whole way back from the dorm court, and it was a hundred and sixty-four
+	-- studs of bare slate on each side while the front slope carried five
+	-- dormers apiece. Ridge at z -94, eaves at z -124, so the surface at
+	-- z -112 is 38 + 30 * (1 - 18/30) = 50.
+	for _, wing in { -142, 142 } do
+		for i = -2, 2 do
+			Kit.dormer(kitFor(parent), { x = wing + i * 32, y = 50.0, z = -112, facing = 180, width = 7, height = 7 })
+		end
+	end
 	-- no south eaves: these two abut the north range's roof at z = -64 and
 	-- that range already boards the joint
-	pitchedRoof(-198, 0, 52, 128, 12, 38.0, { true, false })
-	pitchedRoof(198, 0, 52, 128, 12, 38.0, { true, false })
+	-- The outer columns run north-south, so their ridges do too, and the pitch
+	-- is taken across their fifty-two-stud width: 45 degrees, the same roof
+	-- every other building on the campus has, instead of ten.
+	pitchedRoof(-198, 0, 52, 128, 26, 38.0, nil, true)
+	pitchedRoof(198, 0, 52, 128, 26, 38.0, nil, true)
 	-- gym: taller, its own ridge
-	pitchedRoof(0, -105, 104, 86, 18, 38.0)
+	pitchedRoof(0, -105, 104, 86, 34, 38.0)
 
 	-- CHIMNEY STACKS. The Academy had a hundred and twenty dormers, a clock
 	-- tower, a spire and four crenellated corner towers, and not one chimney:
@@ -3486,10 +3527,12 @@ local function buildGrandFacade(parent: Instance)
 	do
 		local kit = kitFor(parent)
 		for _, ridge in {
-			{ z = 100, base = 44.0, xs = { -204, -142, -80, 80, 142, 204 } },   -- front ranges, ridge 52
-			{ z = -94, base = 45.0, xs = { -204, -142, -80, 80, 142, 204 } },   -- back ranges, ridge 53
-			{ z = 0, base = 42.0, xs = { -198, 198 } },                          -- the two wings, ridge 50
-			{ z = -105, base = 48.0, xs = { -36, 36 } },                         -- the centre range, ridge 56
+			-- base is ridge minus eight, so eight studs of the stack are inside
+			-- the slate and the rest of it stands off the ridge
+			{ z = 100, base = 54.0, xs = { -204, -142, -80, 80, 142, 204 } },   -- front ranges, ridge 62
+			{ z = -94, base = 60.0, xs = { -204, -142, -80, 80, 142, 204 } },   -- back ranges, ridge 68
+			{ z = 0, base = 56.0, xs = { -198, 198 } },                          -- the two wings, ridge 64
+			{ z = -105, base = 64.0, xs = { -36, 36 } },                         -- the centre range, ridge 72
 		} do
 			for _, cx in ridge.xs do
 				Kit.chimney(kit, { x = cx, z = ridge.z, base = ridge.base, height = 16, width = 5.4 })

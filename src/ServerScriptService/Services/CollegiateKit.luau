@@ -215,10 +215,15 @@ function CollegiateKit.dormer(ctx: Ctx, o: { x: number, y: number, z: number, fa
 	ctx.part({ Name = "DormerMullion", Size = Vector3.new(0.35, h - 4, 0.6), CFrame = at * CFrame.new(0, h / 2 + 0.3, 3.05), Color = CollegiateKit.FRAME, Material = Enum.Material.Metal, Parent = ctx.parent }).CanCollide = false
 	ctx.part({ Name = "DormerSill", Size = Vector3.new(w + 0.8, 0.6, 2.0), CFrame = at * CFrame.new(0, 2.2, 2.6), Color = CollegiateKit.ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }).CanCollide = false
 
+	-- 30, not 20. A dormer is the only light an attic storey gets, and when
+	-- the Academy's roofs were pitched properly the dormers rose four studs up
+	-- their slopes and took the top floor of both front wings into the dark
+	-- with them -- two holes of seven hundred square studs each, from a light
+	-- that had been reaching just barely far enough.
 	local light = Instance.new("PointLight")
 	light.Color = CollegiateKit.LANTERN
 	light.Brightness = 1.2
-	light.Range = 20
+	light.Range = 30
 	light.Shadows = false
 	light.Parent = pane
 
