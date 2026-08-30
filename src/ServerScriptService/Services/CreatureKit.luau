@@ -50,7 +50,7 @@ type Body = {
 	ctx: Ctx,
 	root: CFrame,
 	s: number,
-	plume: Plume,
+	plume: any,     -- a Plume for a bird, a Coat for a griffin
 	seed: number,
 }
 
@@ -108,6 +108,125 @@ local function rng(b: Body): () -> number
 		state = (state * 1103515245 + 12345) % 2147483648
 		return state / 2147483648
 	end
+end
+
+-- ---------------------------------------------------------------------------
+-- the quadruped vocabulary
+-- ---------------------------------------------------------------------------
+-- An owl is a stack of spheres and everything on it is found by HEIGHT. A
+-- griffin is a horizontal animal and nothing about it can be found that way:
+-- its body is a barrel lying along Z, its limbs are segments between two
+-- points in space, and its wing is a fan of feathers off a wrist. Those are
+-- the three things this section adds, and every four-legged or winged creature
+-- after the griffin is built from them too.
+
+-- A body is a SPINE: stations along the creature's own Z, each with a height
+-- and a radius. Between stations the barrel is interpolated, so an animal can
+-- have a deep chest and a narrow waist instead of being one tube.
+export type Rib = { z: number, y: number, r: number }
+
+local function ribAt(spine: { Rib }, z: number): (number?, number?)
+	if z < spine[1].z or z > spine[#spine].z then
+		return nil, nil
+	end
+	for i = 1, #spine - 1 do
+		local a, c = spine[i], spine[i + 1]
+		if z >= a.z and z <= c.z then
+			local t = if c.z == a.z then 0 else (z - a.z) / (c.z - a.z)
+			-- smoothstep, so the barrel has no crease at a station
+			t = t * t * (3 - 2 * t)
+			return a.r + (c.r - a.r) * t, a.y + (c.y - a.y) * t
+		end
+	end
+	return nil, nil
+end
+
+-- The barrel itself: overlapping spheres along the spine. Spheres rather than
+-- one long box because the light has to fall away round the animal's sides,
+-- and because everything plated onto it is placed against a known radius.
+local function barrel(b: Body, spine: { Rib }, name: string, colour: Color3, step: number)
+	local z = spine[1].z
+	while z <= spine[#spine].z + 1e-6 do
+		local r, cy = ribAt(spine, z)
+		if r then
+			ball(b, name, (r :: number) * 2, 0, cy :: number, z, colour)
+		end
+		z += step
+	end
+end
+
+-- A plate lying tangent to the barrel: at station z, at angle theta round it
+-- measured from the spine (0 is the top of the back, pi the belly, negative
+-- the other flank), standing `out` proud of the surface. The plate's length
+-- runs along Z, which is the way both feathers and fur lie on an animal.
+local function onSpine(b: Body, spine: { Rib }, name: string, size: Vector3,
+	z: number, theta: number, out: number, colour: Color3, tilt: CFrame?)
+	local r, cy = ribAt(spine, z)
+	if not r then
+		return
+	end
+	local rr = (r :: number) + out
+	local rot = CFrame.Angles(0, 0, -theta)
+	if tilt then
+		rot = rot * tilt
+	end
+	place(b, name, size, rr * math.sin(theta), (cy :: number) + rr * math.cos(theta), z,
+		colour, rot)
+end
+
+-- Where a sphere's surface is in a given direction from its centre. This is
+-- skullFront() generalised, and it exists because the one mistake that has
+-- already cost this kit a whole round is a feature placed at a coordinate
+-- picked by eye that turned out to be INSIDE the head. Roblox has a depth
+-- buffer; a buried part is not a subtle part, it is an absent one.
+local function onSphere(b: Body, name: string, size: Vector3,
+	cx: number, cy: number, cz: number, r: number,
+	dx: number, dy: number, dz: number, out: number, colour: Color3, rot: CFrame?): BasePart?
+	local m = math.sqrt(dx * dx + dy * dy + dz * dz)
+	if m < 1e-6 then
+		return nil
+	end
+	local k = r + out
+	return place(b, name, size, cx + dx / m * k, cy + dy / m * k, cz + dz / m * k,
+		colour, rot)
+end
+
+-- A limb segment between two points, as a box whose local Z is the length.
+-- Boxes rather than cylinders: a cylinder's axis is its local X, so aiming one
+-- along an arbitrary direction costs a second rotation for no gain at this
+-- fidelity. `roll` turns the box about its own axis, which is how a feather
+-- gets its flat to lie in the plane of the wing.
+local function bone(b: Body, name: string, ax: number, ay: number, az: number,
+	bx: number, by: number, bz: number, w: number, t: number, colour: Color3,
+	roll: number?, over: number?): (number, number, number)
+	local dx, dy, dz = bx - ax, by - ay, bz - az
+	local len = math.sqrt(dx * dx + dy * dy + dz * dz)
+	if len < 1e-4 then
+		return bx, by, bz
+	end
+	local rot = CFrame.Angles(0, math.atan2(dx, dz), 0)
+		* CFrame.Angles(-math.asin(dy / len), 0, 0)
+	if roll then
+		rot = rot * CFrame.Angles(0, 0, roll)
+	end
+	place(b, name, v3(w, t, len + (over or 0)), (ax + bx) / 2, (ay + by) / 2, (az + bz) / 2,
+		colour, rot)
+	return bx, by, bz
+end
+
+-- One flight feather: a blade and a narrower tip, so a wing ends in POINTS.
+-- The fingered tip of a raptor's wing is most of what a hundred-and-twenty-
+-- eight pixel silhouette has to work with.
+local function feather(b: Body, name: string, rx: number, ry: number, rz: number,
+	azim: number, elev: number, len: number, w: number, t: number,
+	colour: Color3, tip: Color3?)
+	local dx = math.sin(azim) * math.cos(elev)
+	local dy = math.sin(elev)
+	local dz = math.cos(azim) * math.cos(elev)
+	local cut = len * 0.66
+	bone(b, name, rx, ry, rz, rx + dx * cut, ry + dy * cut, rz + dz * cut, w, t, colour)
+	bone(b, name, rx + dx * cut, ry + dy * cut, rz + dz * cut,
+		rx + dx * len, ry + dy * len, rz + dz * len, w * 0.55, t * 0.8, tip or colour)
 end
 
 -- ---------------------------------------------------------------------------
@@ -576,5 +695,486 @@ function CreatureKit.buildOwl(ctx: Ctx, species: string, x: number, y: number, z
 		seed = 11 + #species * 37,
 	})
 end
+
+-- ---------------------------------------------------------------------------
+-- GRIFFIN
+-- ---------------------------------------------------------------------------
+-- The flight mount, the top of the ladder, and the thumbnail. Eagle in front,
+-- lion behind -- and the whole animal turns on the JOIN. A bird glued to a cat
+-- reads as a toy; what makes a griffin is being able to SEE feathers become
+-- fur, so the shoulder is where the most work goes.
+--
+-- It is a griffin and not a hippogriff on purpose. The design plan flags the
+-- Harry Potter vocabulary as a platform-takedown risk and says to use original
+-- names; a lion hindquarter is also further from anything anyone else in this
+-- genre is shipping. Swapping to a horse rear is the hind legs, the tail and
+-- the rump plating, and nothing else.
+
+export type Coat = {
+	crown: Color3,     -- the head
+	hackle: Color3,    -- the long neck feathers, and the name of the bird
+	breast: Color3,
+	covert: Color3,    -- the wing's shoulder
+	primary: Color3,   -- the flight feathers
+	quill: Color3,     -- feather edges and barring
+	fur: Color3,       -- the lion half
+	belly: Color3,
+	tuft: Color3,      -- the tail
+	beak: Color3,
+	cere: Color3,      -- the soft skin at the base of the beak, and the feet
+	iris: Color3,
+	talon: Color3,
+}
+
+-- Built facing -Z, origin between the front feet on the ground, in studs at
+-- scale one: shoulder 7.9, head 10.6, nose to tail tip 21, wingspan 27.
+local GSPINE: { Rib } = {
+	{ z = -2.7, y = 6.05, r = 1.2 },
+	{ z = -1.5, y = 5.7, r = 1.95 },
+	{ z = -0.3, y = 5.45, r = 2.35 },
+	{ z = 1.3, y = 5.4, r = 2.45 },
+	{ z = 3.1, y = 5.35, r = 2.2 },
+	{ z = 4.9, y = 5.3, r = 1.95 },   -- a lion's waist, which is what makes
+	{ z = 6.5, y = 5.3, r = 2.2 },    -- the haunch behind it read as a haunch
+	{ z = 8.0, y = 5.35, r = 1.65 },
+	{ z = 8.9, y = 5.4, r = 1.0 },
+}
+
+local GNECK = {
+	{ y = 6.6, z = -2.8, r = 1.42 },
+	{ y = 7.5, z = -3.3, r = 1.3 },
+	{ y = 8.4, z = -3.75, r = 1.18 },
+	{ y = 9.2, z = -4.15, r = 1.06 },
+	{ y = 9.8, z = -4.5, r = 0.98 },
+}
+
+local GHEAD = { y = 10.15, z = -5.05, r = 1.45 }
+
+-- THE JOIN. Feathers in front of this station, fur behind it, and a standing
+-- ruff of long plates sitting exactly on it.
+local JOIN = 2.3
+
+local function griffinBody(b: Body, c: Coat)
+	barrel(b, GSPINE, "GriffinBarrel", c.fur, 0.55)
+	-- the chest is a bird's, so its plating is feathers laid along the body
+	for j = 0, 5 do
+		local z = -2.2 + j * 0.92
+		local bond = (j % 2) * 0.3
+		for k = -3, 3 do
+			local theta = k * 0.6 + bond
+			if math.abs(theta) < 2.5 then
+				local shade = if (j + k) % 2 == 0 then 0.0 else 0.1
+				onSpine(b, GSPINE, "GriffinBreast", v3(1.7, 0.16, 1.15), z, theta, 0.03,
+					c.breast:Lerp(c.quill, shade))
+			end
+		end
+	end
+	-- and the rear is a cat's, so its plating is broader, flatter and duller:
+	-- fur does not catch an edge every inch the way a feather does
+	for j = 0, 6 do
+		local z = 2.9 + j * 0.95
+		local bond = (j % 2) * 0.32
+		for k = -3, 3 do
+			local theta = k * 0.64 + bond
+			if math.abs(theta) < 2.5 then
+				local shade = if (j + k) % 2 == 0 then 0.0 else 0.06
+				local coat = if math.abs(theta) > 2.0 then c.belly else c.fur
+				onSpine(b, GSPINE, "GriffinPelt", v3(1.85, 0.13, 1.2), z, theta, 0.025,
+					coat:Lerp(c.tuft, shade))
+			end
+		end
+	end
+	-- the join itself: a standing ruff of long feathers over the shoulder,
+	-- lying back over the fur. This is the one detail that says chimera.
+	for k = -5, 5 do
+		local theta = k * 0.34
+		onSpine(b, GSPINE, "GriffinRuff", v3(0.72, 0.22, 2.6), JOIN, theta, 0.1,
+			if k % 2 == 0 then c.hackle else c.hackle:Lerp(c.quill, 0.3),
+			CFrame.Angles(-0.16, 0, 0))
+	end
+end
+
+local function griffinNeck(b: Body, c: Coat)
+	for i, n in GNECK do
+		ball(b, "GriffinNeck", n.r * 2, 0, n.y, n.z, c.crown)
+		-- hackles: the long golden feathers of the nape, each one a blade
+		-- lying DOWN the neck rather than a plate stuck on it
+		local prev = GNECK[math.max(1, i - 1)]
+		local dy, dz = n.y - prev.y, n.z - prev.z
+		local m = math.sqrt(dy * dy + dz * dz)
+		if m > 1e-4 then
+			dy, dz = dy / m, dz / m
+			for k = -4, 4 do
+				local theta = k * 0.44
+				-- a frame round the neck axis: x across, and the perpendicular
+				-- in the neck's own plane
+				local ux, uy, uz = math.cos(theta), math.sin(theta) * dz, -math.sin(theta) * dy
+				local len = (2.45 - i * 0.3) + math.abs(theta) * 0.28
+				local rx = ux * (n.r + 0.05)
+				local ry = n.y + uy * (n.r + 0.05)
+				local rz = n.z + uz * (n.r + 0.05)
+				bone(b, "GriffinHackle", rx, ry, rz,
+					rx + ux * 0.16 - dy * 0.0, ry - dy * len + uy * 0.16, rz - dz * len + uz * 0.16,
+					0.42, 0.15,
+					if k % 2 == 0 then c.hackle else c.hackle:Lerp(c.crown, 0.45), theta)
+			end
+		end
+	end
+end
+
+local function griffinHead(b: Body, c: Coat)
+	local hy, hz, r = GHEAD.y, GHEAD.z, GHEAD.r
+	ball(b, "GriffinSkull", r * 2, 0, hy, hz, c.crown)
+	-- crown feathering, so the head is not a bald ball next to a plated body
+	for ring = 0, 2 do
+		local phi = 0.42 + ring * 0.46
+		for i = 0, 6 do
+			local th = math.pi + (i - 3) * 0.46 + (ring % 2) * 0.23
+			onSphere(b, "GriffinCrown", v3(0.54, 0.48, 0.1), 0, hy, hz, r,
+				math.sin(phi) * math.sin(th), math.cos(phi), -math.sin(phi) * math.cos(th),
+				-0.02, if (i + ring) % 2 == 0 then c.crown else c.crown:Lerp(c.quill, 0.22),
+				CFrame.Angles(0, -th, 0) * CFrame.Angles(math.pi / 2 - phi, 0, 0))
+		end
+	end
+	for _, side in { -1, 1 } do
+		-- THE BROW. An eagle's scowl is a heavy bony shelf over the eye, and it
+		-- is the one feature that stops this head reading as a pigeon.
+		onSphere(b, "GriffinBrow", v3(1.05, 0.34, 0.8), 0, hy, hz, r,
+			side * 0.5, 0.66, -0.58, -0.08, c.crown:Lerp(c.quill, 0.55),
+			CFrame.Angles(-0.36, side * 0.24, -side * 0.3))
+		-- the eye. Sat ON the surface, so half of it always shows whatever the
+		-- skull does; the ring is bedded, the pupil and the glint stand proud.
+		local dx, dy, dz = side * 0.72, -0.04, -0.7
+		onSphere(b, "GriffinEyePatch", v3(1.0, 0.94, 0.24), 0, hy, hz, r, dx, dy, dz,
+			-0.06, c.crown:Lerp(Color3.fromRGB(34, 28, 24), 0.6),
+			CFrame.Angles(0, side * 0.72, 0))
+		onSphere(b, "GriffinEyeRing", v3(0.9, 0.9, 0.9), 0, hy, hz, r, dx, dy, dz,
+			-0.04, Color3.fromRGB(30, 25, 22))
+		onSphere(b, "GriffinIris", v3(0.72, 0.72, 0.72), 0, hy, hz, r, dx, dy, dz,
+			0.06, c.iris)
+		onSphere(b, "GriffinPupil", v3(0.36, 0.36, 0.36), 0, hy, hz, r, dx, dy, dz,
+			0.26, Color3.fromRGB(12, 11, 13))
+		onSphere(b, "GriffinGlint", v3(0.16, 0.16, 0.16), 0, hy, hz, r,
+			dx + side * 0.22, dy + 0.28, dz, 0.3, Color3.fromRGB(255, 255, 255))
+	end
+	-- The beak. Every piece is placed forward of the cranium's front face at
+	-- z = hz - r, and the y falls faster than the z advances, which is what
+	-- makes it a HOOK rather than a bill.
+	local front = hz - r
+	place(b, "GriffinCere", v3(0.68, 0.6, 0.5), 0, hy - 0.04, front - 0.18, c.cere)
+	for _, side in { -1, 1 } do
+		place(b, "GriffinNostril", v3(0.14, 0.16, 0.14), side * 0.25, hy + 0.02,
+			front - 0.42, c.beak:Lerp(Color3.fromRGB(40, 34, 30), 0.7))
+	end
+	local beak = {
+		{ w = 0.6, h = 0.8, d = 0.62, y = hy - 0.2, z = front - 0.5 },
+		{ w = 0.52, h = 0.74, d = 0.54, y = hy - 0.5, z = front - 0.86 },
+		{ w = 0.43, h = 0.66, d = 0.44, y = hy - 0.86, z = front - 1.08 },
+		{ w = 0.33, h = 0.56, d = 0.32, y = hy - 1.22, z = front - 1.14 },
+		{ w = 0.21, h = 0.4, d = 0.22, y = hy - 1.52, z = front - 1.08 },
+	}
+	for i, k in beak do
+		place(b, "GriffinBeak", v3(k.w, k.h, k.d), 0, k.y, k.z,
+			if i >= 3 then c.beak:Lerp(Color3.fromRGB(38, 34, 34), 0.3 + i * 0.16) else c.beak)
+	end
+	place(b, "GriffinMandible", v3(0.48, 0.36, 1.0), 0, hy - 0.72, front - 0.68, c.beak)
+	place(b, "GriffinGape", v3(0.56, 0.09, 0.86), 0, hy - 0.52, front - 0.6,
+		c.beak:Lerp(Color3.fromRGB(40, 34, 30), 0.55))
+end
+
+-- The eagle foreleg: feathered to the ankle, then scaled, then four toes and
+-- four black talons. At ground level this is the other half of the chimera and
+-- a player standing next to the animal is looking straight at it.
+local function griffinForeleg(b: Body, c: Coat, side: number)
+	local x = side * 1.6
+	ball(b, "GriffinShoulder", 2.3, x * 0.95, 4.95, -1.05, c.breast)
+	bone(b, "GriffinUpperArm", x * 0.97, 4.7, -1.05, x, 3.0, -1.7, 1.35, 1.35, c.breast)
+	bone(b, "GriffinForearm", x, 3.0, -1.7, x, 1.5, -1.32, 1.0, 1.0, c.breast)
+	-- feathered trousers over the top two thirds
+	for j = 0, 3 do
+		for k = -2, 2 do
+			local th = k * 0.62
+			local yy = 4.3 - j * 0.62
+			local rr = 0.78 - j * 0.07
+			bone(b, "GriffinLegPlume",
+				x + math.sin(th) * rr, yy + math.cos(th) * rr * 0.5, -1.2 - j * 0.1,
+				x + math.sin(th) * rr, yy - 0.62 + math.cos(th) * rr * 0.5, -1.16 - j * 0.1,
+				0.66, 0.18,
+				if (j + k) % 2 == 0 then c.breast else c.breast:Lerp(c.quill, 0.22), th)
+		end
+	end
+	bone(b, "GriffinTarsus", x, 1.5, -1.32, x, 0.44, -1.28, 0.54, 0.54, c.cere)
+	for k = -1, 1 do
+		local yaw = k * 0.44
+		local tx = x + math.sin(yaw) * 0.9
+		local tz = -1.3 - math.cos(yaw) * 0.9
+		bone(b, "GriffinToe", x, 0.3, -1.3, tx, 0.24, tz, 0.34, 0.34, c.cere)
+		local ex = x + math.sin(yaw) * 1.45
+		local ez = -1.3 - math.cos(yaw) * 1.45
+		bone(b, "GriffinToe", tx, 0.24, tz, ex, 0.2, ez, 0.28, 0.28, c.cere)
+		bone(b, "GriffinTalon", ex, 0.2, ez,
+			ex + math.sin(yaw) * 0.38, 0.04, ez - math.cos(yaw) * 0.38, 0.2, 0.2, c.talon)
+	end
+	bone(b, "GriffinToe", x, 0.3, -1.3, x, 0.24, -0.62, 0.3, 0.3, c.cere)
+	bone(b, "GriffinTalon", x, 0.24, -0.62, x, 0.08, -0.3, 0.19, 0.19, c.talon)
+end
+
+local function griffinHindleg(b: Body, c: Coat, side: number)
+	local x = side * 1.5
+	ball(b, "GriffinHaunch", 3.5, x * 0.94, 5.0, 6.5, c.fur)
+	bone(b, "GriffinFemur", x * 0.96, 4.7, 6.35, x, 3.05, 5.5, 1.4, 1.4, c.fur)
+	bone(b, "GriffinTibia", x, 3.05, 5.5, x * 1.05, 1.6, 6.85, 1.0, 1.0, c.fur)
+	bone(b, "GriffinHock", x * 1.05, 1.6, 6.85, x * 1.05, 0.55, 6.1, 0.72, 0.72, c.fur)
+	place(b, "GriffinPaw", v3(1.3, 0.6, 1.85), x * 1.05, 0.3, 5.55, c.fur)
+	for k = -1, 1 do
+		place(b, "GriffinPawToe", v3(0.38, 0.4, 0.52), x * 1.05 + k * 0.36, 0.24, 4.66, c.fur)
+		bone(b, "GriffinClaw", x * 1.05 + k * 0.36, 0.22, 4.44,
+			x * 1.05 + k * 0.36, 0.1, 4.16, 0.17, 0.17, c.talon)
+	end
+end
+
+local function griffinTail(b: Body, c: Coat)
+	local pts = {
+		{ 0.0, 5.35, 8.9 }, { 0.0, 5.05, 10.3 }, { 0.0, 4.35, 11.4 },
+		{ 0.0, 3.5, 12.15 }, { 0.0, 2.7, 12.55 },
+	}
+	local w = { 0.78, 0.64, 0.52, 0.42 }
+	for i = 1, #pts - 1 do
+		local a, d = pts[i], pts[i + 1]
+		bone(b, "GriffinTail", a[1], a[2], a[3], d[1], d[2], d[3], w[i], w[i], c.fur, nil, 0.12)
+	end
+	-- the tuft. A lion's tail without one is a rope.
+	for k = 0, 7 do
+		local th = k * (math.pi * 2 / 8)
+		bone(b, "GriffinTuft", 0, 2.75, 12.5,
+			math.sin(th) * 0.55, 2.35 + math.cos(th) * 0.4, 13.35, 0.3, 0.24, c.tuft, th)
+	end
+end
+
+-- THE WING. Two poses, because the animal has two jobs: folded when it is
+-- standing beside you on the court, spread when it is the picture that sells
+-- the game.
+--
+-- The first cut of this hung seven narrow feathers off a wrist and the result
+-- read as a spiky CREST, not a wing. A wing is a SURFACE. So the feathers are
+-- wide, they overlap at their roots, and three ranks of them - tertials off
+-- the humerus, secondaries off the forearm, primaries off the hand - fill the
+-- plane continuously from the body out to the fingers. Only the outer three
+-- primaries are allowed to separate, because that separation is the whole
+-- silhouette of a soaring raptor and it has to be legible at a hundred and
+-- twenty-eight pixels.
+
+local function spreadWing(b: Body, c: Coat, side: number)
+	local rx, ry, rz = side * 1.5, 6.95, 0.5
+	local ex, ey, ez = side * 6.2, 8.8, 2.6
+	local wx, wy, wz = side * 11.6, 9.2, 0.2
+
+	bone(b, "GriffinHumerus", rx, ry, rz, ex, ey, ez, 1.25, 0.85, c.covert)
+	bone(b, "GriffinRadius", ex, ey, ez, wx, wy, wz, 0.95, 0.68, c.covert)
+	-- the patagium: the skin in front of the arm. Without it the leading edge
+	-- is two sticks with a notch at the elbow, which no bird has.
+	bone(b, "GriffinPatagium", rx, ry - 0.1, rz - 0.5, wx, wy - 0.1, wz - 0.5,
+		1.5, 0.34, c.covert)
+
+	-- tertials, off the humerus, closing the gap between wing and body
+	for i = 0, 3 do
+		local u = i / 3
+		feather(b, "GriffinTertial", rx + (ex - rx) * u, ry + (ey - ry) * u - 0.12,
+			rz + (ez - rz) * u + 0.5, side * (0.16 + u * 0.1), -0.2,
+			6.0 - u * 0.8, 1.45, 0.2, c.covert:Lerp(c.primary, 0.35), c.primary)
+	end
+	-- secondaries, off the forearm: nine of them, wide and overlapping, which
+	-- is what makes the inner wing a sheet
+	for i = 0, 10 do
+		local u = i / 10
+		feather(b, "GriffinSecondary", ex + (wx - ex) * u, ey + (wy - ey) * u - 0.1,
+			ez + (wz - ez) * u + 0.55, side * (0.3 - u * 0.12), -0.16,
+			6.4 - u * 1.5, 1.24, 0.2,
+			if i % 2 == 0 then c.primary:Lerp(c.covert, 0.4) else c.primary:Lerp(c.covert, 0.22),
+			c.primary)
+	end
+	-- primaries, off the hand. Wide and lapped at the root, narrow and long at
+	-- the tip, so the wing ends in fingers.
+	for i = 0, 7 do
+		local u = i / 7
+		feather(b, "GriffinPrimary",
+			wx + side * 0.32 * i, wy - 0.05 * i, wz + 0.26 * i,
+			side * (1.5 - u * 1.3), 0.04 - u * 0.16,
+			7.2 - u * 2.0, 1.34 - u * 0.42, 0.2,
+			c.primary, c.primary:Lerp(c.quill, 0.3))
+	end
+	-- coverts, in three ranks over the leading half, so the arm is a stack and
+	-- not a plank
+	for row = 0, 2 do
+		for k = 0, 6 do
+			local u = k / 6
+			local ax = rx + (ex - rx) * math.min(1, u * 2) + (wx - ex) * math.max(0, u * 2 - 1)
+			local ay = ry + (ey - ry) * math.min(1, u * 2) + (wy - ey) * math.max(0, u * 2 - 1)
+			local az = rz + (ez - rz) * math.min(1, u * 2) + (wz - ez) * math.max(0, u * 2 - 1)
+			bone(b, "GriffinCovert", ax, ay + 0.14 - row * 0.06, az + row * 0.95,
+				ax + side * 0.12, ay + 0.1 - row * 0.08, az + row * 0.95 + 1.5,
+				1.5, 0.2,
+				if (row + k) % 2 == 0 then c.covert else c.covert:Lerp(c.quill, 0.28))
+		end
+	end
+	-- the alula, the thumb feather at the wrist: the difference between a wing
+	-- and a fan
+	feather(b, "GriffinAlula", wx, wy + 0.3, wz - 0.5, side * 2.2, 0.14, 2.0, 0.6, 0.17,
+		c.covert, c.primary)
+end
+
+-- A FOLDED wing is not the spread one with its joints moved. It is a shape
+-- lying ON the flank -- so it is built on the barrel the way the body plating
+-- is, but standing well proud of it, with the primaries crossing ABOVE the
+-- rump the way a perched bird's do. The first cut laid them flush and rooted
+-- them at the barrel's own radius, so the whole wing was inside the animal and
+-- the ground render showed a feathered dinosaur.
+local function foldedWing(b: Body, c: Coat, side: number)
+	for row = 0, 3 do
+		local theta = side * (0.44 + row * 0.26)
+		for k = 0, 5 do
+			local z = -0.7 + k * 1.15
+			onSpine(b, GSPINE, "GriffinCovert", v3(1.05, 0.3, 1.6), z, theta,
+				0.42 - row * 0.07 - math.abs(k - 2.5) * 0.05,
+				if (row + k) % 2 == 0 then c.covert else c.covert:Lerp(c.quill, 0.3),
+				CFrame.Angles(-0.1, 0, 0))
+		end
+	end
+	for k = 0, 5 do
+		onSpine(b, GSPINE, "GriffinWingEdge", v3(0.55, 0.42, 1.5), -0.8 + k * 1.15,
+			side * 0.36, 0.5, c.covert:Lerp(c.crown, 0.35))
+	end
+	for i = 0, 4 do
+		local u = i / 4
+		feather(b, "GriffinSecondary", side * (1.55 - u * 0.12), 7.9 - u * 0.16, 2.2 + u * 0.3,
+			side * (0.14 - u * 0.03), -0.09, 4.4 - u * 0.4, 1.05, 0.22,
+			c.primary:Lerp(c.covert, 0.35), c.primary)
+	end
+	for i = 0, 5 do
+		local u = i / 5
+		feather(b, "GriffinPrimary", side * (1.45 - u * 0.2), 7.75 - u * 0.14, 3.3 + u * 0.3,
+			side * (0.12 - u * 0.04), -0.1 - u * 0.02, 6.8 - u * 0.5, 1.0 - u * 0.1, 0.22,
+			c.primary, c.primary:Lerp(c.quill, 0.28))
+	end
+end
+
+-- MANTLING: the heraldic pose, wings half raised and arched forward. It is the
+-- pose a griffin is drawn in on every coat of arms, it shows the whole wing
+-- without needing a thirty-stud clearance, and it is what the animal should be
+-- doing when it is standing on a paved court with people round it.
+local function mantleWing(b: Body, c: Coat, side: number)
+	local rx, ry, rz = side * 1.5, 7.0, 0.5
+	local ex, ey, ez = side * 3.4, 10.6, 0.4
+	local wx, wy, wz = side * 5.2, 9.0, 3.0
+
+	bone(b, "GriffinHumerus", rx, ry, rz, ex, ey, ez, 1.25, 0.9, c.covert)
+	bone(b, "GriffinRadius", ex, ey, ez, wx, wy, wz, 0.95, 0.7, c.covert)
+	bone(b, "GriffinPatagium", rx, ry + 0.2, rz - 0.55, ex, ey, ez - 0.55, 1.4, 0.36, c.covert)
+
+	for row = 0, 2 do
+		for k = 0, 5 do
+			local u = k / 5
+			local ax = rx + (ex - rx) * math.min(1, u * 2) + (wx - ex) * math.max(0, u * 2 - 1)
+			local ay = ry + (ey - ry) * math.min(1, u * 2) + (wy - ey) * math.max(0, u * 2 - 1)
+			local az = rz + (ez - rz) * math.min(1, u * 2) + (wz - ez) * math.max(0, u * 2 - 1)
+			bone(b, "GriffinCovert", ax - side * 0.1, ay - row * 0.5, az + row * 0.35,
+				ax - side * 0.16, ay - row * 0.5 - 1.3, az + row * 0.35 + 0.5, 1.4, 0.2,
+				if (row + k) % 2 == 0 then c.covert else c.covert:Lerp(c.quill, 0.28))
+		end
+	end
+	for i = 0, 6 do
+		local u = i / 6
+		feather(b, "GriffinSecondary", ex + (wx - ex) * u - side * 0.15,
+			ey + (wy - ey) * u - 0.4, ez + (wz - ez) * u + 0.35,
+			side * (0.5 + u * 0.1), -1.02, 6.0 - u * 0.6, 1.3, 0.2,
+			if i % 2 == 0 then c.primary:Lerp(c.covert, 0.4) else c.primary:Lerp(c.covert, 0.22),
+			c.primary)
+	end
+	for i = 0, 6 do
+		local u = i / 6
+		feather(b, "GriffinPrimary", wx + side * 0.16 * i, wy - 0.1 * i, wz + 0.24 * i,
+			side * (0.86 - u * 0.5), -0.62 - u * 0.24, 7.0 - u * 1.5, 1.28 - u * 0.3, 0.22,
+			c.primary, c.primary:Lerp(c.quill, 0.3))
+	end
+	feather(b, "GriffinAlula", wx, wy + 0.3, wz - 0.7, side * 1.15, -0.3, 1.7, 0.55, 0.18,
+		c.covert, c.primary)
+end
+
+local function griffinWing(b: Body, c: Coat, side: number, pose: string)
+	ball(b, "GriffinWingShoulder", 2.8, side * 1.4, 7.1, 0.8, c.covert)
+	if pose == "spread" then
+		spreadWing(b, c, side)
+	elseif pose == "mantle" then
+		mantleWing(b, c, side)
+	else
+		foldedWing(b, c, side)
+	end
+end
+
+function CreatureKit.griffin(ctx: Ctx, o: {
+	x: number, y: number, z: number,
+	yaw: number?, pitch: number?, roll: number?,
+	scale: number?, coat: Coat, wings: string?, seed: number?,
+})
+	local root = CFrame.new(o.x, o.y, o.z)
+		* CFrame.Angles(0, o.yaw or 0, 0)
+		* CFrame.Angles(o.pitch or 0, 0, o.roll or 0)
+	local b: Body = {
+		ctx = ctx,
+		root = root,
+		s = o.scale or 1,
+		plume = o.coat,
+		seed = o.seed or 31,
+	}
+	local c = o.coat
+	griffinBody(b, c)
+	griffinNeck(b, c)
+	griffinHead(b, c)
+	griffinTail(b, c)
+	for _, side in { -1, 1 } do
+		griffinForeleg(b, c, side)
+		griffinHindleg(b, c, side)
+		griffinWing(b, c, side, o.wings or "folded")
+	end
+end
+
+local function grgb(r: number, g: number, bb: number): Color3
+	return Color3.fromRGB(r, g, bb)
+end
+
+-- A golden eagle in front and a lioness behind: one warm family of colours so
+-- the two halves belong to one animal, with the gold of the beak and the eye
+-- as the only saturated thing on it. At night that gold is the whole read.
+CreatureKit.GRIFFIN = {
+	label = "Griffin",
+	scale = 0.85,
+	coat = {
+		crown = grgb(150, 118, 66),
+		hackle = grgb(196, 158, 84),
+		breast = grgb(122, 92, 56),
+		covert = grgb(100, 78, 52),
+		primary = grgb(58, 48, 40),
+		quill = grgb(148, 122, 88),
+		fur = grgb(198, 160, 100),
+		belly = grgb(224, 200, 154),
+		tuft = grgb(74, 60, 44),
+		beak = grgb(228, 202, 132),
+		cere = grgb(250, 198, 54),
+		iris = grgb(255, 158, 26),
+		talon = grgb(32, 30, 32),
+	},
+}
+
+function CreatureKit.buildGriffin(ctx: Ctx, x: number, y: number, z: number,
+	yaw: number?, wings: string?, grow: number?, pitch: number?, roll: number?)
+	CreatureKit.griffin(ctx, {
+		x = x, y = y, z = z,
+		yaw = yaw, pitch = pitch, roll = roll,
+		scale = CreatureKit.GRIFFIN.scale * (grow or 1),
+		coat = CreatureKit.GRIFFIN.coat,
+		wings = wings,
+	})
+end
+
 
 return CreatureKit

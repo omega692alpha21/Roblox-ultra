@@ -369,6 +369,13 @@ if __CREATURES__ then
   __CreatureKit.buildOwl(cctx, "barn", 112.0, 0.4, 248, math.pi, 1)
   __CreatureKit.buildOwl(cctx, "snowy", 126.0, 0.4, 248, math.pi, 1)
   __CreatureKit.buildOwl(cctx, "greatgrey", 141.0, 0.4, 248, math.pi, 1)
+  -- the griffin: one standing on the court with its wings folded, and one in
+  -- flight over the clock tower with them spread, which is the picture the
+  -- whole game is sold on
+  __CreatureKit.buildGriffin(cctx, 0, 0.4, 266, math.pi, "mantle", 1)
+  __CreatureKit.buildGriffin(cctx, -46, 0.4, 258, math.pi - 0.7, "folded", 1)
+  __CreatureKit.buildOwl(cctx, "barn", 8.5, 0.4, 274, math.pi + 0.5, 1)
+  __CreatureKit.buildGriffin(cctx, 28, 122, 168, 3.5, "spread", 1, -0.1, 0.5)
 end
 local out = {}
 local function esc(s) return (s:gsub('"', '\\"')) end
@@ -967,6 +974,14 @@ shots = [
     ("owlgrey",    (147.5, 7.6, 261), (141, 4.8, 248.2)),
     ("owlface",    (144.4, 8.0, 254.5), (141, 7.0, 248)),
     ("owlback",    (162, 6.0, 240),   (140, 4.2, 249)),
+    ("griffin",    (11, 7.0, 294),    (0, 5.2, 268)),
+    ("griffprof",  (38, 6.4, 262),    (0, 5.2, 266)),
+    ("griffhead",  (11, 11.4, 289),   (0, 8.8, 271)),
+    ("griffscale", (27, 7.4, 297),    (2, 4.6, 270)),
+    ("griffrear",  (-30, 8.0, 246),   (0, 5.0, 262)),
+    ("griffsky",   (60, 98, 226),     (28, 120, 170)),
+    ("griffwing",  (66, 116, 196),    (29, 120, 169)),
+    ("grifffold",  (-22, 6.6, 282),   (-46, 4.8, 259)),
     ("entrance",   (0, 55, 300),     (0, 26, 110)),
     ("approach",   (0, 6, 190),      (0, 12, 120)),
     ("facade34",   (-190, 70, 300),  (0, 24, 60)),
@@ -1148,7 +1163,8 @@ else:
     # The four reference angles again, at night, which is the only light the
     # art direction is written for.
     for name in ("spawnview", "eyegate", "entrance", "courtnorth", "dormcourteye", "siteplan",
-                 "overview", "dormcourt", "library", "owlline", "owlgrey"):
+                 "overview", "dormcourt", "library", "owlline", "owlgrey",
+                 "griffin", "griffprof", "griffsky"):
         if only and name not in only:
             continue
         cam, target = next(((c, t) for n, c, t in shots if n == name), (None, None))
