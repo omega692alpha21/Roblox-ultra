@@ -347,6 +347,29 @@ map_src = map_src.replace("return MapService", "__MapService = MapService")
 
 EXPORT = r'''
 local map = __MapService.Build()
+
+-- CREATURES=1 stands the creature kit's owls on the Great Court so they can be
+-- looked at. OFF by default and never in the dump the twenty-three checks read,
+-- because a bird on the paving is not part of the school and every one of those
+-- checks would rightly have something to say about it.
+if __CREATURES__ then
+  local pen = Instance.new("Folder")
+  pen.Name = "Creatures"
+  pen.Parent = map.folder
+  local function cpart(props)
+    local p = Instance.new("Part")
+    p.Anchored = true
+    p.Material = Enum.Material.SmoothPlastic
+    for k, v in pairs(props) do
+      p[k] = v
+    end
+    return p
+  end
+  local cctx = { parent = pen, part = cpart, tag = function() end }
+  __CreatureKit.buildOwl(cctx, "barn", 112.0, 0.4, 248, math.pi, 1)
+  __CreatureKit.buildOwl(cctx, "snowy", 126.0, 0.4, 248, math.pi, 1)
+  __CreatureKit.buildOwl(cctx, "greatgrey", 141.0, 0.4, 248, math.pi, 1)
+end
 local out = {}
 local function esc(s) return (s:gsub('"', '\\"')) end
 local function walk(inst, parentName)
@@ -447,10 +470,11 @@ program = (
     + load_module(os.path.join(REPO, "src/ReplicatedStorage/Shared/CampusPlan.luau"), "__CampusPlan")
     + load_module(os.path.join(REPO, "src/ServerScriptService/Services/CollegiateKit.luau"), "__Kit")
     + load_module(os.path.join(REPO, "src/ServerScriptService/Services/GroundsKit.luau"), "__Grounds")
+    + load_module(os.path.join(REPO, "src/ServerScriptService/Services/CreatureKit.luau"), "__CreatureKit")
     + load_module(os.path.join(REPO, "src/ServerScriptService/Services/PlanBuilder.luau"), "__PlanBuilder")
     + "local __MapService\n"
     + map_src
-    + EXPORT
+    + EXPORT.replace("__CREATURES__", "true" if os.environ.get("CREATURES") else "false")
 )
 lua_path = os.path.join(OUT, "_map_export.luau")
 open(lua_path, "w").write(program)
@@ -933,6 +957,16 @@ def render(cam, target, path, width=1280, height=720, fov=70, sky=((150, 195, 23
 # inside a roof wedge. Four interiors nobody had looked at all session, because
 # the pictures of them were pictures of stone.
 shots = [
+    # CREATURES=1 only: the owl line on the Great Court paving. These stand
+    # empty on a normal pass, which is why they are never in the blind-camera
+    # census unless the birds are actually there.
+    ("owlline",    (126.5, 5.4, 274), (126.5, 3.5, 248)),
+    ("owlgroup",   (129, 6.4, 259.5), (140.5, 4.6, 248.5)),
+    ("owlbarn",    (115.6, 4.6, 258), (112, 3.1, 248)),
+    ("owlsnowy",   (129.5, 5.6, 258), (126, 4.0, 248)),
+    ("owlgrey",    (147.5, 7.6, 261), (141, 4.8, 248.2)),
+    ("owlface",    (144.4, 8.0, 254.5), (141, 7.0, 248)),
+    ("owlback",    (162, 6.0, 240),   (140, 4.2, 249)),
     ("entrance",   (0, 55, 300),     (0, 26, 110)),
     ("approach",   (0, 6, 190),      (0, 12, 120)),
     ("facade34",   (-190, 70, 300),  (0, 24, 60)),
@@ -1114,7 +1148,7 @@ else:
     # The four reference angles again, at night, which is the only light the
     # art direction is written for.
     for name in ("spawnview", "eyegate", "entrance", "courtnorth", "dormcourteye", "siteplan",
-                 "overview", "dormcourt", "library"):
+                 "overview", "dormcourt", "library", "owlline", "owlgrey"):
         if only and name not in only:
             continue
         cam, target = next(((c, t) for n, c, t in shots if n == name), (None, None))
