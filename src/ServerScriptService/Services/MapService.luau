@@ -4068,7 +4068,7 @@ end
 -- Lamps down a walk, alternating sides. A path with no standards on it is a
 -- strip of paving nobody can see after dark, and tools/nightlight_check.py is
 -- what found them -- the whole three-legged route to the library among them.
-local function lampWalk(parent: Instance, x0: number, z0: number, x1: number, z1: number, offset: number, spacing: number)
+local function lampWalk(parent: Instance, x0: number, z0: number, x1: number, z1: number, offset: number, spacing: number, avoidHalf: number?)
 	local dx, dz = x1 - x0, z1 - z0
 	local length = math.sqrt(dx * dx + dz * dz)
 	if length < spacing then
@@ -4079,6 +4079,15 @@ local function lampWalk(parent: Instance, x0: number, z0: number, x1: number, z1
 	local n = math.max(1, math.floor(length / spacing))
 	for i = 1, n do
 		local t = (i - 0.5) * (length / n)
+		-- KEEP OFF THE CROSSING. n comes out odd on the dorm court's two cross
+		-- walks, so the middle lamp of three lands exactly on the centre of
+		-- the run -- which is where the entrance axis crosses it, and the
+		-- entrance axis runs at the boarding house's front door. A cast-iron
+		-- lamp post stood dead centre in the dorm's doorway in every picture
+		-- taken of the building, including two of the four reference angles.
+		if avoidHalf and math.abs(t - length / 2) < avoidHalf then
+			t = length / 2 + (if t < length / 2 then -1 else 1) * (avoidHalf + 6)
+		end
 		local side = if i % 2 == 0 then 1 else -1
 		courtLamp(parent, x0 + ux * t + px * offset * side, z0 + uz * t + pz * offset * side)
 	end
@@ -4148,7 +4157,7 @@ local function buildDormCourt(parent: Instance)
 	-- lamps for the whole court, fifteen per cent of the two walks every
 	-- boarder crosses twice a day was unlit ground
 	for _, wz in { cz - (depth / 2 - WALK), cz + (depth / 2 - WALK) } do
-		lampWalk(parent, cx - 110, wz, cx + 110, wz, 11, 62)
+		lampWalk(parent, cx - 110, wz, cx + 110, wz, 11, 62, AXIS_HALF + 4)
 	end
 	-- the dial on the crossing, and lamps at the four corners of the walks
 	Grounds.dial(kit, cx, cz, upLight :: any)
@@ -8422,7 +8431,17 @@ local function buildRoomLights(parent: Instance)
 			end
 		end
 	end
-	for _, name in { "Academy", "Student Dorms", "Library", "Cafeteria", "Detention Hall", "Gymnasium", "Secret Rooftop" } do
+	-- NOT the Library. It is the one building on the drawing that PlanBuilder
+	-- does not render: the drawing reserves 200 x 96 at (-420, -348) and
+	-- buildLibrary puts a 94 x 70 building inside that, so most of the plan's
+	-- cells for it are open lawn. Running this over them hung fifteen ceiling
+	-- panels in the air outside the walls, up to fifty studs clear of the
+	-- building, lit -- and they are in the picture: a row of white slabs
+	-- floating beside the library's gable end in every shot taken from the
+	-- east. Exactly the fault buildLibraryLanterns already carries a note
+	-- about, in the same envelope, for the same reason. The hand-built library
+	-- lights its own rooms.
+	for _, name in { "Academy", "Student Dorms", "Cafeteria", "Detention Hall", "Gymnasium", "Secret Rooftop" } do
 		local b = CampusPlan.building(name)
 		if not b then
 			continue

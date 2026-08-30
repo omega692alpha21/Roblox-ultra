@@ -938,7 +938,7 @@ shots = [
     ("facade34",   (-190, 70, 300),  (0, 24, 60)),
     ("lobby",      (0, 7, 116),      (0, 6, 60)),
     ("corridor",   (-180, 6, 70),    (0, 6, 70)),
-    ("atrium",     (0, 7, 56),       (0, 8, -30)),
+    ("atriumaxis", (0, 7, 56),       (0, 8, -30)),
     ("courtyard",  (-116, 8, 40),    (-116, 4, -40)),
     ("greenhouse", (-116, 6, 20),    (-116, 6, -40)),
     ("eastlab",    (116, 6, 20),     (116, 6, -40)),
@@ -946,7 +946,11 @@ shots = [
     ("office2",    (-200, 7, 56),    (-207, 6, 18)),
     ("gym",        (0, 9, -70),      (0, 8, -130)),
     ("room101",    (-74, 6, -70),    (-74, 6, -120)),
-    ("library",    (-320, 16, -220),  (-320, 14, -300)),
+    # Was also called "library" -- there were TWO cameras of that name in this
+    # list, so one of them silently overwrote the other's picture and the night
+    # pass took whichever came first. This one stood forty-five studs off the
+    # portico and framed a column; pulled back to hold the whole front.
+    ("libfront",   (-190, 30, -212),  (-306, 18, -290)),
     ("libinside",  (-320, 7, -264),   (-320, 9, -330)),
     ("dorms",      (0, 9, -206),     (0, 9, -280)),
     ("westquad",   (-116, 24, 44),   (-116, 4, -10)),
@@ -955,14 +959,14 @@ shots = [
     ("head",       (-266, 41, -170),  (-320, 39, -170)),
     ("headdesk",   (-330, 42, -170),  (-280, 40, -170)),
     ("turret",     (-249, 30, -176),  (-249, 20, -190)),
-    ("libshaft",   (-338, 8, -290),   (-370, 7, -290)),
+    ("libshaft",   (-334, 8, -300),   (-368, 7, -292)),
     ("dorm",       (0, 7, -276),      (0, 7, -352)),
     ("cafeteria",  (372, 8, -230),    (372, 4, -300)),
     ("libinterior",(-320, 10, -268),  (-320, 6, -318)),
     ("court",      (-116, 14, 62),    (-116, 4, 20)),
     ("courtwide",  (-176, 26, 70),    (-110, 6, 20)),
     ("officewide", (-190, 8, 55),    (-212, 5, 20)),
-    ("upperhall",  (-180, 22, 65),   (0, 22, 65)),
+    ("upperhallw", (-180, 22, 65),   (0, 22, 65)),
     ("upperbalc",  (-100, 24, 60),   (0, 20, -20)),
     ("lobbystair", (10, 8, 112),     (46, 14, 100)),
     ("upperroom",  (-190, 22, 78),   (-190, 22, 110)),
@@ -1033,7 +1037,7 @@ shots = [
     # was (0,115,-148) -> (0,6,-292): a camera twenty studs off the ridge,
     # which gave over half the frame to roof and cropped the range's ends. The
     # reference is taken from across the court with the whole U in frame.
-    ("dormcourt",  (0, 52, -128),     (0, 26, -292)),
+    ("dormcourt",  (0, 34, -158),     (0, 24, -290)),
     ("dormcourteye",(-58, 6, -166),   (10, 12, -252)),
     # The estate fence, and the whole core from the air at the angle the
     # labelled site plan is drawn at.
@@ -1041,6 +1045,39 @@ shots = [
     ("fencenorth", (-260, 20, 660),   (-120, 6, 520)),
     ("siteplan",   (60, 620, 900),    (15, 0, 40)),
 ]
+
+# Two entries were both called "library". Every shot writes shot_<name>.png, so
+# the second quietly overwrote the first's picture, and the night pass -- which
+# looks a name up with next() -- rendered the OTHER one. One camera's view of
+# the building was never seen by anybody all session. A name is the only handle
+# these have; they have to be unique.
+_dupes = sorted({n for n in [s[0] for s in shots] if [s[0] for s in shots].count(n) > 1})
+if _dupes:
+    raise SystemExit("two cameras share a name, so one of them writes over the "
+                     "other's picture: " + ", ".join(_dupes))
+
+
+def cameras_in_solid(parts):
+    """Which cameras are standing INSIDE something.
+
+    The 80-per-cent-one-colour test after the render catches a camera pointed
+    at a wall, and it is the wrong end of the problem: it reports a share, not
+    a reason, and it says nothing until sixty pictures have been drawn. A
+    camera buried in a tree trunk renders a plain brown rectangle -- which is
+    what shot_libfront was, and what somebody then has to open an image to find
+    out. Say it by name, before anything is drawn, with what it is inside.
+    """
+    inside = []
+    for name, cam, _t in shots:
+        for q in parts:
+            if q["t"] >= 0.95 or not q.get("cc", True):
+                continue
+            r, sz, c = q["r"], q["s"], q["p"]
+            half = [0.5 * sum(abs(r[i * 3 + j]) * sz[j] for j in range(3)) for i in range(3)]
+            if all(abs(cam[i] - c[i]) < half[i] for i in range(3)):
+                inside.append((name, q["n"]))
+                break
+    return inside
 # SKIP_SHOTS=1 exports the part dump and stops. The dump takes a few seconds;
 # drawing sixty z-buffered PNGs takes minutes, and the check suite only ever
 # reads the dump. Set it when you are iterating on geometry and looking at
@@ -1056,6 +1093,8 @@ else:
     # pictures and four minutes; when the question is "did that camera move to
     # the right place", one picture answers it.
     only = set(filter(None, os.environ.get("ONLY", "").split(",")))
+    for _name, _what in cameras_in_solid(parts):
+        print(f"camera {_name} is standing inside {_what}")
     from collections import Counter as _Counter
     blind = []
     for name, cam, target in shots:
