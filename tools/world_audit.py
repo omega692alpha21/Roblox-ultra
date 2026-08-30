@@ -364,7 +364,12 @@ WALKS = [
     # from the gym to its door does not exist. What replaces it is the walk
     # from the Academy's rear doors out onto the back lawn.
     ("academy rear to lawn", (0, 0, -152), (0, 0, -186)),
-    ("library colonnade", (-311, 0, -254), (-311, 0, -272)),
+    # Down the DOOR AXIS, x -320, not x -311. This route was written nine
+    # studs off the axis because the middle column of a five-column colonnade
+    # stood dead in front of the library doors and the walk had to dodge it:
+    # the check encoded the defect. The portico is an even six now with a gap
+    # on its centre line, so the way in is the way in.
+    ("library colonnade", (-320, 0, -254), (-320, 0, -272)),
     # The stairs, sampled as ramps. This is the check that would have caught
     # the gap between the upper deck and the roof slabs the first time.
     ("lobby stair W", (-46, 0.5, 114), (-46, 16, 88)),

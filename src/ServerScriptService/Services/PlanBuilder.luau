@@ -626,21 +626,50 @@ function PlanBuilder.build(ctx: Ctx, name: string)
 		ctx.tag(ctx.part({ Name = "PlanGableCoping", Size = facing(4.4, 2.2, 4.4), CFrame = atGable(0.6, rise + 0.7, 0), Color = ASHLAR, Material = Enum.Material.Concrete, Parent = ctx.parent }), "TexAshlar").CanCollide = false
 	end
 
-	-- dormers down the long slopes, and a chimney on each gable end
-	local slopeCount = math.max(2, math.floor((if runsX then width else depth) / 46))
-	for i = 1, slopeCount do
-		local t = (i - 0.5) / slopeCount
-		local along = (if runsX then x0 else z0) + t * (if runsX then width else depth)
-		local halfSpan = (if runsX then depth else width) / 2 + 2
-		local dormerBase = eaves + 2.2 + rise * 0.34
-		local set = halfSpan * 0.62
+	-- DORMERS ON THE BAY CENTRES, AND SIZED TO THE ROOF THEY STAND ON.
+	--
+	-- They were placed on a rhythm of their own -- floor(length / 46) of them,
+	-- evenly spread -- and built at a fixed 7 by 6 whatever the roof was. On
+	-- the boarding house that gives six dormers at x -125, -75, -25, 25, 75,
+	-- 125 against window bays at +-11.5, 34.6, 57.7, 80.8, 103.8, 126.9: not
+	-- one dormer over a window, every one of them between two, on a slope 304
+	-- studs long and 75.6 studs up the pitch. Seven studs wide on a 23-stud
+	-- bay, six tall against a 43-stud rise. Thirty-nine per cent of that slope
+	-- was bare above them, and the courtyard it faces is two of the four
+	-- reference images.
+	--
+	-- The bays come from windowsAlong, so the dormers are worked out the same
+	-- way and land on the same centres: take every other bay, mirrored about
+	-- the middle so the rank stays symmetric and the entrance bay keeps a
+	-- clear span over it.
+	local runLen = if runsX then width else depth
+	local bayCount = math.max(1, math.floor((runLen - WINDOW_PITCH) / WINDOW_PITCH))
+	local baySpacing = runLen / (bayCount + 1)
+	local picks: { number } = {}
+	for i = 1, math.floor(bayCount / 2), 2 do
+		table.insert(picks, i)
+		table.insert(picks, bayCount + 1 - i)
+	end
+	if #picks == 0 then
+		picks = { math.max(1, math.round(bayCount / 2)) }
+	end
+	local halfSpan = (if runsX then depth else width) / 2 + 2
+	local dormerBase = eaves + 2.2 + rise * 0.34
+	local set = halfSpan * 0.62
+	-- a dormer is about two thirds of its bay wide, and its face about three
+	-- tenths of the rise, so it grows with the roof instead of sitting on it
+	-- like a postage stamp
+	local dormerW = math.clamp(baySpacing * 0.62, 7, 16)
+	local dormerH = math.clamp(rise * 0.28, 6, 13)
+	for _, i in picks do
+		local along = (if runsX then x0 else z0) + i * baySpacing
 		-- both slopes. A pitched roof has two, and putting dormers on only one
 		-- of them gives a building that looks finished from one side.
 		for _, slope in { -1, 1 } do
 			if runsX then
-				Kit.dormer(K, { x = along, y = dormerBase, z = cz + slope * set, facing = if slope > 0 then 0 else 180, width = 7, height = 6 })
+				Kit.dormer(K, { x = along, y = dormerBase, z = cz + slope * set, facing = if slope > 0 then 0 else 180, width = dormerW, height = dormerH })
 			else
-				Kit.dormer(K, { x = cx + slope * set, y = dormerBase, z = along, facing = if slope > 0 then 90 else 270, width = 7, height = 6 })
+				Kit.dormer(K, { x = cx + slope * set, y = dormerBase, z = along, facing = if slope > 0 then 90 else 270, width = dormerW, height = dormerH })
 			end
 		end
 	end

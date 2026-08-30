@@ -581,8 +581,15 @@ local function buildLibrary(parent: Instance, center: Vector3)
 	-- Slimmer and further apart than they were: at 4 studs across on a 13 stud
 	-- pitch the colonnade read as a fence and hid the building behind it. Each
 	-- column now gets a base and a capital, without which a cylinder is a pipe.
-	for i = -2, 2 do
-		local cx = i * 18
+	--
+	-- SIX, and none of them on the axis. The comment said six and the loop ran
+	-- `for i = -2, 2`, which is five -- and the middle one stood at cx 0, dead
+	-- in front of the doors, so the entrance to the library was a column. An
+	-- even colonnade has a gap on its centre line; that is what the centre
+	-- line is for. The pitch is 15 offset by half, which keeps the outer pair
+	-- inside the 88-stud architrave they carry and the inner pair clear of the
+	-- 16-stud door opening.
+	for _, cx in { -40.5, -25.5, -10.5, 10.5, 25.5, 40.5 } do
 		part({
 			Name = "LibraryColumn",
 			Shape = Enum.PartType.Cylinder,
@@ -595,6 +602,64 @@ local function buildLibrary(parent: Instance, center: Vector3)
 		part({ Name = "LibraryColumnBase", Size = Vector3.new(4.6, 1.6, 4.6), CFrame = CFrame.new(center) * CFrame.new(cx, 0.8, halfD + 9), Color = Color3.fromRGB(226, 220, 206), Material = Enum.Material.Marble, Parent = parent })
 		part({ Name = "LibraryColumnCap", Size = Vector3.new(4.8, 1.4, 4.8), CFrame = CFrame.new(center) * CFrame.new(cx, H - 0.7, halfD + 9), Color = Color3.fromRGB(236, 231, 218), Material = Enum.Material.Marble, Parent = parent })
 	end
+	-- THE DOORWAY. The south wall is cut in three pieces with a sixteen-stud
+	-- gap between them and a lintel over it, and for the life of the building
+	-- that gap was all there was: a hole, with no jamb, no head, no threshold
+	-- and no leaf in it. Every other entrance on this campus is a dressed
+	-- opening; this was the one you walked through to reach the pyramid.
+	do
+		local dh = H - 8            -- the head of the opening, under the lintel
+		for _, side in { -1, 1 } do
+			tag(part({ Name = "LibraryDoorJamb", Size = Vector3.new(2.6, dh + 1.0, 4.0), CFrame = CFrame.new(center) * CFrame.new(side * 9.0, (dh + 1.0) / 2, halfD + 0.6), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+			-- the leaf, swung open against its own jamb
+			part({
+				Name = "LibraryDoorLeaf",
+				Size = Vector3.new(7.6, dh - 1.4, 0.8),
+				CFrame = CFrame.new(center) * CFrame.new(side * 7.6, (dh - 1.4) / 2, halfD - 1.2) * CFrame.Angles(0, side * math.rad(68), 0),
+				Color = Color3.fromRGB(107, 74, 46),
+				Material = Enum.Material.WoodPlanks,
+				Parent = parent,
+			}).CanCollide = false
+			part({ Name = "LibraryDoorHandle", Size = Vector3.new(0.5, 1.6, 0.5), CFrame = CFrame.new(center) * CFrame.new(side * 4.4, dh / 2, halfD - 3.4), Color = Color3.fromRGB(168, 132, 58), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		end
+		tag(part({ Name = "LibraryDoorHead", Size = Vector3.new(22.0, 2.4, 4.4), CFrame = CFrame.new(center) * CFrame.new(0, dh + 1.2, halfD + 0.8), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		tag(part({ Name = "LibraryDoorKeystone", Size = Vector3.new(3.0, 3.4, 4.8), CFrame = CFrame.new(center) * CFrame.new(0, dh + 1.6, halfD + 1.0), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		tag(part({ Name = "LibraryThreshold", Size = Vector3.new(20.0, 0.7, 7.0), CFrame = CFrame.new(center) * CFrame.new(0, 0.35, halfD + 2.6), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+	end
+
+	-- THE EAST ELEVATION. Sixty-eight studs of sandstone from plinth to
+	-- cornice with not one opening in it: the window loop iterates only the
+	-- two z faces, and the west face is spoken for by the secret bookshelf, so
+	-- the east one got nothing at all. Three lights, the same round-headed
+	-- ones as the long sides.
+	for _, wz in { -20, 0, 20 } do
+		local at = CFrame.new(center) * CFrame.new(halfW + 1.3, WIN_SILL + WIN_H / 2, wz)
+		tag(part({ Name = "LibraryWinSurround", Size = Vector3.new(1.6, WIN_H + 3.4, WIN_W + 3.4), CFrame = at, Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		local pane = part({ Name = "LibraryWindow", Size = Vector3.new(0.7, WIN_H, WIN_W), CFrame = at * CFrame.new(0.5, 0, 0), Color = Color3.fromRGB(255, 196, 107), Material = Enum.Material.Neon, Transparency = 0.34, Parent = parent })
+		pane.CanCollide = false
+		pane.CastShadow = false
+		part({ Name = "LibraryWinMullion", Size = Vector3.new(0.9, WIN_H, 0.6), CFrame = at * CFrame.new(0.8, 0, 0), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		part({ Name = "LibraryWinTransom", Size = Vector3.new(0.9, 0.6, WIN_W), CFrame = at * CFrame.new(0.8, WIN_H / 4, 0), Color = Color3.fromRGB(42, 42, 40), Material = Enum.Material.Metal, Parent = parent }).CanCollide = false
+		tag(part({ Name = "LibraryWinSill", Size = Vector3.new(2.4, 0.8, WIN_W + 4.4), CFrame = at * CFrame.new(0.3, -(WIN_H / 2 + 0.6), 0), Color = Color3.fromRGB(201, 191, 169), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar").CanCollide = false
+		local arch = Instance.new("Part")
+		arch.Name = "LibraryWinHead"
+		arch.Shape = Enum.PartType.Cylinder
+		arch.Anchored = true
+		arch.CanCollide = false
+		arch.Size = Vector3.new(1.6, WIN_W + 3.4, WIN_W + 3.4)
+		arch.CFrame = at * CFrame.new(0, WIN_H / 2, 0)
+		arch.Color = Color3.fromRGB(201, 191, 169)
+		arch.Material = Enum.Material.Concrete
+		arch.Parent = parent
+		tag(arch, "TexAshlar")
+		local glow = Instance.new("PointLight")
+		glow.Color = Color3.fromRGB(255, 220, 160)
+		glow.Brightness = 0.9
+		glow.Range = 24
+		glow.Shadows = false
+		glow.Parent = pane
+	end
+
 	-- entablature the columns actually carry
 	part({ Name = "LibraryArchitrave", Size = Vector3.new(W - 4, 2.6, 7), CFrame = CFrame.new(center) * CFrame.new(0, H + 1.3, halfD + 9), Color = Color3.fromRGB(236, 231, 218), Material = Enum.Material.Marble, Parent = parent })
 	part({
