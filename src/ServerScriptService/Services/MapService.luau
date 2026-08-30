@@ -4207,6 +4207,103 @@ local function buildDormCourt(parent: Instance)
 	end
 end
 
+-- ================= THE WEST LAWN =================
+-- A probe that flood-fills the core for ground with nothing standing on it
+-- says 429,000 square studs of the built campus -- 38 per cent -- is empty,
+-- and 189,000 of that is ONE patch: the whole west side between the Great
+-- Court, the detention hall and the bike track. Four hundred by two hundred
+-- studs of mown nothing with thirty-seven trees scattered over it, which is
+-- one tree per two and a half thousand square studs. The aerial reference is a
+-- landscaped campus; this read as a field with buildings on it.
+--
+-- Drawn before it is built, in the order the plan demands: the ways through
+-- first, then what fills the ground between them. The west walk runs out of
+-- the court's own west gate -- the opening in the railing at z 193..227 -- so
+-- it is a desire line rather than a path laid where there happened to be room.
+-- The three spurs and the south walk close a circuit round two lawn panels;
+-- every walk BUTTS its neighbour rather than lapping over it, because two
+-- paving slabs that overlap share a top face and 245 square studs of the first
+-- version of this flickered.
+local function buildWestGrounds(parent: Instance)
+	local kit = { parent = parent, part = part :: any, tag = tag :: any }
+	local PAVE = Color3.fromRGB(120, 120, 128)
+
+	-- ---- circulation, decided first ----
+	local AXIS_Z = 210          -- the court's cross axis, straight out of its west gate
+	local WALK_HALF = 13
+	local SPUR_HALF = 7
+	local WEST_END = -448       -- short of the boundary planting
+	local SOUTH_Z = 142         -- clear of the Academy, whose envelope ends at z 124
+	local SPURS = { -400, -255, -180 }
+
+	local function walk(x0: number, z0: number, x1: number, z1: number)
+		tag(part({
+			Name = "WestWalk",
+			-- the dorm court's walks, to the stud: -0.2 .. 0.4
+			Size = Vector3.new(math.abs(x1 - x0), 0.6, math.abs(z1 - z0)),
+			CFrame = CFrame.new((x0 + x1) / 2, 0.1, (z0 + z1) / 2),
+			Color = PAVE,
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		}), "TexCourtPaving").CanCollide = false
+	end
+	walk(WEST_END, AXIS_Z - WALK_HALF, -150, AXIS_Z + WALK_HALF)
+	walk(SPURS[1] - SPUR_HALF, SOUTH_Z - SPUR_HALF, SPURS[3] + SPUR_HALF, SOUTH_Z + SPUR_HALF)
+	for _, sx in SPURS do
+		walk(sx - SPUR_HALF, SOUTH_Z + SPUR_HALF, sx + SPUR_HALF, AXIS_Z - WALK_HALF)
+	end
+	-- the joints that make paving read as paving rather than as a grey field
+	for i = -7, 7 do
+		local jx = -300 + i * 38
+		if jx > WEST_END and jx < -152 then
+			part({ Name = "WestWalkJoint", Size = Vector3.new(1.0, 0.5, WALK_HALF * 2), CFrame = CFrame.new(jx, 0.22, AXIS_Z), Color = Color3.fromRGB(92, 92, 98), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+		end
+	end
+
+	-- ---- two lawn panels in the block the walks enclose ----
+	local pz = (SOUTH_Z + SPUR_HALF + AXIS_Z - WALK_HALF) / 2
+	local phd = (AXIS_Z - WALK_HALF - SOUTH_Z - SPUR_HALF) / 2
+	local panels = {}
+	for i = 1, #SPURS - 1 do
+		local x0, x1 = SPURS[i] + SPUR_HALF, SPURS[i + 1] - SPUR_HALF
+		table.insert(panels, { x = (x0 + x1) / 2, hw = (x1 - x0) / 2 })
+	end
+	for _, panel in panels do
+		Grounds.lawnPanel(kit, panel.x, pz, panel.hw - 2, phd - 2)
+		-- a yew at each corner, set in, so the panel is framed and not fenced
+		for _, ox in { -1, 1 } do
+			for _, oz in { -1, 1 } do
+				Grounds.yewCone(kit, panel.x + ox * (panel.hw - 10), pz + oz * (phd - 8), 9)
+			end
+		end
+		Grounds.urn(kit, panel.x, pz, 1.1)
+	end
+
+	-- ---- the lime avenue down the west walk ----
+	for i = 0, 6 do
+		local tx = -180 - i * 42
+		meshTree(parent, Vector3.new(tx, 0.9, AXIS_Z + WALK_HALF + 8), 1.25)
+		meshTree(parent, Vector3.new(tx, 0.9, pz + phd - 6), 1.25)
+	end
+	-- a belt of informal planting on the boundary side: the campus stops at a
+	-- hedge line, not at a fence in a field
+	for i = 0, 4 do
+		local tz = 140 + i * 20
+		meshTree(parent, Vector3.new(-486 - (i % 2) * 26, 0.9, tz), 1.4)
+		meshTree(parent, Vector3.new(-520 + (i % 2) * 18, 0.9, tz + 10), 1.15)
+	end
+
+	-- ---- lamps down every walk, and benches facing the lawns ----
+	lampWalk(parent, WEST_END + 20, AXIS_Z, -160, AXIS_Z, WALK_HALF + 4, 66, SPUR_HALF + 6)
+	lampWalk(parent, SPURS[1] + 20, SOUTH_Z, SPURS[3] - 20, SOUTH_Z, SPUR_HALF + 4, 62)
+	for _, panel in panels do
+		for _, ox in { -1, 1 } do
+			Grounds.bench(kit, panel.x + ox * (panel.hw - 22), pz + phd + 3, 0)
+			Grounds.bench(kit, panel.x + ox * (panel.hw - 22), pz - phd - 3, math.pi)
+		end
+	end
+end
+
 -- ================= THE BIKE TRACK =================
 -- CampusPlan draws it at (-550, 230) to (-310, 430) and nothing has ever
 -- stood there: 48,000 square studs of the campus that the drawing spends on a
@@ -10052,6 +10149,7 @@ end
 	buildGreatCourt(folder)
 	buildBikeTrack(folder)
 	buildDormCourt(folder)
+	buildWestGrounds(folder)
 	detailCorridor(folder)
 
 	-- ---------------- outside: entrance, dorms, grounds ----------------

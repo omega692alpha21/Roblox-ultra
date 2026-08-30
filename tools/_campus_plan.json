@@ -5377,6 +5377,16 @@
   },
   {
    "kind": "grounds",
+   "name": "West Lawn",
+   "rect": [
+    -545,
+    128,
+    -170,
+    229
+   ]
+  },
+  {
+   "kind": "grounds",
    "name": "Bike Track",
    "rect": [
     -550,

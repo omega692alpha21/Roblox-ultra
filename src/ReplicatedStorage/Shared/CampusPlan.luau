@@ -86,6 +86,14 @@ Plan.SITE = {
 	{ name = "Gymnasium", rect = { 330, 340, 520, 470 }, kind = "building", link = { "Hidden Alley" } },
 	{ name = "Secret Rooftop", rect = { 155, 345, 265, 455 }, kind = "building", link = { "Hidden Alley" } },
 	{ name = "Hidden Alley", rect = { 265, 390, 330, 410 }, kind = "grounds", link = { "Gymnasium", "Secret Rooftop" } },
+	-- THE WEST LAWN. A probe that flood-fills the core for ground with nothing
+	-- standing on it found 429,000 square studs empty -- 38 per cent of the
+	-- built campus -- and 189,000 of that was ONE patch, here: the whole west
+	-- side between the court, the detention hall and the bike track, four
+	-- hundred by two hundred studs of mown nothing with thirty-seven trees
+	-- scattered over it. The aerial reference is a landscaped campus, not a
+	-- field with buildings on it. This is the ground that gap is on.
+	{ name = "West Lawn", rect = { -545, 128, -170, 229 }, kind = "grounds" },
 	{ name = "Bike Track", rect = { -550, 230, -310, 430 }, kind = "grounds" },
 	{ name = "Main Gate", rect = { -30, 540, 30, 560 }, kind = "grounds", ceremonial = true },
 }
