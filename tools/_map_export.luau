@@ -7686,6 +7686,78 @@ local function buildDormCourt(parent: Instance)
 	end
 end
 
+-- ================= THE EAST WALK =================
+-- Two faults, one path.
+--
+-- The car park is 25,200 square studs of tarmac with twelve cars on it and
+-- nothing joining it to anything: no drive, no kerb cut, no footway. A player
+-- reaches it by walking across grass, and from the air it reads as a slab
+-- dropped on a lawn.
+--
+-- And the Great Court's east gate is the twin of the west one -- the same
+-- stone piers, the same opening in the railing at z 193..227 -- except the
+-- west gate now leads out onto the West Lawn's walk and the east gate opens
+-- onto ninety-three studs of blank grass.
+--
+-- So the walk goes between them, round the Academy's east range rather than
+-- through it: north out of the car park's corner, west along the range's end,
+-- and into the gate. The dog-leg is not decoration; the Academy occupies
+-- x -224..224 up to z 124 and there is no straight line.
+local function buildEastWalk(parent: Instance)
+	local PAVE = Color3.fromRGB(120, 120, 128)
+	local HALF = 7.0
+	local CORNER_X, CORNER_Z = 250.0, 110.0
+	local GATE_X, GATE_Z = 155.0, 210.0
+	local kit = { parent = parent, part = part :: any, tag = tag :: any }
+
+	local function walk(x0: number, z0: number, x1: number, z1: number)
+		tag(part({
+			Name = "EastWalk",
+			Size = Vector3.new(math.abs(x1 - x0), 0.6, math.abs(z1 - z0)),
+			CFrame = CFrame.new((x0 + x1) / 2, 0.1, (z0 + z1) / 2),
+			Color = PAVE,
+			Material = Enum.Material.Slate,
+			Parent = parent,
+		}), "TexCourtPaving").CanCollide = false
+	end
+	-- out of the car park's north-west corner, and round the corner, and in at
+	-- the gate. Each leg BUTTS the next at the corner square rather than
+	-- lapping it, because two paving slabs that overlap share a top face.
+	-- 340, not 348: the car park's tarmac runs to x 340 and a walk starting
+	-- inside it laid fifty-six square studs of paving over the top of it. A
+	-- butt joint is back-face culled and never fights; an overlap always does.
+	walk(340.0, CORNER_Z - HALF, CORNER_X + HALF, CORNER_Z + HALF)
+	walk(CORNER_X - HALF, CORNER_Z - HALF, CORNER_X + HALF, GATE_Z + HALF)
+	walk(GATE_X, GATE_Z - HALF, CORNER_X - HALF, GATE_Z + HALF)
+	for i = -4, 4 do
+		local jz = CORNER_Z + 20 + i * 22
+		if jz > CORNER_Z + HALF and jz < GATE_Z - HALF then
+			part({ Name = "EastWalkJoint", Size = Vector3.new(HALF * 2, 0.5, 1.0), CFrame = CFrame.new(CORNER_X, 0.22, jz), Color = Color3.fromRGB(92, 92, 98), Material = Enum.Material.Slate, Parent = parent }).CanCollide = false
+		end
+	end
+
+	-- a kerb along the car park's edge, so the tarmac stops at something
+	for _, edge in { { 0, -1 }, { 0, 1 }, { -1, 0 } } do
+		local cx = 430.0 + edge[1] * 91.0
+		local cz = 40.0 + edge[2] * 71.0
+		local size = if edge[1] ~= 0 then Vector3.new(2.0, 1.0, 142.0) else Vector3.new(182.0, 1.0, 2.0)
+		tag(part({ Name = "ParkKerb", Size = size, CFrame = CFrame.new(cx, 0.5, cz), Color = Color3.fromRGB(206, 200, 186), Material = Enum.Material.Concrete, Parent = parent }), "TexAshlar")
+	end
+
+	-- lamps down it, and a pair of standards at the gate
+	lampWalk(parent, 332.0, CORNER_Z, CORNER_X + 12.0, CORNER_Z, HALF + 4, 60)
+	lampWalk(parent, CORNER_X, CORNER_Z + 20.0, CORNER_X, GATE_Z - 20.0, HALF + 4, 58)
+	lampWalk(parent, CORNER_X - 20.0, GATE_Z, GATE_X + 16.0, GATE_Z, HALF + 4, 56)
+	-- and limes down the long leg, matching the West Lawn's avenue
+	for i = 0, 3 do
+		local tz = CORNER_Z + 22 + i * 26
+		for _, side in { -1, 1 } do
+			meshTree(parent, Vector3.new(CORNER_X + side * (HALF + 9), 0.9, tz), 1.2)
+		end
+	end
+	local _ = kit
+end
+
 -- ================= THE WEST LAWN =================
 -- A probe that flood-fills the core for ground with nothing standing on it
 -- says 429,000 square studs of the built campus -- 38 per cent -- is empty,
@@ -10856,8 +10928,61 @@ local function buildBackCampus(parent: Instance)
 	-- gives it "track + pitch + four floodlight masts" and only two of the
 	-- three were ever built.
 	local fieldCtx = { parent = parent, part = part :: any, tag = tag :: any }
+	-- THE PITCH ITSELF. Two hundred and two by ninety studs of turf with two
+	-- goals on it and not one line painted: no touchline, no goal line, no
+	-- halfway, no centre circle, no penalty area. From the air -- one of the
+	-- four reference views -- the sports field read as a green rectangle
+	-- inside a running track, which is what it was.
+	do
+		local HALF_L, HALF_W = 92.0, 42.0
+		local function line(cx: number, cz: number, lx: number, lz: number)
+			part({
+				Name = "PitchLine",
+				Size = Vector3.new(lx, 0.3, lz),
+				-- 0.35 .. 0.65 over turf whose top is 0.40: bedded into it, so
+				-- the paint is on the grass and no two faces share a plane
+				CFrame = CFrame.new(FIELD.X + cx, 0.5, FIELD.Z + cz),
+				Color = Color3.fromRGB(240, 240, 236),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			}).CanCollide = false
+		end
+		line(0, -HALF_W, HALF_L * 2, 1.0)      -- touchlines
+		line(0, HALF_W, HALF_L * 2, 1.0)
+		line(0, 0, 1.0, HALF_W * 2)            -- halfway
+		for _, side in { -1, 1 } do
+			line(side * HALF_L, 0, 1.0, HALF_W * 2)                       -- goal line
+			line(side * (HALF_L - 16), 0, 1.0, 60.0)                      -- penalty area, front
+			line(side * (HALF_L - 8), 30, 32.0, 1.0)                      -- ... and its sides
+			line(side * (HALF_L - 8), -30, 32.0, 1.0)
+			line(side * (HALF_L - 6), 0, 1.0, 26.0)                       -- goal area, front
+			line(side * (HALF_L - 3), 13, 12.0, 1.0)
+			line(side * (HALF_L - 3), -13, 12.0, 1.0)
+			line(side * (HALF_L - 11), 0, 1.6, 1.6)                       -- penalty spot
+		end
+		line(0, 0, 1.8, 1.8)                                              -- centre spot
+		-- the centre circle, as chords: a ring of boxes turned to the tangent
+		for i = 0, 23 do
+			local a = i * math.pi / 12
+			local r = 16.0
+			part({
+				Name = "PitchArc",
+				Size = Vector3.new(r * 2 * math.sin(math.pi / 24) + 0.4, 0.3, 1.0),
+				CFrame = CFrame.new(FIELD.X + math.cos(a) * r, 0.5, FIELD.Z + math.sin(a) * r)
+					* CFrame.Angles(0, -a + math.pi / 2, 0),
+				Color = Color3.fromRGB(240, 240, 236),
+				Material = Enum.Material.SmoothPlastic,
+				Parent = parent,
+			}).CanCollide = false
+		end
+	end
 	for _, side in { -1, 1 } do
-		Grounds.goal(fieldCtx, FIELD.X + side * 92, FIELD.Z, 26, 17, if side > 0 then 0 else math.pi)
+		-- FACING EACH OTHER, down the length of the pitch. GroundsKit.goal puts
+		-- the net behind the mouth at local -z, so yaw 0 opens a goal to the
+		-- north: both of these opened onto the touchline, one north and one
+		-- south, a hundred and eighty-four studs apart across a pitch nobody
+		-- could score on. The east goal faces -x, the west goal +x.
+		Grounds.goal(fieldCtx, FIELD.X + side * 92, FIELD.Z, 26, 17, if side > 0 then -math.pi / 2 else math.pi / 2)
 	end
 	for _, corner in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
 		local mx = FIELD.X + corner[1] * (RX - 26)
@@ -13793,6 +13918,7 @@ end
 	buildBikeTrack(folder)
 	buildDormCourt(folder)
 	buildWestGrounds(folder)
+	buildEastWalk(folder)
 	detailCorridor(folder)
 
 	-- ---------------- outside: entrance, dorms, grounds ----------------
