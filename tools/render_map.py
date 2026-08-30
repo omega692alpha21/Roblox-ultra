@@ -336,6 +336,7 @@ map_src = map_src.replace("local Kit = require(script.Parent.CollegiateKit)", "l
 map_src = map_src.replace("local PlanBuilder = require(script.Parent.PlanBuilder)", "local PlanBuilder = __PlanBuilder")
 map_src = map_src.replace("local CampusPlan = require(ReplicatedStorage.Shared.CampusPlan)", "local CampusPlan = __CampusPlan")
 map_src = map_src.replace("local Grounds = require(script.Parent.GroundsKit)", "local Grounds = __Grounds")
+map_src = map_src.replace("local Creatures = require(script.Parent.CreatureKit)", "local Creatures = __CreatureKit")
 map_src = map_src.replace("local GameConfig = require(ReplicatedStorage.Config.GameConfig)", "")
 map_src = map_src.replace("local PropSizes = require(ReplicatedStorage.Config.PropSizes)", "local PropSizes = __PropSizes")
 map_src = map_src.replace("local Cliques = require(ReplicatedStorage.Config.Cliques)", "local Cliques = __Cliques")
@@ -348,10 +349,12 @@ map_src = map_src.replace("return MapService", "__MapService = MapService")
 EXPORT = r'''
 local map = __MapService.Build()
 
--- CREATURES=1 stands the creature kit's owls on the Great Court so they can be
--- looked at. OFF by default and never in the dump the twenty-three checks read,
--- because a bird on the paving is not part of the school and every one of those
--- checks would rightly have something to say about it.
+-- The creatures standing on the Great Court are built by MapService now, so
+-- they are in the game and in the dump the checks read. What stays behind
+-- CREATURES=1 is the one that cannot be: a griffin in flight over the clock
+-- tower. That is a photograph, not game content -- parked on the approach axis
+-- at a hundred and twenty studs it blocks the view of the school from the
+-- gate, and build_check is right to say so.
 if __CREATURES__ then
   local pen = Instance.new("Folder")
   pen.Name = "Creatures"
@@ -366,15 +369,6 @@ if __CREATURES__ then
     return p
   end
   local cctx = { parent = pen, part = cpart, tag = function() end }
-  __CreatureKit.buildOwl(cctx, "barn", 112.0, 0.4, 248, math.pi, 1)
-  __CreatureKit.buildOwl(cctx, "snowy", 126.0, 0.4, 248, math.pi, 1)
-  __CreatureKit.buildOwl(cctx, "greatgrey", 141.0, 0.4, 248, math.pi, 1)
-  -- the griffin: one standing on the court with its wings folded, and one in
-  -- flight over the clock tower with them spread, which is the picture the
-  -- whole game is sold on
-  __CreatureKit.buildGriffin(cctx, 0, 0.4, 266, math.pi, "mantle", 1)
-  __CreatureKit.buildGriffin(cctx, -46, 0.4, 258, math.pi - 0.7, "folded", 1)
-  __CreatureKit.buildOwl(cctx, "barn", 8.5, 0.4, 274, math.pi + 0.5, 1)
   __CreatureKit.buildGriffin(cctx, 28, 122, 168, 3.5, "spread", 1, -0.1, 0.5)
 end
 local out = {}
@@ -977,6 +971,7 @@ shots = [
     ("griffin",    (11, 7.0, 294),    (0, 5.2, 268)),
     ("griffprof",  (38, 6.4, 262),    (0, 5.2, 266)),
     ("griffhead",  (11, 11.4, 289),   (0, 8.8, 271)),
+    ("grifface",   (4.6, 9.6, 279),   (0.2, 8.9, 272.4)),
     ("griffscale", (27, 7.4, 297),    (2, 4.6, 270)),
     ("griffrear",  (-30, 8.0, 246),   (0, 5.0, 262)),
     ("griffsky",   (60, 98, 226),     (28, 120, 170)),

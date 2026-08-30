@@ -9767,6 +9767,59 @@ local function buildWayfinding(parent: Instance)
 	end
 end
 
+-- ---------------------------------------------------------------------------
+-- THE MENAGERIE
+-- ---------------------------------------------------------------------------
+-- Four creatures standing on the Great Court, so the art can be WALKED UP TO
+-- in the running game instead of only ever being looked at in an offline
+-- render. That matters more than it sounds: the renderer draws a Ball as a
+-- six-by-twelve UV sphere whose faces lie up to seven per cent of the radius
+-- inside the true surface, so it under-draws every sphere -- feather plating
+-- reads more proud in a PNG than it does in Roblox, and a small sphere reads
+-- as a box offline and as a sphere in the game. Some judgements about this art
+-- can only be made in the game.
+--
+-- This is a DISPLAY, not the game layer. The beta's spawning, catching and
+-- following comes later, and when it does these four come out.
+local function buildMenagerie(parent: Instance)
+	-- required HERE and not at the top of the file: MapService is a single
+	-- Luau chunk and one more top-level local takes it past the 200-register
+	-- limit, which kills the offline export outright.
+	local Creatures = require(script.Parent.CreatureKit)
+	local folder = Instance.new("Folder")
+	folder.Name = "Menagerie"
+	folder.Parent = parent
+	local ctx = { parent = folder, part = part :: any, tag = tag :: any }
+
+	-- A creature is several hundred non-colliding parts, so nothing about it
+	-- stops a player walking straight through it. One invisible box each does.
+	-- The name carries "Guard" because that is the word solid_check already
+	-- skips, for exactly this kind of object.
+	local function guard(x: number, z: number, w: number, h: number, d: number)
+		local g = part({
+			Name = "CreatureGuard",
+			Size = Vector3.new(w, h, d),
+			CFrame = CFrame.new(x, 0.5 + h / 2, z),
+			Transparency = 1,
+		})
+		g.Parent = folder
+	end
+
+	Creatures.buildOwl(ctx, "barn", 112, 0.4, 248, math.pi, 1)
+	guard(112, 248, 3.4, 5.0, 3.8)
+	Creatures.buildOwl(ctx, "snowy", 126, 0.4, 248, math.pi, 1)
+	guard(126, 248, 4.4, 6.6, 4.8)
+	Creatures.buildOwl(ctx, "greatgrey", 141, 0.4, 248, math.pi, 1)
+	guard(141, 248, 5.6, 8.4, 6.0)
+
+	-- the griffin stands on the central path, where nobody can walk in from
+	-- the gate without meeting it
+	Creatures.buildGriffin(ctx, 0, 0.4, 266, math.pi, "mantle", 1)
+	guard(0, 264.5, 5.6, 7.4, 14.0)
+	Creatures.buildOwl(ctx, "barn", 8.5, 0.4, 274, math.pi + 0.5, 1)
+	guard(8.5, 274, 3.4, 5.0, 3.8)
+end
+
 function MapService.Build(): Map
 -- Every part the school builds defaults to queryable, touchable and
 -- shadow-casting. On a campus this size that is thousands of parts taxing
@@ -10841,6 +10894,7 @@ end
 	buildHiddenAlley(folder)
 	buildFlagpole(folder)
 	buildCoreFence(folder)
+	buildMenagerie(folder)
 	-- the road, so nothing plants a tree in it
 	blockScatter(0, ROAD_Z, 264, 16)
 	buildTreeline(folder, meshTree)
