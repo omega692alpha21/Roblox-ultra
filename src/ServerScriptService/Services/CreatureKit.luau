@@ -181,14 +181,30 @@ end
 -- buffer; a buried part is not a subtle part, it is an absent one.
 local function onSphere(b: Body, name: string, size: Vector3,
 	cx: number, cy: number, cz: number, r: number,
-	dx: number, dy: number, dz: number, out: number, colour: Color3, rot: CFrame?): BasePart?
+	dx: number, dy: number, dz: number, out: number, colour: Color3, rot: CFrame?,
+	shape: string?): BasePart?
 	local m = math.sqrt(dx * dx + dy * dy + dz * dz)
 	if m < 1e-6 then
 		return nil
 	end
 	local k = r + out
 	return place(b, name, size, cx + dx / m * k, cy + dy / m * k, cz + dz / m * k,
-		colour, rot)
+		colour, rot, shape)
+end
+
+-- A plate lying FLAT on a curved surface: its thin axis, which is local Z, has
+-- to point along the outward direction. Every rotation for this was derived by
+-- hand, and three of them on the griffin's head were about ninety degrees out
+-- at once -- the cheek, the brow and the eye stripe were all standing EDGE-ON
+-- to the surface they were supposed to be lying on. Derive it once instead.
+local function tangent(dx: number, dy: number, dz: number): CFrame
+	local m = math.sqrt(dx * dx + dy * dy + dz * dz)
+	if m < 1e-6 then
+		return CFrame.new()
+	end
+	dx, dy, dz = dx / m, dy / m, dz / m
+	return CFrame.Angles(0, math.atan2(dx, dz), 0)
+		* CFrame.Angles(-math.asin(math.clamp(dy, -1, 1)), 0, 0)
 end
 
 -- A limb segment between two points, as a box whose local Z is the length.
@@ -711,7 +727,8 @@ end
 -- the rump plating, and nothing else.
 
 export type Coat = {
-	crown: Color3,     -- the head
+	hood: Color3,      -- the head's own field, paler than the neck
+	crown: Color3,     -- the nape and the dark markings
 	hackle: Color3,    -- the long neck feathers, and the name of the bird
 	breast: Color3,
 	covert: Color3,    -- the wing's shoulder
@@ -829,90 +846,94 @@ end
 local function griffinHead(b: Body, c: Coat)
 	local hy, hz, r = GHEAD.y, GHEAD.z, GHEAD.r
 	local my, mz, mr = GMUZZLE.y, GMUZZLE.z, GMUZZLE.r
-	ball(b, "GriffinSkull", r * 2, 0, hy, hz, c.crown)
-	ball(b, "GriffinMuzzle", mr * 2, 0, my, mz, c.crown)
-	-- the cheek, which is what gives the head a jaw instead of a chin
+	-- THE FACE FIELD. A barn owl's face works because it is a LIGHT field
+	-- carrying dark marks, so the marks read as features. The griffin's head
+	-- was a MID field carrying dark marks, so the marks were the only thing
+	-- that drew and the head WAS the marks: a brown lump with a bar on it.
+	-- The hood is the fix, and it is the biggest single change here.
+	ball(b, "GriffinSkull", r * 2, 0, hy, hz, c.hood)
+	ball(b, "GriffinMuzzle", mr * 2, 0, my, mz, c.hood)
 	for _, side in { -1, 1 } do
-		onSphere(b, "GriffinCheek", v3(0.86, 0.7, 0.34), 0, hy, hz, r,
-			side * 0.78, -0.42, -0.46, -0.03, c.crown:Lerp(c.hackle, 0.35),
-			CFrame.Angles(0, side * 0.7, 0))
+		local cdx, cdy, cdz = side * 0.78, -0.42, -0.46
+		onSphere(b, "GriffinCheek", v3(0.9, 0.72, 0.3), 0, hy, hz, r,
+			cdx, cdy, cdz, -0.02, c.hood:Lerp(c.crown, 0.3), tangent(cdx, cdy, cdz))
 	end
 
-	-- CROWN feathering. Three rings, small and lapped, over the top and back.
-	-- Any bigger and the head wears a helmet.
-	for ring = 0, 2 do
-		local phi = 0.4 + ring * 0.44
+	-- CROWN feathering, two rings only. The third ran down to the brow line and
+	-- terminated in a hard edge right above the eye, which is what a HELMET is.
+	for ring = 0, 1 do
+		local phi = 0.42 + ring * 0.46
 		for i = 0, 7 do
 			local th = math.pi + (i - 3.5) * 0.42 + (ring % 2) * 0.21
-			onSphere(b, "GriffinCrown", v3(0.44, 0.4, 0.09), 0, hy, hz, r,
-				math.sin(phi) * math.sin(th), math.cos(phi), -math.sin(phi) * math.cos(th),
-				0.02, if (i + ring) % 2 == 0 then c.crown else c.crown:Lerp(c.quill, 0.18),
-				CFrame.Angles(0, -th, 0) * CFrame.Angles(math.pi / 2 - phi, 0, 0))
+			local dx = math.sin(phi) * math.sin(th)
+			local dy = math.cos(phi)
+			local dz = -math.sin(phi) * math.cos(th)
+			onSphere(b, "GriffinCrown", v3(0.5, 0.46, 0.1), 0, hy, hz, r, dx, dy, dz,
+				0.02, if (i + ring) % 2 == 0 then c.hood:Lerp(c.crown, 0.28) else c.hood,
+				tangent(dx, dy, dz))
 		end
 	end
 
-	-- THE ANTI-GOGGLES. Two coloured circles sitting level and symmetric on the
-	-- front of a blank ball read as SPECTACLES, and that is exactly what the
-	-- first griffin's face did. What stops it on a real eagle is that nothing
-	-- about the face is blank between the eyes: the forehead comes down to a
-	-- point and the beak's ridge carries on up between them, so the eyes are
-	-- never a floating pair -- they are two things either side of a keel.
+	-- Nothing is blank between the eyes. The forehead comes down to a point and
+	-- the beak's ridge carries on up between them, so the eyes are never a
+	-- floating pair -- they are two things either side of a keel.
 	place(b, "GriffinForehead", v3(0.46, 0.62, 1.0), 0, hy + 0.28, hz - 1.16,
-		c.crown:Lerp(c.quill, 0.3), CFrame.Angles(0.34, 0, 0))
+		c.hood:Lerp(c.crown, 0.4), CFrame.Angles(0.34, 0, 0))
 	place(b, "GriffinCulmen", v3(0.3, 0.34, 1.1), 0, hy - 0.1, hz - 1.62, c.cere,
 		CFrame.Angles(0.3, 0, 0))
 
 	for _, side in { -1, 1 } do
-		-- The eye is LATERAL and small, and most of the top of it is under a
-		-- shelf. An eagle's eye is a slot, not a disc.
 		local dx, dy, dz = side * 0.78, -0.05, -0.62
-		onSphere(b, "GriffinEyeSocket", v3(1.02, 1.02, 1.02), 0, hy, hz, r, dx, dy, dz,
-			-0.34, c.crown:Lerp(Color3.fromRGB(28, 22, 18), 0.75))
-		onSphere(b, "GriffinEyeRing", v3(0.76, 0.76, 0.76), 0, hy, hz, r, dx, dy, dz,
-			-0.16, Color3.fromRGB(26, 21, 19))
-		onSphere(b, "GriffinIris", v3(0.6, 0.6, 0.6), 0, hy, hz, r, dx, dy, dz,
-			-0.02, c.iris)
-		onSphere(b, "GriffinPupil", v3(0.26, 0.26, 0.26), 0, hy, hz, r, dx, dy, dz,
-			0.14, Color3.fromRGB(10, 9, 11))
-		onSphere(b, "GriffinGlint", v3(0.12, 0.12, 0.12), 0, hy, hz, r,
-			dx + side * 0.22, dy + 0.3, dz - 0.06, 0.2, Color3.fromRGB(255, 255, 255))
-		-- THE SCOWL. A shelf whose front-lower edge cuts across the top of the
-		-- eye. It is the one feature that separates an eagle from a pigeon, and
-		-- it only works if it OVERHANGS -- so it is pitched nose-down and set
-		-- slightly forward of the eye rather than sitting neatly above it.
-		onSphere(b, "GriffinBrow", v3(1.3, 0.26, 0.9), 0, hy, hz, r,
-			side * 0.64, 0.62, -0.52, 0.0, c.crown:Lerp(c.quill, 0.62),
-			CFrame.Angles(-0.3, side * 0.34, -side * 0.32))
-		-- the dark stripe running back from the eye, which is what stops the
-		-- eye reading as an isolated bright dot on a plain head
-		onSphere(b, "GriffinEyeStripe", v3(1.3, 0.3, 0.22), 0, hy, hz, r,
-			side * 0.9, 0.16, 0.3, 0.01, c.crown:Lerp(Color3.fromRGB(36, 28, 22), 0.6),
-			CFrame.Angles(0.1, side * 1.3, 0))
+		-- THE EYE LADDER. Every layer is a real Ball now, and each one's outer
+		-- surface clears the last by at least 0.08 studs MEASURED ALONG THE
+		-- OPTIC AXIS -- which is the only direction that matters, and the thing
+		-- that was not being measured when the pupil sat inside the iris.
+		onSphere(b, "GriffinEyeRing", v3(0.8, 0.8, 0.8), 0, hy, hz, r, dx, dy, dz,
+			-0.14, Color3.fromRGB(30, 24, 20), nil, "Ball")
+		onSphere(b, "GriffinIris", v3(0.66, 0.66, 0.66), 0, hy, hz, r, dx, dy, dz,
+			0.02, c.iris, nil, "Ball")
+		onSphere(b, "GriffinPupil", v3(0.29, 0.29, 0.29), 0, hy, hz, r, dx, dy, dz,
+			0.28, Color3.fromRGB(10, 9, 11), nil, "Ball")
+		onSphere(b, "GriffinGlint", v3(0.13, 0.13, 0.13), 0, hy, hz, r,
+			dx + side * 0.2, dy + 0.26, dz - 0.05, 0.38, Color3.fromRGB(255, 255, 255),
+			nil, "Ball")
+		-- THE SCOWL: a shelf whose outer edge tips down over the eye. The dark
+		-- on this face is asymmetric on purpose -- a brow above and a stripe
+		-- behind, never a ring around -- because anything concentric drawn once
+		-- per eye is a spectacle rim.
+		local bdx, bdy, bdz = side * 0.62, 0.64, -0.5
+		onSphere(b, "GriffinBrow", v3(1.34, 0.86, 0.24), 0, hy, hz, r, bdx, bdy, bdz,
+			0.05, c.crown:Lerp(c.quill, 0.55),
+			tangent(bdx, bdy, bdz) * CFrame.Angles(-0.34, 0, -side * 0.26))
+		local sdx, sdy, sdz = side * 0.9, 0.14, 0.34
+		onSphere(b, "GriffinEyeStripe", v3(1.5, 0.36, 0.2), 0, hy, hz, r, sdx, sdy, sdz,
+			0.01, c.crown:Lerp(Color3.fromRGB(40, 30, 22), 0.55), tangent(sdx, sdy, sdz))
 	end
 
-	-- The beak. Every piece is placed forward of the MUZZLE's front face, and
-	-- the y falls faster than the z advances, which is what makes it a HOOK
-	-- rather than a bill.
+	-- The beak. On a PALE head the old buff beak had almost no separation from
+	-- it, so the beak went ochre and the iris went amber: the eye is now the
+	-- only saturated thing on the animal, which is the rule that was broken the
+	-- first time round when the eye and the beak were the same gold.
 	local front = mz - mr
-	place(b, "GriffinCere", v3(0.62, 0.56, 0.5), 0, my + 0.06, front - 0.14, c.cere)
+	place(b, "GriffinCere", v3(0.64, 0.58, 0.5), 0, my + 0.06, front - 0.14, c.cere)
 	for _, side in { -1, 1 } do
 		place(b, "GriffinNostril", v3(0.12, 0.14, 0.12), side * 0.22, my + 0.1,
 			front - 0.34, Color3.fromRGB(48, 40, 34))
 	end
 	local beak = {
-		{ w = 0.56, h = 0.74, d = 0.58, y = my - 0.1, z = front - 0.44 },
-		{ w = 0.48, h = 0.68, d = 0.5, y = my - 0.38, z = front - 0.76 },
-		{ w = 0.4, h = 0.6, d = 0.4, y = my - 0.7, z = front - 0.96 },
-		{ w = 0.3, h = 0.5, d = 0.3, y = my - 1.02, z = front - 1.0 },
-		{ w = 0.19, h = 0.36, d = 0.2, y = my - 1.28, z = front - 0.94 },
+		{ w = 0.56, h = 0.76, d = 0.58, y = my - 0.1, z = front - 0.44 },
+		{ w = 0.48, h = 0.7, d = 0.5, y = my - 0.4, z = front - 0.76 },
+		{ w = 0.4, h = 0.62, d = 0.4, y = my - 0.74, z = front - 0.96 },
+		{ w = 0.3, h = 0.52, d = 0.3, y = my - 1.08, z = front - 1.0 },
+		{ w = 0.19, h = 0.38, d = 0.2, y = my - 1.36, z = front - 0.94 },
 	}
 	for i, k in beak do
 		place(b, "GriffinBeak", v3(k.w, k.h, k.d), 0, k.y, k.z,
-			if i >= 3 then c.beak:Lerp(Color3.fromRGB(38, 34, 34), 0.18 + i * 0.16)
+			if i >= 3 then c.beak:Lerp(Color3.fromRGB(34, 30, 30), 0.2 + i * 0.17)
 			else c.beak)
 	end
-	place(b, "GriffinMandible", v3(0.44, 0.34, 0.92), 0, my - 0.56, front - 0.56, c.beak)
-	place(b, "GriffinGape", v3(0.52, 0.08, 0.8), 0, my - 0.36, front - 0.48,
+	place(b, "GriffinMandible", v3(0.44, 0.34, 0.92), 0, my - 0.58, front - 0.56, c.beak)
+	place(b, "GriffinGape", v3(0.52, 0.08, 0.8), 0, my - 0.38, front - 0.48,
 		Color3.fromRGB(52, 42, 36))
 end
 
@@ -1183,6 +1204,7 @@ CreatureKit.GRIFFIN = {
 	label = "Griffin",
 	scale = 0.85,
 	coat = {
+		hood = grgb(214, 197, 163),
 		crown = grgb(150, 118, 66),
 		hackle = grgb(196, 158, 84),
 		breast = grgb(122, 92, 56),
@@ -1192,9 +1214,9 @@ CreatureKit.GRIFFIN = {
 		fur = grgb(198, 160, 100),
 		belly = grgb(224, 200, 154),
 		tuft = grgb(74, 60, 44),
-		beak = grgb(228, 202, 132),
-		cere = grgb(250, 198, 54),
-		iris = grgb(255, 158, 26),
+		beak = grgb(222, 186, 118),
+		cere = grgb(214, 164, 60),
+		iris = grgb(255, 176, 10),
 		talon = grgb(32, 30, 32),
 	},
 }
